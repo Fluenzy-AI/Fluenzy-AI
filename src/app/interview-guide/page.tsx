@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -178,7 +178,7 @@ const IntroductionCard = ({
   </div>
 );
 
-const InterviewGuidePage = () => {
+const InterviewGuidePageContent = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -1122,6 +1122,18 @@ const InterviewGuidePage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const InterviewGuidePage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+      </div>
+    }>
+      <InterviewGuidePageContent />
+    </Suspense>
   );
 };
 
