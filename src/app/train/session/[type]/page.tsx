@@ -30,6 +30,7 @@ const SessionPage = () => {
         [ModuleType.TECH_INTERVIEW]: 'technical',
         [ModuleType.COMPANY_WISE_HR]: 'company',
         [ModuleType.FULL_MOCK]: 'mock',
+        [ModuleType.GD_COACH]: 'gd',
       };
 
       const moduleKey = moduleMap[type] || type.toLowerCase().replace('_', '');

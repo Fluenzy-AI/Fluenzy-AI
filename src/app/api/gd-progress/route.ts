@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Fetch HR lesson progress
-    const progressRecords = await prisma.hRProgress.findMany({
+    // Fetch GD lesson progress
+    const progressRecords = await prisma.gDProgress.findMany({
       where: { userId: user.id }
     });
 
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(progressMap);
   } catch (error) {
-    console.error('HR progress fetch error:', error);
+    console.error('GD progress fetch error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

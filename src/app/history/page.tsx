@@ -37,7 +37,8 @@ const HistoryPage = () => {
     scores: {} as any,
     history: [],
     learningPath: [],
-    hrLearningPath: []
+    hrLearningPath: [],
+    gdLearningPath: []
   };
 
   return (

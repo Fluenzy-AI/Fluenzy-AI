@@ -116,6 +116,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
   const isEnglishLearning = type === ModuleType.ENGLISH_LEARNING;
   const isHRInterview = type === ModuleType.HR_INTERVIEW;
   const isConversationPractice = type === ModuleType.CONVERSATION_PRACTICE;
+  const isGDCoach = type === ModuleType.GD_COACH;
 
   const sessionMeta: any = {
     lessonId: searchParams.get('lessonId'),
@@ -247,8 +248,8 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
 
         // Mark lesson as completed
         if (sessionMeta?.lessonId) {
-          const apiEndpoint = isEnglishLearning ? '/api/lesson-complete' : '/api/hr-complete';
-          const storageKey = isEnglishLearning ? 'englishProgress' : 'hrProgress';
+          const apiEndpoint = isEnglishLearning ? '/api/lesson-complete' : isGDCoach ? '/api/gd-complete' : '/api/hr-complete';
+          const storageKey = isEnglishLearning ? 'englishProgress' : isGDCoach ? 'gdProgress' : 'hrProgress';
 
           try {
             await fetch(apiEndpoint, {
@@ -313,6 +314,16 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
       };
     
       const lessonContext = getLessonContext();
+      
+      // Determine level from lesson ID for GD Coach
+      const getGDLevel = () => {
+        const lessonId = sessionMeta?.lessonId || '';
+        const lessonNum = parseInt(lessonId.replace('gd', ''));
+        if (lessonNum <= 8) return 'Beginner';
+        if (lessonNum <= 16) return 'Intermediate';
+        return 'Advanced';
+      };
+
       const instruction = `
         ${SYSTEM_INSTRUCTIONS[type as ModuleType] || 'Senior Interview Coach.'}
         ${isEnglishLearning
@@ -321,6 +332,13 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
           ? `CONTEXT: HR Lesson Topic: ${sessionMeta?.lessonTitle || 'General HR Interview Practice'}. Focus on HR interview coaching, behavioral questions, and professional communication skills. Do not ask technical or coding questions.`
           : isConversationPractice
           ? `CONTEXT: Daily conversation practice. Engage in natural English speaking practice with topics like office small talk, daily life, and casual professional chats. User Proficiency Level: ${user.proficiency}. Be a friendly conversation partner, not an interviewer.`
+          : isGDCoach
+          ? `CONTEXT:
+          Selected Level: ${getGDLevel()}
+          Selected Chapter: ${sessionMeta?.lessonTitle || 'GD Practice'}
+          Selected Module ID: ${sessionMeta?.lessonId || 'gd1'}
+          
+          STRICT INSTRUCTION: Teach ONLY this chapter "${sessionMeta?.lessonTitle}". Do NOT explain what GD is, GD rules, evaluation criteria, or any other chapter. Stay within the scope of this specific chapter only.`
           : `CONTEXT: Role: ${sessionMeta?.role || user.jobRole}, Company: ${sessionMeta?.company || 'Top MNC'}, Resume: ${sessionMeta?.resumeText || 'General Profile'}.
         Use your thinking budget to analyze resume projects and company requirements before every question.`
         }

@@ -24,8 +24,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Update or create HR lesson progress
-    await prisma.hRProgress.upsert({
+    // Update or create GD lesson progress
+    await prisma.gDProgress.upsert({
       where: {
         userId_lessonId: {
           userId: user.id,
@@ -44,17 +44,17 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Increment HR usage count
+    // Increment GD usage count
     await prisma.users.update({
       where: { id: user.id },
       data: {
-        hrUsage: { increment: 1 }
+        gdUsage: { increment: 1 }
       }
     });
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('HR lesson completion error:', error);
+    console.error('GD lesson completion error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

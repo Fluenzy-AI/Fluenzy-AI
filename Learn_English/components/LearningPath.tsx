@@ -12,7 +12,8 @@ import {
   Users,
   Lock,
   CheckCircle,
-  Sparkles
+  Sparkles,
+  GraduationCap
 } from 'lucide-react';
 import { ModuleType } from '../types';
 
@@ -35,6 +36,8 @@ const ModuleCard = ({ type, title, description, icon: Icon, color, delay, isAdva
         router.push('/train/company');
       } else if (type === ModuleType.GD_DISCUSSION) {
         router.push('/train/gd');
+      } else if (type === ModuleType.GD_COACH) {
+        router.push('/train/gd-coach');
       } else if (type === ModuleType.CONVERSATION_PRACTICE) {
         router.push(`/train/session/${type}`);
       } else if (type === ModuleType.TECH_INTERVIEW) {
@@ -133,6 +136,7 @@ const LearningPath: React.FC = () => {
       [ModuleType.COMPANY_WISE_HR]: 'company',
       [ModuleType.FULL_MOCK]: 'mock',
       [ModuleType.GD_DISCUSSION]: 'gd',
+      [ModuleType.GD_COACH]: 'gd',
     };
 
     const key = moduleMap[type];
@@ -210,6 +214,17 @@ const LearningPath: React.FC = () => {
       color: 'bg-purple-500',
       delay: 'delay-500',
       ...getModuleUsage(ModuleType.GD_DISCUSSION),
+      planName: usageData?.planName,
+      limit: usageData?.limit
+    },
+    {
+      type: ModuleType.GD_COACH,
+      title: 'GD Coach',
+      description: 'Step-by-step GD training from beginner to advanced. Learn roles, strategies, and leadership skills.',
+      icon: GraduationCap,
+      color: 'bg-teal-500',
+      delay: 'delay-600',
+      ...getModuleUsage(ModuleType.GD_COACH),
       planName: usageData?.planName,
       limit: usageData?.limit
     },

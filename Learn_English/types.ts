@@ -7,7 +7,8 @@ export enum ModuleType {
   COMPANY_SPECIFIC = 'COMPANY_SPECIFIC',
   FULL_MOCK = 'FULL_MOCK',
   COMPANY_WISE_HR = 'COMPANY_WISE_HR',
-  GD_DISCUSSION = 'GD_DISCUSSION'
+  GD_DISCUSSION = 'GD_DISCUSSION',
+  GD_COACH = 'GD_COACH'
 }
 
 export enum GDRole {
@@ -135,4 +136,5 @@ export interface UserProfile {
   history: SessionRecord[];
   learningPath: LevelProgress[];
   hrLearningPath: LevelProgress[];
+  gdLearningPath: LevelProgress[];
 }

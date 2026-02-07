@@ -51,6 +51,7 @@ model users {
   sessions         Session[]
   lessonProgress   LessonProgress[]
   hrProgress       HRProgress[]
+  gdProgress       GDProgress[]
   resumes          Resume[]
   loginLogs        UserLoginLog[]
   couponUsages     CouponUsage[]
@@ -232,6 +233,20 @@ model LessonProgress {
 }
 
 model HRProgress {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  user         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId     String
+  isCompleted  Boolean  @default(false)
+  completedAt  DateTime?
+  score        Float?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+model GDProgress {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   userId       String   @db.ObjectId
   user         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
