@@ -11,11 +11,13 @@ import {
   ShieldCheck,
   Users,
   Lock,
-  CheckCircle
+  CheckCircle,
+  FileText,
+  Sparkles
 } from 'lucide-react';
 import { ModuleType } from '../types';
 
-const ModuleCard = ({ type, title, description, icon: Icon, color, delay, isAdvanced, canUse, remaining, isLocked, planName, limit }: any) => {
+const ModuleCard = ({ type, title, description, icon: Icon, color, delay, isAdvanced, canUse, remaining, isLocked, planName, limit, isFeatured }: any) => {
   const router = useRouter();
 
   const handleUpgrade = () => {
@@ -40,6 +42,8 @@ const ModuleCard = ({ type, title, description, icon: Icon, color, delay, isAdva
         router.push('/train/technical');
       } else if (type === ModuleType.FULL_MOCK) {
         router.push('/train/mock');
+      } else if (type === ModuleType.INTERVIEW_GUIDE) {
+        router.push('/train/guide');
       } else {
         router.push(`/train/session/${type}`);
       }
@@ -53,13 +57,19 @@ const ModuleCard = ({ type, title, description, icon: Icon, color, delay, isAdva
   return (
     <div
       onClick={handleStart}
-      className={`group relative min-h-[280px] bg-gradient-to-br from-slate-800/80 to-slate-900/80 backdrop-blur-lg p-6 rounded-3xl border border-slate-700/50 shadow-xl ${isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-500/30 hover:scale-[1.02] cursor-pointer'} transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 fill-mode-both ${delay}`}
+      className={`group relative min-h-[280px] bg-gradient-to-br ${isFeatured ? 'from-rose-900/30 via-slate-900/80 to-orange-900/30 border-rose-500/40' : 'from-slate-800/80 to-slate-900/80 border-slate-700/50'} backdrop-blur-lg p-6 rounded-3xl border shadow-xl ${isLocked ? 'opacity-60 cursor-not-allowed' : isFeatured ? 'hover:shadow-2xl hover:shadow-rose-500/20 hover:border-rose-500/50 hover:scale-[1.02] cursor-pointer' : 'hover:shadow-2xl hover:shadow-purple-500/10 hover:border-purple-500/30 hover:scale-[1.02] cursor-pointer'} transition-all duration-300 animate-in fade-in slide-in-from-bottom-4 fill-mode-both ${delay}`}
     >
+      {isFeatured && (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-rose-500 to-orange-500 text-white text-[10px] font-black uppercase tracking-wider flex items-center gap-1 shadow-lg">
+          <Sparkles size={12} />
+          AI Powered
+        </div>
+      )}
       <div className="relative mb-6">
-        <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg ${!isLocked && 'group-hover:shadow-xl transition-all duration-300 group-hover:scale-110'}`}>
+        <div className={`w-16 h-16 rounded-2xl ${isFeatured ? 'bg-gradient-to-br from-rose-500 to-orange-500' : `bg-gradient-to-br ${color}`} flex items-center justify-center shadow-lg ${!isLocked && 'group-hover:shadow-xl transition-all duration-300 group-hover:scale-110'}`}>
           {isLocked ? <Lock size={32} className="text-white" /> : <Icon size={32} className="text-white" />}
         </div>
-        <div className={`absolute -inset-2 bg-gradient-to-br ${color} opacity-20 blur-lg rounded-2xl ${!isLocked && 'group-hover:opacity-30'} transition-opacity duration-300`} />
+        <div className={`absolute -inset-2 ${isFeatured ? 'bg-gradient-to-br from-rose-500 to-orange-500' : `bg-gradient-to-br ${color}`} opacity-20 blur-lg rounded-2xl ${!isLocked && 'group-hover:opacity-30'} transition-opacity duration-300`} />
       </div>
 
       <h3 className="text-xl font-black text-white mb-3 flex items-center gap-2">
@@ -70,23 +80,23 @@ const ModuleCard = ({ type, title, description, icon: Icon, color, delay, isAdva
       <p className="text-slate-300 text-sm leading-relaxed mb-6 line-clamp-2">{description}</p>
 
       <div className="flex items-center justify-between mt-auto">
-        <div className={`font-bold text-sm ${isLocked ? 'text-red-400 cursor-pointer hover:text-red-300' : 'text-purple-400 group-hover:text-purple-300'} transition-colors`} onClick={isLocked ? handleUpgrade : undefined}>
-          {isLocked ? 'Free limit reached. Upgrade to continue.' : 'Start Training →'}
+        <div className={`font-bold text-sm ${isLocked ? 'text-red-400 cursor-pointer hover:text-red-300' : isFeatured ? 'text-rose-400 group-hover:text-rose-300' : 'text-purple-400 group-hover:text-purple-300'} transition-colors`} onClick={isLocked ? handleUpgrade : undefined}>
+          {isLocked ? 'Free limit reached. Upgrade to continue.' : isFeatured ? 'Generate Guide →' : 'Start Training →'}
           {!isLocked && <ArrowRight size={16} className="ml-2 inline group-hover:translate-x-1 transition-transform" />}
         </div>
         <div className="text-right">
           <div className="text-[10px] text-slate-400 font-black uppercase tracking-widest">
             {planName ? `${planName} uses` : 'Free uses'}
           </div>
-          <div className={`text-sm font-black ${isLocked ? 'text-red-400' : remaining === 'Unlimited' ? 'text-green-400' : 'text-white'}`}>
-            {remaining === 'Unlimited' ? '∞' : `${remaining ?? 0} / ${limit || 3}`}
+          <div className={`text-sm font-black ${isLocked ? 'text-red-400' : remaining === 'Unlimited' || remaining === '∞' ? 'text-green-400' : 'text-white'}`}>
+            {remaining === 'Unlimited' || remaining === '∞' ? '∞' : `${remaining ?? 0} / ${limit || 3}`}
           </div>
         </div>
       </div>
 
       <div className="absolute top-4 right-4">
-        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest shadow-sm ${isLocked ? 'bg-red-900/50 text-red-300 border border-red-700/50' : isAdvanced ? 'bg-blue-900/50 text-blue-300 border border-blue-700/50' : 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/50'}`}>
-          {isLocked ? 'Locked' : isAdvanced ? 'Advanced' : 'Available'}
+        <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-full tracking-widest shadow-sm ${isLocked ? 'bg-red-900/50 text-red-300 border border-red-700/50' : isFeatured ? 'bg-rose-900/50 text-rose-300 border border-rose-700/50' : isAdvanced ? 'bg-blue-900/50 text-blue-300 border border-blue-700/50' : 'bg-emerald-900/50 text-emerald-300 border border-emerald-700/50'}`}>
+          {isLocked ? 'Locked' : isFeatured ? 'New' : isAdvanced ? 'Advanced' : 'Available'}
         </span>
       </div>
     </div>
@@ -205,6 +215,20 @@ const LearningPath: React.FC = () => {
       ...getModuleUsage(ModuleType.GD_DISCUSSION),
       planName: usageData?.planName,
       limit: usageData?.limit
+    },
+    {
+      type: ModuleType.INTERVIEW_GUIDE,
+      title: 'Interview Guide',
+      description: 'Generate a personalized, memorizable interview guide with HR questions, technical prep, and cheat sheets.',
+      icon: FileText,
+      color: 'bg-gradient-to-br from-rose-500 to-orange-500',
+      delay: 'delay-600',
+      canUse: true,
+      remaining: '∞',
+      isLocked: false,
+      isFeatured: true,
+      planName: 'All Plans',
+      limit: 'Unlimited'
     },
   ];
 
