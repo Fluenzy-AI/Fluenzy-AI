@@ -374,3 +374,18 @@ model GlobalPlanSettings {
   updatedAt     DateTime @updatedAt
   createdAt     DateTime @default(now())
 }
+
+model InterviewGuide {
+  id                 String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String   @db.ObjectId
+  targetRole         String
+  targetCompany      String?
+  experienceLevel    String   // Fresher or Experienced
+  communicationLevel String   // Beginner, Intermediate, Advanced
+  strengths          String?
+  weaknesses         String?
+  generatedContent   Json     // Full guide JSON
+  pdfUrl             String?  // Generated PDF URL (optional)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}

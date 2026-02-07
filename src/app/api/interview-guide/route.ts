@@ -233,7 +233,7 @@ Generate a COMPLETE Interview Guide in JSON format with the following structure:
 }
 
 ═══════════════════════════════════════════════════════════════
-CRITICAL RULES
+CRITICAL RULES (MUST FOLLOW - NO EXCEPTIONS)
 ═══════════════════════════════════════════════════════════════
 
 1. ❌ Do NOT give generic answers - EVERYTHING must be personalized to user's profile
@@ -246,6 +246,23 @@ CRITICAL RULES
 8. ✅ Include 5 mock interview questions
 9. ✅ All STAR method examples should use user's actual projects/experience
 10. ✅ Company-specific section should be detailed if company is provided
+
+🚨🚨🚨 ABSOLUTE RULE FOR "TELL ME ABOUT YOURSELF" 🚨🚨🚨
+
+ALL "Tell Me About Yourself" answers (short30sec, medium60sec, long90sec) MUST:
+- START WITH: "My name is ${data.name}, and I am..."
+- NEVER start with "I am...", "Myself...", "I'm...", or any other variation
+- The FIRST words must always be "My name is ${data.name}"
+
+WRONG EXAMPLES (NEVER DO THIS):
+❌ "I am a software engineer..."
+❌ "Myself Rahul, I am..."
+❌ "I'm currently working..."
+
+CORRECT EXAMPLE (ALWAYS DO THIS):
+✅ "My name is ${data.name}, and I am a ${data.targetRole} with..."
+
+This rule is NON-NEGOTIABLE. Violating this rule makes the entire guide INVALID.
 
 Generate the complete JSON response now.
   `;
@@ -369,33 +386,64 @@ export async function POST(request: NextRequest) {
     const text = response.text();
 
     // Parse JSON response
+    let guide;
     try {
-      const guide = JSON.parse(text);
-      return NextResponse.json({
-        success: true,
-        guide,
-        userProfile: {
-          name: user.name,
-          experienceLevel,
-          targetRole: guideInput.targetRole,
-          targetCompany: guideInput.targetCompany,
-        },
-      });
+      guide = JSON.parse(text);
     } catch (parseError) {
       // Cleanup backticks if JSON mode wasn't strictly followed
       const cleanedText = text.replace(/```json\n?|\n?```/g, "").trim();
-      const guide = JSON.parse(cleanedText);
-      return NextResponse.json({
-        success: true,
-        guide,
-        userProfile: {
-          name: user.name,
-          experienceLevel,
-          targetRole: guideInput.targetRole,
-          targetCompany: guideInput.targetCompany,
-        },
+      guide = JSON.parse(cleanedText);
+    }
+
+    // Post-process: Ensure "Tell Me About Yourself" starts correctly
+    if (guide.section2_introduction) {
+      const correctStart = `My name is ${user.name}, and I am`;
+      const wrongPatterns = [/^I am\s/i, /^Myself\s/i, /^I'm\s/i, /^My self\s/i];
+      
+      ["short30sec", "medium60sec", "long90sec"].forEach((key) => {
+        if (guide.section2_introduction[key]) {
+          let intro = guide.section2_introduction[key];
+          // Check if it starts incorrectly
+          for (const pattern of wrongPatterns) {
+            if (pattern.test(intro)) {
+              intro = intro.replace(pattern, `${correctStart} `);
+              break;
+            }
+          }
+          // Ensure it starts with "My name is..."
+          if (!intro.toLowerCase().startsWith("my name is")) {
+            intro = `${correctStart} ${intro.charAt(0).toLowerCase()}${intro.slice(1)}`;
+          }
+          guide.section2_introduction[key] = intro;
+        }
       });
     }
+
+    // Save guide to database
+    const savedGuide = await (prisma as any).interviewGuide.create({
+      data: {
+        userId: user.id,
+        targetRole: guideInput.targetRole,
+        targetCompany: guideInput.targetCompany || null,
+        experienceLevel,
+        communicationLevel: guideInput.communicationLevel,
+        strengths: guideInput.strengths || null,
+        weaknesses: guideInput.weaknesses || null,
+        generatedContent: guide,
+      },
+    });
+
+    return NextResponse.json({
+      success: true,
+      guide,
+      guideId: savedGuide.id,
+      userProfile: {
+        name: user.name,
+        experienceLevel,
+        targetRole: guideInput.targetRole,
+        targetCompany: guideInput.targetCompany,
+      },
+    });
   } catch (error: any) {
     console.error("Interview Guide Generation Error:", error);
     return NextResponse.json(

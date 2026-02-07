@@ -12,7 +12,6 @@ import {
   Users,
   Lock,
   CheckCircle,
-  FileText,
   Sparkles
 } from 'lucide-react';
 import { ModuleType } from '../types';
@@ -42,8 +41,6 @@ const ModuleCard = ({ type, title, description, icon: Icon, color, delay, isAdva
         router.push('/train/technical');
       } else if (type === ModuleType.FULL_MOCK) {
         router.push('/train/mock');
-      } else if (type === ModuleType.INTERVIEW_GUIDE) {
-        router.push('/train/guide');
       } else {
         router.push(`/train/session/${type}`);
       }
@@ -215,20 +212,6 @@ const LearningPath: React.FC = () => {
       ...getModuleUsage(ModuleType.GD_DISCUSSION),
       planName: usageData?.planName,
       limit: usageData?.limit
-    },
-    {
-      type: ModuleType.INTERVIEW_GUIDE,
-      title: 'Interview Guide',
-      description: 'Generate a personalized, memorizable interview guide with HR questions, technical prep, and cheat sheets.',
-      icon: FileText,
-      color: 'bg-gradient-to-br from-rose-500 to-orange-500',
-      delay: 'delay-600',
-      canUse: true,
-      remaining: '∞',
-      isLocked: false,
-      isFeatured: true,
-      planName: 'All Plans',
-      limit: 'Unlimited'
     },
   ];
 

@@ -86,6 +86,12 @@ const Navbar = () => {
                   Train Now
                 </Link>
                 <Link
+                  href="/interview-guide"
+                  className={`text-foreground hover:text-primary transition-colors font-semibold ${pathname === '/interview-guide' || pathname.startsWith('/interview-guide') ? 'text-primary' : ''}`}
+                >
+                  Interview Guide
+                </Link>
+                <Link
                   href="/history"
                   className={`text-foreground hover:text-primary transition-colors font-medium ${pathname === '/history' ? 'text-primary' : ''}`}
                 >
@@ -200,6 +206,12 @@ const Navbar = () => {
                   className={`block w-full text-left text-foreground hover:text-primary transition-colors font-medium ${pathname === '/train' ? 'text-primary' : ''}`}
                 >
                   Train Now
+                </Link>
+                <Link
+                  href="/interview-guide"
+                  className={`block w-full text-left text-foreground hover:text-primary transition-colors font-medium ${pathname === '/interview-guide' || pathname.startsWith('/interview-guide') ? 'text-primary' : ''}`}
+                >
+                  Interview Guide
                 </Link>
                 <Link
                   href="/history"
