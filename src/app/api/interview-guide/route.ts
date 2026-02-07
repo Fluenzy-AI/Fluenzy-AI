@@ -46,12 +46,55 @@ interface UserGuideInput {
   derivedWeaknesses: string;
 }
 
-// Usage limits by plan
+// Usage limits by plan (separate from training modules)
 const INTERVIEW_GUIDE_LIMITS: Record<string, number | null> = {
   Free: 3,
   Standard: null, // Unlimited
   Pro: 100,
 };
+
+// Helper function to check and reset monthly usage for interview guides
+async function checkInterviewGuideMonthlyReset(user: any) {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  // Get global settings for this plan
+  const planSettings = await (prisma as any).globalPlanSettings.findUnique({
+    where: { plan: user.plan?.toString() || 'Free' },
+  });
+
+  if (!planSettings || planSettings.status !== 'active') {
+    // Return default limits if no settings
+    return { needsReset: false };
+  }
+
+  const lastReset = new Date(planSettings.lastReset);
+  const lastResetMonth = lastReset.getMonth();
+  const lastResetYear = lastReset.getFullYear();
+
+  const needsReset = currentMonth !== lastResetMonth || currentYear !== lastResetYear;
+
+  if (needsReset) {
+    // Reset interview guide usage along with other modules
+    await (prisma.users.update as any)({
+      where: { id: user.id },
+      data: {
+        interviewGuideUsage: 0,
+      },
+    });
+
+    // Update last reset time
+    await (prisma as any).globalPlanSettings.update({
+      where: { plan: user.plan?.toString() || 'Free' },
+      data: { lastReset: now },
+    });
+
+    return { needsReset: true, resetUsage: 0 };
+  }
+
+  return { needsReset: false };
+}
 
 // Derive strengths and weaknesses from profile data and job description
 const deriveStrengthsAndWeaknesses = (
@@ -396,7 +439,10 @@ export async function POST(request: NextRequest) {
     // Check usage limits
     const userPlan = user.plan?.toString() || "Free";
     const limit = INTERVIEW_GUIDE_LIMITS[userPlan];
-    const currentUsage = (user as any).interviewGuideUsage || 0;
+    
+    // Check for monthly reset
+    const { needsReset, resetUsage } = await checkInterviewGuideMonthlyReset(user);
+    const currentUsage = needsReset ? (resetUsage ?? 0) : ((user as any).interviewGuideUsage || 0);
 
     if (limit !== null && currentUsage >= limit) {
       return NextResponse.json(
@@ -406,6 +452,7 @@ export async function POST(request: NextRequest) {
           limit,
           used: currentUsage,
           remaining: 0,
+          redirectToPricing: true,
         },
         { status: 403 }
       );
@@ -623,7 +670,10 @@ export async function GET(request: NextRequest) {
 
     const userPlan = user.plan?.toString() || "Free";
     const limit = INTERVIEW_GUIDE_LIMITS[userPlan];
-    const currentUsage = (user as any).interviewGuideUsage || 0;
+    
+    // Check for monthly reset
+    const { needsReset, resetUsage } = await checkInterviewGuideMonthlyReset(user);
+    const currentUsage = needsReset ? (resetUsage ?? 0) : ((user as any).interviewGuideUsage || 0);
 
     return NextResponse.json({
       plan: userPlan,
@@ -631,6 +681,7 @@ export async function GET(request: NextRequest) {
       used: currentUsage,
       remaining: limit === null ? "Unlimited" : Math.max(0, limit - currentUsage),
       canGenerate: limit === null || currentUsage < limit,
+      redirectToPricing: limit !== null && currentUsage >= limit,
     });
   } catch (error: any) {
     console.error("Usage check error:", error);

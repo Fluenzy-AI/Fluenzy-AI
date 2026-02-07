@@ -261,7 +261,8 @@ const InterviewGuidePage = () => {
 
   const generateGuide = async () => {
     if (!usage?.canGenerate) {
-      setError(`You've reached your monthly limit of ${usage?.limit} guides. Upgrade your plan for more!`);
+      // Redirect to pricing page when limit exceeded
+      router.push("/pricing");
       return;
     }
 
@@ -287,6 +288,13 @@ const InterviewGuidePage = () => {
 
       if (!response.ok) {
         const errorData = await response.json();
+        
+        // If usage limit reached, redirect to pricing
+        if (response.status === 403 && errorData.redirectToPricing) {
+          router.push("/pricing");
+          return;
+        }
+        
         throw new Error(errorData.message || errorData.error || "Failed to generate guide");
       }
 
@@ -453,10 +461,14 @@ const InterviewGuidePage = () => {
 
                 {/* Usage Display */}
                 {usage && (
-                  <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                  <div className={`p-4 rounded-xl border ${
+                    !usage.canGenerate 
+                      ? "bg-red-900/30 border-red-500/50" 
+                      : "bg-slate-800/50 border-slate-700/50"
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <FileText size={18} className="text-purple-400" />
+                        <FileText size={18} className={!usage.canGenerate ? "text-red-400" : "text-purple-400"} />
                         <span className="text-sm text-slate-300">
                           {usage.plan} Plan
                         </span>
@@ -473,9 +485,17 @@ const InterviewGuidePage = () => {
                           : `${usage.remaining} guides remaining`}
                       </span>
                     </div>
-                    {usage.remaining !== "Unlimited" && (usage.remaining as number) <= 1 && (
+                    {!usage.canGenerate ? (
+                      <p className="text-sm text-red-300 mt-2">
+                        You've used all {usage.limit} guides this month.{" "}
+                        <Link href="/pricing" className="text-amber-400 underline font-medium">
+                          Upgrade your plan
+                        </Link>{" "}
+                        for more!
+                      </p>
+                    ) : usage.remaining !== "Unlimited" && (usage.remaining as number) <= 1 && (
                       <p className="text-xs text-amber-400 mt-2">
-                        Running low? <Link href="/billing" className="underline">Upgrade your plan</Link> for more guides!
+                        Running low? <Link href="/pricing" className="underline">Upgrade your plan</Link> for more guides!
                       </p>
                     )}
                   </div>
@@ -489,28 +509,33 @@ const InterviewGuidePage = () => {
                 )}
 
                 <div className="pt-4">
-                  <Button
-                    onClick={generateGuide}
-                    disabled={loading || !targetRole || !jobDescription || jobDescription.trim().length < 50 || !usage?.canGenerate}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-6 text-lg disabled:opacity-50"
-                  >
-                    {loading ? (
-                      <>
-                        <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                        Generating Your Personalized Guide...
-                      </>
-                    ) : !usage?.canGenerate ? (
-                      <>
-                        <AlertTriangle className="w-5 h-5 mr-2" />
-                        Usage Limit Reached - Upgrade Plan
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="w-5 h-5 mr-2" />
-                        Generate Interview Guide
-                      </>
-                    )}
-                  </Button>
+                  {!usage?.canGenerate ? (
+                    <Button
+                      onClick={() => router.push("/pricing")}
+                      className="w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold py-6 text-lg"
+                    >
+                      <AlertTriangle className="w-5 h-5 mr-2" />
+                      Usage Limit Reached - Upgrade Now
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={generateGuide}
+                      disabled={loading || !targetRole || !jobDescription || jobDescription.trim().length < 50}
+                      className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-6 text-lg disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                          Generating Your Personalized Guide...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-5 h-5 mr-2" />
+                          Generate Interview Guide
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
 
                 <p className="text-xs text-center text-slate-500">

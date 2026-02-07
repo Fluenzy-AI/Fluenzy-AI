@@ -45,8 +45,8 @@ async function checkMonthlyReset(user: any) {
   const resetNeeded = currentMonth !== lastResetMonth || currentYear !== lastResetYear;
 
   if (resetNeeded) {
-    // Reset usage
-    await prisma.users.update({
+    // Reset usage including interviewGuideUsage
+    await (prisma.users.update as any)({
       where: { id: user.id },
       data: {
         usageCount: 0,
@@ -57,6 +57,7 @@ async function checkMonthlyReset(user: any) {
         companyUsage: 0,
         mockUsage: 0,
         gdUsage: 0,
+        interviewGuideUsage: 0,
       },
     });
 
