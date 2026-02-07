@@ -41,9 +41,88 @@ interface UserGuideInput {
   targetCompany: string;
   experienceLevel: "Fresher" | "Experienced";
   communicationLevel: "Beginner" | "Intermediate" | "Advanced";
-  strengths: string;
-  weaknesses: string;
+  jobDescription: string;
+  derivedStrengths: string;
+  derivedWeaknesses: string;
 }
+
+// Usage limits by plan
+const INTERVIEW_GUIDE_LIMITS: Record<string, number | null> = {
+  Free: 3,
+  Standard: null, // Unlimited
+  Pro: 100,
+};
+
+// Derive strengths and weaknesses from profile data and job description
+const deriveStrengthsAndWeaknesses = (
+  skills: Array<{ name: string; level: string }>,
+  experiences: Array<{ role: string; company: string; description?: string }>,
+  projects: Array<{ title: string; description?: string; techStack?: string }>,
+  jobDescription: string
+): { strengths: string; weaknesses: string } => {
+  // Extract key skills and strengths
+  const strongSkills = skills
+    .filter((s) => s.level === "Expert" || s.level === "Advanced")
+    .map((s) => s.name);
+  
+  const intermediateSkills = skills
+    .filter((s) => s.level === "Intermediate")
+    .map((s) => s.name);
+  
+  const beginnerSkills = skills
+    .filter((s) => s.level === "Beginner")
+    .map((s) => s.name);
+
+  // Derive strengths
+  const strengthsList: string[] = [];
+  
+  if (strongSkills.length > 0) {
+    strengthsList.push(`Strong technical expertise in ${strongSkills.slice(0, 5).join(", ")}`);
+  }
+  
+  if (experiences.length > 0) {
+    strengthsList.push(`${experiences.length}+ years of practical work experience`);
+    const roles = [...new Set(experiences.map((e) => e.role))];
+    if (roles.length > 1) {
+      strengthsList.push("Diverse experience across multiple roles");
+    }
+  }
+  
+  if (projects.length >= 3) {
+    strengthsList.push(`Hands-on project experience (${projects.length}+ projects)`);
+  }
+  
+  // Common positive traits to add based on profile completeness
+  if (skills.length >= 5) {
+    strengthsList.push("Quick learner with diverse skill set");
+  }
+  
+  strengthsList.push("Problem-solving mindset and analytical thinking");
+  strengthsList.push("Team collaboration and communication skills");
+
+  // Derive weaknesses (areas for improvement based on skill gaps)
+  const weaknessesList: string[] = [];
+  
+  if (beginnerSkills.length > 0) {
+    weaknessesList.push(`Still developing proficiency in ${beginnerSkills.slice(0, 3).join(", ")}`);
+  }
+  
+  if (experiences.length === 0) {
+    weaknessesList.push("Limited industry experience (eager to learn and grow)");
+  }
+  
+  // Common acceptable weaknesses for interviews
+  weaknessesList.push("Sometimes overly detail-oriented (working on balancing speed with quality)");
+  
+  if (projects.length < 2) {
+    weaknessesList.push("Building more hands-on project portfolio");
+  }
+
+  return {
+    strengths: strengthsList.join("; "),
+    weaknesses: weaknessesList.slice(0, 3).join("; "),
+  };
+};
 
 const generateGuidePrompt = (data: UserGuideInput): string => {
   const educationStr = data.education
@@ -84,7 +163,7 @@ const generateGuidePrompt = (data: UserGuideInput): string => {
   return `
 You are an Elite AI Interview Coach & Career Strategist with 15+ years of experience in HR interviews, technical interviews, behavioral assessments, and communication training.
 
-Your mission is to create a 100% personalized, ready-to-memorize interview guide for the user, based strictly on their personal data below.
+Your mission is to create a 100% personalized, ready-to-memorize interview guide for the user, based strictly on their personal data and job description below.
 
 The output should be so strong that the user can memorize the answers and confidently clear the interview.
 
@@ -116,15 +195,31 @@ ${certsStr}
 **Languages Known:**
 ${languagesStr}
 
-**Self-Identified Strengths:**
-${data.strengths || "Not specified"}
+═══════════════════════════════════════════════════════════════
+JOB DESCRIPTION (ANALYZE THIS CAREFULLY)
+═══════════════════════════════════════════════════════════════
 
-**Self-Identified Weaknesses:**
-${data.weaknesses || "Not specified"}
+${data.jobDescription}
+
+═══════════════════════════════════════════════════════════════
+AUTO-DERIVED STRENGTHS & WEAKNESSES (Based on Profile + JD)
+═══════════════════════════════════════════════════════════════
+
+**Derived Strengths:**
+${data.derivedStrengths}
+
+**Derived Weaknesses (framed positively):**
+${data.derivedWeaknesses}
 
 ═══════════════════════════════════════════════════════════════
 INSTRUCTIONS - GENERATE THE FOLLOWING SECTIONS
 ═══════════════════════════════════════════════════════════════
+
+IMPORTANT: Analyze the Job Description carefully to:
+1. Match user's skills with JD requirements
+2. Highlight relevant projects and experience
+3. Craft answers that directly address what the employer is looking for
+4. Identify skill gaps and prepare defensive answers
 
 Generate a COMPLETE Interview Guide in JSON format with the following structure:
 
@@ -184,7 +279,7 @@ Generate a COMPLETE Interview Guide in JSON format with the following structure:
     ],
     "advanced": [
       {
-        "question": "Question based on user's projects/skills",
+        "question": "Question based on user's projects/skills and JD requirements",
         "answer": "Clear explanation with interview-ready answer"
       }
     ]
@@ -192,9 +287,10 @@ Generate a COMPLETE Interview Guide in JSON format with the following structure:
   
   "section5_companySpecific": {
     "title": "Company-Specific Questions",
-    "whyThisCompany": "Customized answer for target company",
+    "whyThisCompany": "Customized answer for target company based on JD",
+    "whyThisRole": "Why this specific role matches user's career goals",
     "cultureFit": "How user fits the company culture",
-    "roleExpectations": "What the role expects and how user meets it",
+    "roleExpectations": "What the role expects (from JD) and how user meets it",
     "valueAddition": "How user adds unique value to this company"
   },
   
@@ -236,7 +332,7 @@ Generate a COMPLETE Interview Guide in JSON format with the following structure:
 CRITICAL RULES (MUST FOLLOW - NO EXCEPTIONS)
 ═══════════════════════════════════════════════════════════════
 
-1. ❌ Do NOT give generic answers - EVERYTHING must be personalized to user's profile
+1. ❌ Do NOT give generic answers - EVERYTHING must be personalized to user's profile AND tailored to the Job Description
 2. ✅ Use simple, clear, confident English - no complex vocabulary
 3. ✅ Answers must be memorizable word-by-word
 4. ✅ Sound natural and human, not robotic
@@ -245,7 +341,9 @@ CRITICAL RULES (MUST FOLLOW - NO EXCEPTIONS)
 7. ✅ Include 5-6 questions per technical difficulty level
 8. ✅ Include 5 mock interview questions
 9. ✅ All STAR method examples should use user's actual projects/experience
-10. ✅ Company-specific section should be detailed if company is provided
+10. ✅ Company-specific section should be detailed and reference JD requirements
+11. ✅ Strengths answer must use the derived strengths, framed professionally
+12. ✅ Weaknesses answer must use the derived weaknesses, framed positively with improvement plan
 
 🚨🚨🚨 ABSOLUTE RULE FOR "TELL ME ABOUT YOURSELF" 🚨🚨🚨
 
@@ -276,7 +374,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { targetRole, targetCompany, strengths, weaknesses, communicationLevel } = body;
+    const { targetRole, targetCompany, communicationLevel, jobDescription } = body;
+
+    // Validate mandatory job description
+    if (!jobDescription || jobDescription.trim().length < 50) {
+      return NextResponse.json(
+        { error: "Job Description is required (minimum 50 characters)" },
+        { status: 400 }
+      );
+    }
 
     // Fetch user and profile data
     const user = await prisma.users.findUnique({
@@ -285,6 +391,24 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check usage limits
+    const userPlan = user.plan?.toString() || "Free";
+    const limit = INTERVIEW_GUIDE_LIMITS[userPlan];
+    const currentUsage = (user as any).interviewGuideUsage || 0;
+
+    if (limit !== null && currentUsage >= limit) {
+      return NextResponse.json(
+        {
+          error: "Usage limit reached",
+          message: `You've used all ${limit} Interview Guides for this month on ${userPlan} plan. Upgrade to get more!`,
+          limit,
+          used: currentUsage,
+          remaining: 0,
+        },
+        { status: 403 }
+      );
     }
 
     const profile = await (prisma as any).userProfile.findUnique({
@@ -302,6 +426,14 @@ export async function POST(request: NextRequest) {
     // Determine experience level
     const hasWorkExperience = profile?.experiences?.length > 0;
     const experienceLevel = hasWorkExperience ? "Experienced" : "Fresher";
+
+    // Derive strengths and weaknesses from profile and JD
+    const { strengths: derivedStrengths, weaknesses: derivedWeaknesses } = deriveStrengthsAndWeaknesses(
+      profile?.skills || [],
+      profile?.experiences || [],
+      profile?.projects || [],
+      jobDescription
+    );
 
     // Build user guide input
     const guideInput: UserGuideInput = {
@@ -347,8 +479,9 @@ export async function POST(request: NextRequest) {
       targetCompany: targetCompany || "",
       experienceLevel,
       communicationLevel: communicationLevel || "Intermediate",
-      strengths: strengths || "",
-      weaknesses: weaknesses || "",
+      jobDescription,
+      derivedStrengths,
+      derivedWeaknesses,
     };
 
     // Generate guide using Gemini AI
@@ -427,11 +560,22 @@ export async function POST(request: NextRequest) {
         targetCompany: guideInput.targetCompany || null,
         experienceLevel,
         communicationLevel: guideInput.communicationLevel,
-        strengths: guideInput.strengths || null,
-        weaknesses: guideInput.weaknesses || null,
+        jobDescription: jobDescription,
         generatedContent: guide,
       },
     });
+
+    // Increment usage counter
+    await (prisma.users.update as any)({
+      where: { id: user.id },
+      data: {
+        interviewGuideUsage: { increment: 1 },
+      },
+    });
+
+    // Calculate remaining uses
+    const newUsage = currentUsage + 1;
+    const remaining = limit === null ? "Unlimited" : Math.max(0, limit - newUsage);
 
     return NextResponse.json({
       success: true,
@@ -443,6 +587,11 @@ export async function POST(request: NextRequest) {
         targetRole: guideInput.targetRole,
         targetCompany: guideInput.targetCompany,
       },
+      usage: {
+        used: newUsage,
+        limit: limit === null ? "Unlimited" : limit,
+        remaining,
+      },
     });
   } catch (error: any) {
     console.error("Interview Guide Generation Error:", error);
@@ -451,6 +600,42 @@ export async function POST(request: NextRequest) {
         error: "Failed to generate interview guide",
         details: error.message,
       },
+      { status: 500 }
+    );
+  }
+}
+
+// GET endpoint to check usage
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const userPlan = user.plan?.toString() || "Free";
+    const limit = INTERVIEW_GUIDE_LIMITS[userPlan];
+    const currentUsage = (user as any).interviewGuideUsage || 0;
+
+    return NextResponse.json({
+      plan: userPlan,
+      limit: limit === null ? "Unlimited" : limit,
+      used: currentUsage,
+      remaining: limit === null ? "Unlimited" : Math.max(0, limit - currentUsage),
+      canGenerate: limit === null || currentUsage < limit,
+    });
+  } catch (error: any) {
+    console.error("Usage check error:", error);
+    return NextResponse.json(
+      { error: "Failed to check usage" },
       { status: 500 }
     );
   }

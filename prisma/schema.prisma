@@ -45,6 +45,7 @@ model users {
   companyUsage     Int      @default(0)
   mockUsage        Int      @default(0)
   gdUsage          Int      @default(0)
+  interviewGuideUsage Int   @default(0)
   renewalDate      DateTime?
   disabled         Boolean  @default(false)
   sessions         Session[]
@@ -382,8 +383,7 @@ model InterviewGuide {
   targetCompany      String?
   experienceLevel    String   // Fresher or Experienced
   communicationLevel String   // Beginner, Intermediate, Advanced
-  strengths          String?
-  weaknesses         String?
+  jobDescription     String?  // Full job description (optional for backward compatibility)
   generatedContent   Json     // Full guide JSON
   pdfUrl             String?  // Generated PDF URL (optional)
   createdAt          DateTime @default(now())

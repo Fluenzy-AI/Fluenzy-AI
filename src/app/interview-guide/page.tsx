@@ -191,11 +191,19 @@ const InterviewGuidePage = () => {
   const [currentGuideId, setCurrentGuideId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Usage tracking
+  const [usage, setUsage] = useState<{
+    plan: string;
+    limit: number | string;
+    used: number;
+    remaining: number | string;
+    canGenerate: boolean;
+  } | null>(null);
+
   // Form state
   const [targetRole, setTargetRole] = useState("");
   const [targetCompany, setTargetCompany] = useState("");
-  const [strengths, setStrengths] = useState("");
-  const [weaknesses, setWeaknesses] = useState("");
+  const [jobDescription, setJobDescription] = useState("");
   const [communicationLevel, setCommunicationLevel] = useState("Intermediate");
 
   useEffect(() => {
@@ -203,6 +211,20 @@ const InterviewGuidePage = () => {
       router.push("/");
     }
   }, [status, router]);
+
+  // Fetch usage limits
+  useEffect(() => {
+    if (session?.user) {
+      fetch("/api/interview-guide")
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.error) {
+            setUsage(data);
+          }
+        })
+        .catch(console.error);
+    }
+  }, [session]);
 
   // Load guide from history if ID is provided
   useEffect(() => {
@@ -228,6 +250,7 @@ const InterviewGuidePage = () => {
         setTargetRole(data.targetRole);
         setTargetCompany(data.targetCompany || "");
         setCommunicationLevel(data.communicationLevel);
+        setJobDescription(data.jobDescription || "");
       }
     } catch (err) {
       console.error("Failed to load guide:", err);
@@ -237,6 +260,16 @@ const InterviewGuidePage = () => {
   };
 
   const generateGuide = async () => {
+    if (!usage?.canGenerate) {
+      setError(`You've reached your monthly limit of ${usage?.limit} guides. Upgrade your plan for more!`);
+      return;
+    }
+
+    if (!jobDescription || jobDescription.trim().length < 50) {
+      setError("Please paste the full Job Description (minimum 50 characters)");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -247,21 +280,25 @@ const InterviewGuidePage = () => {
         body: JSON.stringify({
           targetRole,
           targetCompany,
-          strengths,
-          weaknesses,
+          jobDescription,
           communicationLevel,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to generate guide");
+        throw new Error(errorData.message || errorData.error || "Failed to generate guide");
       }
 
       const data = await response.json();
       setGuide(data.guide);
       setUserProfile(data.userProfile);
       setCurrentGuideId(data.guideId);
+
+      // Update usage after successful generation
+      if (data.usage) {
+        setUsage((prev) => prev ? { ...prev, ...data.usage, canGenerate: data.usage.remaining > 0 || data.usage.remaining === "Unlimited" } : prev);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -398,30 +435,51 @@ const InterviewGuidePage = () => {
                   </Select>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">
-                      Your Strengths <span className="text-slate-500">(Optional)</span>
-                    </label>
-                    <Textarea
-                      placeholder="e.g., Quick learner, team player, problem-solving..."
-                      value={strengths}
-                      onChange={(e) => setStrengths(e.target.value)}
-                      className="bg-slate-800/50 border-slate-700 min-h-[100px]"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-slate-300">
-                      Your Weaknesses <span className="text-slate-500">(Optional)</span>
-                    </label>
-                    <Textarea
-                      placeholder="e.g., Public speaking, time management..."
-                      value={weaknesses}
-                      onChange={(e) => setWeaknesses(e.target.value)}
-                      className="bg-slate-800/50 border-slate-700 min-h-[100px]"
-                    />
-                  </div>
+                {/* Full Job Description - MANDATORY */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-300">
+                    Full Job Description <span className="text-red-400">*</span>
+                  </label>
+                  <Textarea
+                    placeholder="Paste the complete job description here. This helps us tailor your interview answers to exactly what the employer is looking for..."
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    className="bg-slate-800/50 border-slate-700 min-h-[200px]"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Copy-paste the full JD from the job posting. We'll analyze it to match your skills and prepare targeted answers.
+                  </p>
                 </div>
+
+                {/* Usage Display */}
+                {usage && (
+                  <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700/50">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText size={18} className="text-purple-400" />
+                        <span className="text-sm text-slate-300">
+                          {usage.plan} Plan
+                        </span>
+                      </div>
+                      <span className={`text-sm font-medium ${
+                        usage.remaining === "Unlimited" 
+                          ? "text-green-400" 
+                          : (usage.remaining as number) > 0 
+                            ? "text-purple-400" 
+                            : "text-red-400"
+                      }`}>
+                        {usage.remaining === "Unlimited" 
+                          ? "Unlimited Guides" 
+                          : `${usage.remaining} guides remaining`}
+                      </span>
+                    </div>
+                    {usage.remaining !== "Unlimited" && (usage.remaining as number) <= 1 && (
+                      <p className="text-xs text-amber-400 mt-2">
+                        Running low? <Link href="/billing" className="underline">Upgrade your plan</Link> for more guides!
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 {error && (
                   <div className="p-4 rounded-xl bg-red-900/30 border border-red-500/30 text-red-300 flex items-center gap-3">
@@ -433,13 +491,18 @@ const InterviewGuidePage = () => {
                 <div className="pt-4">
                   <Button
                     onClick={generateGuide}
-                    disabled={loading || !targetRole}
-                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-6 text-lg"
+                    disabled={loading || !targetRole || !jobDescription || jobDescription.trim().length < 50 || !usage?.canGenerate}
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold py-6 text-lg disabled:opacity-50"
                   >
                     {loading ? (
                       <>
                         <Loader2 className="w-5 h-5 animate-spin mr-2" />
                         Generating Your Personalized Guide...
+                      </>
+                    ) : !usage?.canGenerate ? (
+                      <>
+                        <AlertTriangle className="w-5 h-5 mr-2" />
+                        Usage Limit Reached - Upgrade Plan
                       </>
                     ) : (
                       <>

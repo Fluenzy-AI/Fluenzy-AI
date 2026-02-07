@@ -316,9 +316,10 @@ function generatePDFHTML(guide: any, userName: string, targetRole: string, targe
 // GET /api/interview-guide/pdf/[id] - Generate PDF for a guide
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -334,7 +335,7 @@ export async function GET(
 
     const guide = await (prisma as any).interviewGuide.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: user.id,
       },
     });
