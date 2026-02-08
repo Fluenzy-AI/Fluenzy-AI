@@ -1,0 +1,136 @@
+%% Fluenzy AI - Multi-Channel Application Architecture (Mermaid)
+%% Title: Multi-Channel Application Architecture
+
+graph TB
+    subgraph Client["🌐 Client Layer - Multi-Channel"]
+        WebApp["Web Application<br/>(Next.js 15 + React 19)"]
+        Mobile["Mobile Responsive<br/>(Tailwind CSS v4)"]
+        PWA["PWA Support<br/>(Service Workers)"]
+    end
+
+    subgraph Presentation["🎨 Presentation Layer"]
+        Landing["Landing Pages<br/>Hero, Features, Pricing"]
+        Training["Training Modules<br/>English, HR, Technical, GD"]
+        Dashboard["User Dashboard<br/>Analytics, Progress, History"]
+        Profile["Profile Builder<br/>Resume, Skills, Projects"]
+        Components["Component Library<br/>ShadCN + Radix UI + Custom"]
+    end
+
+    subgraph Application["⚙️ Application Layer (Next.js API Routes)"]
+        Auth["Authentication API<br/>/api/auth/*<br/>NextAuth.js"]
+        Session["Training Session API<br/>/api/session<br/>/api/evaluate"]
+        Payment["Payment API<br/>/api/payment<br/>Razorpay Integration"]
+        Resume["Resume Builder API<br/>/api/resume-pdf<br/>Puppeteer"]
+        Analytics["Analytics API<br/>/api/analytics<br/>/api/stats"]
+        Admin["Admin API<br/>/api/admin/*<br/>SuperAdmin Only"]
+        Interview["Interview Guide API<br/>/api/interview-guide<br/>AI Generated"]
+        Receipt["Receipt API<br/>/api/receipt-pdf"]
+    end
+
+    subgraph Middleware["🛡️ Middleware Layer"]
+        AuthMW["Authentication Middleware<br/>JWT Token Validation"]
+        RBAC["Role-Based Access Control<br/>User/Admin/Moderator/SuperAdmin"]
+        RateLimit["Rate Limiting<br/>Express Rate Limit"]
+        DeviceDetect["Device Detection<br/>User Agent Parsing"]
+    end
+
+    subgraph Business["🧠 Business Logic Layer"]
+        subgraph AI["AI/ML Services"]
+            Gemini["Google Generative AI<br/>Gemini Pro"]
+            NLP["Natural Language Processing"]
+            STT["Speech-to-Text"]
+            Evaluation["Response Evaluation Engine"]
+        end
+
+        subgraph TrainingEngine["Training Engine Modules"]
+            English["English Fluency Coach<br/>Voice Agent + Learning Path"]
+            HR["HR Interview Simulator<br/>Behavioral Questions"]
+            Technical["Technical Interview Prep<br/>Coding + System Design"]
+            GD["Group Discussion Agent<br/>Multi-Participant Simulation"]
+            Mock["Mock Interview Platform<br/>Full Interview Simulation"]
+        end
+
+        subgraph Scoring["Scoring & Analytics Engine"]
+            TechScore["Technical Knowledge Scoring"]
+            CommScore["Communication Quality Metrics"]
+            GrammarScore["Grammar & Structure Analysis"]
+            ConfScore["Confidence & Fluency Rating"]
+            FillerDetect["Filler Word Detection"]
+            PaceCalc["Speaking Pace (WPM)"]
+            HinglishDetect["Hinglish Detection"]
+        end
+    end
+
+    subgraph DataAccess["💾 Data Access Layer"]
+        Prisma["Prisma ORM v6.19.0"]
+        subgraph Models["Database Models"]
+            UserModel["Users & UserProfile"]
+            SessionModel["Session & Progress"]
+            PaymentModel["Payment & Subscriptions"]
+            ResumeModel["Resume & Profile Components"]
+        end
+    end
+
+    subgraph Persistence["🗄️ Persistence Layer"]
+        MongoDB["MongoDB Atlas<br/>NoSQL Database"]
+        ImageKit["ImageKit CDN<br/>Image Management"]
+        FileStorage["File Storage<br/>PDFs, Resumes"]
+    end
+
+    subgraph External["🌍 External Services"]
+        NextAuth["NextAuth.js<br/>Session Management"]
+        RazorpayExt["Razorpay<br/>Payment Gateway"]
+        GoogleOAuth["Google OAuth 2.0<br/>Social Login"]
+        ImageKitExt["ImageKit.io<br/>CDN Service"]
+        GeminiExt["Google Gemini API<br/>AI Engine"]
+        PuppeteerExt["Puppeteer<br/>PDF Generation"]
+    end
+
+    %% Client to Presentation
+    Client --> Presentation
+
+    %% Presentation to Application
+    Presentation --> Application
+
+    %% Application to Middleware
+    Application --> Middleware
+
+    %% Middleware to Business Logic
+    Middleware --> Business
+
+    %% Business Logic to Data Access
+    Business --> DataAccess
+
+    %% Data Access to Persistence
+    DataAccess --> Persistence
+
+    %% External Service Connections
+    Auth -.-> NextAuth
+    Auth -.-> GoogleOAuth
+    Payment -.-> RazorpayExt
+    Resume -.-> PuppeteerExt
+    AI -.-> GeminiExt
+    Application -.-> ImageKitExt
+
+    %% Data Access to Prisma
+    DataAccess --> Prisma
+    Prisma --> MongoDB
+
+    %% Styling
+    classDef clientStyle fill:#667eea,stroke:#764ba2,stroke-width:2px,color:#fff
+    classDef presentationStyle fill:#f093fb,stroke:#f5576c,stroke-width:2px,color:#fff
+    classDef appStyle fill:#4facfe,stroke:#00f2fe,stroke-width:2px,color:#fff
+    classDef middlewareStyle fill:#43e97b,stroke:#38f9d7,stroke-width:2px,color:#000
+    classDef businessStyle fill:#fa709a,stroke:#fee140,stroke-width:2px,color:#fff
+    classDef dataStyle fill:#30cfd0,stroke:#330867,stroke-width:2px,color:#fff
+    classDef persistenceStyle fill:#a8edea,stroke:#fed6e3,stroke-width:2px,color:#000
+    classDef externalStyle fill:#ffecd2,stroke:#fcb69f,stroke-width:2px,color:#000
+
+    class Client,WebApp,Mobile,PWA clientStyle
+    class Presentation,Landing,Training,Dashboard,Profile,Components presentationStyle
+    class Application,Auth,Session,Payment,Resume,Analytics,Admin,Interview,Receipt appStyle
+    class Middleware,AuthMW,RBAC,RateLimit,DeviceDetect middlewareStyle
+    class Business,AI,TrainingEngine,Scoring businessStyle
+    class DataAccess,Prisma,Models dataStyle
+    class Persistence,MongoDB,ImageKit,FileStorage persistenceStyle
+    class External,NextAuth,RazorpayExt,GoogleOAuth,ImageKitExt,GeminiExt,PuppeteerExt externalStyle

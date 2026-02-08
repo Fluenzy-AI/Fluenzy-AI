@@ -1,0 +1,173 @@
+@startuml Fluenzy AI - Multi-Channel Application Architecture
+
+!define RECTANGLE class
+!define COMPONENT component
+!define DATABASE database
+!define CLOUD cloud
+!define INTERFACE interface
+
+skinparam componentStyle rectangle
+skinparam backgroundColor #f0f0f0
+skinparam component {
+  BackgroundColor<<client>> #667eea
+  BorderColor<<client>> #764ba2
+  FontColor<<client>> white
+  
+  BackgroundColor<<presentation>> #f093fb
+  BorderColor<<presentation>> #f5576c
+  FontColor<<presentation>> white
+  
+  BackgroundColor<<application>> #4facfe
+  BorderColor<<application>> #00f2fe
+  FontColor<<application>> white
+  
+  BackgroundColor<<middleware>> #43e97b
+  BorderColor<<middleware>> #38f9d7
+  
+  BackgroundColor<<business>> #fa709a
+  BorderColor<<business>> #fee140
+  FontColor<<business>> white
+  
+  BackgroundColor<<data>> #30cfd0
+  BorderColor<<data>> #330867
+  FontColor<<data>> white
+  
+  BackgroundColor<<external>> #ffecd2
+  BorderColor<<external>> #fcb69f
+}
+
+title Fluenzy AI - Multi-Channel Application Architecture
+
+package "Client Layer - Multi-Channel" <<client>> {
+  [Web Application\nNext.js 15 + React 19] as WebApp
+  [Mobile Responsive\nTailwind CSS v4] as Mobile
+  [PWA Support\nService Workers] as PWA
+}
+
+package "Presentation Layer" <<presentation>> {
+  [Landing Pages\nHero, Features, Pricing] as Landing
+  [Training Modules\nEnglish, HR, Technical, GD] as Training
+  [User Dashboard\nAnalytics, Progress] as Dashboard
+  [Profile Builder\nResume, Skills] as Profile
+  [Component Library\nShadCN + Radix UI] as Components
+}
+
+package "Application Layer (Next.js API Routes)" <<application>> {
+  [Authentication API\n/api/auth/*\nNextAuth.js] as Auth
+  [Training Session API\n/api/session\n/api/evaluate] as SessionAPI
+  [Payment API\n/api/payment\nRazorpay] as PaymentAPI
+  [Resume Builder API\n/api/resume-pdf\nPuppeteer] as ResumeAPI
+  [Analytics API\n/api/analytics] as AnalyticsAPI
+  [Admin API\n/api/admin/*\nSuperAdmin] as AdminAPI
+  [Interview Guide API\n/api/interview-guide] as InterviewAPI
+}
+
+package "Middleware Layer" <<middleware>> {
+  [Authentication Middleware\nJWT Token Validation] as AuthMW
+  [Role-Based Access Control\nUser/Admin/Moderator/SuperAdmin] as RBAC
+  [Rate Limiting\nExpress Rate Limit] as RateLimit
+  [Device Detection\nUser Agent Parsing] as DeviceDetect
+}
+
+package "Business Logic Layer" <<business>> {
+  package "AI/ML Services" {
+    [Google Generative AI\nGemini Pro] as Gemini
+    [Natural Language Processing] as NLP
+    [Speech-to-Text] as STT
+    [Response Evaluation Engine] as Evaluation
+  }
+  
+  package "Training Engine Modules" {
+    [English Fluency Coach\nVoice Agent + Learning Path] as English
+    [HR Interview Simulator\nBehavioral Questions] as HR
+    [Technical Interview Prep\nCoding + System Design] as Technical
+    [Group Discussion Agent\nMulti-Participant] as GD
+    [Mock Interview Platform\nFull Simulation] as Mock
+  }
+  
+  package "Scoring & Analytics Engine" {
+    [Technical Knowledge Scoring] as TechScore
+    [Communication Quality Metrics] as CommScore
+    [Grammar & Structure Analysis] as GrammarScore
+    [Confidence & Fluency Rating] as ConfScore
+    [Filler Word Detection] as FillerDetect
+    [Speaking Pace (WPM)] as PaceCalc
+    [Hinglish Detection] as HinglishDetect
+  }
+}
+
+package "Data Access Layer" <<data>> {
+  [Prisma ORM v6.19.0] as Prisma
+  package "Database Models" {
+    [Users & UserProfile] as UserModel
+    [Session & Progress] as SessionModel
+    [Payment & Subscriptions] as PaymentModel
+    [Resume & Components] as ResumeModel
+  }
+}
+
+package "Persistence Layer" {
+  database "MongoDB Atlas\nNoSQL Database" as MongoDB
+  database "ImageKit CDN\nImage Management" as ImageKit
+  database "File Storage\nPDFs, Resumes" as FileStorage
+}
+
+package "External Services" <<external>> {
+  cloud "NextAuth.js\nSession Management" as NextAuth
+  cloud "Razorpay\nPayment Gateway" as RazorpayExt
+  cloud "Google OAuth 2.0\nSocial Login" as GoogleOAuth
+  cloud "ImageKit.io\nCDN Service" as ImageKitExt
+  cloud "Google Gemini API\nAI Engine" as GeminiExt
+  cloud "Puppeteer\nPDF Generation" as PuppeteerExt
+}
+
+' Main Flow Connections
+WebApp --> Landing : HTTP/HTTPS
+Mobile --> Training
+PWA --> Dashboard
+
+Landing --> Auth : API Requests
+Training --> SessionAPI
+Dashboard --> AnalyticsAPI
+Profile --> ResumeAPI
+
+Auth --> AuthMW : Route Protection
+SessionAPI --> AuthMW
+PaymentAPI --> AuthMW
+ResumeAPI --> RBAC
+AnalyticsAPI --> RateLimit
+AdminAPI --> RBAC
+
+AuthMW --> Gemini : Validated Requests
+RBAC --> English
+RateLimit --> HR
+
+English --> TechScore : Score Calculation
+HR --> CommScore
+Technical --> GrammarScore
+GD --> ConfScore
+Mock --> FillerDetect
+
+TechScore --> Prisma : Database Operations
+CommScore --> Prisma
+GrammarScore --> Prisma
+
+Prisma --> UserModel : ORM
+Prisma --> SessionModel
+Prisma --> PaymentModel
+Prisma --> ResumeModel
+
+UserModel --> MongoDB : Query
+SessionModel --> MongoDB
+PaymentModel --> MongoDB
+ResumeModel --> MongoDB
+
+' External Service Connections
+Auth ..> NextAuth : Auth Flow
+Auth ..> GoogleOAuth : OAuth
+PaymentAPI ..> RazorpayExt : Payment
+ResumeAPI ..> PuppeteerExt : PDF Gen
+Gemini ..> GeminiExt : AI Requests
+ImageKit ..> ImageKitExt : CDN
+
+@enduml

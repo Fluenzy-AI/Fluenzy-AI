@@ -1,0 +1,457 @@
+================================================================================
+                FLUENZY AI - MULTI-CHANNEL APPLICATION ARCHITECTURE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    CLIENT LAYER - MULTI-CHANNEL                              │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────────────────────┐  ┌─────────────────────┐  ┌────────────────────┐ │
+│  │  Web Application     │  │  Mobile Responsive  │  │  PWA Support       │ │
+│  │  - Next.js 15        │  │  - Tailwind CSS v4  │  │  - Service Workers │ │
+│  │  - React 19.1.0      │  │  - Responsive Grid  │  │  - Offline Mode    │ │
+│  │  - TypeScript 5.6    │  │  - Touch Optimized  │  │  - Push Notif      │ │
+│  └──────────────────────┘  └─────────────────────┘  └────────────────────┘ │
+│                                                                               │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │ HTTP/HTTPS
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        PRESENTATION LAYER                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌────────────────┐  ┌─────────────────┐  ┌──────────────┐  ┌────────────┐ │
+│  │ Landing Pages  │  │ Training Modules│  │ User Dashboard│  │  Profile   │ │
+│  │ - Hero         │  │ - English Coach │  │ - Analytics   │  │  Builder   │ │
+│  │ - Features     │  │ - HR Interview  │  │ - Progress    │  │ - Resume   │ │
+│  │ - Pricing      │  │ - Technical     │  │ - History     │  │ - Skills   │ │
+│  │ - Blog         │  │ - Group Discuss │  │ - Reports     │  │ - Projects │ │
+│  └────────────────┘  └─────────────────┘  └──────────────┘  └────────────┘ │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │              COMPONENT LIBRARY (ShadCN + Radix UI)                  │    │
+│  │  Forms | Buttons | Cards | Dialogs | Tables | Charts | Navigation  │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │ API Requests
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│               APPLICATION LAYER (Next.js API Routes)                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│  │   Auth API  │  │ Session API │  │ Payment API │  │ Resume API  │        │
+│  │ /api/auth/* │  │ /api/session│  │ /api/payment│  │/api/resume-*│        │
+│  │ NextAuth.js │  │ /api/evaluate│  │  Razorpay  │  │  Puppeteer  │        │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘        │
+│                                                                               │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
+│  │Analytics API│  │  Admin API  │  │Interview API│  │ Receipt API │        │
+│  │/api/analytics│  │ /api/admin/*│  │/api/interview│ │/api/receipt-│        │
+│  │ /api/stats  │  │  SuperAdmin │  │   -guide    │  │    pdf      │        │
+│  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘        │
+│                                                                               │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │ Route Protection
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          MIDDLEWARE LAYER                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐          │
+│  │  Authentication  │  │  Role-Based      │  │  Rate Limiting   │          │
+│  │  Middleware      │  │  Access Control  │  │  Express Rate    │          │
+│  │  - JWT Tokens    │  │  - User          │  │  Limit           │          │
+│  │  - Session Check │  │  - Admin         │  │  - API Throttle  │          │
+│  │                  │  │  - Moderator     │  │  - DDoS Protect  │          │
+│  │                  │  │  - SUPER_ADMIN   │  │                  │          │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘          │
+│                                                                               │
+│  ┌──────────────────────────────────────────────────────────────┐           │
+│  │  Device Detection & User Agent Parsing                        │           │
+│  │  - Browser Type | OS | Device Type | IP | Location           │           │
+│  └──────────────────────────────────────────────────────────────┘           │
+│                                                                               │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │ Validated Requests
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      BUSINESS LOGIC LAYER                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                   AI/ML SERVICES INTEGRATION                         │    │
+│  ├─────────────────────────────────────────────────────────────────────┤    │
+│  │  ┌──────────────────────┐  ┌──────────────────────┐                │    │
+│  │  │ Google Generative AI │  │ Natural Language     │                │    │
+│  │  │ Gemini Pro           │  │ Processing           │                │    │
+│  │  │ - @google/genai      │  │ - Text Analysis      │                │    │
+│  │  │ - v1.35.0            │  │ - Sentiment Analysis │                │    │
+│  │  └──────────────────────┘  └──────────────────────┘                │    │
+│  │                                                                       │    │
+│  │  ┌──────────────────────┐  ┌──────────────────────┐                │    │
+│  │  │ Speech-to-Text       │  │ Response Evaluation  │                │    │
+│  │  │ - Voice Recognition  │  │ - AI Scoring         │                │    │
+│  │  │ - Transcription      │  │ - Feedback Gen       │                │    │
+│  │  └──────────────────────┘  └──────────────────────┘                │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                   TRAINING ENGINE MODULES                            │    │
+│  ├─────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                       │    │
+│  │  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐  │    │
+│  │  │ English Fluency  │  │ HR Interview     │  │ Technical        │  │    │
+│  │  │ Coach            │  │ Simulator        │  │ Interview Prep   │  │    │
+│  │  │ - Daily Practice │  │ - Behavioral Q   │  │ - Coding         │  │    │
+│  │  │ - Voice Agent    │  │ - STAR Method    │  │ - System Design  │  │    │
+│  │  │ - Learning Path  │  │ - Company Prep   │  │ - Tech Vocab     │  │    │
+│  │  └──────────────────┘  └──────────────────┘  └──────────────────┘  │    │
+│  │                                                                       │    │
+│  │  ┌──────────────────┐  ┌──────────────────┐                         │    │
+│  │  │ Group Discussion │  │ Mock Interview   │                         │    │
+│  │  │ Agent            │  │ Platform         │                         │    │
+│  │  │ - Multi-Participant│ │ - Full Simulation│                        │    │
+│  │  │ - Role Evaluation│  │ - Multi-Round    │                         │    │
+│  │  │ - Interjection   │  │ - Performance    │                         │    │
+│  │  └──────────────────┘  └──────────────────┘                         │    │
+│  │                                                                       │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+│  ┌────────────────────────���────────────────────────────────────────────┐    │
+│  │               SCORING & ANALYTICS ENGINE                             │    │
+│  ├─────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                       │    │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐            │    │
+│  │  │ Technical     │  │ Communication │  │ Grammar &     │            │    │
+│  │  │ Knowledge     │  │ Quality       │  │ Structure     │            │    │
+│  │  │ Scoring       │  │ Metrics       │  │ Analysis      │            │    │
+│  │  └───────────────┘  └───────────────┘  └───────────────┘            │    │
+│  │                                                                       │    │
+│  │  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐            │    │
+│  │  │ Confidence &  │  │ Filler Word   │  │ Speaking Pace │            │    │
+│  │  │ Fluency       │  │ Detection     │  │ (WPM) Calc    │            │    │
+│  │  │ Rating        │  │               │  │               │            │    │
+│  │  └───────────────┘  └───────────────┘  └───────────────┘            │    │
+│  │                                                                       │    │
+│  │  ┌───────────────┐  ┌───────────────┐                                │    │
+│  │  │ Hinglish      │  │ Progress      │                                │    │
+│  │  │ Detection     │  │ Timeline      │                                │    │
+│  │  │               │  │ Tracking      │                                │    │
+│  │  └───────────────┘  └───────────────┘                                │    │
+│  │                                                                       │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │ Database Operations
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       DATA ACCESS LAYER                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │                      PRISMA ORM v6.19.0                              │    │
+│  ├─────────────────────────────────────────────────────────────────────┤    │
+│  │                                                                       │    │
+│  │  ┌───────────────────┐  ┌───────────────────┐                       │    │
+│  │  │ Users &           │  │ Session &         │                       │    │
+│  │  │ UserProfile       │  │ Progress          │                       │    │
+│  │  │ - Auth Data       │  │ - Training Data   │                       │    │
+│  │  │ - Plan Info       │  │ - Scores          │                       │    │
+│  │  │ - Usage Limits    │  │ - History         │                       │    │
+│  │  └───────────────────┘  └───────────────────┘                       │    │
+│  │                                                                       │    │
+│  │  ┌───────────────────┐  ┌───────────────────┐                       │    │
+│  │  │ Payment &         │  │ Resume &          │                       │    │
+│  │  │ Subscriptions     │  │ Profile Components│                       │    │
+│  │  │ - Razorpay IDs    │  │ - Skills          │                       │    │
+│  │  │ - Invoices        │  │ - Experience      │                       │    │
+│  │  │ - Coupons         │  │ - Education       │                       │    │
+│  │  └───────────────────┘  └───────────────────┘                       │    │
+│  │                                                                       │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                               │
+└─────────────────────────────────┬───────────────────────────────────────────┘
+                                  │ Query / Store
+                                  ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                       PERSISTENCE LAYER                                      │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────────────────────┐  ┌──────────────────┐  ┌──────────────────┐      │
+│  │  MongoDB Atlas       │  │  ImageKit CDN    │  │  File Storage    │      │
+│  │  - NoSQL Database    │  │  - Image Upload  │  │  - PDFs          │      │
+│  │  - Document Store    │  │  - Transform     │  │  - Resumes       │      │
+│  │  - Replication       │  │  - Optimize      │  │  - Receipts      │      │
+│  │  - Auto-Scaling      │  │  - Global CDN    │  │  - Reports       │      │
+│  │                      │  │                  │  │  (Puppeteer)     │      │
+│  │  Collections:        │  │  Features:       │  │                  │      │
+│  │  - users             │  │  - Public Keys   │  │  Generated:      │      │
+│  │  - sessions          │  │  - Private Keys  │  │  - HTML to PDF   │      │
+│  │  - payments          │  │  - URL Endpoint  │  │  - Dynamic Data  │      │
+│  │  - resumes           │  │                  │  │  - Styling       │      │
+│  └──────────────────────┘  └──────────────────┘  └──────────────────┘      │
+│                                                                               │
+└───────────────────────────────────────────────────────────────────────┬─────┘
+                                                                        │
+            ┌───────────────────────────────────────────────────────────┘
+            │
+┌───────────▼─────────────────────────────────────────────────────────────────┐
+│                   EXTERNAL SERVICES & INTEGRATIONS                           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                               │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐          │
+│  │  NextAuth.js     │  │  Razorpay        │  │  Google OAuth 2.0│          │
+│  │  - Session Mgmt  │  │  - Payments      │  │  - Social Login  │          │
+│  │  - JWT Tokens    │  │  - Subscriptions │  │  - User Profile  │          │
+│  │  - Callbacks     │  │  - Webhooks      │  │  - Email Verify  │          │
+│  │  - Adapters      │  │  - Invoicing     │  │  - Scopes        │          │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘          │
+│                                                                               │
+│  ┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐          │
+│  │  ImageKit.io     │  │  Google Gemini   │  │  Puppeteer       │          │
+│  │  - CDN Service   │  │  - AI Engine     │  │  - Headless      │          │
+│  │  - Image Proc    │  │  - NLP/STT       │  │    Browser       │          │
+│  │  - Optimization  │  │  - Chat API      │  │  - PDF Export    │          │
+│  │  - Next.js SDK   │  │  - Evaluation    │  │  - Screenshots   │          │
+│  └──────────────────┘  └──────────────────┘  └──────────────────┘          │
+│                                                                               │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                              DATA FLOW SEQUENCE
+================================================================================
+
+1. USER AUTHENTICATION FLOW
+   ────────────────────────
+   User → Login/Register → NextAuth → Credentials/Google OAuth
+      → Verify → Create Session → JWT Token → Client
+      → Log Activity (Device, OS, Browser, IP, Location)
+      → Store in MongoDB → Redirect to Dashboard
+
+2. TRAINING SESSION FLOW
+   ─────────────────────
+   User → Select Module → Initialize Session → Record Audio
+      → Process via Web Speech API → Send to Gemini AI
+      → Evaluate Response → Generate Feedback
+      → Calculate Scores (Technical, Communication, Grammar, Confidence)
+      → Update Progress in MongoDB → Display Results
+      → Update Analytics Dashboard
+
+3. PAYMENT FLOW
+   ────────────
+   User → Select Plan → Razorpay Checkout → Payment
+      → Webhook Callback → Verify Signature → Update User Plan
+      → Set Usage Limits → Generate Receipt PDF (Puppeteer)
+      → Email Invoice → Update Subscription Table
+      → Enable Pro/Enterprise Features → Redirect to Dashboard
+
+4. RESUME BUILDER FLOW
+   ───────────────────
+   User → Profile Builder → Add Sections (Experience, Education, Skills, etc.)
+      → Save to MongoDB (UserProfile + Relations) → Preview
+      → Generate PDF (Puppeteer with HTML Template)
+      → Download/Share → Public Profile URL (Optional: /u/[username])
+
+5. ANALYTICS PIPELINE
+   ──────────────────
+   Session Data → Scoring Engine → Calculate Metrics:
+      - Technical Score (0-10): Keyword matching, technical terms
+      - Communication Score (0-10): Words per answer, clarity
+      - Grammar Score (0-10): Structure, sentence formation
+      - Confidence Score (0-10): Filler words, hesitation
+      - Filler Word Count & Detection
+      - Speaking Pace (WPM): Words per minute calculation
+      - Hinglish Detection: Hindi word percentage
+   → Aggregate Historical Data → Store Trends
+   → Generate Charts (Recharts) → Display Dashboard
+
+================================================================================
+                           SECURITY ARCHITECTURE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                      AUTHENTICATION & AUTHORIZATION                      │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ┌────────────────────────────────────────────────────────────┐         │
+│  │  Session Management                                         │         │
+│  │  - NextAuth JWT Tokens                                     │         │
+│  │  - Secure HTTP-only Cookies                                │         │
+│  │  - CSRF Protection                                         │         │
+│  │  - Session Expiry & Refresh                                │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+│  ┌────────────────────────────────────────────────────────────┐         │
+│  │  Password Security                                          │         │
+│  │  - bcrypt Hashing (12 rounds)                              │         │
+│  │  - Salt per User                                            │         │
+│  │  - Password Strength Validation                            │         │
+│  │  - Password Reset Flow                                     │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+│  ┌────────────────────────────────────────────────────────────┐         │
+│  │  Role-Based Access Control (RBAC)                          │         │
+│  │  - User (Default)        → Basic Features                  │         │
+│  │  - Admin                 → User Management                 │         │
+│  │  - Moderator             → Content Moderation              │         │
+│  │  - SUPER_ADMIN           → Full System Access              │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+│  ┌────��───────────────────────────────────────────────────────┐         │
+│  │  Route Protection Middleware                                │         │
+│  │  /pro/*          → Requires Pro Plan                       │         │
+│  │  /api/pro/*      → Requires Pro Plan                       │         │
+│  │  /superadmin/*   → Requires SUPER_ADMIN Role               │         │
+│  │  /api/admin/*    → Requires SUPER_ADMIN Role               │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                           DATA PROTECTION                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  ┌────────────────────────────────────────────────────────────┐         │
+│  │  Input Validation                                           │         │
+│  │  - Zod Schema Validation                                   │         │
+│  │  - Type Safety (TypeScript)                                │         │
+│  │  - Sanitization                                            │         │
+│  │  - XSS Prevention (React Auto-escaping)                    │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+│  ┌────────────────────────────────────────────────────────────┐         │
+│  │  Database Security                                          │         │
+│  │  - SQL Injection Prevention (Prisma ORM)                   │         │
+│  │  - Parameterized Queries                                   │         │
+│  │  - Connection String Encryption                            │         │
+│  │  - MongoDB Authentication                                  │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+│  ┌────────────────────────────────────────────────────────────┐         │
+│  │  API Security                                               │         │
+│  │  - Rate Limiting (Express Rate Limit)                      │         │
+│  │  - CORS Configuration                                      │         │
+│  │  - API Key Validation                                      │         │
+│  │  - Request Size Limits                                     │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+│  ┌─────────���──────────────────────────────────────────────────┐         │
+│  │  Audit & Monitoring                                         │         │
+│  │  - User Login Logs                                         │         │
+│  │  - Device Fingerprinting                                   │         │
+│  │  - IP Address Tracking                                     │         │
+│  │  - Geolocation Logging                                     │         │
+│  │  - Failed Login Attempts                                   │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                         DEPLOYMENT ARCHITECTURE
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         PRODUCTION ENVIRONMENT                           │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                           │
+│  Hosting Platform: Vercel / Render                                      │
+│  Runtime: Node.js 20.x                                                  │
+│  Build Command: npx prisma generate && next build                       │
+│  Start Command: next start                                              │
+│                                                                           │
+│  ┌────────────────────────────────────────────────────────────┐         │
+│  │  Environment Variables (.env.production)                    │         │
+│  ├────────────────────────────────────────────────────────────┤         │
+│  │  DATABASE_URL=mongodb://...                                │         │
+│  │  NEXTAUTH_URL=https://fluenzyai.app                        │         │
+│  │  NEXTAUTH_SECRET=***                                       │         │
+│  │  GOOGLE_CLIENT_ID=***                                      │         │
+│  │  GOOGLE_CLIENT_SECRET=***                                  │         │
+│  │  GOOGLE_GENAI_API_KEY=***                                  │         │
+│  │  RAZORPAY_API_KEY=***                                      │         │
+│  │  RAZORPAY_API_SECRET=***                                   │         │
+│  │  IMAGEKIT_PUBLIC_KEY=***                                   │         │
+│  │  IMAGEKIT_PRIVATE_KEY=***                                  │         │
+│  │  IMAGEKIT_URL_ENDPOINT=https://...                         │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+│  ┌────────────────────────────────────────────────────────────┐         │
+│  │  Performance Optimizations                                  │         │
+│  ├────────────────────────────────────────────────────────────┤         │
+│  │  - Server-Side Rendering (SSR) for SEO                     │         │
+│  │  - Incremental Static Regeneration (ISR)                   │         │
+│  │  - Next.js Image Optimization                              │         │
+│  │  - ImageKit CDN for Global Distribution                    │         │
+│  │  - Automatic Code Splitting                                │         │
+│  │  - React.lazy for Dynamic Imports                          │         │
+│  │  - MongoDB Connection Pooling                              │         │
+│  │  - Edge Caching (Vercel Edge Network)                      │         │
+│  └────────────────────────────────────────────────────────────┘         │
+│                                                                           │
+└─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                        SCALABILITY CONSIDERATIONS
+================================================================================
+
+Current Architecture:
+  ✓ Serverless API Routes (Auto-scaling)
+  ✓ MongoDB Atlas (Managed, Auto-scaling)
+  ✓ ImageKit CDN (Global Distribution)
+  ✓ Google Cloud AI (Managed Service)
+
+Future Enhancements:
+  → WebSockets for Real-time Collaboration (Socket.io)
+  → Queue System for Background Jobs (Bull/BullMQ)
+  → Redis Caching Layer for Session Data
+  → Microservices Architecture (Separate AI Service)
+  → Multi-Region Deployment (Load Balancing)
+  → Kubernetes Orchestration (Container Management)
+  → Elasticsearch for Advanced Search
+  → GraphQL API for Flexible Querying
+
+================================================================================
+                           TECHNOLOGY SUMMARY
+================================================================================
+
+Frontend Stack:
+  - Next.js 15.5.9 (App Router)
+  - React 19.1.0
+  - TypeScript 5.6.3
+  - Tailwind CSS v4
+  - ShadCN UI + Radix UI (40+ components)
+  - Framer Motion 12.23.12
+  - Recharts 2.15.4
+
+Backend Stack:
+  - Node.js 20.x
+  - Next.js API Routes
+  - Prisma ORM 6.19.0
+  - NextAuth.js 4.24.11
+  - bcryptjs 3.0.3
+
+Database:
+  - MongoDB (Prisma Client)
+
+AI/ML:
+  - Google Generative AI (Gemini)
+  - @google/genai 1.35.0
+  - @google/generative-ai 0.24.1
+
+Payment:
+  - Razorpay 2.9.4
+
+File Management:
+  - Puppeteer 24.35.0 (PDF Generation)
+  - ImageKit (@imagekit/next 2.1.3)
+  - file-saver 2.0.5
+
+Security:
+  - express-rate-limit 8.2.1
+  - Custom RBAC Middleware
+
+================================================================================
+                          END OF ARCHITECTURE DOCUMENT
+================================================================================

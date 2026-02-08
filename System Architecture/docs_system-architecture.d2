@@ -1,0 +1,243 @@
+# Fluenzy AI - Multi-Channel Application Architecture (D2)
+# Title: Multi-Channel Application Architecture
+
+direction: down
+
+client: Client Layer - Multi-Channel {
+  web_app: Web Application\n(Next.js 15 + React 19) {
+    shape: rectangle
+    style.fill: "#667eea"
+  }
+  mobile: Mobile Responsive\n(Tailwind CSS v4) {
+    shape: rectangle
+    style.fill: "#667eea"
+  }
+  pwa: PWA Support\n(Service Workers) {
+    shape: rectangle
+    style.fill: "#667eea"
+  }
+}
+
+presentation: Presentation Layer {
+  style.fill: "#f093fb"
+  
+  landing: Landing Pages\nHero, Features, Pricing {
+    shape: rectangle
+  }
+  training: Training Modules\nEnglish, HR, Technical, GD {
+    shape: rectangle
+  }
+  dashboard: User Dashboard\nAnalytics, Progress {
+    shape: rectangle
+  }
+  profile: Profile Builder\nResume, Skills {
+    shape: rectangle
+  }
+  components: Component Library\nShadCN + Radix UI {
+    shape: rectangle
+  }
+}
+
+application: Application Layer (Next.js API Routes) {
+  style.fill: "#4facfe"
+  
+  auth: Authentication API\n/api/auth/*\nNextAuth.js {
+    shape: rectangle
+  }
+  session_api: Training Session API\n/api/session\n/api/evaluate {
+    shape: rectangle
+  }
+  payment: Payment API\n/api/payment\nRazorpay {
+    shape: rectangle
+  }
+  resume_api: Resume Builder API\n/api/resume-pdf\nPuppeteer {
+    shape: rectangle
+  }
+  analytics: Analytics API\n/api/analytics {
+    shape: rectangle
+  }
+  admin: Admin API\n/api/admin/*\nSuperAdmin {
+    shape: rectangle
+  }
+  interview: Interview Guide API\n/api/interview-guide {
+    shape: rectangle
+  }
+}
+
+middleware: Middleware Layer {
+  style.fill: "#43e97b"
+  
+  auth_mw: Authentication Middleware\nJWT Token Validation {
+    shape: hexagon
+  }
+  rbac: Role-Based Access Control\n4 Roles {
+    shape: hexagon
+  }
+  rate_limit: Rate Limiting\nExpress Rate Limit {
+    shape: hexagon
+  }
+  device: Device Detection\nUser Agent Parsing {
+    shape: hexagon
+  }
+}
+
+business: Business Logic Layer {
+  style.fill: "#fa709a"
+  
+  ai_services: AI/ML Services {
+    gemini: Google Generative AI\nGemini Pro {
+      shape: oval
+      style.fill: "#fee140"
+    }
+    nlp: Natural Language Processing {
+      shape: oval
+      style.fill: "#fee140"
+    }
+    stt: Speech-to-Text {
+      shape: oval
+      style.fill: "#fee140"
+    }
+    evaluation: Response Evaluation {
+      shape: oval
+      style.fill: "#fee140"
+    }
+  }
+  
+  training_engine: Training Engine Modules {
+    english: English Fluency Coach\nVoice Agent {
+      shape: rectangle
+    }
+    hr: HR Interview Simulator\nBehavioral Questions {
+      shape: rectangle
+    }
+    technical: Technical Interview Prep\nCoding + System Design {
+      shape: rectangle
+    }
+    gd: Group Discussion Agent\nMulti-Participant {
+      shape: rectangle
+    }
+    mock: Mock Interview Platform\nFull Simulation {
+      shape: rectangle
+    }
+  }
+  
+  scoring: Scoring & Analytics Engine {
+    tech_score: Technical Knowledge Scoring {
+      shape: diamond
+    }
+    comm_score: Communication Quality {
+      shape: diamond
+    }
+    grammar: Grammar Analysis {
+      shape: diamond
+    }
+    confidence: Confidence Rating {
+      shape: diamond
+    }
+    filler: Filler Word Detection {
+      shape: diamond
+    }
+    pace: Speaking Pace (WPM) {
+      shape: diamond
+    }
+  }
+}
+
+data_access: Data Access Layer {
+  style.fill: "#30cfd0"
+  
+  prisma: Prisma ORM v6.19.0 {
+    shape: cylinder
+  }
+  
+  models: Database Models {
+    users: Users & UserProfile {
+      shape: rectangle
+    }
+    sessions: Session & Progress {
+      shape: rectangle
+    }
+    payments: Payment & Subscriptions {
+      shape: rectangle
+    }
+    resumes: Resume & Components {
+      shape: rectangle
+    }
+  }
+}
+
+persistence: Persistence Layer {
+  style.fill: "#a8edea"
+  
+  mongodb: MongoDB Atlas\nNoSQL Database {
+    shape: cylinder
+    style.fill: "#00ed64"
+  }
+  imagekit: ImageKit CDN\nImage Management {
+    shape: cylinder
+    style.fill: "#ff6b6b"
+  }
+  files: File Storage\nPDFs, Resumes {
+    shape: cylinder
+    style.fill: "#4ecdc4"
+  }
+}
+
+external: External Services {
+  style.fill: "#ffecd2"
+  
+  nextauth: NextAuth.js\nSession Management {
+    shape: cloud
+  }
+  razorpay: Razorpay\nPayment Gateway {
+    shape: cloud
+  }
+  google_oauth: Google OAuth 2.0\nSocial Login {
+    shape: cloud
+  }
+  imagekit_ext: ImageKit.io\nCDN Service {
+    shape: cloud
+  }
+  gemini_ext: Google Gemini API\nAI Engine {
+    shape: cloud
+  }
+  puppeteer: Puppeteer\nPDF Generation {
+    shape: cloud
+  }
+}
+
+# Connections - Main Flow
+client -> presentation: HTTP/HTTPS
+presentation -> application: API Requests
+application -> middleware: Route Protection
+middleware -> business: Validated Requests
+business -> data_access: Database Operations
+data_access -> persistence: Data Storage
+
+# Data Access Connections
+data_access.prisma -> persistence.mongodb: Query
+data_access.models -> data_access.prisma: ORM
+
+# External Service Connections
+application.auth -> external.nextauth: Auth Flow {
+  style.stroke-dash: 3
+}
+application.auth -> external.google_oauth: OAuth {
+  style.stroke-dash: 3
+}
+application.payment -> external.razorpay: Payment {
+  style.stroke-dash: 3
+}
+application.resume_api -> external.puppeteer: PDF Gen {
+  style.stroke-dash: 3
+}
+business.ai_services -> external.gemini_ext: AI Requests {
+  style.stroke-dash: 3
+}
+persistence.imagekit -> external.imagekit_ext: CDN {
+  style.stroke-dash: 3
+}
+
+# Internal Business Logic Connections
+business.training_engine -> business.ai_services: AI Evaluation
+business.training_engine -> business.scoring: Score Calculation
