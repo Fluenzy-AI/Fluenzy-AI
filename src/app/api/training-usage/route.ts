@@ -126,6 +126,8 @@ export async function GET(request: NextRequest) {
       company: currentUser.companyUsage ?? 0,
       mock: currentUser.mockUsage ?? 0,
       gd: currentUser.gdUsage ?? 0,
+      vocabulary: 0, // Reference module - no usage tracking
+      corporateVoice: 0, // Practice module - no usage tracking
     };
 
     // Check against global limits
@@ -138,6 +140,8 @@ export async function GET(request: NextRequest) {
       company: true,
       mock: true,
       gd: true,
+      vocabulary: true, // Always available - reference module
+      corporateVoice: true, // Always available - practice module
     } : {
       english: (currentUser.englishUsage ?? 0) < limit,
       daily: (currentUser.dailyUsage ?? 0) < limit,
@@ -146,6 +150,8 @@ export async function GET(request: NextRequest) {
       company: (currentUser.companyUsage ?? 0) < limit,
       mock: (currentUser.mockUsage ?? 0) < limit,
       gd: (currentUser.gdUsage ?? 0) < limit,
+      vocabulary: true, // Always available - reference module
+      corporateVoice: true, // Always available - practice module
     };
 
     const remaining = isUnlimited ? {
@@ -156,6 +162,8 @@ export async function GET(request: NextRequest) {
       company: "Unlimited",
       mock: "Unlimited",
       gd: "Unlimited",
+      vocabulary: "Unlimited", // Always unlimited - reference module
+      corporateVoice: "Unlimited", // Always unlimited - practice module
     } : {
       english: Math.max(0, limit - (currentUser.englishUsage ?? 0)),
       daily: Math.max(0, limit - (currentUser.dailyUsage ?? 0)),
@@ -164,6 +172,8 @@ export async function GET(request: NextRequest) {
       company: Math.max(0, limit - (currentUser.companyUsage ?? 0)),
       mock: Math.max(0, limit - (currentUser.mockUsage ?? 0)),
       gd: Math.max(0, limit - (currentUser.gdUsage ?? 0)),
+      vocabulary: "Unlimited", // Always unlimited - reference module
+      corporateVoice: "Unlimited", // Always unlimited - practice module
     };
 
     // Get plan pricing for display name

@@ -13,7 +13,9 @@ import {
   Lock,
   CheckCircle,
   Sparkles,
-  GraduationCap
+  GraduationCap,
+  BookA,
+  PhoneCall
 } from 'lucide-react';
 import { ModuleType } from '../types';
 
@@ -44,6 +46,10 @@ const ModuleCard = ({ type, title, description, icon: Icon, color, delay, isAdva
         router.push('/train/technical');
       } else if (type === ModuleType.FULL_MOCK) {
         router.push('/train/mock');
+      } else if (type === ModuleType.VOCABULARY_BOOSTER) {
+        router.push('/train/vocabulary');
+      } else if (type === ModuleType.CORPORATE_VOICE) {
+        router.push('/train/corporate-voice');
       } else {
         router.push(`/train/session/${type}`);
       }
@@ -137,6 +143,8 @@ const LearningPath: React.FC = () => {
       [ModuleType.FULL_MOCK]: 'mock',
       [ModuleType.GD_DISCUSSION]: 'gd',
       [ModuleType.GD_COACH]: 'gd',
+      [ModuleType.VOCABULARY_BOOSTER]: 'vocabulary',
+      [ModuleType.CORPORATE_VOICE]: 'corporateVoice',
     };
 
     const key = moduleMap[type];
@@ -225,6 +233,29 @@ const LearningPath: React.FC = () => {
       color: 'bg-teal-500',
       delay: 'delay-600',
       ...getModuleUsage(ModuleType.GD_COACH),
+      planName: usageData?.planName,
+      limit: usageData?.limit
+    },
+    {
+      type: ModuleType.VOCABULARY_BOOSTER,
+      title: 'Vocabulary Booster',
+      description: 'Build interview-ready vocabulary. Learn power words, replacements, and professional phrases.',
+      icon: BookA,
+      color: 'bg-orange-500',
+      delay: 'delay-700',
+      ...getModuleUsage(ModuleType.VOCABULARY_BOOSTER),
+      planName: usageData?.planName,
+      limit: usageData?.limit
+    },
+    {
+      type: ModuleType.CORPORATE_VOICE,
+      title: 'Voice Practice',
+      description: 'Advanced company voice assessment. Read aloud, listen & repeat, comprehension, and live conversation.',
+      icon: PhoneCall,
+      color: 'bg-cyan-500',
+      delay: 'delay-800',
+      isAdvanced: true,
+      ...getModuleUsage(ModuleType.CORPORATE_VOICE),
       planName: usageData?.planName,
       limit: usageData?.limit
     },
