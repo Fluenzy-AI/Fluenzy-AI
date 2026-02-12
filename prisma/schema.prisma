@@ -58,6 +58,9 @@ model users {
   paymentHistories PaymentHistory[]
   profile          UserProfile?
   subscriptions    subscriptions[]
+  gdQueue          GDQueue[]
+  gdParticipants   GDParticipant[]
+  gdHistory        GDHistory[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -403,4 +406,198 @@ model InterviewGuide {
   pdfUrl             String?  // Generated PDF URL (optional)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+// ==================== GD SYSTEM MODELS ====================
+
+enum GDRole {
+  Initiator
+  Moderator
+  Analyzer
+  Challenger
+  Supporter
+  InfoProvider
+  Summarizer
+  Opposer
+}
+
+enum GDMode {
+  Corporate
+  CurrentAffairs
+  Abstract
+  BusinessEthics
+  Technology
+  Random
+}
+
+enum GDDifficulty {
+  Easy
+  Medium
+  Hard
+}
+
+enum GDPhase {
+  Waiting      // Waiting for participants
+  Initiation   // Initiator starts
+  Discussion   // Open discussion
+  Analysis     // Conflict & analysis
+  Summary      // Summarizer concludes
+  Completed    // Session ended
+}
+
+enum ParticipantStatus {
+  Queued       // Waiting in queue
+  Joining      // Joining room
+  Active       // In session
+  Left         // Left session
+  Expired      // Session expired
+}
+
+// Users waiting in matchmaking queue
+model GDQueue {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  user           users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  participantCount Int    // 3-8 participants desired
+  difficulty     GDDifficulty @default(Medium)
+  mode           GDMode   @default(Random)
+  status         ParticipantStatus @default(Queued)
+  joinedAt       DateTime @default(now())
+  matchedAt      DateTime?
+  
+  @@index([status, participantCount, difficulty, mode])
+}
+
+// Active GD Sessions
+model GDSession {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  channelName    String   @unique // Agora channel name (UUID)
+  topic          String
+  topicCategory  GDMode
+  difficulty     GDDifficulty
+  phase          GDPhase  @default(Waiting)
+  phaseStartedAt DateTime @default(now())
+  duration       Int      @default(0) // in seconds
+  maxDuration    Int      @default(1200) // 20 minutes max
+  createdAt      DateTime @default(now())
+  endedAt        DateTime?
+  
+  participants  GDParticipant[]
+  analytics     GDAnalytics?
+  transcript    GDTranscript[]
+  history       GDHistory[]
+  
+}
+
+// Participants in a GD session
+model GDParticipant {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId      String   @db.ObjectId
+  session        GDSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId         String   @db.ObjectId
+  user           users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           GDRole
+  order          Int      // Speaking order
+  joinedAt       DateTime @default(now())
+  leftAt         DateTime?
+  status         ParticipantStatus @default(Active)
+  
+  analytics     GDAnalytics?
+  
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+}
+
+// Real-time analytics per participant
+model GDAnalytics {
+  id                   String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId            String   @unique @db.ObjectId
+  session              GDSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  participantId        String?  @unique @db.ObjectId
+  participant          GDParticipant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  
+  // Speaking analytics
+  speakingTime         Int      @default(0) // in seconds
+  totalSpeakingTime    Int      @default(0)
+  interruptions        Int      @default(0)
+  silenceDuration      Int      @default(0)
+  
+  // Quality metrics
+  confidenceScore      Float    @default(0)
+  paceScore            Float    @default(0) // WPM
+  fillerWordCount      Int      @default(0)
+  volumeStability      Float    @default(0)
+  
+  // Role performance
+  rolePerformanceScore Float    @default(0)
+  
+  // Raw data for post-processing
+  speakingEvents       Json?    // Array of speaking intervals
+  volumeData           Json?    // Volume levels over time
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+// Session transcript
+model GDTranscript {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionId    String   @db.ObjectId
+  session      GDSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  participantId String  @db.ObjectId
+  speakerName  String
+  role         GDRole
+  content      String
+  timestamp    Float    // in seconds from session start
+  phase        GDPhase
+  
+  @@index([sessionId])
+}
+
+// GD History for users
+model GDHistory {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  user           users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId      String   @db.ObjectId
+  session        GDSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  
+  topic          String
+  topicCategory  GDMode
+  role           GDRole
+  duration       Int      // in seconds
+  
+  // Scores
+  overallScore   Float?
+  communicationScore Float?
+  confidenceScore Float?
+  grammarScore   Float?
+  relevanceScore Float?
+  leadershipScore Float?
+  roleScore      Float?
+  
+  // Analysis
+  strengths      String[]
+  improvements   String[]
+  
+  // Transcript
+  transcriptUrl  String?
+  
+  createdAt      DateTime @default(now())
+  
+  @@index([userId])
+  @@index([createdAt])
+}
+
+// Stored topics for variety
+model GDTopic {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  content        String
+  category       GDMode
+  difficulty     GDDifficulty
+  usageCount     Int      @default(0)
+  lastUsedAt     DateTime?
+  createdAt      DateTime @default(now())
+  
+  @@index([category, difficulty])
 }
