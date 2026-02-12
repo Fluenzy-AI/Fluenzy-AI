@@ -33,12 +33,17 @@ interface RoomData {
 
 // Generate stable user ID (session storage preferred)
 function getStableUserId(sessionUserId: string | undefined): string {
+  // Only access storage on client side
+  if (typeof sessionStorage === 'undefined') {
+    return sessionUserId || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  }
+  
   // Try sessionStorage first (survives page reloads during session)
   const stored = sessionStorage.getItem('gd_userId');
   if (stored) return stored;
 
   // Try localStorage as fallback
-  const localStored = localStorage.getItem('gd_userId');
+  const localStored = typeof localStorage !== 'undefined' ? localStorage.getItem('gd_userId') : null;
   if (localStored) {
     sessionStorage.setItem('gd_userId', localStored);
     return localStored;
@@ -47,25 +52,47 @@ function getStableUserId(sessionUserId: string | undefined): string {
   // Generate stable ID
   const newId = sessionUserId || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   sessionStorage.setItem('gd_userId', newId);
-  localStorage.setItem('gd_userId', newId);
+  if (typeof localStorage !== 'undefined') {
+    localStorage.setItem('gd_userId', newId);
+  }
   return newId;
 }
 
 export default function LiveGDPage() {
   const { data: session, status: authStatus } = useSession();
 
-  // Generate stable user ID that persists during session
-  const [userId] = useState(() => getStableUserId(session?.user?.id));
-  const [userName] = useState(() => session?.user?.name || 'Guest User');
+  // Generate stable user ID that persists during session (client-side only)
+  const [userId, setUserId] = useState<string>(() => 
+    getStableUserId(session?.user?.id)
+  );
+  const [userName, setUserName] = useState(() => session?.user?.name || 'Guest User');
   
   // Generate numeric UID for Agora (stable too)
-  const [agoraUid] = useState(() => {
+  const [agoraUid, setAgoraUid] = useState<number>(() => {
+    if (typeof sessionStorage === 'undefined') return Math.floor(Math.random() * 1000000);
     const stored = sessionStorage.getItem('gd_agoraUid');
     if (stored) return parseInt(stored, 10);
     const newUid = Math.floor(Math.random() * 1000000);
     sessionStorage.setItem('gd_agoraUid', newUid.toString());
     return newUid;
   });
+
+  // Initialize storage values on client mount
+  useEffect(() => {
+    if (typeof sessionStorage !== 'undefined') {
+      const stored = sessionStorage.getItem('gd_userId');
+      if (stored && stored !== userId) {
+        setUserId(stored);
+      }
+      const uidStored = sessionStorage.getItem('gd_agoraUid');
+      if (uidStored) {
+        setAgoraUid(parseInt(uidStored, 10));
+      }
+    }
+    if (session?.user?.name) {
+      setUserName(session.user.name);
+    }
+  }, [session]);
 
   const [gdStatus, setGdStatus] = useState<GDStatus>('idle');
   const [roomData, setRoomData] = useState<RoomData | null>(null);
