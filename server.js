@@ -4,10 +4,9 @@ const next = require('next');
 const { Server } = require('socket.io');
 
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-const app = next({ dev, hostname, port });
+const app = next({ dev });
 const handle = app.getRequestHandler();
 
 // Queue manager for real-time matchmaking
@@ -231,9 +230,9 @@ app.prepare().then(() => {
     return modeMap[mode] || allTopics;
   }
 
-  server.listen(port, (err) => {
+  server.listen(port, '0.0.0.0', (err) => {
     if (err) throw err;
-    console.log(`> Ready on http://${hostname}:${port}`);
-    console.log(`> Socket.IO server ready at http://${hostname}:${port}/api/socket/io`);
+    console.log(`> Server running on port ${port}`);
+    console.log(`> Socket.IO ready at /api/socket/io`);
   });
 });
