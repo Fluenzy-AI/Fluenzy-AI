@@ -328,6 +328,44 @@ export async function createGDSession(
   };
 }
 
+// Create a private GD session
+export async function createPrivateGDSession(
+  roomId: string,
+  userIds: string[],
+  participantCount: number,
+  difficulty: GDDifficulty,
+  mode: GDMode
+): Promise<{ sessionId: string; channelName: string; topic: string }> {
+  const channelName = `private_${roomId}`;
+  const topic = getRandomTopic(mode, difficulty);
+  const roles = assignRoles(participantCount);
+  
+  // Create session
+  const session = await prisma.gDSession.create({
+    data: {
+      channelName,
+      topic,
+      topicCategory: mode === 'Random' ? getRandomMode() : mode,
+      difficulty,
+      phase: GDPhase.Waiting,
+      participants: {
+        create: userIds.map((userId, index) => ({
+          userId,
+          role: roles[index],
+          order: index,
+          status: 'Active'
+        }))
+      }
+    }
+  });
+  
+  return {
+    sessionId: session.id,
+    channelName: session.channelName,
+    topic: session.topic
+  };
+}
+
 // Get user's assigned role in a session
 export async function getUserRole(sessionId: string, userId: string): Promise<GDRole | null> {
   const participant = await prisma.gDParticipant.findFirst({

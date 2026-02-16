@@ -11,7 +11,8 @@ import {
   leaveQueue,
   getUserActiveSession,
   seedTopics,
-  cleanupExpiredSessions
+  cleanupExpiredSessions,
+  createPrivateGDSession
 } from '@/lib/gdMatchmaking';
 import { GDDifficulty, GDMode, GDPhase } from '@prisma/client';
 
@@ -31,7 +32,54 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { action, participantCount, difficulty, mode, force } = body;
+    const { action, participantCount, difficulty, mode, force, roomId } = body;
+
+    // Handle private room creation
+    if (action === 'create-private') {
+      const privateRoomId = roomId || `private_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // For private rooms, we don't check for existing sessions
+      // Private rooms can be joined regardless of other sessions
+      // (The session will be created/managed separately)
+
+      // Seed topics if needed
+      await seedTopics();
+
+      // Create private GD session
+      const { sessionId, channelName, topic } = await createPrivateGDSession(
+        privateRoomId,
+        [user.id],
+        4, // Default 4 participants for private rooms
+        'Medium',
+        'Random'
+      );
+
+      // Get current user's role
+      const currentUserRole = await getUserRole(sessionId, user.id);
+
+      // Update user's gdUsage
+      await prisma.users.update({
+        where: { id: user.id },
+        data: { gdUsage: { increment: 1 } }
+      });
+
+      const sessionDetails = await getSessionDetails(sessionId);
+
+      return NextResponse.json({
+        success: true,
+        roomId: privateRoomId,
+        sessionId,
+        channelName,
+        topic,
+        role: currentUserRole,
+        isHost: true,
+        participants: sessionDetails?.participants.map(p => ({
+          odlUserId: p.userId,
+          odlUserName: p.user?.name || 'You',
+          role: p.role
+        }))
+      });
+    }
 
     // Check GD usage limits
     const planSettings = await prisma.globalPlanSettings.findFirst({
