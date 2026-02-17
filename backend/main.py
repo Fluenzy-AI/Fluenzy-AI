@@ -595,6 +595,7 @@ if __name__ == "__main__":
 # Behavioral Analysis WebSocket Endpoint
 # ============================================
 
+
 @app.websocket("/ws/behavioral/{session_id}")
 async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
     """
@@ -608,11 +609,77 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
     - Stress level detection
     - Head stability tracking
     - Engagement scoring
+    
+    Optimization features:
+    - Frame dropping: Only processes the most recent frame if backend is busy
+    - Backpressure: Notifies frontend when overloaded
     """
     await websocket.accept()
     
     # Create session-specific analyzer
     session_analyzer = BehavioralAnalyzer()
+    
+    # Frame dropping: Use asyncio primitives for thread-safe state
+    is_processing = False
+    pending_frame = None
+    pending_frame_lock = asyncio.Lock()
+    last_frame_id = 0
+    dropped_frames = 0
+    
+    async def process_frame_task(image_data: str, frame_id: int):
+        """Process a single frame in the background."""
+        nonlocal is_processing, dropped_frames
+        
+        try:
+            frame = decode_base64_image(image_data)
+            
+            if frame is not None:
+                # Analyze frame
+                result = session_analyzer.analyze_frame(frame, session_id)
+                
+                # Send result
+                await websocket.send_json({
+                    "type": "behavioral_result",
+                    "data": {
+                        "frame_id": result.frame_id,
+                        "timestamp": result.timestamp,
+                        "metrics": {
+                            "confidence": result.metrics.confidence,
+                            "eye_contact": result.metrics.eye_contact,
+                            "posture": result.metrics.posture,
+                            "engagement": result.metrics.engagement,
+                            "smile": result.metrics.smile,
+                            "head_stability": result.metrics.head_stability,
+                            "stress_level": result.metrics.stress_level,
+                            "filler_word_count": result.metrics.filler_word_count,
+                            "face_detected": result.metrics.face_detected,
+                            "alerts": result.metrics.alerts
+                        },
+                        "pose_landmarks": [
+                            {"x": lm[0], "y": lm[1], "z": lm[2]} 
+                            for lm in result.pose_landmarks
+                        ][:33],
+                        "face_landmarks": [
+                            {"x": lm[0], "y": lm[1], "z": lm[2]} 
+                            for lm in result.face_landmarks
+                        ][:468],
+                        "processing_time_ms": result.processing_time_ms,
+                        "annotated_frame": result.annotated_frame
+                    }
+                })
+            else:
+                await websocket.send_json({
+                    "type": "error",
+                    "message": "Failed to decode frame"
+                })
+        except Exception as e:
+            print(f"Error processing frame: {e}")
+            await websocket.send_json({
+                "type": "error",
+                "message": str(e)
+            })
+        finally:
+            is_processing = False
     
     print(f"Behavioral analysis session started for: {session_id}")
     
@@ -643,49 +710,40 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                 if message_type == "frame":
                     # Process video frame for behavioral analysis
                     image_data = message.get("image")
+                    frame_id = message.get("frame_id", 0)
                     
                     if image_data:
-                        frame = decode_base64_image(image_data)
-                        
-                        if frame is not None:
-                            # Analyze frame
-                            result = session_analyzer.analyze_frame(frame, session_id)
+                        async with pending_frame_lock:
+                            # Frame dropping: Replace pending frame with newest
+                            if is_processing:
+                                dropped_frames += 1
+                                print(f"⚠️ Frame {last_frame_id} dropped, now queuing {frame_id}. Total dropped: {dropped_frames}")
+                                
+                                # Notify frontend about backpressure
+                                try:
+                                    await websocket.send_json({
+                                        "type": "busy",
+                                        "frame_id": frame_id,
+                                        "dropped": dropped_frames
+                                    })
+                                except:
+                                    pass
                             
-                            # Send result
-                            await websocket.send_json({
-                                "type": "behavioral_result",
-                                "data": {
-                                    "frame_id": result.frame_id,
-                                    "timestamp": result.timestamp,
-                                    "metrics": {
-                                        "confidence": result.metrics.confidence,
-                                        "eye_contact": result.metrics.eye_contact,
-                                        "posture": result.metrics.posture,
-                                        "engagement": result.metrics.engagement,
-                                        "smile": result.metrics.smile,
-                                        "head_stability": result.metrics.head_stability,
-                                        "stress_level": result.metrics.stress_level,
-                                        "filler_word_count": result.metrics.filler_word_count,
-                                        "face_detected": result.metrics.face_detected,
-                                        "alerts": result.metrics.alerts
-                                    },
-                                    "pose_landmarks": [
-                                        {"x": lm[0], "y": lm[1], "z": lm[2]} 
-                                        for lm in result.pose_landmarks
-                                    ][:33],  # Send top 33 pose landmarks
-                                    "face_landmarks": [
-                                        {"x": lm[0], "y": lm[1], "z": lm[2]} 
-                                        for lm in result.face_landmarks
-                                    ][:468],  # Send face mesh
-                                    "processing_time_ms": result.processing_time_ms,
-                                    "annotated_frame": result.annotated_frame
-                                }
-                            })
-                        else:
-                            await websocket.send_json({
-                                "type": "error",
-                                "message": "Failed to decode frame"
-                            })
+                            # Store new frame as pending
+                            pending_frame = image_data
+                            last_frame_id = frame_id
+                            
+                            # If not currently processing, start processing
+                            if not is_processing:
+                                is_processing = True
+                                # Create task to process in background (non-blocking)
+                                asyncio.create_task(process_frame_task(pending_frame, frame_id))
+                                pending_frame = None
+                    else:
+                        await websocket.send_json({
+                            "type": "error",
+                            "message": "No image data provided"
+                        })
                 
                 elif message_type == "audio":
                     # Process audio/transcript for filler word detection

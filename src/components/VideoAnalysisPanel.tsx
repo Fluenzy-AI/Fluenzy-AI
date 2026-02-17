@@ -61,6 +61,20 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   const [wsConnected, setWsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Configuration for frame throttling and optimization
+  const TARGET_FPS = 3; // 3 FPS - balanced for real-time analysis
+  const FRAME_INTERVAL_MS = 1000 / TARGET_FPS;
+  const MAX_WIDTH = 640; // Downscale to 640px width
+  const MAX_HEIGHT = 480; // Downscale to 480px height
+  const JPEG_QUALITY = 0.6; // 60% JPEG quality for smaller payload
+
+  // State for backpressure handling
+  const [isProcessingFrame, setIsProcessingFrame] = useState(false);
+  const lastFrameTimeRef = useRef<number>(0);
+  const pendingFrameRef = useRef<boolean>(false);
+  const frameIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const frameCounterRef = useRef<number>(0);
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
@@ -98,20 +112,35 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
           const data = message.data;
           const newMetrics = data.metrics;
           
+          // Backpressure: Mark that previous frame is processed
+          setIsProcessingFrame(false);
+          pendingFrameRef.current = false;
+          
           setMetrics(newMetrics);
           setMetricsHistory(prev => [...prev.slice(-100), newMetrics]);
           
           if (data.annotated_frame) {
             setAnnotatedFrame(data.annotated_frame);
           }
+        } else if (message.type === "busy") {
+          // Backend is busy - drop pending frame and wait
+          console.log("⚠️ Backend busy, dropping frame");
+          setIsProcessingFrame(false);
+          pendingFrameRef.current = false;
         } else if (message.type === "connected") {
           console.log("🎉 Behavioral analysis session started:", message.message);
         } else if (message.type === "error") {
           console.error("❌ Server error:", message.message);
           setError(message.message);
+          // Also reset processing state on error
+          setIsProcessingFrame(false);
+          pendingFrameRef.current = false;
         }
       } catch (e) {
         console.error("Error parsing WebSocket message:", e);
+        // Reset processing state on error
+        setIsProcessingFrame(false);
+        pendingFrameRef.current = false;
       }
     };
 
@@ -182,6 +211,11 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
       wsRef.current = null;
     }
     
+    if (frameIntervalRef.current) {
+      clearInterval(frameIntervalRef.current);
+      frameIntervalRef.current = null;
+    }
+    
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
@@ -190,9 +224,11 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     setIsCameraOn(false);
     setIsAnalyzing(false);
     setWsConnected(false);
+    setIsProcessingFrame(false);
+    pendingFrameRef.current = false;
   };
 
-  // Process frames and send to backend
+  // Process frames and send to backend with throttling, downscaling, and backpressure
   const processFrame = useCallback(() => {
     if (!videoRef.current || !canvasRef.current || !wsRef.current || !isAnalyzing) {
       return;
@@ -203,28 +239,75 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     const ctx = canvas.getContext('2d');
 
     if (!ctx || video.readyState !== 4) {
-      animationFrameRef.current = requestAnimationFrame(processFrame);
       return;
     }
 
-    // Draw video frame to canvas
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-
-    // Get frame as base64
-    const imageData = canvas.toDataURL('image/jpeg', 0.7);
-
-    // Send to backend via WebSocket
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({
-        type: "frame",
-        image: imageData
-      }));
+    // Backpressure: Skip if previous frame is still being processed
+    if (isProcessingFrame || pendingFrameRef.current) {
+      console.log("⏳ Skipping frame - backend still processing previous frame");
+      return;
     }
 
-    animationFrameRef.current = requestAnimationFrame(processFrame);
-  }, [isAnalyzing]);
+    // Throttling: Check time since last frame
+    const now = Date.now();
+    const timeSinceLastFrame = now - lastFrameTimeRef.current;
+    if (timeSinceLastFrame < FRAME_INTERVAL_MS) {
+      return;
+    }
+
+    try {
+      // Downscale: Calculate new dimensions maintaining aspect ratio
+      const videoWidth = video.videoWidth;
+      const videoHeight = video.videoHeight;
+      let newWidth = videoWidth;
+      let newHeight = videoHeight;
+
+      // Scale down to fit within MAX_WIDTH x MAX_HEIGHT while maintaining aspect ratio
+      if (videoWidth > MAX_WIDTH || videoHeight > MAX_HEIGHT) {
+        const widthRatio = MAX_WIDTH / videoWidth;
+        const heightRatio = MAX_HEIGHT / videoHeight;
+        const ratio = Math.min(widthRatio, heightRatio);
+        newWidth = Math.round(videoWidth * ratio);
+        newHeight = Math.round(videoHeight * ratio);
+      }
+
+      // Set canvas to downscaled dimensions
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+
+      // Draw downscaled video frame to canvas
+      ctx.drawImage(video, 0, 0, newWidth, newHeight);
+
+      // Get frame as base64 with reduced quality for smaller payload
+      const imageData = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+
+      // Backpressure: Mark that we're sending a new frame
+      setIsProcessingFrame(true);
+      pendingFrameRef.current = true;
+      lastFrameTimeRef.current = now;
+      frameCounterRef.current += 1;
+
+      // Send to backend via WebSocket
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        wsRef.current.send(JSON.stringify({
+          type: "frame",
+          image: imageData,
+          frame_id: frameCounterRef.current,
+          timestamp: now,
+          resolution: { width: newWidth, height: newHeight }
+        }));
+        console.log(`📤 Sent frame ${frameCounterRef.current} (${newWidth}x${newHeight})`);
+      } else {
+        // WebSocket not ready - reset processing state
+        setIsProcessingFrame(false);
+        pendingFrameRef.current = false;
+      }
+    } catch (err) {
+      console.error("Error processing frame:", err);
+      setIsProcessingFrame(false);
+      pendingFrameRef.current = false;
+    }
+  }, [isAnalyzing, isProcessingFrame]);
 
   // Start analysis
   const startAnalysis = () => {
@@ -244,11 +327,16 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   const stopAnalysis = () => {
     setIsAnalyzing(false);
     
-    if (animationFrameRef.current) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
+    // Clear the frame processing interval
+    if (frameIntervalRef.current) {
+      clearInterval(frameIntervalRef.current);
+      frameIntervalRef.current = null;
     }
-
+    
+    // Reset backpressure state
+    setIsProcessingFrame(false);
+    pendingFrameRef.current = false;
+    
     // Get session summary
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify({ type: "get_summary" }));
@@ -260,15 +348,27 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     }
   };
 
-  // Process frames when analyzing
+  // Process frames when analyzing - use setInterval for throttled FPS
   useEffect(() => {
     if (isAnalyzing && isCameraOn) {
-      animationFrameRef.current = requestAnimationFrame(processFrame);
+      // Reset frame timing
+      lastFrameTimeRef.current = 0;
+      pendingFrameRef.current = false;
+      setIsProcessingFrame(false);
+      
+      // Use setInterval for throttled frame processing (3 FPS)
+      frameIntervalRef.current = setInterval(() => {
+        processFrame();
+      }, FRAME_INTERVAL_MS);
+      
+      console.log(`🎬 Started frame processing at ${TARGET_FPS} FPS (interval: ${FRAME_INTERVAL_MS}ms)`);
     }
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current);
+        frameIntervalRef.current = null;
+        console.log("🛑 Stopped frame processing");
       }
     };
   }, [isAnalyzing, isCameraOn, processFrame]);
