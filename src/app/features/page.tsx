@@ -36,88 +36,128 @@ export default function FeaturesPage() {
   return (
     <div className="min-h-screen">
       <HeaderOffset />
-      <section className="pt-12 pb-8 bg-gradient-to-b from-slate-900 to-slate-800">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl lg:text-6xl font-bold text-center mb-4">
-            <span className="text-white">FluenzyAI </span>
-            <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 !bg-clip-text text-transparent">
-              Features
+      {/* Hero Section - Premium */}
+      <section className="relative pt-6 pb-12 overflow-hidden bg-gradient-to-b from-slate-900 via-slate-900 to-slate-800">
+        {/* Animated background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-10 left-1/4 w-72 h-72 bg-blue-600/10 rounded-full blur-[100px] animate-pulse" />
+          <div className="absolute bottom-10 right-1/4 w-80 h-80 bg-violet-600/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-48 bg-cyan-500/5 rounded-full blur-[80px]" />
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          {/* Badge */}
+          <div className="flex justify-center mb-6">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold text-slate-300 tracking-wide uppercase">Powered by AI</span>
+            </div>
+          </div>
+          
+          <h1 className="text-4xl lg:text-6xl font-black text-center mb-5 leading-tight">
+            <span className="text-white">Everything you need to </span>
+            <br className="hidden lg:block" />
+            <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-cyan-400 !bg-clip-text text-transparent">
+              ace your interviews
             </span>
           </h1>
-          <p className="text-xl text-slate-300 text-center max-w-4xl mx-auto leading-relaxed mb-8">
-            Unlock the power of AI to accelerate your career with FluenzyAI’s intelligent training ecosystem. From interview mastery to English fluency, our advanced AI-powered modules are designed for real-world success. Each module offers specialized, personalized training paths that adapt to your learning style, delivering focused, intensive practice to help you progress faster and build lasting confidence.
+          <p className="text-base lg:text-lg text-slate-400 text-center max-w-3xl mx-auto leading-relaxed mb-8">
+            From interview mastery to English fluency — our advanced AI modules deliver personalized training paths that adapt to your learning style and help you build lasting confidence.
           </p>
+          
+          {/* Stats strip */}
+          <div className="flex flex-wrap justify-center gap-6 lg:gap-10">
+            {[
+              { value: "6+", label: "AI Modules" },
+              { value: "10K+", label: "Questions" },
+              { value: "98%", label: "Success Rate" },
+              { value: "24/7", label: "AI Available" },
+            ].map((stat) => (
+              <div key={stat.label} className="text-center">
+                <div className="text-2xl lg:text-3xl font-black text-white">{stat.value}</div>
+                <div className="text-xs text-slate-500 font-medium mt-0.5">{stat.label}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
+      
       <div className="relative">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent"></div>
         <Features />
       </div>
       <section className="relative overflow-hidden bg-slate-950 text-slate-200">
         <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-950 to-slate-950" />
-        <div className="container mx-auto px-4 py-16 space-y-12 relative z-10">
-          <nav aria-label="Breadcrumb" className="text-sm text-slate-400">
-            <ol className="flex flex-wrap gap-2">
+        <div className="container mx-auto px-4 py-16 space-y-14 relative z-10">
+          <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
+            <ol className="flex flex-wrap gap-2 items-center">
               <li>
-                <a href="/" className="hover:text-slate-200">Home</a>
+                <a href="/" className="hover:text-slate-300 transition-colors">Home</a>
               </li>
-              <li aria-hidden="true">/</li>
+              <li aria-hidden="true" className="text-slate-700">/</li>
               <li className="text-slate-300">Features</li>
             </ol>
           </nav>
 
           <div className="space-y-5 max-w-4xl">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Feature Overview</p>
-            <h2 className="text-3xl md:text-4xl font-semibold text-white">An AI Interview Coach built for real-world practice</h2>
-            <p className="text-base leading-relaxed text-slate-300">
+            <p className="text-xs uppercase tracking-[0.3em] text-blue-400 font-semibold">Feature Overview</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-white leading-snug">An AI Interview Coach built for real-world practice</h2>
+            <p className="text-base leading-relaxed text-slate-400">
               FluenzyAI combines an AI Interview Preparation Platform with structured English speaking practice so candidates can
               improve both content and delivery. Each feature module supports a specific interview stage, from HR interview preparation
               and behavioral storytelling to technical interview training for coding, system design, and role-specific knowledge.
-              This layered approach makes FluenzyAI useful for entry-level roles and advanced FAANG interview practice alike because
-              you can focus on the exact skill set each hiring round evaluates.
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 shadow-lg transition hover:-translate-y-1 hover:shadow-purple-500/10">
-              <h3 className="text-lg font-semibold text-white">Mock interviews with AI that feel real</h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-300">
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-slate-900/80 to-slate-800/40 backdrop-blur-sm p-7 transition-all duration-300 hover:-translate-y-1 hover:border-white/15 hover:shadow-xl hover:shadow-blue-500/5 group">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                </div>
+                <h3 className="text-lg font-bold text-white">Mock interviews that feel real</h3>
+              </div>
+              <p className="text-sm leading-relaxed text-slate-400 group-hover:text-slate-300 transition-colors">
                 The mock interviews with AI simulate realistic conversation flow so you can practice concise answers, stronger structure,
                 and calm pacing. The English speaking practice with AI emphasizes pronunciation, grammar clarity, and vocabulary choice,
-                while the HR interview preparation modules help you refine leadership stories, conflict resolution responses, and career
-                motivation narratives. For technical interview training, the AI Interview Coach blends problem-solving prompts with
-                follow-up questions that mirror actual onsite interviews.
+                while the HR interview preparation modules help you refine leadership stories and career motivation narratives.
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 shadow-lg transition hover:-translate-y-1 hover:shadow-purple-500/10">
-              <h3 className="text-lg font-semibold text-white">Built for discoverability and crawl depth</h3>
-              <p className="mt-3 text-sm leading-relaxed text-slate-300">
-                Features are designed for crawlability and discoverability, with clear descriptions and internal navigation. You can move
-                between feature details, pricing, and training without friction. This structure ensures that important pages remain
-                indexable and meaningful for Google, while users get a quick overview of the core capabilities. Explore the pricing page
-                to match a plan to your preparation intensity or jump back to the home page for a complete platform overview.
+            <div className="rounded-2xl border border-white/[0.06] bg-gradient-to-br from-slate-900/80 to-slate-800/40 backdrop-blur-sm p-7 transition-all duration-300 hover:-translate-y-1 hover:border-white/15 hover:shadow-xl hover:shadow-violet-500/5 group">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-500 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                </div>
+                <h3 className="text-lg font-bold text-white">Adaptive and personalized</h3>
+              </div>
+              <p className="text-sm leading-relaxed text-slate-400 group-hover:text-slate-300 transition-colors">
+                FluenzyAI adapts to your skill level and learning pace, providing progressively challenging content. Move between 
+                feature details, pricing, and training without friction. This layered approach makes FluenzyAI useful for entry-level roles 
+                and advanced FAANG interview practice alike.
               </p>
             </div>
           </div>
 
+          {/* CTA Buttons */}
           <div className="flex flex-wrap gap-3">
-            <a href="/train" className="rounded-full bg-gradient-to-r from-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950">
+            <a href="/train" className="group inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-3 text-sm font-bold text-white shadow-lg shadow-blue-500/25 hover:shadow-blue-500/40 transition-all duration-300 hover:scale-105">
               Start Training
+              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
             </a>
-            <a href="/pricing" className="rounded-full border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-400">
+            <a href="/pricing" className="rounded-full border border-white/10 bg-white/5 backdrop-blur-sm px-6 py-3 text-sm font-semibold text-slate-200 transition-all hover:border-white/25 hover:bg-white/10">
               Compare Plans
             </a>
-            <a href="/blog/prepare-for-faang-interviews-with-ai" className="rounded-full border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-400">
-              Read our complete AI-powered FAANG interview guide
-            </a>
-            <a href="/u/anjha1" className="rounded-full border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-400">
-              Achhuta Nand Jha – AI Interview Profile
-            </a>
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-2xl font-semibold text-white">Feature FAQs</h2>
-            <div className="space-y-4">
+          {/* FAQ Section */}
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <h2 className="text-2xl font-bold text-white">Frequently Asked Questions</h2>
+            </div>
+            <div className="space-y-3">
               {[
                 {
                   q: "What makes FluenzyAI different from other interview platforms?",
@@ -136,9 +176,12 @@ export default function FeaturesPage() {
                   a: "You receive grammar feedback, vocabulary suggestions, and pacing insights through English speaking practice with AI that mirrors real interview scenarios.",
                 },
               ].map((item) => (
-                <details key={item.q} className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-5">
-                  <summary className="cursor-pointer text-sm font-semibold text-slate-100">{item.q}</summary>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-300">{item.a}</p>
+                <details key={item.q} className="group rounded-xl border border-white/[0.06] bg-gradient-to-br from-slate-900/60 to-slate-800/30 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:border-white/15">
+                  <summary className="cursor-pointer px-6 py-4 text-sm font-semibold text-slate-200 flex items-center justify-between gap-4 select-none">
+                    {item.q}
+                    <svg className="w-4 h-4 text-slate-500 group-open:rotate-180 transition-transform duration-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                  </summary>
+                  <p className="px-6 pb-5 text-sm leading-relaxed text-slate-400">{item.a}</p>
                 </details>
               ))}
             </div>

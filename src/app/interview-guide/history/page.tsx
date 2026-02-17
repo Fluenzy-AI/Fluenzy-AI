@@ -122,36 +122,40 @@ const InterviewGuideHistoryPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="max-w-7xl mx-auto px-4 py-8 md:py-12">
-        <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="min-h-screen bg-slate-950 relative overflow-hidden">
+      {/* Radial Glows */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 blur-[120px] -z-10 rounded-full" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/10 blur-[120px] -z-10 rounded-full" />
+
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-4 md:py-6">
+        <div className="space-y-6 animate-in fade-in duration-500">
           {/* Header */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 mb-4">
-                <FileText size={18} className="text-purple-400" />
-                <span className="text-sm font-medium text-purple-300">
-                  Interview Guide History
-                </span>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 mb-3">
+                  <FileText size={14} className="text-purple-400" />
+                  <span className="text-xs font-black uppercase tracking-widest text-purple-300">
+                    Guide History
+                  </span>
+                </div>
+                <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">
+                  Your Generated Guides
+                </h1>
+                <p className="text-slate-400 mt-1 text-sm font-medium">
+                  Review and manage your personalized interview material.
+                </p>
               </div>
-              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
-                Your Generated Guides
-              </h1>
-              <p className="text-slate-300 mt-2">
-                View, download, and manage all your previously generated interview guides.
-              </p>
+              <Link href="/interview-guide">
+                <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-xl text-xs font-bold px-6">
+                  <Plus size={16} className="mr-2" />
+                  New Guide
+                </Button>
+              </Link>
             </div>
-            <Link href="/interview-guide">
-              <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
-                <Plus size={18} className="mr-2" />
-                Generate New Guide
-              </Button>
-            </Link>
-          </div>
 
           {/* Guides List */}
           {guides.length === 0 ? (
-            <Card className="border-slate-700/50 bg-slate-900/50 backdrop-blur-xl">
+          <Card className="border-white/10 bg-slate-900/40 backdrop-blur-2xl rounded-[2rem]">
               <CardContent className="py-16 text-center">
                 <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-6">
                   <FileText size={40} className="text-slate-600" />
@@ -174,9 +178,9 @@ const InterviewGuideHistoryPage = () => {
               {guides.map((guide) => (
                 <Card
                   key={guide.id}
-                  className="border-slate-700/50 bg-slate-900/50 backdrop-blur-xl hover:border-purple-500/30 transition-colors"
+                  className="border-white/5 bg-slate-900/40 backdrop-blur-xl hover:border-purple-500/30 transition-all duration-300 rounded-2xl group"
                 >
-                  <CardContent className="p-6">
+                  <CardContent className="p-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
@@ -213,27 +217,27 @@ const InterviewGuideHistoryPage = () => {
                       <div className="flex items-center gap-2">
                         <Link href={`/interview-guide?id=${guide.id}`}>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            className="border-slate-700 hover:bg-slate-800"
+                            className="bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-bold"
                           >
                             <Eye size={16} className="mr-2" />
                             View
                           </Button>
                         </Link>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="border-emerald-700 text-emerald-400 hover:bg-emerald-900/30"
+                          className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 text-emerald-400 rounded-xl text-xs font-bold"
                           onClick={() => downloadPDF(guide.id, guide.targetRole, guide.targetCompany)}
                         >
                           <Download size={16} className="mr-2" />
                           PDF
                         </Button>
                         <Button
-                          variant="outline"
+                          variant="ghost"
                           size="sm"
-                          className="border-red-700 text-red-400 hover:bg-red-900/30"
+                          className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-xl"
                           onClick={() => deleteGuide(guide.id)}
                           disabled={deleting === guide.id}
                         >
@@ -253,35 +257,35 @@ const InterviewGuideHistoryPage = () => {
 
           {/* Stats Card */}
           {guides.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="border-slate-700/50 bg-slate-900/50">
-                <CardContent className="p-4 text-center">
-                  <p className="text-3xl font-black text-purple-400">{guides.length}</p>
-                  <p className="text-slate-400 text-sm">Total Guides</p>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <Card className="border-white/5 bg-slate-900/40 rounded-2xl">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-black text-purple-400">{guides.length}</p>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Total Guides</p>
                 </CardContent>
               </Card>
-              <Card className="border-slate-700/50 bg-slate-900/50">
-                <CardContent className="p-4 text-center">
-                  <p className="text-3xl font-black text-emerald-400">
+              <Card className="border-white/5 bg-slate-900/40 rounded-2xl">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-black text-emerald-400">
                     {new Set(guides.map((g) => g.targetRole)).size}
                   </p>
-                  <p className="text-slate-400 text-sm">Unique Roles</p>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Unique Roles</p>
                 </CardContent>
               </Card>
-              <Card className="border-slate-700/50 bg-slate-900/50">
-                <CardContent className="p-4 text-center">
-                  <p className="text-3xl font-black text-amber-400">
+              <Card className="border-white/5 bg-slate-900/40 rounded-2xl">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-black text-amber-400">
                     {guides.filter((g) => g.targetCompany).length}
                   </p>
-                  <p className="text-slate-400 text-sm">Company-Specific</p>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Company-Specific</p>
                 </CardContent>
               </Card>
-              <Card className="border-slate-700/50 bg-slate-900/50">
-                <CardContent className="p-4 text-center">
-                  <p className="text-3xl font-black text-pink-400">
+              <Card className="border-white/5 bg-slate-900/40 rounded-2xl">
+                <CardContent className="p-3 text-center">
+                  <p className="text-2xl font-black text-pink-400">
                     {guides.filter((g) => g.experienceLevel === "Fresher").length}
                   </p>
-                  <p className="text-slate-400 text-sm">Fresher Guides</p>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Fresher Guides</p>
                 </CardContent>
               </Card>
             </div>

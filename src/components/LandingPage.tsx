@@ -32,7 +32,6 @@ const LandingPage = () => {
     <div>
       <Hero />
       <TrustSection />
-      <TargetCompaniesRibbon />
       <TrainingShowcase />
       <Features />
       <FeedbackSection />

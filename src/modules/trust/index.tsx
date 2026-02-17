@@ -13,41 +13,57 @@ const companies = [
 
 const TrustSection = () => {
   return (
-    <div className="py-10 bg-slate-950 border-y border-slate-800 overflow-hidden relative">
-      <div className="text-center mb-6">
-        <p className="text-slate-400 text-sm uppercase tracking-widest font-semibold">
-          Trusted by FAANG & Top Tech Companies
-        </p>
-      </div>
-
-      {/* Gradient Overlay for Fade Effect */}
-      <div className="absolute top-0 left-0 w-20 h-full bg-gradient-to-r from-slate-950 to-transparent z-10"></div>
-      <div className="absolute top-0 right-0 w-20 h-full bg-gradient-to-l from-slate-950 to-transparent z-10"></div>
-
-      {/* Marquee Container */}
-      <div className="flex w-full overflow-hidden">
+    <section className="py-20 relative overflow-hidden bg-slate-950">
+      {/* Background Glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-1/2 bg-purple-500/5 blur-[120px]" />
+      
+      <div className="container mx-auto px-4 relative z-10">
         <motion.div
-          className="flex gap-16 items-center whitespace-nowrap"
-          animate={{ x: ["0%", "-50%"] }}
-          transition={{
-            repeat: Infinity,
-            ease: "linear",
-            duration: 20, // Adjust speed here
-          }}
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-center mb-12"
         >
-          {/* Double the list to create seamless loop */}
-          {[...companies, ...companies].map((company, index) => (
-            <div key={index} className="flex items-center justify-center min-w-[120px]">
-              <img
-                src={company.logo}
-                alt={company.name}
-                className="h-8 w-auto opacity-50 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300 cursor-pointer"
-              />
-            </div>
-          ))}
+          <h3 className="text-sm uppercase tracking-[0.3em] text-slate-400 font-bold mb-4">
+            Trusted by FAANG & Top Tech Companies
+          </h3>
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto">
+            Candidates from these companies use Fluenzy AI to master their communication and technical depth.
+          </p>
         </motion.div>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-12 items-center">
+          {companies.map((company, index) => (
+            <motion.div
+              key={company.name}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+              whileHover={{ y: -8 }}
+              className="flex flex-col items-center justify-center group"
+            >
+              <div className="relative h-20 w-32 flex items-center justify-center bg-white/5 rounded-2xl border border-white/5 group-hover:bg-white/10 group-hover:border-white/10 transition-all duration-500 shadow-2xl backdrop-blur-sm overflow-hidden">
+                {/* Internal Glow */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                
+                <img
+                  src={company.logo}
+                  alt={company.name}
+                  className={`h-8 w-auto relative z-10 object-contain transition-all duration-500 ${
+                    company.name === "Apple" || company.name === "Amazon" ? "invert brightness-200" : "brightness-125"
+                  } group-hover:scale-110 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]`}
+                />
+              </div>
+              <span className="mt-4 text-[9px] font-black tracking-[0.3em] text-slate-500 group-hover:text-purple-400 uppercase transition-colors">
+                {company.name}
+              </span>
+            </motion.div>
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   );
 };
 

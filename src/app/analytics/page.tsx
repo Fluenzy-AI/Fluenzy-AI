@@ -160,8 +160,8 @@ const ProgressRing = ({ value, label }: { value: number; label: string }) => {
         />
         <defs>
           <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#38bdf8" />
-            <stop offset="100%" stopColor="#a855f7" />
+            <stop offset="0%" stopColor="#3b82f6" />
+            <stop offset="100%" stopColor="#06b6d4" />
           </linearGradient>
         </defs>
         <text x="60" y="64" textAnchor="middle" className="fill-white text-xl font-semibold">
@@ -177,82 +177,128 @@ const Heatmap = ({ activity }: { activity: Array<{ date: string; count: number }
   const containerRef = useRef<HTMLDivElement | null>(null);
   const activityMap = useMemo(() => new Map(activity.map((item) => [item.date, item.count])), [activity]);
   const today = new Date();
-  const days: Array<{ date: string; count: number }> = [];
-  for (let i = 111; i >= 0; i -= 1) {
+  const days: Array<{ date: string; count: number; dayOfWeek: number; weekIndex: number; month: string }> = [];
+  
+  // Generate full year of data (52 weeks = 364 days)
+  for (let i = 363; i >= 0; i -= 1) {
     const date = new Date(today);
     date.setDate(today.getDate() - i);
     const key = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-    days.push({ date: key, count: activityMap.get(key) || 0 });
+    const dayOfWeek = (date.getDay() + 6) % 7; // Monday = 0, Sunday = 6
+    const weekIndex = Math.floor((363 - i) / 7);
+    const month = date.toLocaleDateString("en-US", { month: "short" });
+    days.push({ date: key, count: activityMap.get(key) || 0, dayOfWeek, weekIndex, month });
   }
+  
   const max = Math.max(1, ...days.map((d) => d.count));
-  const [layout, setLayout] = useState({ cols: 14, size: 12, gap: 4, rows: 8 });
-
-  useEffect(() => {
-    const element = containerRef.current;
-    if (!element) return;
-
-    const updateLayout = () => {
-      const { width, height } = element.getBoundingClientRect();
-      if (!width || !height) return;
-
-      const total = days.length;
-      const minCols = 10;
-      const maxCols = 24;
-      const ratio = width / height;
-      let cols = Math.round(Math.sqrt(total * ratio));
-      cols = Math.max(minCols, Math.min(maxCols, cols));
-      let rows = Math.ceil(total / cols);
-
-      const minGap = 2;
-      const maxGap = 6;
-      const gap = Math.max(minGap, Math.min(maxGap, Math.floor(width / cols * 0.18)));
-      const sizeW = (width - gap * (cols - 1)) / cols;
-      const sizeH = (height - gap * (rows - 1)) / rows;
-      const size = Math.max(8, Math.floor(Math.min(sizeW, sizeH)));
-
-      rows = Math.ceil(total / cols);
-      setLayout({ cols, size, gap, rows });
-    };
-
-    updateLayout();
-    const resizeObserver = new ResizeObserver(updateLayout);
-    resizeObserver.observe(element);
-    window.addEventListener("resize", updateLayout);
-
-    return () => {
-      resizeObserver.disconnect();
-      window.removeEventListener("resize", updateLayout);
-    };
-  }, [days.length]);
-
+  const weeks = 52;
+  
+  // GitHub-style emerald/green gradient
+  const getColor = (intensity: number) => {
+    if (intensity === 0) return "bg-slate-800/20";
+    if (intensity > 0.75) return "bg-emerald-500";
+    if (intensity > 0.5) return "bg-emerald-600";
+    if (intensity > 0.25) return "bg-emerald-700/80";
+    return "bg-emerald-800/60";
+  };
+  
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  
+  // Get month positions for labels
+  const monthPositions: Array<{ month: string; weekIndex: number }> = [];
+  let lastMonth = '';
+  days.forEach((day) => {
+    if (day.month !== lastMonth && day.dayOfWeek === 0) {
+      monthPositions.push({ month: day.month, weekIndex: day.weekIndex });
+      lastMonth = day.month;
+    }
+  });
+  
   return (
-    <div ref={containerRef} className="h-full w-full">
-      <div
-        className="mx-auto grid"
-        style={{
-          gridTemplateColumns: `repeat(${layout.cols}, ${layout.size}px)`,
-          gap: `${layout.gap}px`,
-          width: `${layout.cols * layout.size + (layout.cols - 1) * layout.gap}px`,
-        }}
-      >
-        {days.map((day) => {
-          const intensity = day.count / max;
-          const bg = intensity === 0
-            ? "bg-slate-800/40"
-            : intensity > 0.7
-            ? "bg-emerald-500"
-            : intensity > 0.4
-            ? "bg-emerald-400"
-            : "bg-emerald-300/80";
-          return (
-            <div
-              key={day.date}
-              className={`rounded-full ${bg}`}
-              style={{ width: layout.size, height: layout.size }}
-              title={`${day.date}: ${day.count}`}
-            />
-          );
-        })}
+    <div ref={containerRef} className="h-full w-full flex flex-col gap-3">
+      {/* Header with legend */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+          <Flame size={14} className="text-emerald-400" />
+          <span>Last year activity</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">Less</span>
+          <div className="flex gap-1">
+            <div className="w-2.5 h-2.5 rounded-sm bg-slate-800/20"></div>
+            <div className="w-2.5 h-2.5 rounded-sm bg-emerald-800/60"></div>
+            <div className="w-2.5 h-2.5 rounded-sm bg-emerald-700/80"></div>
+            <div className="w-2.5 h-2.5 rounded-sm bg-emerald-600"></div>
+            <div className="w-2.5 h-2.5 rounded-sm bg-emerald-500"></div>
+          </div>
+          <span className="text-xs text-slate-500">More</span>
+        </div>
+      </div>
+      
+      {/* Month labels */}
+      <div className="flex pl-12 relative" style={{ height: '12px' }}>
+        {monthPositions.map(({ month, weekIndex }) => (
+          <div 
+            key={`${month}-${weekIndex}`}
+            className="absolute text-[10px] text-slate-500 font-medium"
+            style={{ left: `${48 + weekIndex * 12}px` }}
+          >
+            {month}
+          </div>
+        ))}
+      </div>
+      
+      {/* Heatmap grid - horizontal */}
+      <div className="flex gap-1">
+        {/* Day labels */}
+        <div className="flex flex-col gap-[3px] text-[9px] text-slate-500 font-medium justify-center pr-1 w-10 text-right">
+          {dayLabels.map((label, i) => (
+            <div key={i} className="h-[10px] flex items-center justify-end" style={{ opacity: i % 2 === 0 ? 1 : 0 }}>
+              {label}
+            </div>
+          ))}
+        </div>
+        
+        {/* Activity grid - weeks horizontally, days vertically */}
+        <div className="flex gap-[3px] overflow-x-auto">
+          {Array.from({ length: weeks }).map((_, weekIndex) => (
+            <div key={weekIndex} className="flex flex-col gap-[3px]">
+              {Array.from({ length: 7 }).map((_, dayIndex) => {
+                const dayData = days.find(d => d.weekIndex === weekIndex && d.dayOfWeek === dayIndex);
+                if (!dayData) return <div key={dayIndex} className="w-[10px] h-[10px]" />;
+                
+                const intensity = dayData.count / max;
+                const color = getColor(intensity);
+                
+                return (
+                  <div
+                    key={dayIndex}
+                    className={`w-[10px] h-[10px] rounded-sm ${color} transition-all duration-200 hover:scale-125 hover:ring-2 hover:ring-emerald-400 cursor-pointer`}
+                    title={`${dayData.date}: ${dayData.count} activities`}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Stats summary */}
+      <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-emerald-400"></div>
+            <span className="text-slate-400">Total: <span className="text-white font-semibold">{activity.reduce((sum, d) => sum + d.count, 0)}</span></span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+            <span className="text-slate-400">Avg/week: <span className="text-white font-semibold">{Math.round(activity.reduce((sum, d) => sum + d.count, 0) / 52)}</span></span>
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5 text-slate-400">
+          <span className="text-orange-400">🔥</span>
+          <span>Current streak: <span className="text-emerald-400 font-semibold">{activity.slice(-7).filter(d => d.count > 0).length} days</span></span>
+        </div>
       </div>
     </div>
   );
@@ -305,18 +351,29 @@ export default function AnalyticsDashboardPage() {
   return (
     <div className="overflow-x-hidden">
       <HeaderOffset />
-      <div className="container mx-auto px-4 py-12 space-y-10">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Analytics Dashboard</h1>
-          <p className="text-sm text-slate-400 mt-2">Your communication-first performance report with clear next steps.</p>
+      <div className="container mx-auto px-4 pb-12 space-y-10">
+      {/* Header Section - Premium Oceanic Design */}
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-cyan-600/10 rounded-3xl blur-xl"></div>
+        <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 p-8 rounded-3xl bg-gradient-to-br from-slate-900/40 to-slate-900/60 backdrop-blur-xl border border-white/10">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <BarChart3 className="text-white" size={20} />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">Analytics Dashboard</h1>
+            </div>
+            <p className="text-sm text-slate-400 font-medium leading-relaxed ml-13">Your communication-first performance report with clear next steps.</p>
+          </div>
+          <Badge variant="outline" className={`border px-4 py-2 text-sm font-bold shadow-lg ${getStatusColor(summary.overallStatus)}`}>
+            <Sparkles size={14} className="mr-2" />
+            {summary.overallStatus}
+          </Badge>
         </div>
-        <Badge variant="outline" className={`border ${getStatusColor(summary.overallStatus)}`}>
-          {summary.overallStatus}
-        </Badge>
       </div>
 
-      <div className="sticky top-20 z-40 rounded-2xl border border-slate-800/70 bg-slate-950/80 backdrop-blur-lg p-4 shadow-xl">
+      {/* Sticky Summary Bar - Premium Glassmorphism */}
+      <div className="sticky top-20 z-40 rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/90 to-slate-950/90 backdrop-blur-2xl p-6 shadow-2xl shadow-blue-500/5 hover:shadow-blue-500/10 transition-all duration-300">
         <div className="grid gap-4 md:grid-cols-5">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs text-slate-400">
@@ -388,55 +445,73 @@ export default function AnalyticsDashboardPage() {
         </div>
       </div>
 
+      {/* Metric Cards - Premium Design */}
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="relative group border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <Gauge className="h-4 w-4 text-sky-400" /> Overall Performance
+            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-300">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
+                <Gauge className="h-4 w-4 text-white" />
+              </div>
+              Overall Performance
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-white">{Math.round(summary.overallScore)}</div>
-            <p className="text-xs text-slate-400 mt-2">Status: {summary.overallStatus}</p>
+            <div className="text-3xl font-black text-white">{Math.round(summary.overallScore)}</div>
+            <p className="text-xs text-slate-400 mt-2 font-medium">Status: <span className="text-cyan-400 font-bold">{summary.overallStatus}</span></p>
           </CardContent>
         </Card>
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="relative group border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <MessageSquare className="h-4 w-4 text-emerald-400" /> Communication Score
+            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-300">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
+                <MessageSquare className="h-4 w-4 text-white" />
+              </div>
+              Communication Score
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-white">{Math.round(summary.communicationScore)}</div>
-            <p className="text-xs text-slate-400 mt-2">Clarity, grammar, confidence combined</p>
+            <div className="text-3xl font-black text-white">{Math.round(summary.communicationScore)}</div>
+            <p className="text-xs text-slate-400 mt-2 font-medium">Clarity, grammar, confidence combined</p>
           </CardContent>
         </Card>
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="relative group border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <BrainCircuit className="h-4 w-4 text-purple-400" /> Technical Knowledge
+            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-300">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-md">
+                <BrainCircuit className="h-4 w-4 text-white" />
+              </div>
+              Technical Knowledge
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-white">{Math.round(summary.technicalScore)}</div>
-            <p className="text-xs text-slate-400 mt-2">Accuracy across technical questions</p>
+            <div className="text-3xl font-black text-white">{Math.round(summary.technicalScore)}</div>
+            <p className="text-xs text-slate-400 mt-2 font-medium">Accuracy across technical questions</p>
           </CardContent>
         </Card>
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="relative group border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-600/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-medium text-slate-300">
-              <Timer className="h-4 w-4 text-amber-400" /> Avg Time / Question
+            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-300">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md">
+                <Timer className="h-4 w-4 text-white" />
+              </div>
+              Avg Time / Question
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-semibold text-white">{summary.avgTimePerQuestion}m</div>
-            <p className="text-xs text-slate-400 mt-2">Total practice {formatDuration(summary.totalDurationMinutes)}</p>
+            <div className="text-3xl font-black text-white">{summary.avgTimePerQuestion}m</div>
+            <p className="text-xs text-slate-400 mt-2 font-medium">Total practice: <span className="text-amber-400 font-bold">{formatDuration(summary.totalDurationMinutes)}</span></p>
           </CardContent>
         </Card>
       </section>
 
+      {/* Communication Skills & Progress Section */}
       <section className="grid gap-6 lg:grid-cols-3">
-        <Card className="border-slate-800/70 bg-slate-900/60 lg:col-span-1">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl lg:col-span-1 hover:shadow-xl hover:shadow-cyan-500/5 transition-all duration-300">
           <CardHeader>
             <CardTitle className="text-sm font-medium text-slate-300">Communication Skills</CardTitle>
           </CardHeader>
@@ -474,10 +549,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60 lg:col-span-2">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl lg:col-span-2 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-sky-400" /> Skill Progress Over Time
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-white" />
+              </div>
+              Skill Progress Over Time
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[280px]">
@@ -497,11 +575,15 @@ export default function AnalyticsDashboardPage() {
         </Card>
       </section>
 
+      {/* Chart Section - Communication & Accuracy */}
       <section className="grid gap-6 lg:grid-cols-2 animate-in fade-in slide-in-from-bottom-2">
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-sky-400" /> Communication Skills Snapshot
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
+                <BarChart3 className="h-4 w-4 text-white" />
+              </div>
+              Communication Skills Snapshot
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[240px]">
@@ -524,10 +606,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-amber-400" /> Accuracy vs Speed
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+                <ArrowUpRight className="h-4 w-4 text-white" />
+              </div>
+              Accuracy vs Speed
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[240px]">
@@ -544,11 +629,30 @@ export default function AnalyticsDashboardPage() {
         </Card>
       </section>
 
+      {/* Activity Heatmap - Premium Design */}
+      <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300">
+        <CardHeader>
+          <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+              <Flame className="h-4 w-4 text-white" />
+            </div>
+            Activity Heatmap
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="h-[200px] p-6">
+          <Heatmap activity={activity} />
+        </CardContent>
+      </Card>
+
+      {/* Advanced Communication Insights */}
       <section className="grid gap-6 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-2">
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Mic2 className="h-4 w-4 text-emerald-400" /> Filler Word Detector
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                <Mic2 className="h-4 w-4 text-white" />
+              </div>
+              Filler Word Detector
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -574,10 +678,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Gauge className="h-4 w-4 text-sky-400" /> Speaking Speed vs Ideal
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <Gauge className="h-4 w-4 text-white" />
+              </div>
+              Speaking Speed vs Ideal
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -607,10 +714,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-400" /> Structure & Tone Quality
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              Structure & Tone Quality
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -645,11 +755,15 @@ export default function AnalyticsDashboardPage() {
         </Card>
       </section>
 
+      {/* Confidence Insights Section */}
       <section className="grid gap-6 lg:grid-cols-2 animate-in fade-in slide-in-from-bottom-2">
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-sky-400" /> Confidence Timeline (Latest Session)
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-white" />
+              </div>
+              Confidence Timeline (Latest Session)
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[240px]">
@@ -668,10 +782,13 @@ export default function AnalyticsDashboardPage() {
             )}
           </CardContent>
         </Card>
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Activity className="h-4 w-4 text-emerald-400" /> Session Confidence Trend
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                <Activity className="h-4 w-4 text-white" />
+              </div>
+              Session Confidence Trend
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[240px]">
@@ -694,11 +811,15 @@ export default function AnalyticsDashboardPage() {
         </Card>
       </section>
 
+      {/* Statistics & Distribution Section */}
       <section className="grid gap-6 lg:grid-cols-3">
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Activity className="h-4 w-4 text-emerald-400" /> Practice Statistics
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                <Activity className="h-4 w-4 text-white" />
+              </div>
+              Practice Statistics
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 text-sm text-slate-300">
@@ -710,10 +831,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60 lg:col-span-2">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl lg:col-span-2 hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Target className="h-4 w-4 text-purple-400" /> Practice Distribution by Module
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <Target className="h-4 w-4 text-white" />
+              </div>
+              Practice Distribution by Module
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[260px]">
@@ -730,11 +854,15 @@ export default function AnalyticsDashboardPage() {
         </Card>
       </section>
 
+      {/* Question Analytics Section */}
       <section className="grid gap-6 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-2">
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <ClipboardList className="h-4 w-4 text-sky-400" /> Question Difficulty
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <ClipboardList className="h-4 w-4 text-white" />
+              </div>
+              Question Difficulty
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[220px]">
@@ -750,10 +878,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60 lg:col-span-2">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl lg:col-span-2 hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Target className="h-4 w-4 text-emerald-400" /> Accuracy by Question Type
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                <Target className="h-4 w-4 text-white" />
+              </div>
+              Accuracy by Question Type
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -776,11 +907,15 @@ export default function AnalyticsDashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-2">
-        <Card className="border-slate-800/70 bg-slate-900/60 lg:col-span-2">
+      {/* Company & Coach Insights */}
+      <section className="grid gap-6 lg:grid-cols-3 animate-in fade-in-slide-in-from-bottom-2">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl lg:col-span-2 hover:shadow-xl hover:shadow-cyan-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-sky-400" /> Company-wise Readiness
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                <ShieldCheck className="h-4 w-4 text-white" />
+              </div>
+              Company-wise Readiness
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[260px]">
@@ -796,10 +931,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-400" /> Company Gap Signals
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              Company Gap Signals
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
@@ -872,10 +1010,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-blue-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <ArrowUpRight className="h-4 w-4 text-sky-400" /> Next Session Recommendations
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
+                <ArrowUpRight className="h-4 w-4 text-white" />
+              </div>
+              Next Session Recommendations
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -935,10 +1076,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <BarChart3 className="h-4 w-4 text-emerald-400" /> Confidence & Performance Insights
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                <BarChart3 className="h-4 w-4 text-white" />
+              </div>
+              Confidence & Performance Insights
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -977,22 +1121,14 @@ export default function AnalyticsDashboardPage() {
         </Card>
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-slate-800/70 bg-slate-900/60">
+      {/* Communication vs Confidence */}
+      <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Flame className="h-4 w-4 text-amber-400" /> Activity Heatmap
-            </CardTitle>
-          </CardHeader>
-            <CardContent className="h-[320px] p-4">
-            <Heatmap activity={activity} />
-          </CardContent>
-        </Card>
-
-        <Card className="border-slate-800/70 bg-slate-900/60">
-          <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <Mic2 className="h-4 w-4 text-emerald-400" /> Communication vs Confidence
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                <Mic2 className="h-4 w-4 text-white" />
+              </div>
+              Communication vs Confidence
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[320px]">
@@ -1013,13 +1149,15 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-      </section>
-
+      {/* Final Insights Section */}
       <section className="grid gap-6 lg:grid-cols-2">
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" /> Strengths & Focus Areas
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
+                <CheckCircle2 className="h-4 w-4 text-white" />
+              </div>
+              Strengths & Focus Areas
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -1057,10 +1195,13 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="border-slate-800/70 bg-slate-900/60">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-sm font-medium text-slate-300 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-purple-400" /> AI Insights
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+                <TrendingUp className="h-4 w-4 text-white" />
+              </div>
+              AI Insights
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">

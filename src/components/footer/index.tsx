@@ -12,13 +12,14 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 mb-12">
           {/* Brand Column */}
           <div className="lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-4">
-              <div className="relative">
-                <Sparkles className="h-8 w-8 text-primary animate-glow-pulse" />
-                <div className="absolute inset-0 h-8 w-8 text-secondary animate-glow-pulse opacity-30" />
-              </div>
+            <div className="flex items-center space-x-3 mb-4">
+              <img 
+                src="/image/fluenzyAI.jpeg" 
+                alt="Fluenzy AI Logo" 
+                className="h-9 w-auto rounded-lg object-contain shadow-lg"
+              />
               <span
-                className="text-2xl font-bold"
+                className="text-2xl font-black tracking-tight"
                 style={{
                   background: 'var(--gradient-primary)',
                   WebkitBackgroundClip: 'text',

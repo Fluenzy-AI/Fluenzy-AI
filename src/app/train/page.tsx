@@ -92,29 +92,10 @@ const TrainPage = () => {
 
   return (
     <div className="space-y-6">
-      {ctaInfo && (
-        <Card className="border-purple-500/30 bg-purple-500/5">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                  <ctaInfo.icon size={24} className="text-purple-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold">{ctaInfo.text}</h3>
-                  <p className="text-sm text-muted-foreground">{ctaInfo.description}</p>
-                </div>
-              </div>
-              <Button asChild className="bg-purple-600 hover:bg-purple-700">
-                <Link href={ctaInfo.href}>{ctaInfo.text}</Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
-      <div className="bg-slate-900/30 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl p-6 md:p-8 lg:p-12">
-        <LearningPath />
+
+      <div className="py-8">
+        <LearningPath ctaInfo={ctaInfo} />
       </div>
     </div>
   );

@@ -368,7 +368,12 @@ export default function ProfilePage() {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
               <div className="flex items-center gap-4">
                 {user.image ? (
-                  <img src={user.image} alt={user.name} className="w-20 h-20 rounded-full object-cover" />
+                  <img 
+                    src={user.image} 
+                    alt={user.name} 
+                    className="w-20 h-20 rounded-full object-cover" 
+                    referrerPolicy="no-referrer"
+                  />
                 ) : (
                   <div className="w-20 h-20 rounded-full bg-slate-700" />
                 )}

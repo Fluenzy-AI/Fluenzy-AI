@@ -321,7 +321,12 @@ const Dashboard: React.FC<{ user: UserProfile; isAnalyticsView?: boolean }> = ({
           <div className="w-16 h-16 rounded-[1.5rem] bg-gradient-to-br from-blue-600 to-indigo-600 p-0.5 shadow-xl shadow-blue-100">
             <div className="w-full h-full bg-white rounded-[1.4rem] flex items-center justify-center overflow-hidden">
                {user.picture ? (
-                 <img src={user.picture} alt={user.name} className="w-full h-full object-cover" />
+                 <img 
+                   src={user.picture} 
+                   alt={user.name} 
+                   className="w-full h-full object-cover" 
+                   referrerPolicy="no-referrer"
+                 />
                ) : (
                  <User className="text-blue-600" size={32} />
                )}
