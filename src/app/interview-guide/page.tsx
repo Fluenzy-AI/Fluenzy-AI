@@ -57,45 +57,86 @@ interface InterviewGuide {
   section8_mockInterview: GuideSection;
 }
 
+const SECTION_ORDER = [
+  "section1_preparation",
+  "section2_introduction",
+  "section3_hrQuestions",
+  "section4_technicalQuestions",
+  "section5_companySpecific",
+  "section6_communication",
+  "section7_cheatSheet",
+  "section8_mockInterview",
+] as const;
+
+type SectionId = (typeof SECTION_ORDER)[number];
+
 const SectionAccordion = ({
   title,
   icon: Icon,
   color,
   children,
   defaultOpen = false,
+  isVisible = false,
+  animationDelay = 0,
+  isOpen = false,
+  onToggle,
+  sectionId,
 }: {
   title: string;
   icon: React.ElementType;
   color: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  isVisible?: boolean;
+  animationDelay?: number;
+  isOpen?: boolean;
+  onToggle?: () => void;
+  sectionId?: string;
 }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
+  const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
+  const isControlled = isOpen !== undefined;
+  const currentIsOpen = isControlled ? isOpen : internalIsOpen;
+
+  const handleToggle = () => {
+    if (onToggle) {
+      onToggle();
+    } else {
+      setInternalIsOpen(!internalIsOpen);
+    }
+  };
 
   return (
-    <div className="group bg-slate-900/40 backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-xl hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 overflow-hidden">
+    <div 
+      className={`group bg-slate-900/40 backdrop-blur-2xl rounded-[2rem] border border-white/10 shadow-xl hover:shadow-2xl hover:shadow-blue-500/10 transition-all duration-500 overflow-hidden ${
+        isVisible 
+          ? "opacity-100 translate-y-0" 
+          : "opacity-0 translate-y-8"
+      }`}
+      style={{ transitionDelay: `${animationDelay}ms`, transitionProperty: 'opacity, transform' }}
+      data-section-id={sectionId}
+    >
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full p-6 flex items-center justify-between hover:bg-white/5 transition-colors duration-300"
+        onClick={handleToggle}
+        className="w-full p-5 md:p-6 flex items-center justify-between hover:bg-white/5 transition-colors duration-300"
       >
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4 md:gap-5">
           <div
-            className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-500`}
+            className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br ${color} flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:scale-110 transition-transform duration-500 flex-shrink-0`}
           >
-            <Icon size={26} className="text-white drop-shadow-md" />
+            <Icon size={22} className="text-white drop-shadow-md md:size-26" />
           </div>
-          <h2 className="text-xl md:text-2xl font-black text-white tracking-tight text-left">
+          <h2 className="text-lg md:text-2xl font-black text-white tracking-tight text-left">
             {title}
           </h2>
         </div>
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/10 transition-all duration-500 ${isOpen ? "bg-white/20 rotate-180 border-blue-500/30" : ""}`}>
-           <ChevronDown size={20} className={`text-slate-400 transition-colors ${isOpen ? "text-blue-400" : ""}`} />
+        <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center bg-white/5 border border-white/10 transition-all duration-300 ${currentIsOpen ? "bg-indigo-500/20 border-indigo-500/30" : ""}`}>
+           <ChevronUp size={18} className={`text-slate-400 transition-all duration-300 ${currentIsOpen ? "text-indigo-400 transform rotate-180" : ""} md:size-20`} />
         </div>
       </button>
       <div 
-        className={`px-6 md:px-8 overflow-hidden transition-all duration-500 ease-in-out ${isOpen ? "max-h-[5000px] opacity-100 pb-8 pt-2" : "max-h-0 opacity-0"}`}
+        className={`px-4 md:px-6 lg:px-8 overflow-hidden transition-all duration-500 ease-in-out ${currentIsOpen ? "max-h-[5000px] opacity-100 pb-6 md:pb-8 pt-2" : "max-h-0 opacity-0"}`}
       >
-        <div className="border-t border-white/5 pt-6">
+        <div className="border-t border-white/5 pt-4 md:pt-6">
           {children}
         </div>
       </div>
@@ -193,31 +234,41 @@ const IntroductionCard = ({
   duration: string;
   content: string;
   icon: React.ReactNode;
-}) => (
-  <div className="relative group bg-slate-900/60 backdrop-blur-2xl rounded-[2rem] p-8 border border-white/[0.08] hover:border-indigo-500/40 transition-all duration-500 overflow-hidden shadow-xl">
-    <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 blur-[80px] -z-10 rounded-full group-hover:bg-indigo-500/10 transition-colors duration-700"></div>
-    <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/5 blur-[60px] -z-10 rounded-full"></div>
-    
-    <div className="flex items-center justify-between mb-6">
-      <div className="flex items-center gap-4">
-        <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-inner">
-          {icon}
+}) => {
+  // Split content into lines/paragraphs for better readability
+  const contentLines = content.split('\n').filter(line => line.trim());
+  
+  return (
+    <div className="relative group bg-slate-900/60 backdrop-blur-2xl rounded-[2rem] p-6 md:p-8 border border-white/[0.08] hover:border-indigo-500/40 transition-all duration-500 overflow-hidden shadow-xl h-full flex flex-col">
+      <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-500/5 blur-[80px] -z-10 rounded-full group-hover:bg-indigo-500/10 transition-colors duration-700"></div>
+      <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/5 blur-[60px] -z-10 rounded-full"></div>
+      
+      <div className="flex items-center justify-between mb-4 md:mb-6">
+        <div className="flex items-center gap-3 md:gap-4">
+          <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-inner flex-shrink-0">
+            {icon}
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-0.5">Duration</span>
+            <span className="font-black text-white text-sm tracking-tight">{duration}</span>
+          </div>
         </div>
-        <div className="flex flex-col">
-          <span className="text-[10px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-0.5">Duration</span>
-          <span className="font-black text-white text-sm tracking-tight">{duration}</span>
+        <CopyButton text={content} />
+      </div>
+      
+      <div className="relative pl-4 md:pl-6 flex-grow">
+        <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-transparent opacity-30 rounded-full" />
+        <div className="space-y-3 md:space-y-4">
+          {contentLines.map((line, index) => (
+            <p key={index} className="text-slate-300 leading-relaxed whitespace-pre-wrap text-sm md:text-base font-medium">
+              {line}
+            </p>
+          ))}
         </div>
       </div>
-      <CopyButton text={content} />
     </div>
-    <div className="relative pl-6">
-      <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-indigo-500 to-transparent opacity-30 rounded-full" />
-      <p className="text-slate-300 leading-loose whitespace-pre-wrap text-base font-medium italic">
-        "{content}"
-      </p>
-    </div>
-  </div>
-);
+  );
+};
 
 const InterviewGuidePageContent = () => {
   const { data: session, status } = useSession();
@@ -231,6 +282,11 @@ const InterviewGuidePageContent = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [currentGuideId, setCurrentGuideId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    new Set(["section1_preparation"])
+  );
+  const [unlockedSectionCount, setUnlockedSectionCount] = useState(1);
+  const [visibleIntroCards, setVisibleIntroCards] = useState(1);
 
   // Usage tracking
   const [usage, setUsage] = useState<{
@@ -273,6 +329,111 @@ const InterviewGuidePageContent = () => {
       loadGuideFromHistory(guideId);
     }
   }, [guideId, session]);
+
+  useEffect(() => {
+    if (!guide) return;
+    setUnlockedSectionCount(1);
+    setExpandedSections(new Set(["section1_preparation"]));
+    setVisibleIntroCards(1);
+  }, [guide]);
+
+  const unlockNextSection = (sectionId: SectionId) => {
+    const currentIndex = SECTION_ORDER.indexOf(sectionId);
+    if (currentIndex < 0) return;
+
+    setUnlockedSectionCount((prev) => {
+      if (prev !== currentIndex + 1) {
+        return prev;
+      }
+      return Math.min(prev + 1, SECTION_ORDER.length);
+    });
+  };
+
+  const handleSectionToggle = (sectionId: SectionId) => {
+    const shouldUnlockNext = !expandedSections.has(sectionId);
+
+    setExpandedSections((prev) => {
+      const next = new Set(prev);
+      const isCurrentlyExpanded = next.has(sectionId);
+
+      if (isCurrentlyExpanded) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+
+      return next;
+    });
+
+    if (shouldUnlockNext) {
+      unlockNextSection(sectionId);
+    }
+  };
+
+  useEffect(() => {
+    if (!guide) return;
+
+    const currentSectionId = SECTION_ORDER[unlockedSectionCount - 1];
+    if (!currentSectionId) return;
+
+    const currentSectionElement = document.querySelector(
+      `[data-section-id="${currentSectionId}"]`
+    );
+
+    if (!currentSectionElement) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const currentEntry = entries[0];
+        if (currentEntry?.isIntersecting) {
+          unlockNextSection(currentSectionId);
+        }
+      },
+      {
+        threshold: 0.4,
+      }
+    );
+
+    observer.observe(currentSectionElement);
+
+    return () => observer.disconnect();
+  }, [guide, unlockedSectionCount]);
+
+  const isSectionVisible = (sectionId: SectionId) =>
+    SECTION_ORDER.indexOf(sectionId) < unlockedSectionCount;
+  const isSectionExpanded = (sectionId: SectionId) => expandedSections.has(sectionId);
+
+  useEffect(() => {
+    if (!guide?.section2_introduction || !isSectionVisible("section2_introduction")) {
+      return;
+    }
+
+    const introOrder = ["short30sec", "medium60sec", "long90sec"] as const;
+    const availableIntroCards = introOrder.filter(
+      (key) => !!guide.section2_introduction[key]
+    );
+
+    if (availableIntroCards.length === 0 || visibleIntroCards >= availableIntroCards.length) {
+      return;
+    }
+
+    const currentCardKey = availableIntroCards[visibleIntroCards - 1];
+    const currentCard = document.querySelector(`[data-intro-card="${currentCardKey}"]`);
+    if (!currentCard) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          setVisibleIntroCards((prev) => Math.min(prev + 1, availableIntroCards.length));
+        }
+      },
+      { threshold: 0.65 }
+    );
+
+    observer.observe(currentCard);
+    return () => observer.disconnect();
+  }, [guide, visibleIntroCards, isSectionVisible("section2_introduction")]);
 
   const loadGuideFromHistory = async (id: string) => {
     setLoading(true);
@@ -647,9 +808,15 @@ const InterviewGuidePageContent = () => {
             ].map((f, i) => (
               <div key={i} className="group bg-slate-900/40 backdrop-blur-3xl rounded-[2.5rem] p-8 border border-white/5 hover:border-white/10 hover:bg-slate-900/60 transition-all duration-500 flex flex-col items-center text-center relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-slate-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className={`w-16 h-16 rounded-2xl bg-${f.color}-500/10 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500 ring-1 ring-white/5 shadow-2xl relative`}>
-                  <div className={`absolute inset-0 bg-${f.color}-500/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity`} />
-                  <f.icon className={`text-${f.color}-400 relative z-10`} size={30} />
+                <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-500 ring-1 ring-white/5 shadow-2xl relative ${
+                  f.color === "blue" ? "bg-blue-500/10" : f.color === "cyan" ? "bg-cyan-500/10" : "bg-indigo-500/10"
+                }`}>
+                  <div className={`absolute inset-0 blur-xl opacity-0 group-hover:opacity-100 transition-opacity ${
+                    f.color === "blue" ? "bg-blue-500/20" : f.color === "cyan" ? "bg-cyan-500/20" : "bg-indigo-500/20"
+                  }`} />
+                  <f.icon className={`relative z-10 ${
+                    f.color === "blue" ? "text-blue-400" : f.color === "cyan" ? "text-cyan-400" : "text-indigo-400"
+                  }`} size={30} />
                 </div>
                 <h4 className="text-white font-black text-sm uppercase tracking-[0.25em] mb-3">{f.title}</h4>
                 <p className="text-slate-400 text-sm font-medium leading-relaxed">{f.desc}</p>
@@ -735,22 +902,31 @@ const InterviewGuidePageContent = () => {
               { label: `${communicationLevel} Communication`, color: "cyan", icon: Languages },
               { label: "8 Multi-Dimensional Sections", color: "indigo", icon: Sparkles }
             ].map((badge, idx) => (
-              <div key={idx} className={`flex items-center gap-2.5 px-4 py-2 rounded-xl bg-${badge.color}-500/5 border border-${badge.color}-500/20 text-${badge.color}-300 text-[11px] font-black uppercase tracking-widest shadow-inner`}>
-                <badge.icon size={14} className={`text-${badge.color}-400`} />
+              <div key={idx} className={`flex items-center gap-2.5 px-4 py-2 rounded-xl ${
+                badge.color === "blue" ? "bg-blue-500/5 border border-blue-500/20 text-blue-300" :
+                badge.color === "cyan" ? "bg-cyan-500/5 border border-cyan-500/20 text-cyan-300" :
+                "bg-indigo-500/5 border border-indigo-500/20 text-indigo-300"
+              } text-[11px] font-black uppercase tracking-widest shadow-inner`}>
+                <badge.icon size={14} className={badge.color === "blue" ? "text-blue-400" : badge.color === "cyan" ? "text-cyan-400" : "text-indigo-400"} />
                 {badge.label}
               </div>
             ))}
           </div>
 
           {/* Guide Sections Grid */}
-          <div className="grid grid-cols-1 gap-8">
+          <div className="grid grid-cols-1 gap-8 md:gap-10">
             {/* Section 1: Preparation */}
-            {guide.section1_preparation && (
+            {guide.section1_preparation && isSectionVisible("section1_preparation") && (
               <SectionAccordion
                 title={guide.section1_preparation.title || "Pre-Interview Blueprint"}
                 icon={BookOpen}
                 color="from-blue-600 to-indigo-600"
                 defaultOpen={true}
+                sectionId="section1_preparation"
+                isVisible={isSectionVisible("section1_preparation")}
+                animationDelay={0}
+                isOpen={isSectionExpanded("section1_preparation")}
+                onToggle={() => handleSectionToggle("section1_preparation")}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8 py-2">
                   {guide.section1_preparation.oneDayBefore && (
@@ -844,7 +1020,7 @@ const InterviewGuidePageContent = () => {
                           STAR Framework Integration
                         </h3>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
                         {Object.entries(guide.section1_preparation.starMethod).map(
                           ([key, value]) => (
                             <div
@@ -866,52 +1042,71 @@ const InterviewGuidePageContent = () => {
             )}
 
             {/* Section 2: Introduction */}
-            {guide.section2_introduction && (
+            {guide.section2_introduction && isSectionVisible("section2_introduction") && (
               <SectionAccordion
                 title={guide.section2_introduction.title || "The Narrative (Self-Intro)"}
                 icon={User}
                 color="from-indigo-600 to-indigo-700"
+                sectionId="section2_introduction"
+                isVisible={isSectionVisible("section2_introduction")}
+                animationDelay={150}
+                isOpen={isSectionExpanded("section2_introduction")}
+                onToggle={() => handleSectionToggle("section2_introduction")}
               >
-                <div className="grid grid-cols-1 gap-6 py-2">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {guide.section2_introduction.short30sec && (
-                      <IntroductionCard
-                        duration="The Elevator Pitch"
-                        content={guide.section2_introduction.short30sec}
-                        icon={<Clock size={22} className="text-blue-400" />}
-                      />
-                    )}
-                    {guide.section2_introduction.medium60sec && (
-                      <div className="md:scale-105 z-10">
+                <div className="grid grid-cols-1 gap-6 md:gap-8 py-2">
+                  {/* Introduction Cards Grid */}
+                  <div className="grid grid-cols-1 gap-6 md:gap-8">
+                    {guide.section2_introduction.short30sec && visibleIntroCards >= 1 && (
+                      <div
+                        className="h-full animate-in fade-in slide-in-from-bottom-4 duration-500"
+                        data-intro-card="short30sec"
+                      >
                         <IntroductionCard
-                          duration="The Standard Pitch"
+                          duration="30 Seconds"
+                          content={guide.section2_introduction.short30sec}
+                          icon={<Clock size={22} className="text-blue-400" />}
+                        />
+                      </div>
+                    )}
+                    {guide.section2_introduction.medium60sec && visibleIntroCards >= 2 && (
+                      <div
+                        className="h-full animate-in fade-in slide-in-from-bottom-4 duration-500"
+                        data-intro-card="medium60sec"
+                      >
+                        <IntroductionCard
+                          duration="1 Minute"
                           content={guide.section2_introduction.medium60sec}
                           icon={<Clock size={22} className="text-indigo-400" />}
                         />
                       </div>
                     )}
-                    {guide.section2_introduction.long90sec && (
-                      <IntroductionCard
-                        duration="The Deep Dive"
-                        content={guide.section2_introduction.long90sec}
-                        icon={<Clock size={22} className="text-cyan-400" />}
-                      />
+                    {guide.section2_introduction.long90sec && visibleIntroCards >= 3 && (
+                      <div
+                        className="h-full animate-in fade-in slide-in-from-bottom-4 duration-500"
+                        data-intro-card="long90sec"
+                      >
+                        <IntroductionCard
+                          duration="2 Minutes"
+                          content={guide.section2_introduction.long90sec}
+                          icon={<Clock size={22} className="text-cyan-400" />}
+                        />
+                      </div>
                     )}
                   </div>
                   
                   {guide.section2_introduction.tips && (
-                    <div className="p-8 rounded-[2.5rem] bg-slate-900/60 border border-white/[0.08] shadow-2xl mt-4">
-                      <div className="flex items-center gap-4 mb-6">
-                         <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20">
-                            <Lightbulb size={24} className="text-indigo-400" />
+                    <div className="p-6 md:p-8 rounded-[2.5rem] bg-slate-900/60 border border-white/[0.08] shadow-2xl mt-4">
+                      <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-6">
+                         <div className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 flex-shrink-0">
+                            <Lightbulb size={20} className="text-indigo-400 md:w-6 md:h-6" />
                          </div>
-                        <h4 className="font-black text-2xl text-white tracking-tight">Delivery Precision Tips</h4>
+                        <h4 className="font-black text-lg md:text-xl text-white tracking-tight">Delivery Precision Tips</h4>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 md:gap-x-12 gap-y-4 md:gap-y-6">
                         {guide.section2_introduction.tips.map((tip: string, i: number) => (
-                          <div key={i} className="flex items-start gap-4 text-slate-400 text-sm font-medium leading-relaxed border-l border-white/5 pl-4 hover:border-indigo-500/40 transition-colors">
-                            <span className="text-indigo-500 font-bold">•</span>
-                            {tip}
+                          <div key={i} className="flex items-start gap-3 md:gap-4 text-slate-400 text-sm md:text-base font-medium leading-relaxed border-l-2 border-white/5 pl-4 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all rounded-r-lg p-2 -ml-2">
+                            <span className="text-indigo-500 font-bold flex-shrink-0 w-5 h-5 flex items-center justify-center bg-indigo-500/10 rounded-full text-xs">{i + 1}</span>
+                            <span className="flex-grow">{tip}</span>
                           </div>
                         ))}
                       </div>
@@ -922,11 +1117,16 @@ const InterviewGuidePageContent = () => {
             )}
 
             {/* Section 3: HR Questions */}
-            {guide.section3_hrQuestions && (
+            {guide.section3_hrQuestions && isSectionVisible("section3_hrQuestions") && (
               <SectionAccordion
                 title={guide.section3_hrQuestions.title || "HR Strategic Responses"}
                 icon={MessageSquare}
                 color="from-blue-600 to-indigo-600"
+                sectionId="section3_hrQuestions"
+                isVisible={isSectionVisible("section3_hrQuestions")}
+                animationDelay={300}
+                isOpen={isSectionExpanded("section3_hrQuestions")}
+                onToggle={() => handleSectionToggle("section3_hrQuestions")}
               >
                 <div className="grid grid-cols-1 gap-6 py-2">
                   {guide.section3_hrQuestions.questions?.map((q: any, i: number) => (
@@ -943,11 +1143,16 @@ const InterviewGuidePageContent = () => {
             )}
 
             {/* Section 4: Technical Questions */}
-            {guide.section4_technicalQuestions && (
+            {guide.section4_technicalQuestions && isSectionVisible("section4_technicalQuestions") && (
               <SectionAccordion
                 title={guide.section4_technicalQuestions.title || "Domain Expert Deep-Dive"}
                 icon={Code}
                 color="from-indigo-600 to-blue-600"
+                sectionId="section4_technicalQuestions"
+                isVisible={isSectionVisible("section4_technicalQuestions")}
+                animationDelay={450}
+                isOpen={isSectionExpanded("section4_technicalQuestions")}
+                onToggle={() => handleSectionToggle("section4_technicalQuestions")}
               >
                 <div className="space-y-10 py-2">
                   {["beginner", "intermediate", "advanced"].map(
@@ -973,14 +1178,19 @@ const InterviewGuidePageContent = () => {
             )}
 
             {/* Section 5: Company Specific */}
-            {guide.section5_companySpecific && (
+            {guide.section5_companySpecific && isSectionVisible("section5_companySpecific") && (
               <SectionAccordion
                 title={guide.section5_companySpecific.title || "Institutional Alignment"}
                 icon={Building2}
                 color="from-indigo-700 to-blue-800"
+                sectionId="section5_companySpecific"
+                isVisible={isSectionVisible("section5_companySpecific")}
+                animationDelay={600}
+                isOpen={isSectionExpanded("section5_companySpecific")}
+                onToggle={() => handleSectionToggle("section5_companySpecific")}
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-2">
-                  {[
+                  {[    
                     { title: "Why This Company?", content: guide.section5_companySpecific.whyThisCompany, color: "blue", icon: Target },
                     { title: "Culture Integration", content: guide.section5_companySpecific.cultureFit, color: "indigo", icon: Sparkles },
                     { title: "Strategic Role Expectations", content: guide.section5_companySpecific.roleExpectations, color: "cyan", icon: Target },
@@ -988,7 +1198,11 @@ const InterviewGuidePageContent = () => {
                   ].map((item, idx) => item.content && (
                     <div key={idx} className="group/comp bg-slate-900/60 backdrop-blur-xl rounded-[2.2rem] p-8 border border-white/[0.08] hover:border-blue-500/30 transition-all duration-500 flex flex-col items-start gap-4">
                       <div className="w-full flex justify-between items-center mb-2">
-                         <div className={`flex items-center gap-3 px-4 py-1.5 rounded-full bg-${item.color}-500/10 border border-${item.color}-500/20 text-${item.color}-400`}>
+                         <div className={`flex items-center gap-3 px-4 py-1.5 rounded-full ${
+                           item.color === "blue" ? "bg-blue-500/10 border border-blue-500/20 text-blue-400" :
+                           item.color === "indigo" ? "bg-indigo-500/10 border border-indigo-500/20 text-indigo-400" :
+                           "bg-cyan-500/10 border border-cyan-500/20 text-cyan-400"
+                         }`}>
                             <item.icon size={16} />
                             <span className="text-[10px] font-black uppercase tracking-widest">{item.title}</span>
                          </div>
@@ -1004,11 +1218,16 @@ const InterviewGuidePageContent = () => {
             )}
 
             {/* Section 6: Communication */}
-            {guide.section6_communication && (
+            {guide.section6_communication && isSectionVisible("section6_communication") && (
               <SectionAccordion
                 title={guide.section6_communication.title || "Communication Refinement"}
                 icon={Languages}
                 color="from-cyan-600 to-indigo-600"
+                sectionId="section6_communication"
+                isVisible={isSectionVisible("section6_communication")}
+                animationDelay={750}
+                isOpen={isSectionExpanded("section6_communication")}
+                onToggle={() => handleSectionToggle("section6_communication")}
               >
                 <div className="grid grid-cols-1 gap-10 py-2">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -1094,11 +1313,16 @@ const InterviewGuidePageContent = () => {
             )}
 
             {/* Section 7: Cheat Sheet */}
-            {guide.section7_cheatSheet && (
+            {guide.section7_cheatSheet && isSectionVisible("section7_cheatSheet") && (
               <SectionAccordion
                 title={guide.section7_cheatSheet.title || "Rapid Mastery Cheat Sheet"}
                 icon={FileText}
                 color="from-indigo-600 to-indigo-700"
+                sectionId="section7_cheatSheet"
+                isVisible={isSectionVisible("section7_cheatSheet")}
+                animationDelay={900}
+                isOpen={isSectionExpanded("section7_cheatSheet")}
+                onToggle={() => handleSectionToggle("section7_cheatSheet")}
               >
                 <div className="grid grid-cols-1 gap-10 py-2">
                   {guide.section7_cheatSheet.keyLinesToMemorize && (
@@ -1163,11 +1387,16 @@ const InterviewGuidePageContent = () => {
             )}
 
             {/* Section 8: Mock Interview */}
-            {guide.section8_mockInterview && (
+            {guide.section8_mockInterview && isSectionVisible("section8_mockInterview") && (
               <SectionAccordion
                 title={guide.section8_mockInterview.title || "Rapid Fire Simulation"}
                 icon={Target}
                 color="from-rose-600 to-indigo-600"
+                sectionId="section8_mockInterview"
+                isVisible={isSectionVisible("section8_mockInterview")}
+                animationDelay={1050}
+                isOpen={isSectionExpanded("section8_mockInterview")}
+                onToggle={() => handleSectionToggle("section8_mockInterview")}
               >
                 <div className="grid grid-cols-1 gap-6 py-2">
                   <p className="text-slate-500 text-sm font-medium italic mb-2 px-1">
