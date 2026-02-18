@@ -34,27 +34,25 @@ interface RoomData {
 // Generate stable user ID (session storage preferred)
 function getStableUserId(sessionUserId: string | undefined): string {
   // Only access storage on client side
-  if (typeof sessionStorage === 'undefined') {
+  if (typeof window === 'undefined') {
     return sessionUserId || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
   
   // Try sessionStorage first (survives page reloads during session)
-  const stored = sessionStorage.getItem('gd_userId');
+  const stored = window.sessionStorage.getItem('gd_userId');
   if (stored) return stored;
 
   // Try localStorage as fallback
-  const localStored = typeof localStorage !== 'undefined' ? localStorage.getItem('gd_userId') : null;
+  const localStored = window.localStorage.getItem('gd_userId');
   if (localStored) {
-    sessionStorage.setItem('gd_userId', localStored);
+    window.sessionStorage.setItem('gd_userId', localStored);
     return localStored;
   }
 
   // Generate stable ID
   const newId = sessionUserId || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  sessionStorage.setItem('gd_userId', newId);
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem('gd_userId', newId);
-  }
+  window.sessionStorage.setItem('gd_userId', newId);
+  window.localStorage.setItem('gd_userId', newId);
   return newId;
 }
 
@@ -69,11 +67,11 @@ export default function LiveGDPage() {
   
   // Generate numeric UID for Agora (stable too)
   const [agoraUid, setAgoraUid] = useState<number>(() => {
-    if (typeof sessionStorage === 'undefined') return Math.floor(Math.random() * 1000000);
-    const stored = sessionStorage.getItem('gd_agoraUid');
+    if (typeof window === 'undefined') return Math.floor(Math.random() * 1000000);
+    const stored = window.sessionStorage.getItem('gd_agoraUid');
     if (stored) return parseInt(stored, 10);
     const newUid = Math.floor(Math.random() * 1000000);
-    sessionStorage.setItem('gd_agoraUid', newUid.toString());
+    window.sessionStorage.setItem('gd_agoraUid', newUid.toString());
     return newUid;
   });
 

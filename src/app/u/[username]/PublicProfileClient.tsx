@@ -5,7 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { CalendarDays, Code, Download, ExternalLink, FileText, Github, Globe, Linkedin, MapPin } from "lucide-react";
+import {
+  CalendarDays, Code2, Download, ExternalLink, FileText, Github, Globe,
+  Linkedin, MapPin, Award, Briefcase, GraduationCap, BookOpen, Languages,
+  FolderKanban, Activity, TrendingUp, Zap, Star, Eye, Share2, Copy, Check,
+} from "lucide-react";
 
 type ResumeItem = {
   id: string;
@@ -176,7 +180,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
     { key: "github", url: githubUrl, icon: Github },
     { key: "linkedin", url: linkedinUrl, icon: Linkedin },
     { key: "portfolio", url: portfolioUrl, icon: Globe },
-    { key: "leetcode", url: leetcodeUrl, icon: Code },
+    { key: "leetcode", url: leetcodeUrl, icon: Code2 },
   ];
   const location = (profile as any).location as string | undefined;
   const analyticsReportEnabled = Boolean(profile.publicSections?.analyticsReport);
