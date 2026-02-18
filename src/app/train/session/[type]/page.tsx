@@ -106,7 +106,6 @@ const SessionPage = () => {
               <VideoAnalysisPanel 
                 sessionId={sessionId}
                 isActive={true}
-                autoStart={true}
               />
             </div>
           )}
