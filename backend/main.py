@@ -379,19 +379,20 @@ def encode_base64_image(frame: np.ndarray) -> str:
         return ""
 
 
-# Global model
+# Global model (loaded lazily)
 yolo_model = None
 
-# Global behavioral analyzer
-behavioral_analyzer = BehavioralAnalyzer()
+# Global behavioral analyzer (loaded lazily in websocket)
+# behavioral_analyzer = BehavioralAnalyzer()  # REMOVED - causes OOM on free tier
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifespan context manager"""
+    """Lifespan context manager - lightweight startup for Render free tier"""
     global yolo_model
-    print("Starting Company Tracks Video Analysis Server...")
-    yolo_model = load_yolo_model()
+    print("Starting Company Tracks Video Analysis Server (lazy loading enabled)...")
+    # DON'T load models at startup - this causes OOM on free tier
+    # Models will be loaded lazily on first request
     yield
     print("Shutting down server...")
 
