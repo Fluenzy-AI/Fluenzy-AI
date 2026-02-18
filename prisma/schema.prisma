@@ -601,3 +601,30 @@ model GDTopic {
   
   @@index([category, difficulty])
 }
+
+// Latest topics asked by companies (managed by Super Admin)
+model LatestTopic {
+  id                            String   @id @default(auto()) @map("_id") @db.ObjectId
+  companyName                   String
+
+  // GD
+  gdTopic                       String?
+  gdQuestion                    String?
+  gdDifficulty                  String?  // Easy, Medium, Hard
+
+  // Personal Interview
+  personalInterviewTopic        String?
+  personalInterviewQuestion     String?
+  personalInterviewDifficulty   String?
+
+  // Technical Interview
+  technicalInterviewTopic       String?
+  technicalInterviewQuestion    String?
+  technicalInterviewDifficulty  String?
+
+  createdAt                     DateTime @default(now())
+  updatedAt                     DateTime @updatedAt
+
+  @@index([companyName])
+  @@index([createdAt])
+}

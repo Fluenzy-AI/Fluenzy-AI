@@ -13,7 +13,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { CalendarDays, Copy, Download, FileText, Pencil, Trash2 } from "lucide-react";
+import {
+  CalendarDays, Copy, Download, FileText, Pencil, Trash2,
+  User, Camera, Globe, Github, Linkedin, ExternalLink, Code2,
+  Briefcase, GraduationCap, Award, FolderKanban, BookOpen,
+  Languages, CreditCard, Upload, Link2, Eye, EyeOff,
+  Shield, TrendingUp, Zap, CheckCircle2, Plus, MapPin,
+  Star, Activity
+} from "lucide-react";
 import Link from "next/link";
 
 interface PlanInfo {
@@ -361,646 +368,863 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="space-y-6">
-        <Card className="bg-gradient-to-br from-slate-900/60 to-slate-800/60 border-slate-700/50">
-          <CardContent className="p-6 md:p-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-              <div className="flex items-center gap-4">
-                {user.image ? (
-                  <img 
-                    src={user.image} 
-                    alt={user.name} 
-                    className="w-20 h-20 rounded-full object-cover" 
-                    referrerPolicy="no-referrer"
+    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-6xl space-y-8">
+
+        {/* ─── Hero Profile Card ─── */}
+        <Card className="relative overflow-hidden border-slate-700/50 bg-slate-900/60">
+          {/* Gradient banner */}
+          <div className="h-32 sm:h-40 bg-gradient-to-r from-purple-600/40 via-blue-600/40 to-pink-600/40 relative">
+            <div className="absolute inset-0 bg-[url('/image/grid-pattern.svg')] opacity-10" />
+            {profile.openToWork && (
+              <div className="absolute top-4 right-4">
+                <Badge className="bg-emerald-500/90 text-white border-0 shadow-lg shadow-emerald-500/20 gap-1.5 px-3 py-1">
+                  <CheckCircle2 className="h-3 w-3" /> Open to Work
+                </Badge>
+              </div>
+            )}
+          </div>
+          <CardContent className="px-6 sm:px-8 pb-8 -mt-14 relative">
+            <div className="flex flex-col sm:flex-row sm:items-end gap-5">
+              {/* Avatar */}
+              <div className="relative group">
+                <div className="w-28 h-28 rounded-2xl border-4 border-slate-900 overflow-hidden bg-slate-800 shadow-xl">
+                  {user.image ? (
+                    <img src={user.image} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-3xl font-black text-white">
+                      {user.name?.charAt(0)}
+                    </div>
+                  )}
+                </div>
+                <label className="absolute bottom-1.5 right-1.5 w-8 h-8 rounded-lg bg-slate-800/90 border border-slate-700 flex items-center justify-center cursor-pointer hover:bg-slate-700 transition-colors group-hover:scale-110">
+                  <Camera className="h-3.5 w-3.5 text-slate-300" />
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setAvatarFile(file);
+                        // Auto-upload
+                        const doUpload = async () => {
+                          setAvatarUploading(true);
+                          setAvatarError(null);
+                          try {
+                            const body = new FormData();
+                            body.append("file", file);
+                            const res = await fetch("/api/profile/avatar", { method: "POST", body });
+                            if (!res.ok) { const err = await res.json().catch(() => null); setAvatarError(err?.error || "Failed to upload"); }
+                            else {
+                              const payload = await res.json();
+                              setProfileData((prev) => prev ? { ...prev, user: { ...prev.user, image: payload.imageUrl } } : prev);
+                            }
+                          } catch { setAvatarError("Failed to upload profile image"); }
+                          finally { setAvatarUploading(false); }
+                        };
+                        doUpload();
+                      }
+                    }}
                   />
-                ) : (
-                  <div className="w-20 h-20 rounded-full bg-slate-700" />
-                )}
-                <div>
-                  <h2 className="text-2xl font-bold text-white">{user.name}</h2>
-                  <p className="text-slate-300">{user.email}</p>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge variant="secondary">{planInfo.planName}</Badge>
-                    <span className="text-sm text-slate-400">
-                      {planInfo.price > 0 ? `₹${planInfo.price}/month` : "Free"}
-                    </span>
+                </label>
+                {avatarUploading && (
+                  <div className="absolute inset-0 rounded-2xl bg-slate-900/70 flex items-center justify-center">
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   </div>
+                )}
+              </div>
+              {avatarError && <p className="text-xs text-red-400">{avatarError}</p>}
+
+              {/* Name + Info */}
+              <div className="flex-1 min-w-0">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{user.name}</h1>
+                {profile.headline && (
+                  <p className="text-sm text-slate-400 mt-0.5">{profile.headline}</p>
+                )}
+                <div className="flex items-center gap-3 mt-2 flex-wrap">
+                  <span className="text-sm text-slate-400">{user.email}</span>
+                  <Badge variant="secondary" className="gap-1 text-[10px] font-bold uppercase tracking-wider">
+                    <Zap className="h-3 w-3" /> {planInfo.planName}
+                  </Badge>
+                  {planInfo.price > 0 && (
+                    <span className="text-xs text-slate-500">₹{planInfo.price}/month</span>
+                  )}
                 </div>
               </div>
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2 text-sm text-slate-300">
-                  <CalendarDays className="h-4 w-4" />
-                  Renewal: {planInfo.renewalDate ? new Date(planInfo.renewalDate).toLocaleDateString() : "N/A"}
+
+              {/* Plan stats (right side on desktop) */}
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500">Usage</p>
+                    <p className="font-semibold text-white">{planInfo.currentUsage} / {planInfo.isUnlimited ? "∞" : planInfo.monthlyLimit}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-slate-500">Renewal</p>
+                    <p className="font-semibold text-white">{planInfo.renewalDate ? new Date(planInfo.renewalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "N/A"}</p>
+                  </div>
                 </div>
-                <div className="text-sm text-slate-300">
-                  Monthly usage: {planInfo.currentUsage} / {planInfo.isUnlimited ? "Unlimited" : planInfo.monthlyLimit}
-                </div>
-                <div className="flex gap-2">
-                  <Button size="sm" asChild>
-                    <Link href="/billing">Manage Billing</Link>
+                {/* Progress bar */}
+                {!planInfo.isUnlimited && planInfo.monthlyLimit && (
+                  <div className="w-40 h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 rounded-full transition-all"
+                      style={{ width: `${Math.min(100, (planInfo.currentUsage / planInfo.monthlyLimit) * 100)}%` }}
+                    />
+                  </div>
+                )}
+                <div className="flex gap-2 mt-1">
+                  <Button size="sm" className="gap-1.5 h-8 text-xs" asChild>
+                    <Link href="/billing"><CreditCard className="h-3 w-3" /> Billing</Link>
                   </Button>
-                  <Button size="sm" variant="outline" asChild>
-                    <Link href="/">Back to App</Link>
+                  <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" asChild>
+                    <Link href={publicProfileUrl} target="_blank"><Globe className="h-3 w-3" /> Public Profile</Link>
                   </Button>
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
 
-            <Separator className="my-6" />
+        {/* ─── Two-Column: Basic Info + Settings ─── */}
+        <div className="grid lg:grid-cols-5 gap-6">
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm text-slate-300">Full Name</label>
+          {/* Left: Profile Details (3 cols) */}
+          <div className="lg:col-span-3 space-y-6">
+
+            {/* Basic Info Card */}
+            <Card className="border-slate-700/50 bg-slate-900/60">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <User className="h-4 w-4 text-purple-400" /> Basic Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Full Name</label>
+                    <Input
+                      value={user.name || ""}
+                      onChange={(e) => updateProfile({ name: e.target.value })}
+                      className="bg-slate-800/50 border-slate-700/50 h-9"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Username</label>
+                    <Input
+                      value={profile.username}
+                      onChange={(e) => updateProfile({ username: e.target.value })}
+                      className="bg-slate-800/50 border-slate-700/50 h-9"
+                    />
+                    {usernameError && <p className="text-xs text-red-400">{usernameError}</p>}
+                    {usernameSuggestions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {usernameSuggestions.map((s) => (
+                          <Button key={s} size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={() => updateProfile({ username: s })}>
+                            {s}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Headline</label>
                   <Input
-                    value={user.name || ""}
-                    onChange={(e) => updateProfile({ name: e.target.value })}
-                    className="mt-1"
+                    placeholder="e.g. Full-Stack Developer | AI Enthusiast"
+                    value={profile.headline || ""}
+                    onChange={(e) => updateProfile({ headline: e.target.value })}
+                    className="bg-slate-800/50 border-slate-700/50 h-9"
                   />
                 </div>
-                <div>
-                  <label className="text-sm text-slate-300">Profile Photo</label>
-                  <div className="flex flex-col md:flex-row md:items-center gap-2 mt-1">
-                    <Input
-                      type="file"
-                      accept="image/png,image/jpeg,image/jpg,image/webp"
-                      onChange={(e) => setAvatarFile(e.target.files?.[0] || null)}
-                    />
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={uploadAvatar}
-                      disabled={!avatarFile || avatarUploading}
-                    >
-                      {avatarUploading ? "Uploading..." : "Upload Photo"}
-                    </Button>
-                  </div>
-                  {avatarError && <p className="text-xs text-red-400 mt-1">{avatarError}</p>}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">About</label>
+                  <Textarea
+                    placeholder="Write a short bio about yourself..."
+                    value={profile.bio || ""}
+                    onChange={(e) => updateProfile({ bio: e.target.value })}
+                    className="bg-slate-800/50 border-slate-700/50 min-h-[80px] resize-y"
+                  />
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-slate-300">Open to Work</span>
+                <div className="flex items-center justify-between rounded-lg bg-emerald-500/5 border border-emerald-500/10 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-emerald-400" />
+                    <span className="text-sm font-medium text-slate-200">Open to Work</span>
+                  </div>
                   <Switch
                     checked={profile.openToWork}
                     onCheckedChange={(checked) => updateProfile({ openToWork: checked })}
                   />
                 </div>
-                <div>
-                  <label className="text-sm text-slate-300">Headline</label>
-                  <Input
-                    value={profile.headline || ""}
-                    onChange={(e) => updateProfile({ headline: e.target.value })}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm text-slate-300">About</label>
-                  <Textarea
-                    value={profile.bio || ""}
-                    onChange={(e) => updateProfile({ bio: e.target.value })}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-sm text-slate-300">Public Profile URL</label>
-                  <div className="flex items-center gap-2 mt-1">
-                    <Input value={publicProfileUrl} readOnly />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => navigator.clipboard.writeText(publicProfileUrl)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm text-slate-300">Username</label>
-                  <Input
-                    value={profile.username}
-                    onChange={(e) => updateProfile({ username: e.target.value })}
-                    className="mt-1"
-                  />
-                  {usernameError && <p className="text-xs text-red-400 mt-1">{usernameError}</p>}
-                  {usernameSuggestions.length > 0 && (
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {usernameSuggestions.map((suggestion) => (
-                        <Button
-                          key={suggestion}
-                          size="sm"
-                          variant="outline"
-                          className="border-slate-700/60"
-                          onClick={() => updateProfile({ username: suggestion })}
-                        >
-                          {suggestion}
-                        </Button>
-                      ))}
+              </CardContent>
+            </Card>
+
+            {/* Social Links Card */}
+            <Card className="border-slate-700/50 bg-slate-900/60">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Link2 className="h-4 w-4 text-blue-400" /> Social Links
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {[
+                    { key: "github", icon: Github, label: "GitHub", placeholder: "https://github.com/username", color: "text-slate-300" },
+                    { key: "linkedin", icon: Linkedin, label: "LinkedIn", placeholder: "https://linkedin.com/in/username", color: "text-blue-400" },
+                    { key: "portfolio", icon: Globe, label: "Portfolio", placeholder: "https://yoursite.com", color: "text-emerald-400" },
+                    { key: "leetcode", icon: Code2, label: "LeetCode", placeholder: "https://leetcode.com/username", color: "text-amber-400" },
+                  ].map((link) => (
+                    <div key={link.key} className="space-y-1.5">
+                      <label className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+                        <link.icon className={`h-3 w-3 ${link.color}`} /> {link.label}
+                      </label>
+                      <Input
+                        placeholder={link.placeholder}
+                        value={(profile.socialLinks as any)?.[link.key] || ""}
+                        onChange={(e) =>
+                          updateProfile({ socialLinks: { ...profile.socialLinks, [link.key]: e.target.value } })
+                        }
+                        className="bg-slate-800/50 border-slate-700/50 h-9 text-sm"
+                      />
                     </div>
-                  )}
+                  ))}
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-slate-300">Social Links</label>
-                  <Input
-                    placeholder="GitHub URL"
-                    value={profile.socialLinks?.github || ""}
-                    onChange={(e) =>
-                      updateProfile({
-                        socialLinks: {
-                          ...profile.socialLinks,
-                          github: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                  <Input
-                    placeholder="LinkedIn URL"
-                    value={profile.socialLinks?.linkedin || ""}
-                    onChange={(e) =>
-                      updateProfile({
-                        socialLinks: {
-                          ...profile.socialLinks,
-                          linkedin: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                  <Input
-                    placeholder="Portfolio URL"
-                    value={profile.socialLinks?.portfolio || ""}
-                    onChange={(e) =>
-                      updateProfile({
-                        socialLinks: {
-                          ...profile.socialLinks,
-                          portfolio: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                  <Input
-                    placeholder="LeetCode URL"
-                    value={profile.socialLinks?.leetcode || ""}
-                    onChange={(e) =>
-                      updateProfile({
-                        socialLinks: {
-                          ...profile.socialLinks,
-                          leetcode: e.target.value,
-                        },
-                      })
-                    }
-                  />
+              </CardContent>
+            </Card>
+
+            {/* Public Profile URL Card */}
+            <Card className="border-slate-700/50 bg-slate-900/60">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-cyan-400" /> Public Profile
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <Input value={publicProfileUrl} readOnly className="bg-slate-800/50 border-slate-700/50 h-9 text-sm font-mono" />
+                  <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" onClick={() => navigator.clipboard.writeText(publicProfileUrl)}>
+                    <Copy className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-9 w-9 shrink-0" asChild>
+                    <a href={publicProfileUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a>
+                  </Button>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-300">Public Profile</span>
+                <div className="flex items-center justify-between rounded-lg bg-slate-800/30 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    {profile.publicProfileEnabled ? <Eye className="h-4 w-4 text-blue-400" /> : <EyeOff className="h-4 w-4 text-slate-500" />}
+                    <span className="text-sm font-medium text-slate-200">Profile Visible to Public</span>
+                  </div>
                   <Switch
                     checked={profile.publicProfileEnabled}
                     onCheckedChange={(checked) => updateProfile({ publicProfileEnabled: checked })}
                   />
                 </div>
-                <div className="text-xs text-slate-400">Choose visible sections</div>
-                <div className="grid grid-cols-2 gap-2 text-sm text-slate-300">
-                  {[
-                    { key: "skills", label: "Skills" },
-                    { key: "experience", label: "Experience" },
-                    { key: "education", label: "Education" },
-                    { key: "certifications", label: "Certifications" },
-                    { key: "projects", label: "Projects" },
-                    { key: "courses", label: "Courses" },
-                    { key: "languages", label: "Languages" },
-                    { key: "analyticsReport", label: "Analytics Report" },
-                  ].map((item) => (
-                    <label key={item.key} className="flex items-center gap-2">
-                      <Checkbox
-                        checked={Boolean(profile.publicSections?.[item.key])}
-                        onCheckedChange={(checked) =>
-                          updateProfile({
-                            publicSections: {
-                              ...profile.publicSections,
-                              [item.key]: Boolean(checked),
-                            },
-                          })
-                        }
-                      />
-                      {item.label}
-                    </label>
+                {profile.publicProfileEnabled && (
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Visible Sections</p>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                      {[
+                        { key: "skills", label: "Skills", icon: Star },
+                        { key: "experience", label: "Experience", icon: Briefcase },
+                        { key: "education", label: "Education", icon: GraduationCap },
+                        { key: "certifications", label: "Certs", icon: Award },
+                        { key: "projects", label: "Projects", icon: FolderKanban },
+                        { key: "courses", label: "Courses", icon: BookOpen },
+                        { key: "languages", label: "Languages", icon: Languages },
+                        { key: "analyticsReport", label: "Analytics", icon: Activity },
+                      ].map((item) => (
+                        <label key={item.key} className={`flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer transition-colors text-xs ${
+                          profile.publicSections?.[item.key]
+                            ? 'border-purple-500/30 bg-purple-500/5 text-slate-200'
+                            : 'border-slate-700/50 bg-slate-800/30 text-slate-400'
+                        }`}>
+                          <Checkbox
+                            checked={Boolean(profile.publicSections?.[item.key])}
+                            onCheckedChange={(checked) =>
+                              updateProfile({ publicSections: { ...profile.publicSections, [item.key]: Boolean(checked) } })
+                            }
+                            className="h-3.5 w-3.5"
+                          />
+                          <item.icon className="h-3 w-3" />
+                          {item.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right: Activity + Quick Stats (2 cols) */}
+          <div className="lg:col-span-2 space-y-6">
+
+            {/* Practice Activity Heatmap */}
+            <Card className="border-slate-700/50 bg-slate-900/60">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Activity className="h-4 w-4 text-emerald-400" /> Practice Activity
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-[repeat(20,1fr)] gap-[3px]">
+                  {heatmapDays.map((day) => (
+                    <div
+                      key={day.key}
+                      title={`${day.count} session${day.count !== 1 ? 's' : ''} on ${day.key}`}
+                      className={`aspect-square rounded-[2px] transition-colors ${
+                        day.count === 0
+                          ? "bg-slate-800/80"
+                          : day.count < 2
+                          ? "bg-emerald-700/70"
+                          : day.count < 4
+                          ? "bg-emerald-500/80"
+                          : "bg-emerald-400"
+                      }`}
+                    />
                   ))}
                 </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+                <div className="flex items-center justify-end gap-1.5 mt-3 text-[10px] text-slate-500">
+                  <span>Less</span>
+                  <div className="w-2.5 h-2.5 rounded-[2px] bg-slate-800/80" />
+                  <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-700/70" />
+                  <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-500/80" />
+                  <div className="w-2.5 h-2.5 rounded-[2px] bg-emerald-400" />
+                  <span>More</span>
+                </div>
+              </CardContent>
+            </Card>
 
-        <Card className="bg-slate-900/60 border-slate-700/50">
-          <CardHeader>
-            <CardTitle>Practice Activity</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-[repeat(20,minmax(0,1fr))] gap-1">
-              {heatmapDays.map((day) => (
-                <div
-                  key={day.key}
-                  title={`${day.count} practice sessions on ${day.key}`}
-                  className={`h-3 w-3 rounded-sm ${
-                    day.count === 0
-                      ? "bg-slate-800"
-                      : day.count < 2
-                      ? "bg-emerald-700"
-                      : day.count < 4
-                      ? "bg-emerald-500"
-                      : "bg-emerald-300"
-                  }`}
-                />
+            {/* Quick Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { label: "Skills", count: sections.skills.length, icon: Star, color: "text-amber-400", bg: "bg-amber-500/10" },
+                { label: "Projects", count: sections.projects.length, icon: FolderKanban, color: "text-blue-400", bg: "bg-blue-500/10" },
+                { label: "Certifications", count: sections.certifications.length, icon: Award, color: "text-purple-400", bg: "bg-purple-500/10" },
+                { label: "Resumes", count: resumes?.length || 0, icon: FileText, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+              ].map((stat) => (
+                <Card key={stat.label} className="border-slate-700/50 bg-slate-900/60">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
+                      <stat.icon className={`h-5 w-5 ${stat.color}`} />
+                    </div>
+                    <div>
+                      <p className="text-xl font-bold text-white">{stat.count}</p>
+                      <p className="text-[10px] text-slate-500 uppercase tracking-wider font-medium">{stat.label}</p>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
 
+            {/* Resume Card */}
+            <Card className="border-slate-700/50 bg-slate-900/60">
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-rose-400" /> Resume
+                </CardTitle>
+                <Button variant="outline" size="sm" className="h-7 text-xs gap-1" asChild>
+                  <a href="/api/resume-pdf" target="_blank" rel="noreferrer">
+                    <Download className="h-3 w-3" /> Generate
+                  </a>
+                </Button>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="file"
+                    accept="application/pdf"
+                    onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                    className="h-9 text-sm bg-slate-800/50 border-slate-700/50"
+                  />
+                  <Button size="sm" className="h-9 gap-1 shrink-0" onClick={uploadResume} disabled={!resumeFile || resumeUploading}>
+                    <Upload className="h-3 w-3" /> {resumeUploading ? "..." : "Upload"}
+                  </Button>
+                </div>
+                {resumeError && <p className="text-xs text-red-400">{resumeError}</p>}
+                {resumes?.length ? (
+                  <div className="space-y-2">
+                    {resumes.map((resume) => (
+                      <div key={resume.id} className="flex items-center justify-between rounded-lg bg-slate-800/40 border border-slate-700/30 p-2.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <FileText className="h-4 w-4 text-slate-400 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs text-slate-200 truncate">{resume.fileName}</p>
+                            <p className="text-[10px] text-slate-500">{new Date(resume.uploadedAt).toLocaleDateString()}</p>
+                          </div>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" asChild>
+                          <a href={resume.fileUrl} target="_blank" rel="noreferrer"><Download className="h-3.5 w-3.5" /></a>
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-slate-500 text-center py-2">PDF only, max 5MB</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* ─── Sections Grid ─── */}
         <div className="grid lg:grid-cols-2 gap-6">
-          <Card className="bg-slate-900/60 border-slate-700/50">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Skills</CardTitle>
-              <Button size="sm" onClick={() => openDialog("skill")}>Add</Button>
+
+          {/* Skills */}
+          <Card className="border-slate-700/50 bg-slate-900/60">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Star className="h-4 w-4 text-amber-400" /> Skills
+              </CardTitle>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openDialog("skill")}>
+                <Plus className="h-3 w-3" /> Add
+              </Button>
             </CardHeader>
             <CardContent>
               {sections.skills.length ? (
                 <div className="flex flex-wrap gap-2">
                   {sections.skills.map((skill) => (
-                    <span key={skill.id} className="flex items-center gap-2 bg-slate-800/80 text-slate-200 px-3 py-1 rounded-full text-xs">
+                    <span key={skill.id} className="group/skill flex items-center gap-1.5 bg-slate-800/80 hover:bg-slate-800 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-slate-700/30">
                       {skill.name}
-                      <button onClick={() => openDialog("skill", skill)}><Pencil className="h-3 w-3" /></button>
-                      <button onClick={() => deleteSection("skill", skill.id)}><Trash2 className="h-3 w-3" /></button>
+                      {skill.level && <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4 ml-1">{skill.level}</Badge>}
+                      <div className="hidden group-hover/skill:flex items-center gap-0.5 ml-1">
+                        <button onClick={() => openDialog("skill", skill)} className="hover:text-purple-400 transition-colors"><Pencil className="h-2.5 w-2.5" /></button>
+                        <button onClick={() => deleteSection("skill", skill.id)} className="hover:text-red-400 transition-colors"><Trash2 className="h-2.5 w-2.5" /></button>
+                      </div>
                     </span>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Add your first skill.</p>
+                <p className="text-sm text-slate-500 text-center py-4">Add your skills to showcase your expertise</p>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/60 border-slate-700/50">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Experience</CardTitle>
-              <Button size="sm" onClick={() => openDialog("experience")}>Add</Button>
+          {/* Experience */}
+          <Card className="border-slate-700/50 bg-slate-900/60">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Briefcase className="h-4 w-4 text-blue-400" /> Experience
+              </CardTitle>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openDialog("experience")}>
+                <Plus className="h-3 w-3" /> Add
+              </Button>
             </CardHeader>
             <CardContent>
               {sections.experiences.length ? (
                 <div className="space-y-3">
                   {sections.experiences.map((exp) => (
-                    <div key={exp.id} className="rounded-lg border border-slate-800 p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-slate-100">{exp.role}</p>
-                          <p className="text-sm text-slate-400">{exp.company}</p>
+                    <div key={exp.id} className="rounded-xl bg-slate-800/40 border border-slate-700/30 p-4 group/exp">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <Briefcase className="h-5 w-5 text-blue-400" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-100">{exp.role}</p>
+                            <p className="text-sm text-slate-400">{exp.company}</p>
+                            <p className="text-xs text-slate-500 mt-1">{new Date(exp.startDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })} — {exp.endDate ? new Date(exp.endDate).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "Present"}</p>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => openDialog("experience", exp)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteSection("experience", exp.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="flex gap-1 opacity-0 group-hover/exp:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDialog("experience", exp)}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteSection("experience", exp.id)}><Trash2 className="h-3 w-3 text-red-400" /></Button>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-400">{new Date(exp.startDate).toLocaleDateString()} - {exp.endDate ? new Date(exp.endDate).toLocaleDateString() : "Present"}</p>
-                      <p className="text-sm text-slate-300 mt-2">{exp.description}</p>
+                      {exp.description && <p className="text-sm text-slate-300 mt-2 ml-[52px] leading-relaxed">{exp.description}</p>}
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Add your first role.</p>
+                <p className="text-sm text-slate-500 text-center py-4">Add your work experience</p>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/60 border-slate-700/50">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Education</CardTitle>
-              <Button size="sm" onClick={() => openDialog("education")}>Add</Button>
+          {/* Education */}
+          <Card className="border-slate-700/50 bg-slate-900/60">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <GraduationCap className="h-4 w-4 text-emerald-400" /> Education
+              </CardTitle>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openDialog("education")}>
+                <Plus className="h-3 w-3" /> Add
+              </Button>
             </CardHeader>
             <CardContent>
               {sections.educations.length ? (
                 <div className="space-y-3">
                   {sections.educations.map((edu) => (
-                    <div key={edu.id} className="rounded-lg border border-slate-800 p-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="font-semibold text-slate-100">{edu.degree}</p>
-                          <p className="text-sm text-slate-400">{edu.institution}</p>
+                    <div key={edu.id} className="rounded-xl bg-slate-800/40 border border-slate-700/30 p-4 group/edu">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 mt-0.5">
+                            <GraduationCap className="h-5 w-5 text-emerald-400" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-slate-100">{edu.degree}</p>
+                            <p className="text-sm text-slate-400">{edu.institution}</p>
+                            <p className="text-xs text-slate-500 mt-1">{edu.startYear} — {edu.endYear || "Present"} {edu.grade ? <span className="text-emerald-400/80">• {edu.grade}</span> : ""}</p>
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => openDialog("education", edu)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteSection("education", edu.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="flex gap-1 opacity-0 group-hover/edu:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDialog("education", edu)}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteSection("education", edu.id)}><Trash2 className="h-3 w-3 text-red-400" /></Button>
                         </div>
                       </div>
-                      <p className="text-xs text-slate-400">{edu.startYear} - {edu.endYear || "Present"} {edu.grade ? `• ${edu.grade}` : ""}</p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Add your education history.</p>
+                <p className="text-sm text-slate-500 text-center py-4">Add your education history</p>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/60 border-slate-700/50">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Certifications</CardTitle>
-              <Button size="sm" onClick={() => openDialog("certification")}>Add</Button>
+          {/* Certifications */}
+          <Card className="border-slate-700/50 bg-slate-900/60">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Award className="h-4 w-4 text-purple-400" /> Certifications
+              </CardTitle>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openDialog("certification")}>
+                <Plus className="h-3 w-3" /> Add
+              </Button>
             </CardHeader>
             <CardContent>
               {sections.certifications.length ? (
                 <div className="space-y-3">
                   {sections.certifications.map((cert) => (
-                    <div key={cert.id} className="rounded-lg border border-slate-800 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
+                    <div key={cert.id} className="rounded-xl bg-slate-800/40 border border-slate-700/30 p-4 group/cert">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
                           {cert.imageUrl ? (
                             /\.pdf($|\?)/i.test(cert.imageUrl) ? (
-                              <div className="h-12 w-12 rounded-md bg-slate-800 flex items-center justify-center border border-slate-800">
-                                <FileText className="h-5 w-5 text-slate-300" />
+                              <div className="h-12 w-12 rounded-xl bg-slate-800 flex items-center justify-center border border-slate-700/50 shrink-0">
+                                <FileText className="h-5 w-5 text-slate-400" />
                               </div>
                             ) : (
-                              <img
-                                src={cert.imageUrl}
-                                alt={cert.name}
-                                className="h-12 w-12 rounded-md object-cover border border-slate-800"
-                              />
+                              <img src={cert.imageUrl} alt={cert.name} className="h-12 w-12 rounded-xl object-cover border border-slate-700/50 shrink-0" />
                             )
                           ) : (
-                            <div className="h-12 w-12 rounded-md bg-slate-800" />
+                            <div className="h-12 w-12 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+                              <Award className="h-5 w-5 text-purple-400" />
+                            </div>
                           )}
                           <div>
-                          <p className="font-semibold text-slate-100">{cert.name}</p>
-                          <p className="text-sm text-slate-400">Issuer: {cert.issuer || "Microsoft"}</p>
+                            <p className="font-semibold text-slate-100">{cert.name}</p>
+                            <p className="text-sm text-slate-400">{cert.issuer || "—"}</p>
+                            <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+                              {cert.issueDate && <span>{new Date(cert.issueDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })}</span>}
+                              {cert.credentialId && <span>ID: {cert.credentialId}</span>}
+                            </div>
                           </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => openDialog("certification", cert)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteSection("certification", cert.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="flex gap-1 opacity-0 group-hover/cert:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDialog("certification", cert)}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteSection("certification", cert.id)}><Trash2 className="h-3 w-3 text-red-400" /></Button>
                         </div>
                       </div>
-                      <div className="mt-2 text-sm text-slate-300 space-y-1">
-                        <p>Date: {cert.issueDate ? new Date(cert.issueDate).toLocaleDateString() : "N/A"}</p>
-                        <p>ID: {cert.credentialId || cert.id}</p>
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
+                      <div className="mt-3 ml-[60px] flex flex-wrap gap-1.5">
                         {cert.skills?.length ? (
                           cert.skills.map((skill: string) => (
-                            <Badge key={skill} variant="secondary">{skill}</Badge>
+                            <Badge key={skill} variant="secondary" className="text-[10px]">{skill}</Badge>
                           ))
-                        ) : (
-                          <Badge variant="secondary">No skills added</Badge>
+                        ) : null}
+                        {cert.credentialUrl && (
+                          <Button variant="outline" size="sm" className="h-5 text-[10px] px-2 gap-0.5" asChild>
+                            <a href={cert.credentialUrl} target="_blank" rel="noreferrer"><ExternalLink className="h-2.5 w-2.5" /> Verify</a>
+                          </Button>
                         )}
-                        <Button variant="outline" size="sm" asChild disabled={!cert.credentialUrl}>
-                          <a href={cert.credentialUrl || "#"} target="_blank" rel="noreferrer">
-                            Verify
-                          </a>
-                        </Button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Add your certifications.</p>
+                <p className="text-sm text-slate-500 text-center py-4">Add your certifications</p>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/60 border-slate-700/50">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Projects</CardTitle>
-              <Button size="sm" onClick={() => openDialog("project")}>Add</Button>
+          {/* Projects */}
+          <Card className="border-slate-700/50 bg-slate-900/60">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <FolderKanban className="h-4 w-4 text-cyan-400" /> Projects
+              </CardTitle>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openDialog("project")}>
+                <Plus className="h-3 w-3" /> Add
+              </Button>
             </CardHeader>
             <CardContent>
               {sections.projects.length ? (
                 <div className="space-y-3">
                   {sections.projects.map((project) => (
-                    <div key={project.id} className="rounded-lg border border-slate-800 p-3">
-                      <div className="flex items-center justify-between">
+                    <div key={project.id} className="rounded-xl bg-slate-800/40 border border-slate-700/30 p-4 group/proj">
+                      <div className="flex items-start justify-between">
                         <div>
                           <p className="font-semibold text-slate-100">{project.title}</p>
-                          <p className="text-sm text-slate-400">{project.techStack}</p>
+                          {project.techStack && <p className="text-xs text-slate-500 mt-0.5 font-mono">{project.techStack}</p>}
                         </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="icon" onClick={() => openDialog("project", project)}><Pencil className="h-4 w-4" /></Button>
-                          <Button variant="ghost" size="icon" onClick={() => deleteSection("project", project.id)}><Trash2 className="h-4 w-4" /></Button>
+                        <div className="flex gap-1 opacity-0 group-hover/proj:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDialog("project", project)}><Pencil className="h-3 w-3" /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteSection("project", project.id)}><Trash2 className="h-3 w-3 text-red-400" /></Button>
                         </div>
                       </div>
-                      <p className="text-sm text-slate-300 mt-2">{project.description}</p>
+                      {project.description && <p className="text-sm text-slate-300 mt-2 leading-relaxed">{project.description}</p>}
                       <div className="mt-3 flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" asChild disabled={!project.projectUrl}>
-                          <a href={project.projectUrl || "#"} target="_blank" rel="noreferrer">
-                            Show Project
-                          </a>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild disabled={!project.repoUrl}>
-                          <a href={project.repoUrl || "#"} target="_blank" rel="noreferrer">
-                            GitHub
-                          </a>
-                        </Button>
-                        <Button variant="outline" size="sm" asChild disabled={!project.projectUrl && !project.repoUrl}>
-                          <a href={project.projectUrl || project.repoUrl || "#"} target="_blank" rel="noreferrer">
-                            Project Details
-                          </a>
-                        </Button>
+                        {project.projectUrl && (
+                          <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1" asChild>
+                            <a href={project.projectUrl} target="_blank" rel="noreferrer"><Globe className="h-2.5 w-2.5" /> Live Demo</a>
+                          </Button>
+                        )}
+                        {project.repoUrl && (
+                          <Button variant="outline" size="sm" className="h-6 text-[10px] gap-1" asChild>
+                            <a href={project.repoUrl} target="_blank" rel="noreferrer"><Github className="h-2.5 w-2.5" /> GitHub</a>
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Add your first project.</p>
+                <p className="text-sm text-slate-500 text-center py-4">Showcase your projects</p>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/60 border-slate-700/50">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Courses</CardTitle>
-              <Button size="sm" onClick={() => openDialog("course")}>Add</Button>
+          {/* Courses */}
+          <Card className="border-slate-700/50 bg-slate-900/60">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-orange-400" /> Courses
+              </CardTitle>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openDialog("course")}>
+                <Plus className="h-3 w-3" /> Add
+              </Button>
             </CardHeader>
             <CardContent>
               {sections.courses.length ? (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {sections.courses.map((course) => (
-                    <div key={course.id} className="rounded-lg border border-slate-800 p-3 flex items-center justify-between">
-                      <div>
-                        <p className="font-semibold text-slate-100">{course.name}</p>
-                        <p className="text-sm text-slate-400">{course.platform} • {course.status}</p>
+                    <div key={course.id} className="flex items-center justify-between rounded-xl bg-slate-800/40 border border-slate-700/30 p-3 group/course">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-orange-500/10 flex items-center justify-center shrink-0">
+                          <BookOpen className="h-4 w-4 text-orange-400" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-slate-100">{course.name}</p>
+                          <p className="text-xs text-slate-500">{course.platform} • <span className={course.status === 'Completed' ? 'text-emerald-400' : 'text-amber-400'}>{course.status}</span></p>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openDialog("course", course)}><Pencil className="h-4 w-4" /></Button>
-                        <Button variant="ghost" size="icon" onClick={() => deleteSection("course", course.id)}><Trash2 className="h-4 w-4" /></Button>
+                      <div className="flex gap-1 opacity-0 group-hover/course:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openDialog("course", course)}><Pencil className="h-3 w-3" /></Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => deleteSection("course", course.id)}><Trash2 className="h-3 w-3 text-red-400" /></Button>
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Add your first course.</p>
+                <p className="text-sm text-slate-500 text-center py-4">Track your learning journey</p>
               )}
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-900/60 border-slate-700/50">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Languages</CardTitle>
-              <Button size="sm" onClick={() => openDialog("language")}>Add</Button>
+          {/* Languages */}
+          <Card className="border-slate-700/50 bg-slate-900/60">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Languages className="h-4 w-4 text-teal-400" /> Languages
+              </CardTitle>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => openDialog("language")}>
+                <Plus className="h-3 w-3" /> Add
+              </Button>
             </CardHeader>
             <CardContent>
               {sections.languages.length ? (
                 <div className="flex flex-wrap gap-2">
                   {sections.languages.map((lang) => (
-                    <span key={lang.id} className="flex items-center gap-2 bg-slate-800/80 text-slate-200 px-3 py-1 rounded-full text-xs">
-                      {lang.name} • {lang.proficiency}
-                      <button onClick={() => openDialog("language", lang)}><Pencil className="h-3 w-3" /></button>
-                      <button onClick={() => deleteSection("language", lang.id)}><Trash2 className="h-3 w-3" /></button>
+                    <span key={lang.id} className="group/lang flex items-center gap-1.5 bg-slate-800/80 hover:bg-slate-800 text-slate-200 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors border border-slate-700/30">
+                      {lang.name}
+                      <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">{lang.proficiency}</Badge>
+                      <div className="hidden group-hover/lang:flex items-center gap-0.5 ml-1">
+                        <button onClick={() => openDialog("language", lang)} className="hover:text-purple-400 transition-colors"><Pencil className="h-2.5 w-2.5" /></button>
+                        <button onClick={() => deleteSection("language", lang.id)} className="hover:text-red-400 transition-colors"><Trash2 className="h-2.5 w-2.5" /></button>
+                      </div>
                     </span>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-slate-400">Add your languages.</p>
+                <p className="text-sm text-slate-500 text-center py-4">Add languages you speak</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Billing & Payments */}
+          <Card className="border-slate-700/50 bg-slate-900/60">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-pink-400" /> Billing & Payments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {payments.length ? (
+                <div className="space-y-2">
+                  {payments.map((payment) => (
+                    <div key={payment.id} className="rounded-xl bg-slate-800/40 border border-slate-700/30 p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm text-slate-100">{payment.plan || "Plan"}</p>
+                          <Badge variant="secondary" className="text-[10px]">₹{payment.amount}</Badge>
+                        </div>
+                        <p className="text-xs text-slate-500 mt-0.5">{new Date(payment.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</p>
+                        {payment.couponUsed && <p className="text-[10px] text-emerald-400 mt-0.5">Coupon: {payment.couponUsed}</p>}
+                      </div>
+                      {payment.receiptUrl && (
+                        <Button variant="outline" size="sm" className="h-7 text-xs gap-1 shrink-0" asChild>
+                          <a href={payment.receiptUrl} target="_blank" rel="noreferrer"><Download className="h-3 w-3" /> Invoice</a>
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500 text-center py-4">No billing history yet</p>
               )}
             </CardContent>
           </Card>
         </div>
-
-        <Card className="bg-slate-900/60 border-slate-700/50">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Resume</CardTitle>
-            <Button variant="outline" size="sm" asChild>
-              <a href="/api/resume-pdf" target="_blank" rel="noreferrer">
-                <Download className="h-4 w-4 mr-2" /> Download Resume
-              </a>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col md:flex-row md:items-center gap-3">
-              <Input
-                type="file"
-                accept="application/pdf"
-                onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
-              />
-              <Button
-                size="sm"
-                onClick={uploadResume}
-                disabled={!resumeFile || resumeUploading}
-              >
-                {resumeUploading ? "Uploading..." : "Upload Resume"}
-              </Button>
-            </div>
-            {resumeError && <p className="text-sm text-red-400">{resumeError}</p>}
-
-            {resumes?.length ? (
-              <div className="space-y-2">
-                {resumes.map((resume) => (
-                  <div key={resume.id} className="flex items-center justify-between rounded-lg border border-slate-800 p-3">
-                    <div>
-                      <p className="text-sm text-slate-200">{resume.fileName}</p>
-                      <p className="text-xs text-slate-400">
-                        Uploaded: {new Date(resume.uploadedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm" asChild>
-                      <a href={resume.fileUrl} target="_blank" rel="noreferrer">
-                        <Download className="h-4 w-4 mr-2" /> Download
-                      </a>
-                    </Button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400">Upload your resume (PDF only, max 5MB).</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-slate-900/60 border-slate-700/50">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Billing & Payments</CardTitle>
-            <div className="flex gap-2">
-            </div>
-          </CardHeader>
-          <CardContent>
-            {payments.length ? (
-              <div className="space-y-3">
-                {payments.map((payment) => (
-                  <div key={payment.id} className="rounded-lg border border-slate-800 p-3 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                    <div>
-                      <p className="text-sm text-slate-400">{new Date(payment.date).toLocaleDateString()}</p>
-                      <p className="font-semibold text-slate-100">{payment.plan || "Plan"} • ₹{payment.amount}</p>
-                      {payment.couponUsed && <p className="text-xs text-emerald-400">Coupon: {payment.couponUsed}</p>}
-                      {payment.invoiceId && <p className="text-xs text-slate-400">Invoice: {payment.invoiceId}</p>}
-                    </div>
-                    {payment.receiptUrl && (
-                      <Button variant="outline" size="sm" asChild>
-                        <a href={payment.receiptUrl} target="_blank" rel="noreferrer">
-                          <Download className="h-4 w-4 mr-2" /> Download Invoice
-                        </a>
-                      </Button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-slate-400">No billing history yet.</p>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-lg bg-slate-900 border-slate-700/50">
           <DialogHeader>
-            <DialogTitle>{editingItem ? "Edit" : "Add"} {activeSection}</DialogTitle>
-            <DialogDescription>Update your profile section details.</DialogDescription>
+            <DialogTitle className="flex items-center gap-2">
+              {activeSection === "skill" && <Star className="h-4 w-4 text-amber-400" />}
+              {activeSection === "experience" && <Briefcase className="h-4 w-4 text-blue-400" />}
+              {activeSection === "education" && <GraduationCap className="h-4 w-4 text-emerald-400" />}
+              {activeSection === "certification" && <Award className="h-4 w-4 text-purple-400" />}
+              {activeSection === "project" && <FolderKanban className="h-4 w-4 text-cyan-400" />}
+              {activeSection === "course" && <BookOpen className="h-4 w-4 text-orange-400" />}
+              {activeSection === "language" && <Languages className="h-4 w-4 text-teal-400" />}
+              {editingItem ? "Edit" : "Add"} {activeSection && activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
+            </DialogTitle>
+            <DialogDescription>Fill in the details below.</DialogDescription>
           </DialogHeader>
           {activeSection === "skill" && (
             <div className="space-y-3">
-              <Input
-                placeholder="Skill name"
-                value={formData.name || ""}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Skill Name</label>
+                <Input
+                  placeholder="e.g. React, Python, Figma..."
+                  value={formData.name || ""}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="bg-slate-800/50 border-slate-700/50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Level</label>
+                <Select value={formData.level || "Beginner"} onValueChange={(value) => setFormData({ ...formData, level: value })}>
+                  <SelectTrigger className="bg-slate-800/50 border-slate-700/50"><SelectValue placeholder="Level" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Beginner">Beginner</SelectItem>
+                    <SelectItem value="Intermediate">Intermediate</SelectItem>
+                    <SelectItem value="Advanced">Advanced</SelectItem>
+                    <SelectItem value="Expert">Expert</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
 
           {activeSection === "experience" && (
             <div className="space-y-3">
-              <Input placeholder="Role" value={formData.role || ""} onChange={(e) => setFormData({ ...formData, role: e.target.value })} />
-              <Input placeholder="Company" value={formData.company || ""} onChange={(e) => setFormData({ ...formData, company: e.target.value })} />
-              <Input type="date" value={formData.startDate ? formData.startDate.slice(0, 10) : ""} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} />
-              <Input type="date" value={formData.endDate ? formData.endDate.slice(0, 10) : ""} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} />
-              <Textarea placeholder="Description" value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Role</label>
+                <Input placeholder="e.g. Software Engineer" value={formData.role || ""} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Company</label>
+                <Input placeholder="e.g. Google" value={formData.company || ""} onChange={(e) => setFormData({ ...formData, company: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Start Date</label>
+                  <Input type="date" value={formData.startDate ? formData.startDate.slice(0, 10) : ""} onChange={(e) => setFormData({ ...formData, startDate: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">End Date</label>
+                  <Input type="date" value={formData.endDate ? formData.endDate.slice(0, 10) : ""} onChange={(e) => setFormData({ ...formData, endDate: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Description</label>
+                <Textarea placeholder="Describe your role and achievements..." value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
             </div>
           )}
 
           {activeSection === "education" && (
             <div className="space-y-3">
-              <Input placeholder="Degree" value={formData.degree || ""} onChange={(e) => setFormData({ ...formData, degree: e.target.value })} />
-              <Input placeholder="Institution" value={formData.institution || ""} onChange={(e) => setFormData({ ...formData, institution: e.target.value })} />
-              <Input placeholder="Start Year" value={formData.startYear || ""} onChange={(e) => setFormData({ ...formData, startYear: e.target.value })} />
-              <Input placeholder="End Year" value={formData.endYear || ""} onChange={(e) => setFormData({ ...formData, endYear: e.target.value })} />
-              <Input placeholder="Grade / CGPA" value={formData.grade || ""} onChange={(e) => setFormData({ ...formData, grade: e.target.value })} />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Degree</label>
+                <Input placeholder="e.g. B.Tech in Computer Science" value={formData.degree || ""} onChange={(e) => setFormData({ ...formData, degree: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Institution</label>
+                <Input placeholder="e.g. IIT Delhi" value={formData.institution || ""} onChange={(e) => setFormData({ ...formData, institution: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Start Year</label>
+                  <Input placeholder="2020" value={formData.startYear || ""} onChange={(e) => setFormData({ ...formData, startYear: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">End Year</label>
+                  <Input placeholder="2024" value={formData.endYear || ""} onChange={(e) => setFormData({ ...formData, endYear: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Grade / CGPA</label>
+                  <Input placeholder="8.5" value={formData.grade || ""} onChange={(e) => setFormData({ ...formData, grade: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+              </div>
             </div>
           )}
 
           {activeSection === "certification" && (
             <div className="space-y-3">
-              <Input placeholder="Certificate name" value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-              <Input placeholder="Issuer" value={formData.issuer || ""} onChange={(e) => setFormData({ ...formData, issuer: e.target.value })} />
-              <Input type="date" value={formData.issueDate ? formData.issueDate.slice(0, 10) : ""} onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })} />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Certificate Name</label>
+                  <Input placeholder="e.g. AWS Solutions Architect" value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Issuer</label>
+                  <Input placeholder="e.g. Amazon" value={formData.issuer || ""} onChange={(e) => setFormData({ ...formData, issuer: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Issue Date</label>
+                <Input type="date" value={formData.issueDate ? formData.issueDate.slice(0, 10) : ""} onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
               <div className="space-y-2">
-                <label className="text-sm text-slate-300">Certificate PDF</label>
-                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Certificate PDF</label>
+                <div className="flex items-center gap-2">
                   <Input
                     type="file"
                     accept="application/pdf"
                     onChange={(e) => setCertificateFile(e.target.files?.[0] || null)}
+                    className="bg-slate-800/50 border-slate-700/50"
                   />
                   <Button
                     size="sm"
                     variant="outline"
+                    className="shrink-0 gap-1"
                     onClick={uploadCertificateImage}
                     disabled={!certificateFile || certificateUploading}
                   >
-                    {certificateUploading ? "Uploading..." : "Upload PDF"}
+                    <Upload className="h-3 w-3" /> {certificateUploading ? "..." : "Upload"}
                   </Button>
                 </div>
                 {certificateError && <p className="text-xs text-red-400">{certificateError}</p>}
@@ -1017,60 +1241,99 @@ export default function ProfilePage() {
                   </div>
                 )}
               </div>
-              <Input placeholder="Credential URL" value={formData.credentialUrl || ""} onChange={(e) => setFormData({ ...formData, credentialUrl: e.target.value })} />
-              <Input
-                placeholder="Skills (comma separated)"
-                value={formData.skillsText || ""}
-                onChange={(e) => setFormData({ ...formData, skillsText: e.target.value })}
-              />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Credential URL</label>
+                <Input placeholder="https://..." value={formData.credentialUrl || ""} onChange={(e) => setFormData({ ...formData, credentialUrl: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Skills (comma separated)</label>
+                <Input
+                  placeholder="e.g. AWS, Cloud, DevOps"
+                  value={formData.skillsText || ""}
+                  onChange={(e) => setFormData({ ...formData, skillsText: e.target.value })}
+                  className="bg-slate-800/50 border-slate-700/50"
+                />
+              </div>
             </div>
           )}
 
           {activeSection === "project" && (
             <div className="space-y-3">
-              <Input placeholder="Project title" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
-              <Input placeholder="Tech stack" value={formData.techStack || ""} onChange={(e) => setFormData({ ...formData, techStack: e.target.value })} />
-              <Textarea placeholder="Description" value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-              <Input placeholder="GitHub URL" value={formData.repoUrl || ""} onChange={(e) => setFormData({ ...formData, repoUrl: e.target.value })} />
-              <Input placeholder="Live URL" value={formData.projectUrl || ""} onChange={(e) => setFormData({ ...formData, projectUrl: e.target.value })} />
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Project Title</label>
+                <Input placeholder="e.g. AI Chat Application" value={formData.title || ""} onChange={(e) => setFormData({ ...formData, title: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Tech Stack</label>
+                <Input placeholder="e.g. React, Node.js, MongoDB" value={formData.techStack || ""} onChange={(e) => setFormData({ ...formData, techStack: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Description</label>
+                <Textarea placeholder="What does this project do?" value={formData.description || ""} onChange={(e) => setFormData({ ...formData, description: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">GitHub URL</label>
+                  <Input placeholder="https://github.com/..." value={formData.repoUrl || ""} onChange={(e) => setFormData({ ...formData, repoUrl: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Live URL</label>
+                  <Input placeholder="https://..." value={formData.projectUrl || ""} onChange={(e) => setFormData({ ...formData, projectUrl: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+              </div>
             </div>
           )}
 
           {activeSection === "course" && (
             <div className="space-y-3">
-              <Input placeholder="Course name" value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-              <Input placeholder="Platform" value={formData.platform || ""} onChange={(e) => setFormData({ ...formData, platform: e.target.value })} />
-              <Select value={formData.status || "In Progress"} onValueChange={(value) => setFormData({ ...formData, status: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="In Progress">In Progress</SelectItem>
-                  <SelectItem value="Completed">Completed</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Course Name</label>
+                <Input placeholder="e.g. Machine Learning Specialization" value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Platform</label>
+                  <Input placeholder="e.g. Coursera, Udemy" value={formData.platform || ""} onChange={(e) => setFormData({ ...formData, platform: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Status</label>
+                  <Select value={formData.status || "In Progress"} onValueChange={(value) => setFormData({ ...formData, status: value })}>
+                    <SelectTrigger className="bg-slate-800/50 border-slate-700/50"><SelectValue placeholder="Status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="In Progress">In Progress</SelectItem>
+                      <SelectItem value="Completed">Completed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           )}
 
           {activeSection === "language" && (
             <div className="space-y-3">
-              <Input placeholder="Language" value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-              <Select value={formData.proficiency || "Basic"} onValueChange={(value) => setFormData({ ...formData, proficiency: value })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Proficiency" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Basic">Basic</SelectItem>
-                  <SelectItem value="Fluent">Fluent</SelectItem>
-                  <SelectItem value="Native">Native</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Language</label>
+                  <Input placeholder="e.g. English, Hindi" value={formData.name || ""} onChange={(e) => setFormData({ ...formData, name: e.target.value })} className="bg-slate-800/50 border-slate-700/50" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Proficiency</label>
+                  <Select value={formData.proficiency || "Basic"} onValueChange={(value) => setFormData({ ...formData, proficiency: value })}>
+                    <SelectTrigger className="bg-slate-800/50 border-slate-700/50"><SelectValue placeholder="Proficiency" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Basic">Basic</SelectItem>
+                      <SelectItem value="Fluent">Fluent</SelectItem>
+                      <SelectItem value="Native">Native</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
           )}
 
           <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={saveSection}>Save</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)} className="px-6">Cancel</Button>
+            <Button onClick={saveSection} className="px-6 gap-1.5"><CheckCircle2 className="h-3.5 w-3.5" /> Save</Button>
           </div>
         </DialogContent>
       </Dialog>

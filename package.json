@@ -1,16 +1,16 @@
 {
-  "name": "pixora",
+  "name": "fluenzy-ai",
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": "20.x"
+    "node": ">=20.x"
   },
   "scripts": {
     "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
     "dev:next": "next dev",
     "build": "npx prisma generate && next build",
-    "start": "NODE_ENV=production node server.js",
-    "backend": "C:\\Users\\Achhuta\\AppData\\Local\\Python\\bin\\python.exe backend/setup_venv.py && backend\\venv\\Scripts\\python.exe -m uvicorn main:app --reload --port 8000 --app-dir backend",
+    "start": "node server.js",
+    "backend": "python backend/setup_venv.py && python -m uvicorn main:app --reload --port 8000 --app-dir backend",
     "frontend": "node server.js"
   },
   "dependencies": {

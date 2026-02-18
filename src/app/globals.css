@@ -1,13 +1,16 @@
 /* Tailwind v4 core */
 @import "tailwindcss";
 
+/* System font stack with Geist as preferred (loaded via CDN when available) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+
 /* ===== THEME TOKENS =====
    Map your old theme.extend.* into v4 tokens via @theme.
    Any --color-foo token gives you classes like bg-foo, text-foo, border-foo, ring-foo, etc.
 */
 @theme {
   /* fonts */
-  --font-inter: "Inter", sans-serif;
+  --font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* radius */
   --radius: 1rem;

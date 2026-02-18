@@ -92,8 +92,6 @@ const TrainPage = () => {
 
   return (
     <div className="space-y-6">
-
-
       <div className="py-8">
         <LearningPath ctaInfo={ctaInfo} />
       </div>

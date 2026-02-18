@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Role } from "@prisma/client";
+import LatestTopicTab from "@/components/LatestTopicTab";
 
 interface Analytics {
   totalUsers: number;
@@ -436,6 +437,7 @@ export default function SuperAdminDashboard() {
           <TabsTrigger value="plan-settings">Plan Settings</TabsTrigger>
           <TabsTrigger value="plan-pricing">Plan Pricing</TabsTrigger>
           <TabsTrigger value="logs">System Logs</TabsTrigger>
+          <TabsTrigger value="latest-topics">LatestTopic</TabsTrigger>
         </TabsList>
 
         <TabsContent value="users">
@@ -1128,6 +1130,10 @@ export default function SuperAdminDashboard() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="latest-topics">
+          <LatestTopicTab />
         </TabsContent>
       </Tabs>
     </div>
