@@ -32,18 +32,17 @@ interface BehavioralMetrics {
 interface VideoAnalysisPanelProps {
   sessionId: string;
   isActive: boolean;
-  autoStart?: boolean;
   onSessionEnd?: (metrics: BehavioralMetrics) => void;
 }
 
 const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({ 
   sessionId, 
   isActive,
-  autoStart = false,
   onSessionEnd 
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isInterviewStarted, setIsInterviewStarted] = useState(false); // New: Tracks if interview button was clicked
   const [metrics, setMetrics] = useState<BehavioralMetrics>({
     confidence: 0,
     eye_contact: 0,
@@ -163,10 +162,12 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     wsRef.current = ws;
   }, [sessionId, isAnalyzing]);
 
-  // Start camera
+  // Start camera - Called when "Start Interview" button is clicked
   const startCamera = async () => {
     try {
       console.log("📷 Starting camera...");
+      setIsInterviewStarted(true); // Mark interview as started
+      
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           width: { ideal: 640 },
@@ -226,6 +227,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     setWsConnected(false);
     setIsProcessingFrame(false);
     pendingFrameRef.current = false;
+    setIsInterviewStarted(false); // Reset interview started state
   };
 
   // Process frames and send to backend with throttling, downscaling, and backpressure
@@ -380,10 +382,10 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     };
   }, []);
 
-  // Auto-start when interview becomes active
+  // Auto-start when interview is explicitly started by user clicking button
   useEffect(() => {
-    if (isActive && autoStart && !isCameraOn) {
-      // Start camera and analysis automatically
+    // Only auto-start if user has clicked the Start Interview button AND isActive is true
+    if (isInterviewStarted && isActive && !isCameraOn) {
       startCamera();
     }
     
@@ -391,7 +393,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     if (!isActive && isCameraOn) {
       stopCamera();
     }
-  }, [isActive, autoStart]);
+  }, [isActive, isInterviewStarted, isCameraOn]);
 
   // Get color based on score
   const getScoreColor = (score: number) => {
@@ -428,7 +430,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
               className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
             >
               <Camera size={14} />
-              Start Camera
+              Start Interview
             </button>
           ) : (
             <>
@@ -501,7 +503,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-slate-500">
             <CameraOff size={48} className="mb-3 opacity-50" />
-            <p className="text-sm">Click "Start Camera" to begin</p>
+            <p className="text-sm">Click "Start Interview" to begin</p>
           </div>
         )}
         
