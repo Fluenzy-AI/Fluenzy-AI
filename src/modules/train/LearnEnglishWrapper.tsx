@@ -47,8 +47,6 @@ const LearnEnglishWrapper: React.FC<LearnEnglishWrapperProps> = ({ mode }) => {
       return <TechnicalMastery />;
     case 'company':
       return <CompanyHRDashboard />;
-    case 'mock':
-      return <LearningPath />;
     default:
       return <LearningPath />;
   }

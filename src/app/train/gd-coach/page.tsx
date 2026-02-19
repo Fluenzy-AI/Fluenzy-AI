@@ -6,10 +6,14 @@ import { useEffect } from "react";
 import GDCoachDashboard from "../../../../Learn_English/components/GDCoachDashboard";
 import { UserProfile } from "../../../../Learn_English/types";
 import { INITIAL_USER } from "../../../../Learn_English/constants";
+import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 
 const GDCoachPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  
+  const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -35,7 +39,7 @@ const GDCoachPage = () => {
   };
 
   return (
-    <div className="bg-slate-900/30 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl p-6 md:p-8 lg:p-12">
+    <div className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-6 md:p-8 lg:p-12 theme-transition`}>
       <GDCoachDashboard user={user} />
     </div>
   );

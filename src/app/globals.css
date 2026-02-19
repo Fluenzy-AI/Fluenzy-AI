@@ -26,10 +26,10 @@
   --color-popover: hsl(220 27% 8%);
   --color-popover-foreground: hsl(210 40% 98%);
 
-  --color-primary: hsl(192 100% 50%);
+  --color-primary: hsl(232 77% 59%);
   --color-primary-foreground: hsl(220 27% 6%);
 
-  --color-primary-glow: hsl(192 100% 70%);
+  --color-primary-glow: hsl(232 77% 70%);
   --color-secondary-glow: hsl(271 81% 70%);
 
   --color-secondary: hsl(271 81% 56%);
@@ -41,17 +41,17 @@
   --color-muted: hsl(220 27% 12%);
   --color-muted-foreground: hsl(215 20.2% 65.1%);
 
-  --color-accent: hsl(271 81% 56%);
+  --color-accent: hsl(189 80% 53%);
   --color-accent-foreground: hsl(210 40% 98%);
 
   --color-border: hsl(220 27% 15%);
   --color-input: hsl(220 27% 10%);
-  --color-ring: hsl(192 100% 50%);
+  --color-ring: hsl(232 77% 59%);
 
   /* You can reference these in utilities via var() */
   --gradient-primary: linear-gradient(
     135deg,
-    hsl(192 100% 50%),
+    hsl(232 77% 59%),
     hsl(271 81% 56%)
   );
   --gradient-glass: linear-gradient(
@@ -65,29 +65,29 @@
     hsl(271 81% 56% / 0.3)
   );
 
-  --glow-primary: 0 0 40px hsl(192 100% 50% / 0.3);
+  --glow-primary: 0 0 40px hsl(232 77% 59% / 0.3);
   --glow-secondary: 0 0 40px hsl(271 81% 56% / 0.3);
-  --glow-subtle: 0 4px 20px hsl(192 100% 50% / 0.1);
+  --glow-subtle: 0 4px 20px hsl(232 77% 59% / 0.1);
 }
 
 /* ===== BASE ===== */
 @layer base {
   :root {
     /* Light Mode Colors (Default) */
-    --color-background: hsl(220 20% 97%);
+    --color-background: hsl(210 20% 98%);
     --color-foreground: hsl(220 27% 15%);
 
-    --color-card: hsl(220 20% 99%);
+    --color-card: hsl(0 0% 100%);
     --color-card-foreground: hsl(220 27% 15%);
-    --color-card-border: hsl(220 15% 85%);
+    --color-card-border: hsl(214 32% 91%);
 
-    --color-popover: hsl(220 20% 99%);
+    --color-popover: hsl(0 0% 100%);
     --color-popover-foreground: hsl(220 27% 15%);
 
-    --color-primary: hsl(192 100% 45%);
+    --color-primary: hsl(232 77% 50%);
     --color-primary-foreground: hsl(0 0% 100%);
 
-    --color-primary-glow: hsl(192 100% 55%);
+    --color-primary-glow: hsl(232 77% 60%);
     --color-secondary-glow: hsl(271 81% 60%);
 
     --color-secondary: hsl(271 81% 50%);
@@ -96,20 +96,20 @@
     --color-destructive: hsl(0 84.2% 60.2%);
     --color-destructive-foreground: hsl(0 0% 100%);
 
-    --color-muted: hsl(220 15% 92%);
-    --color-muted-foreground: hsl(220 10% 45%);
+    --color-muted: hsl(214 32% 96%);
+    --color-muted-foreground: hsl(215 16% 47%);
 
-    --color-accent: hsl(271 81% 50%);
+    --color-accent: hsl(189 80% 53%);
     --color-accent-foreground: hsl(0 0% 100%);
 
-    --color-border: hsl(220 15% 88%);
-    --color-input: hsl(220 20% 95%);
-    --color-ring: hsl(192 100% 45%);
+    --color-border: hsl(214 32% 91%);
+    --color-input: hsl(214 32% 96%);
+    --color-ring: hsl(232 77% 50%);
 
     /* Light Mode Gradients & Glows */
     --gradient-primary: linear-gradient(
       135deg,
-      hsl(192 100% 45%),
+      hsl(232 77% 50%),
       hsl(271 81% 50%)
     );
     --gradient-glass: linear-gradient(
@@ -123,9 +123,9 @@
       hsl(271 81% 50% / 0.4)
     );
 
-    --glow-primary: 0 0 30px hsl(192 100% 45% / 0.2);
+    --glow-primary: 0 0 30px hsl(232 77% 50% / 0.2);
     --glow-secondary: 0 0 30px hsl(271 81% 50% / 0.2);
-    --glow-subtle: 0 2px 15px hsl(192 100% 45% / 0.08);
+    --glow-subtle: 0 2px 15px hsl(232 77% 50% / 0.08);
   }
 
   .dark {
@@ -140,10 +140,10 @@
     --color-popover: hsl(220 27% 8%);
     --color-popover-foreground: hsl(210 40% 98%);
 
-    --color-primary: hsl(192 100% 50%);
+    --color-primary: hsl(232 77% 59%);
     --color-primary-foreground: hsl(220 27% 6%);
 
-    --color-primary-glow: hsl(192 100% 70%);
+    --color-primary-glow: hsl(232 77% 70%);
     --color-secondary-glow: hsl(271 81% 70%);
 
     --color-secondary: hsl(271 81% 56%);
@@ -155,17 +155,17 @@
     --color-muted: hsl(220 27% 12%);
     --color-muted-foreground: hsl(215 20.2% 65.1%);
 
-    --color-accent: hsl(271 81% 56%);
+    --color-accent: hsl(189 80% 53%);
     --color-accent-foreground: hsl(210 40% 98%);
 
     --color-border: hsl(220 27% 15%);
     --color-input: hsl(220 27% 10%);
-    --color-ring: hsl(192 100% 50%);
+    --color-ring: hsl(232 77% 59%);
 
     /* Dark Mode Gradients & Glows */
     --gradient-primary: linear-gradient(
       135deg,
-      hsl(192 100% 50%),
+      hsl(232 77% 59%),
       hsl(271 81% 56%)
     );
     --gradient-glass: linear-gradient(
@@ -179,9 +179,84 @@
       hsl(271 81% 56% / 0.3)
     );
 
-    --glow-primary: 0 0 40px hsl(192 100% 50% / 0.3);
+    --glow-primary: 0 0 40px hsl(232 77% 59% / 0.3);
     --glow-secondary: 0 0 40px hsl(271 81% 56% / 0.3);
-    --glow-subtle: 0 4px 20px hsl(192 100% 50% / 0.1);
+    --glow-subtle: 0 4px 20px hsl(232 77% 59% / 0.1);
+  }
+
+  /* Midnight Theme */
+  .midnight {
+    --color-background: hsl(220 40% 5%);
+    --color-foreground: hsl(220 40% 98%);
+
+    --color-card: hsl(220 40% 8%);
+    --color-card-foreground: hsl(220 40% 98%);
+    --color-card-border: hsl(220 80% 40% / 0.2);
+
+    --color-popover: hsl(220 40% 8%);
+    --color-popover-foreground: hsl(220 40% 98%);
+
+    --color-primary: hsl(232 77% 59%);
+    --color-primary-foreground: hsl(220 40% 5%);
+
+    --color-primary-glow: hsl(232 77% 70%);
+    --color-secondary-glow: hsl(271 81% 70%);
+
+    --color-secondary: hsl(271 81% 56%);
+    --color-secondary-foreground: hsl(220 40% 98%);
+
+    --color-destructive: hsl(0 84.2% 60.2%);
+    --color-destructive-foreground: hsl(220 40% 98%);
+
+    --color-muted: hsl(220 40% 12%);
+    --color-muted-foreground: hsl(220 20% 60%);
+
+    --color-accent: hsl(189 80% 53%);
+    --color-accent-foreground: hsl(220 40% 98%);
+
+    --color-border: hsl(220 40% 15%);
+    --color-input: hsl(220 40% 10%);
+    --color-ring: hsl(232 77% 59%);
+
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(232 77% 59%),
+      hsl(271 81% 56%)
+    );
+    --color-secondary-foreground: hsl(220 40% 98%);
+
+    --color-destructive: hsl(0 84.2% 60.2%);
+    --color-destructive-foreground: hsl(220 40% 98%);
+
+    --color-muted: hsl(220 40% 12%);
+    --color-muted-foreground: hsl(220 20% 60%);
+
+    --color-accent: hsl(260 80% 60%);
+    --color-accent-foreground: hsl(220 40% 98%);
+
+    --color-border: hsl(220 40% 15%);
+    --color-input: hsl(220 40% 10%);
+    --color-ring: hsl(220 80% 60%);
+
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(220 80% 60%),
+      hsl(260 80% 60%)
+    );
+    --gradient-glass: linear-gradient(
+      135deg,
+      hsl(220 40% 8% / 0.4),
+      hsl(220 40% 8% / 0.1)
+    );
+    --gradient-border: linear-gradient(
+      135deg,
+      hsl(220 80% 60% / 0.3),
+      hsl(260 80% 60% / 0.3)
+    );
+
+    --glow-primary: 0 0 40px hsl(232 77% 59% / 0.3);
+    --glow-secondary: 0 0 40px hsl(271 81% 56% / 0.3);
+    --glow-subtle: 0 4px 20px hsl(232 77% 59% / 0.1);
   }
 
   * {
@@ -295,19 +370,19 @@
   }
 
   .glow-effect {
-    box-shadow: 0 0 20px hsl(192 100% 45% / 0.3), 0 0 40px hsl(271 81% 50% / 0.15);
+    box-shadow: 0 0 20px hsl(232 77% 50% / 0.3), 0 0 40px hsl(271 81% 50% / 0.15);
   }
 
   .dark .glow-effect {
-    box-shadow: 0 0 30px hsl(192 100% 50% / 0.4), 0 0 60px hsl(271 81% 56% / 0.2);
+    box-shadow: 0 0 30px hsl(232 77% 59% / 0.4), 0 0 60px hsl(271 81% 56% / 0.2);
   }
 
   .glow-border {
-    box-shadow: 0 0 0 1px hsl(192 100% 45% / 0.25), 0 0 15px hsl(271 81% 50% / 0.08);
+    box-shadow: 0 0 0 1px hsl(232 77% 50% / 0.25), 0 0 15px hsl(271 81% 50% / 0.08);
   }
 
   .dark .glow-border {
-    box-shadow: 0 0 0 1px hsl(192 100% 50% / 0.3), 0 0 20px hsl(271 81% 56% / 0.1);
+    box-shadow: 0 0 0 1px hsl(232 77% 59% / 0.3), 0 0 20px hsl(271 81% 56% / 0.1);
   }
 
   /* Fast Transitions */
@@ -434,4 +509,1739 @@
       max-width: 1400px;
     }
   } /* matches 2xl: 1400px */
+}
+
+/* ===== THEME-AWARE OVERRIDES FOR LEARN_ENGLISH COMPONENTS ===== */
+/* These help adapt hardcoded dark components to light mode */
+
+/* Light mode text overrides */
+[data-theme="light"] .text-white {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .text-slate-300,
+[data-theme="light"] .text-slate-400 {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .text-slate-100 {
+  color: #1E293B !important;
+}
+
+/* Light mode heading specific fixes for GD Coach */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4 {
+  color: #0F172A !important;
+}
+
+/* Light mode background overrides */
+[data-theme="light"] .bg-slate-900\/80,
+[data-theme="light"] .bg-slate-900\/60,
+[data-theme="light"] .bg-slate-900\/40 {
+  background-color: rgb(255 255 255 / 0.8) !important;
+}
+
+[data-theme="light"] .bg-slate-800\/80,
+[data-theme="light"] .bg-slate-800\/60 {
+  background-color: rgb(248 250 252 / 0.8) !important;
+}
+
+[data-theme="light"] .bg-slate-950\/80,
+[data-theme="light"] .bg-slate-950\/60 {
+  background-color: rgb(248 250 252 / 0.9) !important;
+}
+
+/* Light mode border overrides */
+[data-theme="light"] .border-slate-700\/50,
+[data-theme="light"] .border-slate-800\/70 {
+  border-color: rgb(203 213 225 / 0.5) !important;
+}
+
+/* Light mode gradient card overrides */
+[data-theme="light"] .from-slate-800\/80,
+[data-theme="light"] .from-slate-900\/80,
+[data-theme="light"] .from-emerald-900\/20 {
+  --tw-gradient-from: #F8FAFC !important;
+  --tw-gradient-to: rgb(255 255 255 / 0.9) !important;
+}
+
+[data-theme="light"] .to-slate-900\/80 {
+  --tw-gradient-to: rgb(255 255 255 / 0.9) !important;
+}
+
+/* Light mode shadow overrides */
+[data-theme="light"] .shadow-2xl,
+[data-theme="light"] .shadow-xl {
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1) !important;
+}
+
+/* Light mode icon color overrides */
+[data-theme="light"] .text-slate-400 {
+  color: #94A3B8 !important;
+}
+
+/* Theme transition for smooth switching */
+.theme-transition,
+.theme-transition * {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, box-shadow 200ms ease !important;
+}
+
+/* Additional light mode overrides for interactive elements */
+[data-theme="light"] .bg-slate-700,
+[data-theme="light"] .bg-slate-700\/80,
+[data-theme="light"] .bg-slate-600 {
+  background-color: #E2E8F0 !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .hover\:bg-slate-700:hover {
+  background-color: #CBD5E1 !important;
+}
+
+/* Light mode input overrides */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background-color: #F1F5F9 !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+/* Light mode progress bar overrides */
+[data-theme="light"] .bg-slate-700\/30 {
+  background-color: #E2E8F0 !important;
+}
+
+/* Light mode scrollbar */
+[data-theme="light"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #F1F5F9;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Midnight theme specific overrides */
+[data-theme="midnight"] .text-white {
+  color: #E2E8F0 !important;
+}
+
+[data-theme="midnight"] .text-slate-300,
+[data-theme="midnight"] .text-slate-400 {
+  color: #94A3B8 !important;
+}
+
+/* ===== GD COACH DASHBOARD LIGHT MODE FIXES ===== */
+/* Level Cards - Subtle pastel backgrounds instead of dark gradients */
+[data-theme="light"] .from-blue-900\/30,
+[data-theme="light"] .from-blue-900\/20 {
+  --tw-gradient-from: rgba(59, 130, 246, 0.06) !important;
+  --tw-gradient-to: rgba(248, 250, 252, 0.9) !important;
+}
+
+[data-theme="light"] .from-amber-900\/30,
+[data-theme="light"] .from-amber-900\/20 {
+  --tw-gradient-from: rgba(245, 158, 11, 0.06) !important;
+  --tw-gradient-to: rgba(248, 250, 252, 0.9) !important;
+}
+
+[data-theme="light"] .from-purple-900\/30,
+[data-theme="light"] .from-purple-900\/20,
+[data-theme="light"] .from-purple-900\/40 {
+  --tw-gradient-from: rgba(168, 85, 247, 0.06) !important;
+  --tw-gradient-to: rgba(248, 250, 252, 0.9) !important;
+}
+
+[data-theme="light"] .from-emerald-900\/20 {
+  --tw-gradient-from: rgba(16, 185, 129, 0.06) !important;
+  --tw-gradient-to: rgba(248, 250, 252, 0.9) !important;
+}
+
+[data-theme="light"] .to-slate-900\/80 {
+  --tw-gradient-to: #FFFFFF !important;
+}
+
+[data-theme="light"] .to-slate-900\/60,
+[data-theme="light"] .to-pink-900\/40 {
+  --tw-gradient-to: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Border fixes for level cards */
+[data-theme="light"] .border-blue-500\/30 {
+  border-color: rgba(59, 130, 246, 0.2) !important;
+}
+
+[data-theme="light"] .border-amber-500\/30 {
+  border-color: rgba(245, 158, 11, 0.2) !important;
+}
+
+[data-theme="light"] .border-purple-500\/30 {
+  border-color: rgba(168, 85, 247, 0.2) !important;
+}
+
+[data-theme="light"] .border-emerald-500\/30 {
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Progress bar background fixes */
+[data-theme="light"] .bg-slate-700\/50 {
+  background-color: #E2E8F0 !important;
+}
+
+/* Badge color fixes for light mode */
+[data-theme="light"] .bg-blue-500\/20 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+[data-theme="light"] .text-blue-400,
+[data-theme="light"] .text-blue-300 {
+  color: #2563EB !important;
+}
+
+[data-theme="light"] .bg-amber-500\/20 {
+  background-color: rgba(245, 158, 11, 0.1) !important;
+}
+
+[data-theme="light"] .text-amber-400,
+[data-theme="light"] .text-amber-300 {
+  color: #D97706 !important;
+}
+
+[data-theme="light"] .bg-purple-500\/20 {
+  background-color: rgba(168, 85, 247, 0.1) !important;
+}
+
+[data-theme="light"] .text-purple-400,
+[data-theme="light"] .text-purple-300 {
+  color: #7C3AED !important;
+}
+
+[data-theme="light"] .bg-emerald-500\/20 {
+  background-color: rgba(16, 185, 129, 0.1) !important;
+}
+
+[data-theme="light"] .text-emerald-400,
+[data-theme="light"] .text-emerald-300 {
+  color: #059669 !important;
+}
+
+/* Icon container backgrounds */
+[data-theme="light"] .bg-purple-500\/20,
+[data-theme="light"] .bg-blue-500\/20,
+[data-theme="light"] .bg-amber-500\/20,
+[data-theme="light"] .bg-emerald-500\/20 {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Back button and navigation */
+[data-theme="light"] .text-slate-400 {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .hover\:text-slate-300:hover {
+  color: #475569 !important;
+}
+
+/* Lesson card overrides */
+[data-theme="light"] .group .text-slate-400 {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .group-hover\:text-purple-400:hover {
+  color: #7C3AED !important;
+}
+
+/* CTA section fixes */
+[data-theme="light"] .from-purple-900\/40 {
+  --tw-gradient-from: rgba(168, 85, 247, 0.08) !important;
+}
+
+[data-theme="light"] .to-pink-900\/40 {
+  --tw-gradient-to: rgba(236, 72, 153, 0.08) !important;
+}
+
+/* Ensure cards have white background in light mode */
+[data-theme="light"] .bg-gradient-to-br,
+[data-theme="light"] .bg-gradient-to-r {
+  background-color: #FFFFFF !important;
+}
+
+/* Override card backgrounds with subtle shadows */
+[data-theme="light"] .backdrop-blur-xl {
+  backdrop-filter: blur(12px);
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Outer card container in light mode - full white */
+[data-theme="light"] .rounded-3xl.backdrop-blur-xl {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+/* Fix shadow effects - remove glow in light mode */
+[data-theme="light"] .shadow-lg,
+[data-theme="light"] .shadow-xl,
+[data-theme="light"] .shadow-2xl {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .shadow-purple-500\/10,
+[data-theme="light"] .shadow-purple-500\/20 {
+  --tw-shadow-color: transparent !important;
+}
+
+[data-theme="light"] .shadow-emerald-500\/10,
+[data-theme="light"] .shadow-emerald-500\/20 {
+  --tw-shadow-color: transparent !important;
+}
+
+/* Button fixes */
+[data-theme="light"] .bg-gradient-to-r.from-purple-600.to-pink-600 {
+  background: linear-gradient(to right, #7C3AED, #EC4899) !important;
+}
+
+/* ===== GD AGENT PAGE LIGHT MODE FIXES ===== */
+/* Hero section - replace dark gradient with light neutral */
+[data-theme="light"] .bg-gradient-to-b.from-slate-900.via-slate-900.to-slate-950,
+[data-theme="light"] .min-h-screen.bg-gradient-to-b {
+  background: linear-gradient(to bottom, #F8FAFC, #F1F5F9) !important;
+}
+
+/* Hero section content */
+[data-theme="light"] .text-white,
+[data-theme="light"] .text-gray-100 {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .text-gray-300,
+[data-theme="light"] .text-gray-400 {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .text-slate-500,
+[data-theme="light"] .text-slate-400 {
+  color: #64748B !important;
+}
+
+/* Card section backgrounds */
+[data-theme="light"] .bg-slate-800\/50,
+[data-theme="light"] .bg-slate-800\/30 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-theme="light"] .bg-slate-800 {
+  background-color: #FFFFFF !important;
+}
+
+/* Card borders */
+[data-theme="light"] .border-slate-700\/50 {
+  border-color: #E2E8F0 !important;
+}
+
+/* Card hover states */
+[data-theme="light"] .bg-slate-800\/50:hover {
+  background-color: #FFFFFF !important;
+}
+
+/* Stats text in cards */
+[data-theme="light"] .text-slate-500 {
+  color: #94A3B8 !important;
+}
+
+/* Card inner background on hover */
+[data-theme="light"] .absolute.inset-\[1px\].bg-slate-800.rounded-2xl {
+  background-color: #FFFFFF !important;
+}
+
+/* Feature list items */
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+}
+
+/* Tips section */
+[data-theme="light"] .bg-slate-800\/30.border-slate-700\/50 {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* Most Popular Badge - Light Mode */
+[data-theme="light"] .bg-gradient-to-r.from-amber-500.to-orange-500 {
+  background: linear-gradient(to right, #F59E0B, #F97316) !important;
+}
+
+[data-theme="light"] .shadow-amber-500\/30,
+[data-theme="light"] .shadow-lg.shadow-amber-500\/30 {
+  --tw-shadow-color: transparent !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Icon container backgrounds */
+[data-theme="light"] .bg-white\/5 {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* CTA buttons - preserve gradient but adjust shadows */
+[data-theme="light"] .shadow-lg {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Gradient overlay on cards */
+[data-theme="light"] .absolute.inset-0.bg-gradient-to-r,
+[data-theme="light"] .absolute.inset-0.bg-gradient-to-r.opacity-0 {
+  opacity: 0 !important;
+}
+
+/* Hero section heading glow effect - remove in light mode */
+[data-theme="light"] .text-white.drop-shadow-lg {
+  text-shadow: none !important;
+}
+
+/* Gradient text effect in hero */
+[data-theme="light"] .bg-clip-text.text-transparent.bg-gradient-to-r {
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: #0F172A !important;
+}
+
+/* Quick tips card in light mode */
+[data-theme="light"] .bg-slate-800\/30 {
+  background-color: #FFFFFF !important;
+}
+
+/* Tips section icons */
+[data-theme="light"] .text-amber-400 {
+  color: #D97706 !important;
+}
+
+/* Tip cards in tips section */
+[data-theme="light"] .bg-slate-800\/50.rounded-xl.p-4 {
+  background-color: #F8FAFC !important;
+  border: 1px solid #E2E8F0;
+}
+
+/* Subheading text in cards */
+[data-theme="light"] .text-xs.text-slate-500.font-medium.uppercase.tracking-wider {
+  color: #64748B !important;
+}
+
+/* Feature text in cards */
+[data-theme="light"] .text-sm.text-gray-300 {
+  color: #475569 !important;
+}
+
+/* Stats value text */
+[data-theme="light"] .text-sm.font-bold.text-white {
+  color: #0F172A !important;
+}
+
+/* ===== TECHNICAL MASTERY PAGE LIGHT MODE FIXES ===== */
+/* Main container */
+[data-theme="light"] .bg-slate-900\/30.backdrop-blur-xl {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* Header section */
+[data-theme="light"] .border-b.border-slate-700\/50 {
+  border-color: #E2E8F0 !important;
+}
+
+/* Back button */
+[data-theme="light"] .text-slate-400.font-bold.text-sm {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .hover\:text-slate-300:hover {
+  color: #475569 !important;
+}
+
+/* Step indicators */
+[data-theme="light"] .bg-slate-600 {
+  background-color: #CBD5E1 !important;
+}
+
+/* Headings */
+[data-theme="light"] .text-3xl.font-black.text-white {
+  color: #0F172A !important;
+}
+
+/* Subtext */
+[data-theme="light"] .text-slate-300 {
+  color: #64748B !important;
+}
+
+/* Option Cards - unselected state */
+[data-theme="light"] .border-slate-700.bg-slate-800\/50 {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+[data-theme="light"] .hover\:border-slate-600:hover {
+  border-color: #CBD5E1 !important;
+}
+
+/* Option Cards - selected state */
+[data-theme="light"] .border-purple-500.bg-purple-900\/30 {
+  background-color: rgba(91, 108, 255, 0.08) !important;
+  border-color: #5B6CFF !important;
+}
+
+/* Icon container - unselected */
+[data-theme="light"] .bg-slate-700.text-slate-400 {
+  background-color: #F1F5F9 !important;
+  color: #64748B !important;
+}
+
+/* Icon container - selected */
+[data-theme="light"] .bg-purple-600.text-white {
+  background-color: #5B6CFF !important;
+}
+
+/* Card title text */
+[data-theme="light"] .font-black.text-white.uppercase {
+  color: #0F172A !important;
+}
+
+/* Card description */
+[data-theme="light"] .text-xs.text-slate-300 {
+  color: #64748B !important;
+}
+
+/* Summary section cards */
+[data-theme="light"] .bg-slate-800\/50.p-8.rounded-3xl.border.border-slate-600 {
+  background-color: #FFFFFF !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* Summary section inner box */
+[data-theme="light"] .bg-slate-900\/50.p-4.rounded-2xl.border.border-slate-700 {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+}
+
+/* Labels */
+[data-theme="light"] .text-xs.font-black.uppercase.text-slate-400 {
+  color: #64748B !important;
+}
+
+/* Summary values */
+[data-theme="light"] .font-bold.text-white.capitalize {
+  color: #0F172A !important;
+}
+
+/* Button shadow */
+[data-theme="light"] .shadow-2xl.shadow-purple-500\/25 {
+  --tw-shadow-color: rgba(91, 108, 255, 0.15) !important;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Rounded card backgrounds for options */
+[data-theme="light"] .rounded-3xl.border-2 {
+  background-color: #FFFFFF !important;
+}
+
+/* ===== TECHNICAL PAGE PREMIUM LIGHT THEME UPGRADE ===== */
+/* Page background - soft neutral instead of pure white */
+[data-theme="light"] .min-h-screen {
+  background-color: #F6F8FC !important;
+}
+
+/* Main container card - premium depth */
+[data-theme="light"] .bg-slate-900\/30.backdrop-blur-xl.rounded-3xl {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EAF2 !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06) !important;
+  border-radius: 20px !important;
+}
+
+/* Add subtle gradient wash to top section */
+[data-theme="light"] .flex.items-center.justify-between.p-6 {
+  background: linear-gradient(to bottom, rgba(91, 108, 255, 0.04), transparent) !important;
+}
+
+/* Premium card styling for option buttons */
+[data-theme="light"] .rounded-3xl.border-2.flex.flex-col {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EAF2 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 20px !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .rounded-3xl.border-2.flex.flex-col:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(91, 108, 255, 0.2) !important;
+}
+
+/* Premium icon containers with soft brand tints */
+[data-theme="light"] .rounded-2xl.bg-slate-700 {
+  background-color: rgba(91, 108, 255, 0.08) !important;
+}
+
+/* Different tints per category - using nth-child approach */
+[data-theme="light"] .rounded-3xl.border-2:nth-child(1) .rounded-2xl {
+  background-color: rgba(59, 130, 246, 0.08) !important; /* Frontend - blue */
+}
+
+[data-theme="light"] .rounded-3xl.border-2:nth-child(2) .rounded-2xl {
+  background-color: rgba(34, 197, 94, 0.08) !important; /* Backend - green */
+}
+
+[data-theme="light"] .rounded-3xl.border-2:nth-child(3) .rounded-2xl {
+  background-color: rgba(99, 102, 241, 0.08) !important; /* Full Stack - indigo */
+}
+
+[data-theme="light"] .rounded-3xl.border-2:nth-child(4) .rounded-2xl {
+  background-color: rgba(168, 85, 247, 0.08) !important; /* System Design - purple */
+}
+
+/* Selected state icon */
+[data-theme="light"] .rounded-2xl.bg-purple-600 {
+  background-color: #5B6CFF !important;
+  box-shadow: 0 4px 12px rgba(91, 108, 255, 0.25) !important;
+}
+
+/* Premium typography */
+[data-theme="light"] .text-3xl.font-black.text-white {
+  color: #0F172A !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .text-slate-300.text-base {
+  color: #475569 !important;
+}
+
+[data-theme="light"] .font-black.text-white.uppercase.tracking-widest.text-sm {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+[data-theme="light"] .text-xs.text-slate-300 {
+  color: #64748B !important;
+}
+
+/* Premium summary card */
+[data-theme="light"] .bg-slate-800\/50.p-8.rounded-3xl.border {
+  background-color: #F8FAFC !important;
+  border: 1px solid #E6EAF2 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Summary inner box */
+[data-theme="light"] .bg-slate-900\/50.p-4.rounded-2xl {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EAF2 !important;
+}
+
+/* Premium button */
+[data-theme="light"] .bg-purple-600.text-white.px-12.py-4.rounded-3xl {
+  background: linear-gradient(135deg, #5B6CFF, #8B5CF6) !important;
+  box-shadow: 0 8px 20px rgba(91, 108, 255, 0.25) !important;
+}
+
+[data-theme="light"] .bg-purple-600.text-white.px-12.py-4.rounded-3xl:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 28px rgba(91, 108, 255, 0.3) !important;
+}
+
+/* Step indicator premium */
+[data-theme="light"] .bg-purple-500 {
+  background: linear-gradient(135deg, #5B6CFF, #8B5CF6) !important;
+}
+
+/* Card spacing */
+[data-theme="light"] .grid.grid-cols-1.md\:grid-cols-2.gap-6 {
+  gap: 24px !important;
+}
+
+/* Container padding */
+[data-theme="light"] .flex-1.p-6.md\:p-12 {
+  padding: 32px !important;
+}
+
+/* ===== COMPANY HR DASHBOARD THEME-AWARE STYLES ===== */
+/* Main container */
+[data-theme="light"] .max-w-4xl.mx-auto.py-8 {
+  padding-top: 32px;
+  padding-bottom: 32px;
+}
+
+/* Back button */
+[data-theme="light"] .text-slate-400.font-bold.text-sm.hover\:text-slate-600 {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .hover\:text-slate-600:hover {
+  color: #475569 !important;
+}
+
+/* Step indicator inactive */
+[data-theme="light"] .bg-slate-100 {
+  background-color: #E2E8F0 !important;
+}
+
+/* Step indicator active */
+[data-theme="light"] .bg-blue-600 {
+  background: linear-gradient(135deg, #5B6CFF, #8B5CF6) !important;
+}
+
+/* Main card container - premium white */
+[data-theme="light"] .bg-white.rounded-\[3rem\].border.border-slate-100 {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EAF2 !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 32px !important;
+}
+
+/* Card padding */
+[data-theme="light"] .p-12.space-y-10 {
+  padding: 40px !important;
+  gap: 32px !important;
+}
+
+/* Headings */
+[data-theme="light"] .text-3xl.font-black.text-slate-900 {
+  color: #0F172A !important;
+  font-weight: 800 !important;
+}
+
+/* Subtitle */
+[data-theme="light"] .text-slate-500.font-medium {
+  color: #64748B !important;
+}
+
+/* Company grid */
+[data-theme="light"] .grid.grid-cols-2.md\:grid-cols-3.gap-6 {
+  gap: 20px !important;
+}
+
+/* Company cards */
+[data-theme="light"] .bg-white.rounded-3xl.border.border-slate-200.shadow-sm {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+  border-radius: 24px !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .bg-white.rounded-3xl.border.border-slate-200.shadow-sm:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(91, 108, 255, 0.2) !important;
+}
+
+/* Selected company card */
+[data-theme="light"] .bg-blue-50.border-blue-500.shadow-md {
+  background-color: rgba(91, 108, 255, 0.06) !important;
+  border-color: #5B6CFF !important;
+  box-shadow: 0 8px 20px rgba(91, 108, 255, 0.15) !important;
+}
+
+/* Company logo container */
+[data-theme="light"] .w-16.h-16.rounded-2xl.bg-white {
+  background-color: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+/* Company name */
+[data-theme="light"] .font-semibold.text-slate-800 {
+  color: #111827 !important;
+  font-weight: 600 !important;
+}
+
+/* Step 2+ cards (Role, Experience, etc.) */
+[data-theme="light"] .grid.grid-cols-1.md\:grid-cols-3.gap-4 button {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 20px !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .grid.grid-cols-1.md\:grid-cols-3.gap-4 button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06) !important;
+  border-color: rgba(91, 108, 255, 0.2) !important;
+}
+
+/* Selected state for step 2+ */
+[data-theme="light"] button.selected,
+[data-theme="light"] .border-2.border-blue-500.bg-blue-50 {
+  background-color: rgba(91, 108, 255, 0.06) !important;
+  border-color: #5B6CFF !important;
+}
+
+/* Input fields */
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="url"],
+[data-theme="light"] textarea {
+  background-color: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 12px !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+/* File upload area */
+[data-theme="light"] .border-2.border-dashed.border-slate-300.rounded-2xl {
+  border-color: #CBD5E1 !important;
+  background-color: #F8FAFC !important;
+}
+
+/* Primary button */
+[data-theme="light"] .bg-blue-600.text-white.rounded-2xl.font-bold {
+  background: linear-gradient(135deg, #5B6CFF, #8B5CF6) !important;
+  box-shadow: 0 8px 20px rgba(91, 108, 255, 0.25) !important;
+}
+
+[data-theme="light"] .bg-blue-600.text-white.rounded-2xl.font-bold:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 12px 28px rgba(91, 108, 255, 0.3) !important;
+}
+
+/* Secondary button */
+[data-theme="light"] .bg-slate-100.text-slate-700.rounded-2xl.font-semibold {
+  background-color: #F1F5F9 !important;
+  color: #475569 !important;
+}
+
+/* Selection pill badges */
+[data-theme="light"] .bg-blue-100.text-blue-700,
+[data-theme="light"] .bg-green-100.text-green-700,
+[data-theme="light"] .bg-purple-100.text-purple-700 {
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* ===== DARK MODE COMPANY PAGE ENHANCEMENTS ===== */
+[data-theme="dark"] .bg-white.rounded-\[3rem\].border.border-slate-100,
+[data-theme="midnight"] .bg-white.rounded-\[3rem\].border.border-slate-100 {
+  background-color: #1E293B !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+}
+
+[data-theme="dark"] .text-slate-900,
+[data-theme="midnight"] .text-slate-900 {
+  color: #F1F5F9 !important;
+}
+
+[data-theme="dark"] .text-slate-800,
+[data-theme="midnight"] .text-slate-800 {
+  color: #E2E8F0 !important;
+}
+
+[data-theme="dark"] .text-slate-500,
+[data-theme="midnight"] .text-slate-500 {
+  color: #94A3B8 !important;
+}
+
+[data-theme="dark"] .bg-white.rounded-3xl.border.border-slate-200,
+[data-theme="midnight"] .bg-white.rounded-3xl.border.border-slate-200 {
+  background-color: #334155 !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] .font-semibold.text-slate-800,
+[data-theme="midnight"] .font-semibold.text-slate-800 {
+  color: #F1F5F9 !important;
+}
+
+/* ===== PREMIUM LIGHT THEME UPGRADES (Linear/Stripe Style) ===== */
+/* Soft gradient page background */
+[data-theme="light"] body,
+[data-theme="light"] .min-h-screen {
+  background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%) !important;
+}
+
+/* Premium main card */
+[data-theme="light"] .bg-white.rounded-\[3rem\].border.border-slate-100 {
+  background: #FFFFFF !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08) !important;
+  border-radius: 24px !important;
+}
+
+/* Premium heading */
+[data-theme="light"] .text-3xl.font-black.text-slate-900 {
+  color: #111827 !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+
+/* Premium subtext */
+[data-theme="light"] .text-slate-500 {
+  color: #6b7280 !important;
+}
+
+/* Premium dropdown/select */
+[data-theme="light"] select,
+[data-theme="light"] .relative select {
+  background-color: #F3F4F6 !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 14px !important;
+  padding: 12px 16px !important;
+  color: #111827 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: all 200ms ease !important;
+  appearance: none !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 12px center !important;
+  background-size: 16px !important;
+}
+
+[data-theme="light"] select:focus,
+[data-theme="light"] .relative select:focus {
+  outline: none !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Premium button - selected/active state */
+[data-theme="light"] button:has(.bg-blue-600),
+[data-theme="light"] .bg-blue-600.text-white,
+[data-theme="light"] .bg-indigo-600.text-white {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3) !important;
+  transform: scale(1.02) !important;
+  transition: all 200ms ease !important;
+}
+
+/* Experience level buttons - unselected */
+[data-theme="light"] .grid button.bg-white,
+[data-theme="light"] button.bg-white.border {
+  background-color: #F3F4F6 !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 16px !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .grid button.bg-white:hover,
+[data-theme="light"] button.bg-white.border:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+  border-color: #6366f1 !important;
+}
+
+/* Experience level buttons - selected */
+[data-theme="light"] button.selected,
+[data-theme="light"] button.bg-indigo-600 {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  color: white !important;
+  box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3) !important;
+  transform: scale(1.02) !important;
+  border: none !important;
+}
+
+/* Continue button premium */
+[data-theme="light"] .bg-blue-600.text-white.rounded-2xl.font-bold,
+[data-theme="light"] button:contains("Continue") {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+  padding: 16px 32px !important;
+  border-radius: 16px !important;
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3) !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .bg-blue-600.text-white.rounded-2xl.font-bold:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 15px 40px rgba(99, 102, 241, 0.35) !important;
+}
+
+/* Premium input fields */
+[data-theme="light"] input[type="text"],
+[data-theme="light"] input[type="url"],
+[data-theme="light"] textarea,
+[data-theme="light"] .bg-slate-50 input {
+  background-color: #F9FAFB !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 14px !important;
+  padding: 14px 18px !important;
+  color: #111827 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15), inset 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* File upload premium */
+[data-theme="light"] .border-2.border-dashed {
+  border-color: #D1D5DB !important;
+  background: linear-gradient(135deg, #F9FAFB, #F3F4F6) !important;
+  border-radius: 20px !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .border-2.border-dashed:hover {
+  border-color: #6366f1 !important;
+  background: linear-gradient(135deg, #F3F4F6, #EEF2FF) !important;
+}
+
+/* Premium step indicator */
+[data-theme="light"] .bg-blue-600,
+[data-theme="light"] .bg-indigo-600 {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+}
+
+[data-theme="light"] .bg-slate-100 {
+  background-color: #E5E7EB !important;
+}
+
+/* Add subtle radial gradient behind main card */
+[data-theme="light"] .max-w-4xl.mx-auto {
+  position: relative;
+}
+
+[data-theme="light"] .max-w-4xl.mx-auto::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme="light"] .max-w-4xl.mx-auto > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Better spacing */
+[data-theme="light"] .space-y-8 > * + * {
+  margin-top: 32px !important;
+}
+
+[data-theme="light"] .gap-6 {
+  gap: 24px !important;
+}
+
+/* ===== DARK THEME PREMIUM IMPROVEMENTS ===== */
+[data-theme="dark"] body,
+[data-theme="dark"] .min-h-screen,
+[data-theme="midnight"] body,
+[data-theme="midnight"] .min-h-screen {
+  background: #0f172a !important;
+}
+
+[data-theme="midnight"] body,
+[data-theme="midnight"] .min-h-screen {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%) !important;
+}
+
+[data-theme="dark"] .bg-white.rounded-\[3rem\],
+[data-theme="midnight"] .bg-white.rounded-\[3rem\] {
+  background: #1E293B !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4) !important;
+}
+
+[data-theme="dark"] select,
+[data-theme="midnight"] select {
+  background-color: #334155 !important;
+  border-color: #475569 !important;
+  color: #F1F5F9 !important;
+}
+
+/* ===== THEME TRANSITION ANIMATION ===== */
+*,
+*::before,
+*::after {
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease, transform 200ms ease !important;
+}
+
+/* ===== COMPREHENSIVE SIDEBAR & NAVIGATION UPGRADES ===== */
+/* Sidebar background */
+[data-theme="light"] nav,
+[data-theme="light"] aside,
+[data-theme="light"] [class*="sidebar"],
+[data-theme="light"] nav.bg-slate-900,
+[data-theme="light"] nav.bg-slate-800 {
+  background-color: #FFFFFF !important;
+  border-right: 1px solid #E6EAF2 !important;
+}
+
+/* Sidebar text */
+[data-theme="light"] nav a,
+[data-theme="light"] nav button,
+[data-theme="light"] nav span {
+  color: #475569 !important;
+}
+
+/* Sidebar active item */
+[data-theme="light"] nav a.bg-slate-800,
+[data-theme="light"] nav button.bg-slate-800,
+[data-theme="light"] nav .bg-blue-600,
+[data-theme="light"] nav .active {
+  background-color: #EAF2FF !important;
+  color: #2563EB !important;
+}
+
+/* Sidebar hover */
+[data-theme="light"] nav a:hover,
+[data-theme="light"] nav button:hover {
+  background-color: #F1F5F9 !important;
+}
+
+/* Sidebar icons */
+[data-theme="light"] nav svg {
+  color: #64748B !important;
+}
+
+[data-theme="light"] nav a:hover svg,
+[data-theme="light"] nav button:hover svg {
+  color: #2563EB !important;
+}
+
+/* Sidebar active icon */
+[data-theme="light"] nav a.bg-slate-800 svg,
+[data-theme="light"] nav .active svg {
+  color: #2563EB !important;
+}
+
+/* Sidebar divider */
+[data-theme="light"] nav hr,
+[data-theme="light"] nav .border-t {
+  border-color: #E6EAF2 !important;
+}
+
+/* ===== THEME TOGGLE PREMIUM STYLING ===== */
+[data-theme="light"] button[class*="theme"],
+[data-theme="light"] [class*="theme-toggle"],
+[data-theme="light"] [class*="dropdown"] {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EAF2 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] [class*="theme-option"]:hover,
+[data-theme="light"] [class*="theme-option"].active {
+  background-color: #EAF2FF !important;
+}
+
+/* ===== PROGRESS BAR UPGRADES ===== */
+[data-theme="light"] .bg-slate-200,
+[data-theme="light"] .bg-slate-300,
+[data-theme="light"] .bg-slate-700\/50 {
+  background-color: #E2E8F0 !important;
+}
+
+[data-theme="light"] .bg-blue-600,
+[data-theme="light"] .bg-indigo-600,
+[data-theme="light"] .bg-purple-600 {
+  background: linear-gradient(90deg, #2563EB, #4F46E5) !important;
+}
+
+/* Animated progress fill */
+[data-theme="light"] [role="progressbar"] {
+  background: linear-gradient(90deg, #2563EB, #6366F1) !important;
+}
+
+/* ===== BADGE & TAG UPGRADES ===== */
+[data-theme="light"] .bg-blue-100,
+[data-theme="light"] .bg-indigo-100 {
+  background-color: #EAF2FF !important;
+  color: #2563EB !important;
+}
+
+[data-theme="light"] .bg-green-100 {
+  background-color: #EAF9F0 !important;
+  color: #16A34A !important;
+}
+
+[data-theme="light"] .bg-amber-100,
+[data-theme="light"] .bg-yellow-100 {
+  background-color: #FFF6E6 !important;
+  color: #D97706 !important;
+}
+
+[data-theme="light"] .bg-red-100 {
+  background-color: #FDECEC !important;
+  color: #EF4444 !important;
+}
+
+/* ===== INPUT & FORM UPGRADES ===== */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background-color: #F8FAFC !important;
+  border-color: #E2E8F0 !important;
+  border-radius: 12px !important;
+  color: #0F172A !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus,
+[data-theme="light"] select:focus {
+  border-color: #2563EB !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+}
+
+/* ===== CARD HOVER EFFECTS ===== */
+[data-theme="light"] .card,
+[data-theme="light"] [class*="card"] {
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .card:hover,
+[data-theme="light"] [class*="card"]:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ===== RESPONSIVE SPACING ===== */
+[data-theme="light"] .p-4 { padding: 16px !important; }
+[data-theme="light"] .p-6 { padding: 24px !important; }
+[data-theme="light"] .p-8 { padding: 32px !important; }
+[data-theme="light"] .gap-4 { gap: 16px !important; }
+[data-theme="light"] .gap-6 { gap: 24px !important; }
+[data-theme="light"] .space-y-4 > * + * { margin-top: 16px !important; }
+[data-theme="light"] .space-y-6 > * + * { margin-top: 24px !important; }
+[data-theme="light"] .space-y-8 > * + * { margin-top: 32px !important; }
+
+/* ===== VOCABULARY BOOSTER PAGE PREMIUM LIGHT THEME ===== */
+/* Hero section with gradient */
+[data-theme="light"] .text-3xl.md\:text-4xl.font-black.text-white {
+  color: #0F172A !important;
+  font-weight: 800 !important;
+}
+
+[data-theme="light"] .text-white.mb-2 {
+  color: #0F172A !important;
+}
+
+/* Hero gradient background */
+[data-theme="light"] .bg-gradient-to-b,
+[data-theme="light"] [class*="vocabulary"].min-h-screen {
+  background: linear-gradient(to bottom, #FFFFFF, #F1F5F9) !important;
+}
+
+/* Hero subtitle */
+[data-theme="light"] .text-slate-400.max-w-xl {
+  color: #64748B !important;
+}
+
+/* Tab navigation */
+[data-theme="light"] .flex.gap-2 button,
+[data-theme="light"] [class*="tabs"] button {
+  background-color: #F1F5F9 !important;
+  border-radius: 9999px !important;
+  padding: 8px 20px !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .flex.gap-2 button:hover {
+  background-color: #E2E8F0 !important;
+}
+
+/* Active tab */
+[data-theme="light"] .flex.gap-2 button.bg-purple-600,
+[data-theme="light"] button[aria-selected="true"] {
+  background-color: #FFFFFF !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid #E2E8F0 !important;
+  color: #2563EB !important;
+}
+
+/* Category containers */
+[data-theme="light"] .bg-slate-800\/40.rounded-3xl,
+[data-theme="light"] .bg-slate-800\/50 {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 20px !important;
+}
+
+/* Word cards */
+[data-theme="light"] .bg-slate-800\/60.rounded-2xl,
+[data-theme="light"] .bg-slate-800\/50.rounded-2xl {
+  background-color: #F8FAFC !important;
+  border: 1px solid #E2E8F0 !important;
+  border-radius: 16px !important;
+  transition: all 200ms ease !important;
+}
+
+[data-theme="light"] .bg-slate-800\/60.rounded-2xl:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1) !important;
+  border-color: #2563EB !important;
+}
+
+/* Example section */
+[data-theme="light"] .bg-emerald-900\/20,
+[data-theme="light"] .bg-green-900\/20 {
+  background-color: #ECFDF5 !important;
+  border-left: 4px solid #10B981 !important;
+}
+
+/* Wrong section */
+[data-theme="light"] .bg-red-900\/20 {
+  background-color: #FEF2F2 !important;
+  border-left: 4px solid #EF4444 !important;
+}
+
+/* Better alternative */
+[data-theme="light"] .bg-blue-900\/20,
+[data-theme="light"] .bg-indigo-900\/20 {
+  background-color: #EFF6FF !important;
+  border-left: 4px solid #2563EB !important;
+}
+
+/* Word title text */
+[data-theme="light"] .text-white.font-bold,
+[data-theme="light"] .font-bold.text-white {
+  color: #0F172A !important;
+}
+
+/* Word phonetic/meaning text */
+[data-theme="light"] .text-slate-400,
+[data-theme="light"] .text-gray-400 {
+  color: #64748B !important;
+}
+
+/* Category title */
+[data-theme="light"] .text-xl.font-bold.text-white,
+[data-theme="light"] .font-bold.text-white.text-xl {
+  color: #0F172A !important;
+}
+
+/* Section heading */
+[data-theme="light"] .text-2xl.font-bold.text-white {
+  color: #0F172A !important;
+  font-weight: 700 !important;
+}
+
+/* Button primary */
+[data-theme="light"] .bg-purple-600.text-white,
+[data-theme="light"] button.bg-purple-600 {
+  background: linear-gradient(135deg, #2563EB, #4F46E5) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25) !important;
+}
+
+[data-theme="light"] .bg-purple-600.text-white:hover {
+  transform: scale(1.02) !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3) !important;
+}
+
+/* Button secondary */
+[data-theme="light"] .bg-slate-700,
+[data-theme="light"] button.bg-slate-700 {
+  background-color: #F1F5F9 !important;
+  color: #475569 !important;
+  border: 1px solid #E2E8F0 !important;
+}
+
+/* Icon colors in cards */
+[data-theme="light"] .text-purple-400,
+[data-theme="light"] .text-blue-400,
+[data-theme="light"] .text-green-400 {
+  color: #2563EB !important;
+}
+
+/* Section backgrounds */
+[data-theme="light"] .bg-slate-900\/30 {
+  background-color: #FFFFFF !important;
+}
+
+/* Back button */
+[data-theme="light"] .text-slate-400.font-bold {
+  color: #64748B !important;
+}
+
+/* Card divider */
+[data-theme="light"] .border-t.border-slate-700\/50 {
+  border-color: #E2E8F0 !important;
+}
+
+/* Tab icon colors */
+[data-theme="light"] .text-slate-400,
+[data-theme="light"] .lucide {
+  color: #64748B !important;
+}
+
+[data-theme="light"] .bg-purple-600 .lucide {
+  color: #FFFFFF !important;
+}
+
+/* Vocabulary page spacing */
+[data-theme="light"] .p-6.md\:p-12 {
+  padding: 48px !important;
+}
+
+[data-theme="light"] .space-y-8 {
+  gap: 32px !important;
+}
+
+/* ===== COMPREHENSIVE INTERVIEW GUIDE & ALL PAGES LIGHT THEME ===== */
+/* Global page background */
+[data-theme="light"] html,
+[data-theme="light"] body,
+[data-theme="light"] main,
+[data-theme="light"] [class*="page"] {
+  background-color: #F8FAFC !important;
+}
+
+/* Interview Guide specific */
+[data-theme="light"] .min-h-screen,
+[data-theme="light"] [class*="interview"],
+[data-theme="light"] [class*="guide"] {
+  background-color: #F8FAFC !important;
+}
+
+/* Fix all dark section backgrounds */
+[data-theme="light"] section,
+[data-theme="light"] .section,
+[data-theme="light"] [class*="section"] {
+  background-color: transparent !important;
+}
+
+/* All main content containers */
+[data-theme="light"] main > div,
+[data-theme="light"] .container,
+[data-theme="light"] .content-wrapper {
+  background-color: #FFFFFF !important;
+}
+
+/* Remove dark gradients */
+[data-theme="light"] .bg-gradient-to-r,
+[data-theme="light"] .bg-gradient-to-l,
+[data-theme="light"] .bg-gradient-to-t,
+[data-theme="light"] .bg-gradient-to-b {
+  background: transparent !important;
+}
+
+/* ===== COMPREHENSIVE LIGHT THEME RESET FOR ALL COMPONENTS ===== */
+/* Reset all grey backgrounds to white/light */
+[data-theme="light"] .bg-slate-900,
+[data-theme="light"] .bg-slate-800,
+[data-theme="light"] .bg-slate-700,
+[data-theme="light"] .bg-slate-600 {
+  background-color: #F1F5F9 !important;
+}
+
+/* Override slate backgrounds with transparency/white */
+[data-theme="light"] .bg-slate-900\/\d+,
+[data-theme="light"] .bg-slate-800\/\d+,
+[data-theme="light"] .bg-slate-700\/\d+ {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* All text hierarchy */
+[data-theme="light"] .text-white,
+[data-theme="light"] [class*="text-white"] {
+  color: #0F172A !important;
+}
+
+[data-theme="light"] .text-gray-100,
+[data-theme="light"] .text-gray-200 {
+  color: #334155 !important;
+}
+
+[data-theme="light"] .text-gray-300,
+[data-theme="light"] .text-gray-400 {
+  color: #64748B !important;
+}
+
+/* Borders */
+[data-theme="light"] .border-slate-800,
+[data-theme="light"] .border-slate-700,
+[data-theme="light"] .border-slate-600 {
+  border-color: #E2E8F0 !important;
+}
+
+/* Sticky header */
+[data-theme="light"] header,
+[data-theme="light"] [class*="header"],
+[data-theme="light"] nav,
+[data-theme="light"] [class*="nav"] {
+  background-color: #FFFFFF !important;
+  border-bottom: 1px solid #E2E8F0 !important;
+}
+
+/* Theme toggle - ensure it's visible and styled */
+[data-theme="light"] [class*="theme"],
+[data-theme="light"] button[class*="theme"] {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* ===== FINAL THEME CONSISTENCY RULES ===== */
+/* Ensure buttons always have proper styling */
+[data-theme="light"] button {
+  transition: all 200ms ease !important;
+}
+
+/* Links */
+[data-theme="light"] a {
+  color: #2563EB !important;
+  transition: color 200ms ease !important;
+}
+
+[data-theme="light"] a:hover {
+  color: #1D4ED8 !important;
+}
+
+/* Focus states for accessibility */
+[data-theme="light"] *:focus-visible {
+  outline: 2px solid #2563EB !important;
+  outline-offset: 2px !important;
+}
+
+/* Smooth transitions globally */
+[data-theme="light"] * {
+  -webkit-transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease !important;
+  transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease, box-shadow 200ms ease !important;
+}
+
+/* ===== INTERVIEW GUIDE PAGE COMPREHENSIVE STYLING ===== */
+/* Hero section */
+[data-theme="light"] .bg-slate-900,
+[data-theme="light"] [class*="hero"].min-h-screen {
+  background: linear-gradient(to bottom, #F7F9FC, #EEF2FF) !important;
+}
+
+/* Badge */
+[data-theme="light"] .bg-blue-500\/20.text-blue-300,
+[data-theme="light"] .bg-purple-500\/20 {
+  background-color: #E0E7FF !important;
+  color: #4F46E5 !important;
+}
+
+/* Main heading */
+[data-theme="light"] .text-4xl.font-black,
+[data-theme="light"] .text-5xl.font-black {
+  color: #111827 !important;
+  font-weight: 800 !important;
+}
+
+/* Hero subtitle */
+[data-theme="light"] .text-slate-400,
+[data-theme="light"] .text-lg.text-slate-400 {
+  color: #6B7280 !important;
+}
+
+/* Button styles */
+[data-theme="light"] .bg-gradient-to-r.from-blue-600.to-purple-600 {
+  background: linear-gradient(135deg, #4F46E5, #6366F1) !important;
+  box-shadow: 0 8px 24px rgba(79, 70, 229, 0.3) !important;
+}
+
+[data-theme="light"] .bg-gradient-to-r.from-blue-600.to-purple-600:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(79, 70, 229, 0.35) !important;
+}
+
+/* Secondary button */
+[data-theme="light"] .bg-slate-800,
+[data-theme="light"] .bg-slate-700 {
+  background-color: #F3F4F6 !important;
+  color: #374151 !important;
+  border: 1px solid #E5E7EB !important;
+}
+
+/* Card styling */
+[data-theme="light"] .bg-slate-800\/50,
+[data-theme="light"] .bg-slate-800\/40 {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EAF2 !important;
+  border-radius: 24px !important;
+}
+
+/* Glass card effect */
+[data-theme="light"] .bg-slate-900\/50,
+[data-theme="light"] .bg-slate-900\/60 {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(12px);
+  border: 1px solid #E6EAF2 !important;
+}
+
+/* Card title */
+[data-theme="light"] .text-2xl.font-bold.text-white,
+[data-theme="light"] .text-xl.font-bold.text-white {
+  color: #111827 !important;
+  font-weight: 700 !important;
+}
+
+/* Status badge */
+[data-theme="light"] .bg-green-500\/20,
+[data-theme="light"] .bg-green-500\/20.text-green-300 {
+  background-color: #D1FAE5 !important;
+  color: #059669 !important;
+}
+
+/* Form inputs */
+[data-theme="light"] input,
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+  background-color: #F9FAFB !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 14px !important;
+  color: #111827 !important;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] textarea:focus {
+  border-color: #4F46E5 !important;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15) !important;
+}
+
+/* Toggle switch */
+[data-theme="light"] .bg-slate-700 {
+  background-color: #E5E7EB !important;
+}
+
+[data-theme="light"] .bg-green-500 {
+  background-color: #10B981 !important;
+}
+
+/* Divider */
+[data-theme="light"] .border-t.border-slate-700 {
+  border-color: #E6EAF2 !important;
+}
+
+/* Feature cards grid */
+[data-theme="light"] .grid.grid-cols-3 > div,
+[data-theme="light"] .grid-cols-1.md\:grid-cols-3 > div {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EAF2 !important;
+  border-radius: 20px !important;
+  padding: 24px !important;
+}
+
+/* Feature card hover */
+[data-theme="light"] .grid.grid-cols-3 > div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Feature card icon */
+[data-theme="light"] .w-12.h-12.rounded-2xl {
+  background-color: #E0E7FF !important;
+}
+
+[data-theme="light"] .text-purple-400,
+[data-theme="light"] .text-blue-400 {
+  color: #4F46E5 !important;
+}
+
+/* Feature card text */
+[data-theme="light"] .text-white.font-semibold {
+  color: #111827 !important;
+}
+
+[data-theme="light"] .text-slate-400 {
+  color: #6B7280 !important;
+}
+
+/* Accordion section */
+[data-theme="light"] .bg-slate-800\/30 {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E6EAF2 !important;
+  border-radius: 16px !important;
+}
+
+/* Section accordion header */
+[data-theme="light"] .bg-slate-800\/40 {
+  background-color: #F9FAFB !important;
+  border-bottom: 1px solid #E6EAF2 !important;
+}
+
+/* Loading spinner */
+[data-theme="light"] .animate-spin {
+  border-color: #E5E7EB !important;
+  border-top-color: #4F46E5 !important;
+}
+
+/* Account section */
+[data-theme="light"] .bg-purple-500\/10 {
+  background-color: #F3E8FF !important;
+}
+
+[data-theme="light"] .text-purple-400 {
+  color: #9333EA !important;
+}
+
+/* PRO badge */
+[data-theme="light"] .bg-gradient-to-r.from-amber-400.to-orange-500 {
+  background: linear-gradient(135deg, #F59E0B, #EA580C) !important;
+}
+
+/* Progress bar */
+[data-theme="light"] .bg-slate-700\/50 {
+  background-color: #E5E7EB !important;
+}
+
+[data-theme="light"] .bg-gradient-to-r.from-blue-500.to-purple-500 {
+  background: linear-gradient(90deg, #4F46E5, #8B5CF6) !important;
+}
+
+/* ===== DARK THEME INTERVIEW GUIDE ===== */
+[data-theme="dark"] .bg-slate-900,
+[data-theme="dark"] [class*="hero"].min-h-screen {
+  background: linear-gradient(to bottom, #0F172A, #1E293B) !important;
+}
+
+[data-theme="dark"] .bg-slate-800\/50 {
+  background-color: rgba(30, 41, 59, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  color: #F1F5F9 !important;
+}
+
+[data-theme="dark"] .text-4xl.font-black {
+  color: #F1F5F9 !important;
+}
+
+[data-theme="dark"] .text-slate-400 {
+  color: #94A3B8 !important;
+}
+
+/* Lesson Card Gradient Overrides for GD Coach */
+[data-theme="light"] .bg-gradient-to-br.from-emerald-900\/20.to-slate-900\/80,
+[data-theme="light"] .bg-gradient-to-br.from-slate-800\/80.to-slate-900\/80 {
+  background: linear-gradient(to bottom right, rgba(16, 185, 129, 0.06), #FFFFFF) !important;
+  border-color: rgba(16, 185, 129, 0.2) !important;
+}
+
+[data-theme="light"] .bg-gradient-to-br.from-slate-800\/80.to-slate-900\/80 {
+  background: linear-gradient(to bottom right, rgba(248, 250, 252, 0.95), #FFFFFF) !important;
+  border-color: rgba(168, 85, 247, 0.2) !important;
 }

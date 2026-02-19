@@ -29,7 +29,6 @@ const PAGE_TITLES: Record<string, { label: string; color: string }> = {
   '/train/gd': { label: 'GD Agent', color: 'text-indigo-400' },
   '/train/technical': { label: 'Technical Mastery', color: 'text-emerald-400' },
   '/train/company': { label: 'Company Track', color: 'text-amber-400' },
-  '/train/mock': { label: 'Mock Interview', color: 'text-rose-400' },
   '/train/daily': { label: 'Daily Conversation', color: 'text-sky-400' },
   '/train/latest-topics': { label: 'Latest Company Topics', color: 'text-lime-400' },
   '/train/english': { label: 'Essential Modules', color: 'text-blue-400' },

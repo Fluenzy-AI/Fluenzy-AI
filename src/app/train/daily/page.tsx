@@ -2,15 +2,23 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import VoiceAgent from "../../../../Learn_English/components/VoiceAgent";
 import { UserProfile } from "../../../../Learn_English/types";
 import { INITIAL_USER } from "../../../../Learn_English/constants";
-import { ModuleType } from "../../../../Learn_English/types";
+import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 
 const DailyPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -18,8 +26,12 @@ const DailyPage = () => {
     }
   }, [status, router]);
 
-  if (status === "loading") {
-    return <div>Loading...</div>;
+  if (status === "loading" || !mounted) {
+    return (
+      <div className={`min-h-screen ${currentTheme.background} flex items-center justify-center`}>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: currentTheme.accent }}></div>
+      </div>
+    );
   }
 
   if (!session?.user) {
@@ -36,7 +48,7 @@ const DailyPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
+    <div className={`min-h-screen ${currentTheme.background} p-8 theme-transition`}>
       <VoiceAgent user={user} onSessionEnd={() => {}} />
     </div>
   );

@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import VoiceAgent from "../../../../../Learn_English/components/VoiceAgent";
 import VideoAnalysisPanel from "../../../../components/VideoAnalysisPanel";
 import { UserProfile, ModuleType } from "../../../../../Learn_English/types";
+import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 import { INITIAL_USER } from "../../../../../Learn_English/constants";
 
 const SessionPage = () => {
@@ -13,6 +14,9 @@ const SessionPage = () => {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
+  const { resolvedTheme } = useTheme();
+  
+  const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
   const type = params.type as string;
   const [isVideoAnalysisEnabled, setIsVideoAnalysisEnabled] = useState(false);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
@@ -44,7 +48,6 @@ const SessionPage = () => {
         [ModuleType.HR_INTERVIEW]: 'hr',
         [ModuleType.TECH_INTERVIEW]: 'technical',
         [ModuleType.COMPANY_WISE_HR]: 'company',
-        [ModuleType.FULL_MOCK]: 'mock',
         [ModuleType.GD_COACH]: 'gd',
       };
 
@@ -86,8 +89,8 @@ const SessionPage = () => {
   } : {};
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
-      {/* Subtle radial glow */}
+    <div className={`min-h-screen ${currentTheme.background} relative overflow-hidden theme-transition`}>
+      {/* Subtle radial glow - adapt to theme */}
       <div className="absolute inset-0 bg-gradient-radial from-purple-900/10 via-transparent to-transparent" />
       <div className="absolute inset-0 bg-gradient-radial from-blue-900/5 via-transparent to-transparent" />
 
@@ -95,7 +98,7 @@ const SessionPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Voice Agent */}
           <div className={`${isVideoAnalysisEnabled && (isHRInterview || isCompanyWise) ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
-            <div className="bg-slate-900/30 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl p-6 md:p-8 lg:p-12">
+            <div className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-6 md:p-8 lg:p-12 theme-transition`}>
               <VoiceAgent user={user} onSessionEnd={() => {}} />
             </div>
           </div>

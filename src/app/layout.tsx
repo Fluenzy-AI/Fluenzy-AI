@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Provider from "./providers";
 import LayoutWrapper from "../components/LayoutWrapper";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.fluenzyai.app"),
@@ -136,11 +137,31 @@ export default function RootLayout({
         className="antialiased"
         suppressHydrationWarning
       >
-        <Provider>
-          <LayoutWrapper>
-            {children}
-          </LayoutWrapper>
-        </Provider>
+        {/* Theme initialization script to prevent flash */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var theme = localStorage.getItem('fluenzy-theme') || 'dark';
+                  var actualTheme = theme;
+                  if (theme === 'system') {
+                    actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  }
+                  document.documentElement.classList.add(actualTheme);
+                  document.documentElement.setAttribute('data-theme', actualTheme);
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+        <ThemeProvider>
+          <Provider>
+            <LayoutWrapper>
+              {children}
+            </LayoutWrapper>
+          </Provider>
+        </ThemeProvider>
       </body>
     </html>
   );

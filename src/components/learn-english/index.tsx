@@ -30,9 +30,6 @@ const LearnEnglishApp: React.FC<LearnEnglishAppProps> = ({ mode, user, onSession
       return <GDAgent user={user} onSessionEnd={onSessionEnd || (() => {})} />;
     case 'company':
       return <CompanyHRDashboard />;
-    case 'mock':
-      // For mock, perhaps use LearningPath or a combined component
-      return <LearningPath />;
     default:
       return <LearningPath />;
   }

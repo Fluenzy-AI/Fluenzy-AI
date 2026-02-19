@@ -58,9 +58,6 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ session, pathname }) =>
                    <Link href="/train/company" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/company' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
                      <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Company Track
                    </Link>
-                   <Link href="/train/mock" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/mock' ? 'text-rose-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Mock Interview
-                   </Link>
                    <Link href="/train/daily" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/daily' ? 'text-sky-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
                      <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Daily Conversation
                    </Link>
