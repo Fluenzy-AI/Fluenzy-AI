@@ -293,9 +293,10 @@ export default function TrainPage() {
                 rounded-2xl p-6 transition-all duration-200
                 ${mod.isLocked 
                   ? 'opacity-60' 
-                  : 'hover:border-[#5B6CFF]/30 hover:shadow-lg hover:shadow-[#5B6CFF]/10 hover:-translate-y-1'
+                  : 'hover:border-[#5B6CFF]/30 hover:shadow-lg hover:shadow-[#5B6CFF]/10 hover:-translate-y-1 cursor-pointer'
                 }
               `}
+              {...(mod.isLocked ? {} : { onClick: () => router.push(mod.href), role: 'button', tabIndex: 0, onKeyDown: (e) => e.key === 'Enter' && router.push(mod.href) })}
             >
               {/* Gradient Background Effect */}
               <div className={`absolute -right-20 -top-20 w-40 h-40 bg-gradient-to-br ${mod.gradient} opacity-0 group-hover:opacity-10 blur-3xl transition-opacity duration-500`} />
@@ -353,8 +354,11 @@ export default function TrainPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-slate-500"
-                      onClick={() => router.push('/billing')}
+                      className="text-slate-500 z-20"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        router.push('/billing');
+                      }}
                     >
                       Upgrade
                     </Button>

@@ -22,6 +22,18 @@ import {
 } from "../ui/sheet";
 import SidebarContent from "./SidebarContent";
 
+// User type for passed user data
+interface UserData {
+  name: string;
+  email: string;
+  avatar?: string | null;
+}
+
+interface NavbarProps {
+  showSidebar?: boolean;
+  userData?: UserData | null;
+}
+
 const PAGE_TITLES: Record<string, { label: string; color: string }> = {
   '/train': { label: 'Train Now', color: 'text-purple-400' },
   '/train/hr': { label: 'HR Interview Coach', color: 'text-purple-400' },
@@ -43,11 +55,29 @@ const PAGE_TITLES: Record<string, { label: string; color: string }> = {
   '/billing': { label: 'Subscription', color: 'text-blue-400' },
 };
 
-const Navbar = ({ showSidebar }: { showSidebar?: boolean }) => {
+const Navbar = ({ showSidebar, userData }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const { data: session } = useSession();
   const pathname = usePathname();
+
+  // Use userData from props (from LayoutWrapper) or fall back to session
+  const user = userData || (session?.user ? {
+    name: session.user.name || '',
+    email: session.user.email || '',
+    avatar: session.user.image
+  } : null);
+
+  // Get the display name and initial
+  const displayName = user?.name || 'User';
+  const userInitial = displayName.charAt(0).toUpperCase();
+  
+  // Get the best avatar URL - use custom avatar, then session image, then null
+  const avatarUrl = user?.avatar || session?.user?.image || null;
+  
+  // Determine if we should show the image or fallback
+  const showAvatarImage = avatarUrl && !imageError;
 
   useEffect(() => {
     const handleScroll = () => {
@@ -156,25 +186,26 @@ const Navbar = ({ showSidebar }: { showSidebar?: boolean }) => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-full pr-3 sm:pr-4 p-1 transition-all duration-200 h-auto">
                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[10px] font-black text-white overflow-hidden uppercase ring-2 ring-white/10">
-                         {session.user.image ? (
+                         {showAvatarImage ? (
                            <img 
-                             src={session.user.image} 
-                             alt="User" 
+                             src={avatarUrl!} 
+                             alt={displayName} 
                              className="w-full h-full object-cover"
                              referrerPolicy="no-referrer"
+                             onError={() => setImageError(true)}
                            />
                          ) : (
-                           session.user.name?.charAt(0)
+                           userInitial
                          )}
                        </div>
-                      <span className="hidden sm:inline-block text-xs font-bold text-slate-200 max-w-[80px] truncate">{session.user.name?.split(' ')[0]}</span>
+                      <span className="hidden sm:inline-block text-xs font-bold text-slate-200 max-w-[80px] truncate">{displayName.split(' ')[0]}</span>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-60 bg-slate-900/95 backdrop-blur-xl border-white/10 mt-2 rounded-xl p-1">
                     {/* User info header */}
                     <div className="px-3 py-2.5 mb-1">
-                      <p className="text-sm font-semibold text-white truncate">{session.user.name}</p>
-                      <p className="text-xs text-slate-400 truncate">{session.user.email}</p>
+                      <p className="text-sm font-semibold text-white truncate">{displayName}</p>
+                      <p className="text-xs text-slate-400 truncate">{user?.email || session.user.email}</p>
                     </div>
                     <DropdownMenuSeparator className="bg-white/5" />
                     <DropdownMenuItem asChild>

@@ -76,8 +76,27 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [planInfo, setPlanInfo] = useState<any>(null);
+  const [imageError, setImageError] = useState(false);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+
+  // Extract user info from planInfo
+  const userData = planInfo?.user ? {
+    name: planInfo.user.name,
+    email: planInfo.user.email,
+    avatar: planInfo.user.avatar
+  } : null;
+
+  // Get the best avatar URL
+  const avatarUrl = userData?.avatar || session?.user?.image || null;
+  const showAvatarImage = avatarUrl && !imageError;
+  const displayName = userData?.name || session?.user?.name || 'User';
+  const userInitial = displayName.charAt(0).toUpperCase();
+
+  // Reset image error when avatar URL changes
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrl]);
 
   // Fetch user plan info
   useEffect(() => {
@@ -112,7 +131,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       <div className="min-h-screen flex flex-col bg-slate-950">
         <div className="flex flex-1">
           <main className="flex-1">
-            {!hideNav && <Navbar showSidebar={false} />}
+            {!hideNav && <Navbar showSidebar={false} userData={userData} />}
             <div className="pt-10">
               {children}
             </div>
@@ -399,8 +418,18 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
                     className={`flex items-center gap-2 p-1.5 rounded-xl ${currentTheme.cardBg} border ${currentTheme.cardBorder} hover:border-[#5B6CFF]/30 transition-colors`}
                   >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-sm">
-                      {session.user.name?.charAt(0) || 'U'}
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                      {showAvatarImage ? (
+                        <img 
+                          src={avatarUrl!} 
+                          alt={displayName} 
+                          className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
+                          onError={() => setImageError(true)}
+                        />
+                      ) : (
+                        userInitial
+                      )}
                     </div>
                     <ChevronDown size={14} className={`hidden sm:block ${currentTheme.textMuted}`} />
                   </button>
@@ -422,17 +451,27 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                           {/* User Info Section */}
                           <div className={`p-5 border-b ${currentTheme.cardBorder} bg-gradient-to-r from-[#5B6CFF]/10 to-[#8B5CF6]/10`}>
                             <div className="flex items-start gap-4">
-                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-                                {session.user.name?.charAt(0) || 'U'}
+                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden">
+                                {showAvatarImage ? (
+                                  <img 
+                                    src={avatarUrl!} 
+                                    alt={displayName} 
+                                    className="w-full h-full object-cover"
+                                    referrerPolicy="no-referrer"
+                                    onError={() => setImageError(true)}
+                                  />
+                                ) : (
+                                  userInitial
+                                )}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <p className={`font-bold ${currentTheme.text} text-lg truncate`}>{session.user.name}</p>
+                                  <p className={`font-bold ${currentTheme.text} text-lg truncate`}>{displayName}</p>
                                   {planInfo?.isUnlimited && (
                                     <Crown size={18} className="text-amber-400 flex-shrink-0" />
                                   )}
                                 </div>
-                                <p className={`text-sm ${currentTheme.textMuted} truncate`}>{session.user.email}</p>
+                                <p className={`text-sm ${currentTheme.textMuted} truncate`}>{userData?.email || session?.user?.email}</p>
                                 <div className="flex items-center gap-2 mt-2">
                                   <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
                                     planInfo?.plan === 'Pro' ? 'bg-[#5B6CFF]/20 text-[#5B6CFF] border border-[#5B6CFF]/30' :

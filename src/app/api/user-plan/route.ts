@@ -63,6 +63,12 @@ export async function GET(request: NextRequest) {
                     Math.max(0, (settings?.monthlyLimit || 0) - totalUsage),
       renewalDate: user.renewalDate,
       subscription: subscription || null,
+      // User info for navbar
+      user: {
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+      }
     };
 
     return NextResponse.json(planInfo);
