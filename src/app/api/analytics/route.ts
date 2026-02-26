@@ -35,6 +35,42 @@ const getDurationMinutes = (start?: Date | null, end?: Date | null, stored?: num
 };
 
 const fillerWords = ["uh", "um", "like", "you know", "basically", "actually", "so", "kind of", "sort of", "hmm", "er", "ah"];
+const stopWords = new Set([
+  "the",
+  "is",
+  "a",
+  "an",
+  "and",
+  "or",
+  "to",
+  "of",
+  "in",
+  "on",
+  "for",
+  "with",
+  "that",
+  "this",
+  "it",
+  "as",
+  "at",
+  "be",
+  "are",
+  "was",
+  "were",
+  "i",
+  "you",
+  "we",
+  "they",
+  "he",
+  "she",
+  "my",
+  "your",
+  "our",
+  "their",
+  "me",
+  "us",
+  "them",
+]);
 
 const countFillerWords = (text: string) => {
   const lower = text.toLowerCase();
@@ -138,6 +174,9 @@ export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
     const publicUsername = searchParams.get("username");
     const isPublic = searchParams.get("public") === "1";
+    const range = (searchParams.get("range") || "all").toLowerCase();
+    const selectedSessionId = (searchParams.get("sessionId") || "").trim();
+    const behavioralSessionId = searchParams.get("behavioralSessionId");
     let userId: string | null = null;
 
     if (isPublic && publicUsername) {
@@ -167,10 +206,41 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    const sessions = await prisma.session.findMany({
+    const allSessionsForOptions = await prisma.session.findMany({
       where: { userId },
       select: {
+        sessionId: true,
+        module: true,
+        startTime: true,
+      },
+      orderBy: { startTime: "desc" },
+      take: 200,
+    });
+
+    const sessionWhere: any = { userId };
+    const now = new Date();
+    if (selectedSessionId) {
+      sessionWhere.sessionId = selectedSessionId;
+    } else if (range === "7d") {
+      const from = new Date(now);
+      from.setDate(now.getDate() - 7);
+      sessionWhere.startTime = { gte: from };
+    } else if (range === "30d") {
+      const from = new Date(now);
+      from.setDate(now.getDate() - 30);
+      sessionWhere.startTime = { gte: from };
+    } else if (range === "last_session") {
+      const latest = allSessionsForOptions[0];
+      if (latest?.sessionId) {
+        sessionWhere.sessionId = latest.sessionId;
+      }
+    }
+
+    const sessions = await prisma.session.findMany({
+      where: sessionWhere,
+      select: {
         id: true,
+        sessionId: true,
         module: true,
         targetCompany: true,
         role: true,
@@ -324,6 +394,32 @@ export async function GET(request: NextRequest) {
       }));
 
     const activity = Array.from(activityMap.entries()).map(([date, count]) => ({ date, count }));
+    const historySessions = sessions.map((s) => ({
+      sessionId: s.sessionId,
+      company: s.targetCompany || "General",
+      role: s.role || "N/A",
+      module: s.module,
+      date: formatDateKey(s.startTime),
+      durationMinutes: getDurationMinutes(s.startTime, s.endTime, s.duration),
+      score: Number((normalizeScore(s.aggregateScore) || 0).toFixed(1)),
+      status:
+        (normalizeScore(s.aggregateScore) || 0) >= 60
+          ? "Passed"
+          : (normalizeScore(s.aggregateScore) || 0) > 0
+          ? "Needs Practice"
+          : "Incomplete",
+    }));
+    const historyStatusBreakdownMap = new Map<string, number>();
+    historySessions.forEach((s) => {
+      historyStatusBreakdownMap.set(s.status, (historyStatusBreakdownMap.get(s.status) || 0) + 1);
+    });
+    const historyStatusBreakdown = Array.from(historyStatusBreakdownMap.entries()).map(([status, count]) => ({ status, count }));
+    const historyScoreTrend = historySessions
+      .map((s) => ({ date: s.date, score: s.score, company: s.company, sessionId: s.sessionId }))
+      .sort((a, b) => a.date.localeCompare(b.date));
+    const historyDurationTrend = historySessions
+      .map((s) => ({ date: s.date, duration: s.durationMinutes, company: s.company, sessionId: s.sessionId }))
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     const completionRate = totalSessions > 0 ? Number(((sessions.filter((s) => s.endTime).length / totalSessions) * 100).toFixed(1)) : 0;
 
@@ -397,6 +493,47 @@ export async function GET(request: NextRequest) {
       .filter((v): v is number => typeof v === "number");
     const toneConsistency = clamp(100 - stdDev(confidenceValues) * 1.8);
     const hesitationIndex = clamp(fillerRate * 2 + (100 - (confidenceScore ?? 0)) * 0.35);
+    const keywordCounts = new Map<string, number>();
+    transcripts.forEach((t) => {
+      const words = (t.userAnswer || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .split(/\s+/)
+        .filter(Boolean);
+      words.forEach((word) => {
+        if (word.length < 3 || stopWords.has(word)) return;
+        keywordCounts.set(word, (keywordCounts.get(word) || 0) + 1);
+      });
+    });
+    const topKeywords = Array.from(keywordCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([word, count]) => ({ word, count }));
+
+    const responseLengthBySession = sessions
+      .map((s) => {
+        const items = transcripts.filter((t) => t.sessionId === s.id);
+        const lengths = items.map((t) => countWords(t.userAnswer || ""));
+        return {
+          sessionId: s.sessionId,
+          date: formatDateKey(s.startTime),
+          avgWords: Number((average(lengths) || 0).toFixed(1)),
+          answers: items.length,
+        };
+      })
+      .filter((s) => s.answers > 0)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const textByCompanyMap = new Map<string, number>();
+    sessions.forEach((s) => {
+      const items = transcripts.filter((t) => t.sessionId === s.id);
+      const words = items.reduce((sum, t) => sum + countWords(t.userAnswer || ""), 0);
+      const key = s.targetCompany || "General";
+      textByCompanyMap.set(key, (textByCompanyMap.get(key) || 0) + words);
+    });
+    const textVolumeByCompany = Array.from(textByCompanyMap.entries())
+      .map(([company, words]) => ({ company, words }))
+      .sort((a, b) => b.words - a.words);
 
     const mostRecentSession = sessions[0];
     const recentSessionTranscripts = mostRecentSession
@@ -421,14 +558,24 @@ export async function GET(request: NextRequest) {
     const grammarVelocity = grammarSeries.length > 1 ? Number(((grammarSeries[grammarSeries.length - 1] - grammarSeries[0]) / (grammarSeries.length - 1)).toFixed(2)) : 0;
 
     const grammarScoresOrdered = transcripts
-      .map((t) => ({ score: normalizeScore(t.grammarScore) || 0, date: t.createdAt }))
+      .map((t) => ({ score: normalizeScore(t.grammarScore), date: t.createdAt }))
+      .filter((t): t is { score: number; date: Date } => t.score != null)
       .sort((a, b) => a.date.getTime() - b.date.getTime())
       .map((t) => t.score);
-    const sliceSize = Math.max(1, Math.floor(grammarScoresOrdered.length * 0.3));
-    const grammarBefore = average(grammarScoresOrdered.slice(0, sliceSize)) || 0;
-    const grammarAfter = average(grammarScoresOrdered.slice(-sliceSize)) || 0;
+
+    let grammarBefore = 0;
+    let grammarAfter = 0;
+    if (grammarScoresOrdered.length === 1) {
+      grammarBefore = grammarScoresOrdered[0];
+      grammarAfter = grammarScoresOrdered[0];
+    } else if (grammarScoresOrdered.length > 1) {
+      const sliceSize = Math.max(1, Math.floor(grammarScoresOrdered.length * 0.3));
+      grammarBefore = average(grammarScoresOrdered.slice(0, sliceSize)) || 0;
+      grammarAfter = average(grammarScoresOrdered.slice(-sliceSize)) || 0;
+    }
 
     const confidenceVsDifficulty: Array<{ difficulty: number; confidence: number }> = [];
+    const confidenceAccuracyPoints: Array<{ confidence: number; accuracy: number; turnLabel: string }> = [];
     const accuracyScores: number[] = [];
     const confidenceForAccuracy: number[] = [];
 
@@ -438,6 +585,11 @@ export async function GET(request: NextRequest) {
       if (baseScore != null && confidenceValue != null) {
         const difficulty = clamp(100 - baseScore);
         confidenceVsDifficulty.push({ difficulty, confidence: confidenceValue });
+        confidenceAccuracyPoints.push({
+          confidence: Number(confidenceValue.toFixed(1)),
+          accuracy: Number(baseScore.toFixed(1)),
+          turnLabel: `${t.sessionId}-${t.turnNumber}`,
+        });
         accuracyScores.push(baseScore);
         confidenceForAccuracy.push(confidenceValue);
       }
@@ -512,11 +664,36 @@ export async function GET(request: NextRequest) {
     let bodyLanguageScore = 0;
     let behavioralTimeline: Array<{ date: string; eyeContact: number; posture: number; stress: number; engagement: number }> = [];
     let behavioralAlerts: string[] = ["No AI video analysis data yet. Complete one HR/company interview to unlock."];
+    let behavioralHasData = false;
+    let behavioralMessage = "Complete one interview to unlock AI Behavioral Insights.";
+    let behavioralSessions: Array<{ sessionId: string; date: string; sampleCount: number; score: number }> = [];
+    let compositeRadar: Array<{ metric: string; score: number }> = [];
+    let replayInsights: Array<{ index: number; confidence: number; stress: number; filler: number; dropZone: number; stressSpike: number; fillerPeak: number }> = [];
+    let alertFrequency: Array<{ alert: string; count: number; sessions: number; intensity: number }> = [];
+    let sessionAlertIntensity: Array<{ sessionId: string; intensity: number }> = [];
+    let confidenceBodyLanguageCorrelationHeatmap: Array<{ x: string; y: string; value: number }> = [];
+    let stressVsAccuracy: Array<{ stress: number; accuracy: number; sessionId: string }> = [];
+    let engagementStabilityIndex: Array<{ sessionId: string; value: number }> = [];
+    let confidenceRecoverySpeed: Array<{ sessionId: string; value: number }> = [];
+    let microExpressionStabilityTrend: Array<{ date: string; value: number }> = [];
+    let sessionQualityIndex: Array<{ date: string; score: number }> = [];
+    let stressPerformanceImpact: Array<{ date: string; stress: number; accuracy: number }> = [];
+    let emotionalStabilityIndex = 0;
 
     try {
+      const behavioralFilter: Record<string, unknown> = { userId };
+      const effectiveBehavioralSession = behavioralSessionId?.trim() || selectedSessionId || (range === "last_session" ? allSessionsForOptions[0]?.sessionId : "");
+      if (effectiveBehavioralSession) {
+        behavioralFilter.sessionId = effectiveBehavioralSession;
+      } else if (range === "7d" || range === "30d") {
+        const days = range === "7d" ? 7 : 30;
+        const from = new Date(now);
+        from.setDate(now.getDate() - days);
+        behavioralFilter.createdAt = { $gte: from.toISOString() };
+      }
       const rawBehavioral = await (prisma as any).$runCommandRaw({
         find: "behavioral_analytics",
-        filter: { userId },
+        filter: behavioralFilter,
         sort: { createdAt: 1 },
         limit: 500,
       });
@@ -528,6 +705,8 @@ export async function GET(request: NextRequest) {
       };
 
       if (behavioralDocs.length) {
+        behavioralHasData = true;
+        behavioralMessage = "";
         eyeContactScore = Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.eye_contact))) || 0).toFixed(1));
         postureScore = Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.posture))) || 0).toFixed(1));
         smileScore = Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.smile))) || 0).toFixed(1));
@@ -541,9 +720,64 @@ export async function GET(request: NextRequest) {
           engagementScore,
         ]) || 0).toFixed(1));
 
+        const sessionsByExternalId = new Map(sessions.map((s) => [s.sessionId, s]));
+        behavioralSessions = behavioralDocs
+          .map((doc: any) => {
+            const sid = String(doc?.sessionId || "");
+            const createdAt = String(doc?.createdAt || "");
+            const date = createdAt ? createdAt.slice(0, 10) : "";
+            const sampleCount = toNumber(doc?.sampleCount) || (Array.isArray(doc?.timeline) ? doc.timeline.length : 0);
+            const summary = doc?.summary || {};
+            const score = average([
+              toNumber(summary?.eye_contact) || 0,
+              toNumber(summary?.posture) || 0,
+              toNumber(summary?.smile) || 0,
+              100 - (toNumber(summary?.stress_level) || 0),
+              toNumber(summary?.engagement) || 0,
+            ]) || 0;
+            return { sessionId: sid, date, sampleCount, score: Number(score.toFixed(1)) };
+          })
+          .sort((a: any, b: any) => a.date.localeCompare(b.date));
+
+        compositeRadar = [
+          { metric: "Eye Contact", score: eyeContactScore },
+          { metric: "Posture", score: postureScore },
+          { metric: "Smile", score: smileScore },
+          { metric: "Engagement", score: engagementScore },
+          { metric: "Stress Control", score: Number((100 - stressLevel).toFixed(1)) },
+          {
+            metric: "Face Detection",
+            score: Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.face_detected_rate))) || 0).toFixed(1)),
+          },
+        ];
+
         const timelineMap = new Map<string, { eye: number[]; posture: number[]; stress: number[]; engagement: number[] }>();
+        const replayRaw: Array<{ confidence: number; stress: number; filler: number }> = [];
+        const smilesByDate = new Map<string, number[]>();
+        const sessionQualityRaw: Array<{ date: string; score: number }> = [];
+
         behavioralDocs.forEach((doc: any) => {
           const points = Array.isArray(doc?.timeline) ? doc.timeline : [];
+          const sid = String(doc?.sessionId || "");
+          const sessionScore = normalizeScore(sessionsByExternalId.get(sid)?.aggregateScore);
+          const summary = doc?.summary || {};
+          const qScore = average([
+            toNumber(summary?.eye_contact) || 0,
+            toNumber(summary?.posture) || 0,
+            toNumber(summary?.smile) || 0,
+            toNumber(summary?.engagement) || 0,
+            100 - (toNumber(summary?.stress_level) || 0),
+          ]) || 0;
+          const sessionDate = String(doc?.createdAt || "").slice(0, 10);
+          if (sessionDate) {
+            sessionQualityRaw.push({ date: sessionDate, score: Number(qScore.toFixed(1)) });
+          }
+
+          let alertIntensity = 0;
+          const sessionConfidences: number[] = [];
+          const sessionEngagements: number[] = [];
+          const sessionSmiles: number[] = [];
+
           points.forEach((point: any) => {
             const timestamp = String(point?.timestamp || doc?.createdAt || "");
             const date = timestamp ? timestamp.slice(0, 10) : "";
@@ -554,11 +788,44 @@ export async function GET(request: NextRequest) {
             const posture = toNumber(point?.posture);
             const stress = toNumber(point?.stress_level);
             const engagement = toNumber(point?.engagement);
+            const confidence = toNumber(point?.confidence);
+            const filler = toNumber(point?.filler_word_count);
+            const smile = toNumber(point?.smile);
             if (eye != null) bucket.eye.push(eye);
             if (posture != null) bucket.posture.push(posture);
             if (stress != null) bucket.stress.push(stress);
             if (engagement != null) bucket.engagement.push(engagement);
+            if (confidence != null) sessionConfidences.push(confidence);
+            if (engagement != null) sessionEngagements.push(engagement);
+            if (smile != null) sessionSmiles.push(smile);
+            if (date && smile != null) {
+              if (!smilesByDate.has(date)) smilesByDate.set(date, []);
+              smilesByDate.get(date)!.push(smile);
+            }
+            if (confidence != null && stress != null && filler != null) {
+              replayRaw.push({ confidence, stress, filler });
+              const dropZone = confidence < 50 ? 1 : 0;
+              const spike = stress > 65 ? 1 : 0;
+              const fillerPeak = filler > 4 ? 1 : 0;
+              alertIntensity += dropZone + spike + fillerPeak;
+            }
+            if (sessionScore != null && stress != null) {
+              stressVsAccuracy.push({ stress, accuracy: sessionScore, sessionId: sid });
+            }
           });
+
+          if (sessionEngagements.length) {
+            const stability = clamp(100 - stdDev(sessionEngagements) * 2);
+            engagementStabilityIndex.push({ sessionId: sid || "session", value: Number(stability.toFixed(1)) });
+          }
+
+          if (sessionConfidences.length > 2) {
+            const minConf = Math.min(...sessionConfidences);
+            const endConf = sessionConfidences[sessionConfidences.length - 1];
+            confidenceRecoverySpeed.push({ sessionId: sid || "session", value: Number((endConf - minConf).toFixed(1)) });
+          }
+
+          sessionAlertIntensity.push({ sessionId: sid || "session", intensity: alertIntensity });
         });
 
         behavioralTimeline = Array.from(timelineMap.entries())
@@ -571,20 +838,107 @@ export async function GET(request: NextRequest) {
             engagement: Number((average(values.engagement) || 0).toFixed(1)),
           }));
 
+        replayInsights = replayRaw.map((point, index) => ({
+          index: index + 1,
+          confidence: Number(point.confidence.toFixed(1)),
+          stress: Number(point.stress.toFixed(1)),
+          filler: Number(point.filler.toFixed(1)),
+          dropZone: point.confidence < 50 ? 1 : 0,
+          stressSpike: point.stress > 65 ? 1 : 0,
+          fillerPeak: point.filler > 4 ? 1 : 0,
+        }));
+
         const alertCounts = new Map<string, number>();
+        const alertSessions = new Map<string, Set<string>>();
         behavioralDocs.forEach((doc: any) => {
           const alerts = Array.isArray(doc?.alerts) ? doc.alerts : [];
+          const sid = String(doc?.sessionId || "session");
           alerts.forEach((alert: unknown) => {
             if (typeof alert !== "string" || !alert.trim()) return;
             alertCounts.set(alert, (alertCounts.get(alert) || 0) + 1);
+            if (!alertSessions.has(alert)) alertSessions.set(alert, new Set());
+            alertSessions.get(alert)!.add(sid);
           });
         });
+        alertFrequency = Array.from(alertCounts.entries())
+          .sort((a, b) => b[1] - a[1])
+          .map(([alert, count]) => ({
+            alert,
+            count,
+            sessions: alertSessions.get(alert)?.size || 0,
+            intensity: Number((count / Math.max(1, alertSessions.get(alert)?.size || 1)).toFixed(2)),
+          }));
+
         behavioralAlerts = alertCounts.size
           ? Array.from(alertCounts.entries())
               .sort((a, b) => b[1] - a[1])
               .slice(0, 4)
               .map(([alert]) => alert)
           : ["No repeated behavioral alerts detected."];
+
+        const corrInput: Array<{ confidence: number; eye: number; posture: number; smile: number; engagement: number; stress: number }> = [];
+        behavioralDocs.forEach((doc: any) => {
+          const points = Array.isArray(doc?.timeline) ? doc.timeline : [];
+          points.forEach((point: any) => {
+            const confidence = toNumber(point?.confidence);
+            const eye = toNumber(point?.eye_contact);
+            const p = toNumber(point?.posture);
+            const s = toNumber(point?.smile);
+            const e = toNumber(point?.engagement);
+            const st = toNumber(point?.stress_level);
+            if (confidence == null || eye == null || p == null || s == null || e == null || st == null) return;
+            corrInput.push({ confidence, eye, posture: p, smile: s, engagement: e, stress: st });
+          });
+        });
+        const corrPairs: Array<[string, string, number]> = [
+          ["Confidence", "Eye Contact", pearsonCorrelation(corrInput.map((r) => r.confidence), corrInput.map((r) => r.eye))],
+          ["Confidence", "Posture", pearsonCorrelation(corrInput.map((r) => r.confidence), corrInput.map((r) => r.posture))],
+          ["Confidence", "Smile", pearsonCorrelation(corrInput.map((r) => r.confidence), corrInput.map((r) => r.smile))],
+          ["Confidence", "Engagement", pearsonCorrelation(corrInput.map((r) => r.confidence), corrInput.map((r) => r.engagement))],
+          ["Confidence", "Stress", pearsonCorrelation(corrInput.map((r) => r.confidence), corrInput.map((r) => r.stress))],
+        ];
+        confidenceBodyLanguageCorrelationHeatmap = corrPairs.map(([x, y, value]) => ({
+          x,
+          y,
+          value: Number((value * 100).toFixed(1)),
+        }));
+
+        microExpressionStabilityTrend = Array.from(smilesByDate.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([date, values]) => ({
+            date,
+            value: Number((clamp(100 - stdDev(values) * 2)).toFixed(1)),
+          }));
+
+        const sqByDate = new Map<string, number[]>();
+        sessionQualityRaw.forEach((row) => {
+          if (!sqByDate.has(row.date)) sqByDate.set(row.date, []);
+          sqByDate.get(row.date)!.push(row.score);
+        });
+        sessionQualityIndex = Array.from(sqByDate.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([date, values]) => ({ date, score: Number((average(values) || 0).toFixed(1)) }));
+
+        const accuracyByDateMap = new Map<string, number[]>();
+        transcripts.forEach((t) => {
+          const date = formatDateKey(t.createdAt);
+          const score = normalizeScore(t.perQuestionScore ?? t.relevanceScore);
+          if (score == null) return;
+          if (!accuracyByDateMap.has(date)) accuracyByDateMap.set(date, []);
+          accuracyByDateMap.get(date)!.push(score);
+        });
+        stressPerformanceImpact = behavioralTimeline
+          .map((row) => ({
+            date: row.date,
+            stress: row.stress,
+            accuracy: Number((average(accuracyByDateMap.get(row.date) || []) || 0).toFixed(1)),
+          }))
+          .filter((row) => row.accuracy > 0);
+
+        const engagementAvg = average(engagementStabilityIndex.map((i) => i.value)) || 0;
+        const recoveryAvg = average(confidenceRecoverySpeed.map((i) => i.value)) || 0;
+        const microAvg = average(microExpressionStabilityTrend.map((i) => i.value)) || 0;
+        emotionalStabilityIndex = Number(clamp(average([engagementAvg, recoveryAvg + 50, microAvg]) || 0).toFixed(1));
       }
     } catch (behavioralError) {
       console.error("Behavioral analytics read error:", behavioralError);
@@ -659,8 +1013,38 @@ export async function GET(request: NextRequest) {
     ];
 
     const nextSessionFocus = focusAreas.length ? `${focusAreas[0]} Booster` : "Communication Booster";
+    const sessionsAsc = [...sessions].sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
+    let cumulativeMinutes = 0;
+    const practiceImprovement = sessionsAsc.map((s, idx) => {
+      cumulativeMinutes += getDurationMinutes(s.startTime, s.endTime, s.duration);
+      return {
+        session: idx + 1,
+        cumulativeMinutes,
+        score: Number((normalizeScore(s.aggregateScore) || 0).toFixed(1)),
+      };
+    });
+    const skillGapCompanyRisk = companyReadiness.map((c) => ({
+      company: c.name,
+      risk: Number((100 - c.score).toFixed(1)),
+      weakestSkill: c.missingSkills[0] || "Communication",
+    }));
+    const quadrantSummary = {
+      ideal: confidenceAccuracyPoints.filter((p) => p.confidence >= 60 && p.accuracy >= 60).length,
+      overconfidence: confidenceAccuracyPoints.filter((p) => p.confidence >= 60 && p.accuracy < 60).length,
+      selfDoubt: confidenceAccuracyPoints.filter((p) => p.confidence < 60 && p.accuracy >= 60).length,
+      weakZone: confidenceAccuracyPoints.filter((p) => p.confidence < 60 && p.accuracy < 60).length,
+    };
 
     return NextResponse.json({
+      filters: {
+        range,
+        sessionId: selectedSessionId || null,
+        availableSessions: allSessionsForOptions.map((s) => ({
+          sessionId: s.sessionId,
+          module: s.module,
+          date: formatDateKey(s.startTime),
+        })),
+      },
       summary: {
         communicationScore: communicationScore ?? 0,
         confidenceScore: confidenceScore ?? 0,
@@ -694,8 +1078,23 @@ export async function GET(request: NextRequest) {
       charts: {
         accuracyVsSpeed,
       },
+      history: {
+        sessions: historySessions.slice(0, 12),
+        scoreTrend: historyScoreTrend,
+        durationTrend: historyDurationTrend,
+        statusBreakdown: historyStatusBreakdown,
+      },
+      textReport: {
+        topKeywords,
+        responseLengthBySession,
+        textVolumeByCompany,
+      },
       advanced: {
         behavioral: {
+          hasData: behavioralHasData,
+          message: behavioralMessage,
+          sessions: behavioralSessions,
+          compositeRadar,
           eyeContactScore: Number(eyeContactScore.toFixed(1)),
           postureScore: Number(postureScore.toFixed(1)),
           smileScore: Number(smileScore.toFixed(1)),
@@ -703,7 +1102,18 @@ export async function GET(request: NextRequest) {
           engagementScore: Number(engagementScore.toFixed(1)),
           bodyLanguageScore,
           timeline: behavioralTimeline,
+          replayInsights,
           alerts: behavioralAlerts,
+          alertFrequency,
+          sessionAlertIntensity,
+          confidenceBodyLanguageCorrelationHeatmap,
+          stressVsAccuracy,
+          engagementStabilityIndex,
+          confidenceRecoverySpeed,
+          microExpressionStabilityTrend,
+          sessionQualityIndex,
+          stressPerformanceImpact,
+          emotionalStabilityIndex,
         },
         communication: {
           fillerRate: Number(fillerRate.toFixed(1)),
@@ -728,6 +1138,8 @@ export async function GET(request: NextRequest) {
         },
         confidence: {
           confidenceVsDifficulty,
+          confidenceAccuracyPoints,
+          quadrantSummary,
           fatigueRiskPercent,
           confidenceVsAccuracyCorrelation: confidenceAccuracyCorrelation,
           sessionTrend: sessionConfidenceTrend,
@@ -747,11 +1159,15 @@ export async function GET(request: NextRequest) {
         },
         company: {
           readiness: companyReadiness,
+          skillGapCompanyRisk,
           recommendations: [
             `${nextSessionFocus} recommended based on your weakest area.`,
             "Revisit least practiced modules to balance your interview readiness.",
           ],
           readinessTimelineWeeks,
+        },
+        growth: {
+          practiceImprovement,
         },
         coach: {
           readinessSummary: readinessTimelineWeeks == null
