@@ -1,8 +1,9 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,7 +33,6 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Activity, Flame } from "lucide-react";
 
 interface AnalyticsResponse {
   filters: {
@@ -219,79 +219,62 @@ const Heatmap = ({ activity }: { activity: Array<{ date: string; count: number }
   const containerRef = useRef<HTMLDivElement | null>(null);
   const activityMap = useMemo(() => new Map(activity.map((item) => [item.date, item.count])), [activity]);
   const today = new Date();
-  const days: Array<{ date: string; count: number; dayOfWeek: number; weekIndex: number; month: string }> = [];
 
-  for (let i = 363; i >= 0; i -= 1) {
-    const date = new Date(today);
-    date.setDate(today.getDate() - i);
-    const key = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-    const dayOfWeek = (date.getDay() + 6) % 7;
-    const weekIndex = Math.floor((363 - i) / 7);
-    const month = date.toLocaleDateString("en-US", { month: "short" });
-    days.push({ date: key, count: activityMap.get(key) || 0, dayOfWeek, weekIndex, month });
-  }
+  const monthBlocks = useMemo(() => {
+    const blocks: Array<{ month: string; cells: Array<{ key: string; count: number }> }> = [];
+    for (let offset = 11; offset >= 0; offset -= 1) {
+      const date = new Date(today.getFullYear(), today.getMonth() - offset, 1);
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const bucket = Array.from({ length: 35 }, (_, index) => ({ key: `${year}-${month}-${index}`, count: 0 }));
 
-  const max = Math.max(1, ...days.map((d) => d.count));
-  const weeks = 52;
-  const dayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+      for (let day = 1; day <= daysInMonth; day += 1) {
+        const current = new Date(year, month, day);
+        const dateKey = current.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+        const weekday = (current.getDay() + 6) % 7;
+        const weekChunk = Math.floor((day - 1) / 7);
+        const index = weekChunk * 7 + weekday;
+        bucket[index].count += activityMap.get(dateKey) || 0;
+      }
 
-  const monthPositions: Array<{ month: string; weekIndex: number }> = [];
-  let lastMonth = "";
-  days.forEach((d) => {
-    if (d.month !== lastMonth && d.dayOfWeek === 0) {
-      monthPositions.push({ month: d.month, weekIndex: d.weekIndex });
-      lastMonth = d.month;
+      blocks.push({
+        month: date.toLocaleDateString("en-US", { month: "short" }),
+        cells: bucket,
+      });
     }
-  });
+    return blocks;
+  }, [activityMap, today]);
 
-  const getColor = (intensity: number) => {
-    if (intensity === 0) return "bg-slate-800/20";
-    if (intensity > 0.75) return "bg-emerald-500";
-    if (intensity > 0.5) return "bg-emerald-600";
-    if (intensity > 0.25) return "bg-emerald-700/80";
-    return "bg-emerald-800/60";
+  const max = Math.max(1, ...monthBlocks.flatMap((block) => block.cells.map((cell) => cell.count)));
+
+  const getColor = (count: number) => {
+    if (count <= 0) return "bg-slate-800/50";
+    const intensity = count / max;
+    if (intensity > 0.75) return "bg-emerald-400";
+    if (intensity > 0.5) return "bg-emerald-500/90";
+    if (intensity > 0.25) return "bg-emerald-600/80";
+    return "bg-emerald-700/70";
   };
 
   return (
-    <div ref={containerRef} className="h-full w-full flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
-          <Flame size={14} className="text-emerald-400" />
-          <span>Last year activity</span>
-        </div>
-      </div>
-
-      <div className="flex pl-12 relative" style={{ height: "12px" }}>
-        {monthPositions.map(({ month, weekIndex }) => (
-          <div key={`${month}-${weekIndex}`} className="absolute text-[10px] text-slate-500 font-medium" style={{ left: `${48 + weekIndex * 12}px` }}>{month}</div>
-        ))}
-      </div>
-
-      <div className="flex gap-1">
-        <div className="flex flex-col gap-[3px] text-[9px] text-slate-500 font-medium justify-center pr-1 w-10 text-right">
-          {dayLabels.map((label, i) => (
-            <div key={label} className="h-[10px] flex items-center justify-end" style={{ opacity: i % 2 === 0 ? 1 : 0 }}>{label}</div>
-          ))}
-        </div>
-        <div className="flex gap-[3px] overflow-x-auto">
-          {Array.from({ length: weeks }).map((_, weekIndex) => (
-            <div key={weekIndex} className="flex flex-col gap-[3px]">
-              {Array.from({ length: 7 }).map((_, dayIndex) => {
-                const dayData = days.find((d) => d.weekIndex === weekIndex && d.dayOfWeek === dayIndex);
-                if (!dayData) return <div key={dayIndex} className="w-[10px] h-[10px]" />;
-                const color = getColor(dayData.count / max);
-                return <div key={dayIndex} className={`w-[10px] h-[10px] rounded-sm ${color}`} title={`${dayData.date}: ${dayData.count}`} />;
-              })}
+    <div ref={containerRef} className="h-full w-full space-y-4">
+      <div className="text-2xl sm:text-3xl font-bold text-white">Practice Consistency</div>
+      <div className="w-full overflow-x-hidden pb-1">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+        {monthBlocks.map((block) => (
+          <div key={block.month} className="flex flex-col items-center gap-1.5">
+            <span className="text-[11px] sm:text-xs text-sky-200">{block.month}</span>
+            <div className="grid grid-cols-5 grid-rows-7 gap-1">
+              {block.cells.map((cell) => (
+                <div key={cell.key} className={`h-2.5 w-2.5 sm:h-3 sm:w-3 rounded-none ${getColor(cell.count)}`} title={`${block.month}: ${cell.count}`} />
+              ))}
             </div>
-          ))}
+          </div>
+        ))}
         </div>
       </div>
-
-      <div className="flex items-center justify-between text-xs text-slate-400">
-        <span>Total: <span className="text-white font-semibold">{activity.reduce((sum, d) => sum + d.count, 0)}</span></span>
-        <span>Avg/week: <span className="text-white font-semibold">{Math.round(activity.reduce((sum, d) => sum + d.count, 0) / 52)}</span></span>
-        <span>Current streak: <span className="text-emerald-400 font-semibold">{activity.slice(-7).filter((d) => d.count > 0).length} days</span></span>
-      </div>
+      <p className="text-base sm:text-xl text-slate-300">Activity for the last 12 months.</p>
     </div>
   );
 };
@@ -299,14 +282,16 @@ const Heatmap = ({ activity }: { activity: Array<{ date: string; count: number }
 export default function AnalyticsDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPublicView = searchParams.get("public") === "1";
+  const publicUsername = searchParams.get("username") || "";
   const [data, setData] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
-  const [range, setRange] = useState("all");
-  const [sessionFilter, setSessionFilter] = useState("");
+  const [range, setRange] = useState(() => searchParams.get("range") || "all");
 
   useEffect(() => {
-    if (status === "unauthenticated") router.push("/");
-  }, [status, router]);
+    if (!isPublicView && status === "unauthenticated") router.push("/");
+  }, [isPublicView, status, router]);
 
   useEffect(() => {
     const load = async () => {
@@ -314,9 +299,9 @@ export default function AnalyticsDashboardPage() {
       try {
         const params = new URLSearchParams();
         params.set("range", range);
-        if (sessionFilter) {
-          params.set("sessionId", sessionFilter);
-          params.set("behavioralSessionId", sessionFilter);
+        if (isPublicView && publicUsername) {
+          params.set("public", "1");
+          params.set("username", publicUsername);
         }
         const res = await fetch(`/api/analytics?${params.toString()}`);
         if (res.ok) setData(await res.json());
@@ -324,8 +309,17 @@ export default function AnalyticsDashboardPage() {
         setLoading(false);
       }
     };
-    if (status === "authenticated") load();
-  }, [status, range, sessionFilter]);
+    if ((isPublicView && publicUsername) || status === "authenticated") load();
+  }, [status, range, isPublicView, publicUsername]);
+
+  useEffect(() => {
+    if (!data) return;
+    if (searchParams.get("print") === "1") {
+      const timeout = window.setTimeout(() => window.print(), 900);
+      return () => window.clearTimeout(timeout);
+    }
+    return undefined;
+  }, [data, searchParams]);
 
   const stressPerformanceSeries = useMemo(() => {
     if (!data) return [];
@@ -382,20 +376,19 @@ export default function AnalyticsDashboardPage() {
   }, [data]);
 
   if (loading) return <div className="container mx-auto px-4 py-12">Loading analytics...</div>;
-  if (!session?.user || !data) return <div className="container mx-auto px-4 py-12">No analytics data available yet.</div>;
+  if ((!session?.user && !isPublicView) || !data) return <div className="container mx-auto px-4 py-12">No analytics data available yet.</div>;
 
-  const { summary, distributions, trends, activity, insights, charts, textReport, advanced, filters, history } = data;
+  const { summary, distributions, trends, activity, insights, charts, textReport, advanced, history } = data;
   const wpmLow = advanced.communication.idealWpmRange[0];
   const wpmHigh = advanced.communication.idealWpmRange[1];
   const communicationCompositeRadar = [
     { metric: "Communication", score: Number(summary.communicationScore.toFixed(1)) },
     { metric: "Confidence", score: Number(summary.confidenceScore.toFixed(1)) },
     { metric: "Grammar", score: Number(summary.grammarScore.toFixed(1)) },
-    { metric: "Speaking Pace", score: Number(advanced.communication.speakingPaceScore.toFixed(1)) },
+    { metric: "Speaking Pace", score: Number(advanced.communication.speakingWpm.toFixed(1)) },
+    { metric: "Sentence Structure", score: Number(advanced.communication.sentenceStructureScore.toFixed(1)) },
+    { metric: "Tone Consistency", score: Number(advanced.communication.toneConsistency.toFixed(1)) },
   ];
-  const selectedBehavioralSession = sessionFilter
-    ? advanced.behavioral.sessions.find((s) => s.sessionId === sessionFilter) || null
-    : advanced.behavioral.sessions[0] || null;
   const hasGrammarInsights =
     advanced.grammar.categories.length > 0 ||
     advanced.grammar.errorFrequency > 0 ||
@@ -425,27 +418,39 @@ export default function AnalyticsDashboardPage() {
             value={range}
             onChange={(e) => setRange(e.target.value)}
           >
-            <option value="all">All Time</option>
-            <option value="last_session">Last Session</option>
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
+            <option value="all" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>All Time</option>
+            <option value="last_session" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>Last Session</option>
+            <option value="7d" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>Last 7 Days</option>
+            <option value="30d" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>Last 30 Days</option>
+            <option value="3m" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>Last 3 Months</option>
+            <option value="5m" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>Last 5 Months</option>
+            <option value="1y" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>Last 1 Year</option>
           </select>
-          <select
-            className="bg-slate-900 border border-slate-700 rounded px-3 py-1 text-sm text-slate-200"
-            value={sessionFilter}
-            onChange={(e) => setSessionFilter(e.target.value)}
+          <Button
+            variant="outline"
+            onClick={() => {
+              const params = new URLSearchParams();
+              params.set("print", "1");
+              params.set("range", range);
+              if (isPublicView && publicUsername) {
+                params.set("public", "1");
+                params.set("username", publicUsername);
+              }
+              window.open(`/analytics?${params.toString()}`, "_blank", "noopener,noreferrer");
+            }}
           >
-            <option value="">All Interview Sessions</option>
-            {filters.availableSessions.map((s) => (
-              <option key={s.sessionId} value={s.sessionId}>
-                {s.date} - {s.module} - {s.sessionId.slice(0, 16)}
-              </option>
-            ))}
-          </select>
-          <Button variant="outline" onClick={() => window.open("/analytics/report?print=1", "_blank", "noopener,noreferrer")}>
             Export PDF
           </Button>
-          <Button onClick={() => router.push("/train")} className="bg-emerald-500 text-slate-950 hover:bg-emerald-400">Focus: {advanced.coach.nextSessionFocus}</Button>
+          {isPublicView && publicUsername && (
+            <Button asChild variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800">
+              <Link href={`/u/${encodeURIComponent(publicUsername)}`}>Back to Public Profile</Link>
+            </Button>
+          )}
+          {!isPublicView && (
+            <Button onClick={() => router.push("/train")} className="bg-emerald-500 text-slate-950 hover:bg-emerald-400">
+              Focus: {advanced.coach.nextSessionFocus}
+            </Button>
+          )}
         </div>
 
         {/* 1 OVERALL PERFORMANCE SUMMARY */}
@@ -525,7 +530,17 @@ export default function AnalyticsDashboardPage() {
     </Card>
     <Card className="border-white/10 bg-slate-900/60">
       <CardHeader><CardTitle className="text-sm text-slate-300">Communication Composite Radar</CardTitle></CardHeader>
-      <CardContent className="h-[300px]"><ResponsiveContainer width="100%" height="100%"><RadarChart data={communicationCompositeRadar}><PolarGrid /><PolarAngleAxis dataKey="metric" /><PolarRadiusAxis domain={[0, 100]} /><Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.35} /><ChartTooltip /></RadarChart></ResponsiveContainer></CardContent>
+      <CardContent className="h-[300px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={communicationCompositeRadar}>
+            <PolarGrid />
+            <PolarAngleAxis dataKey="metric" />
+            <PolarRadiusAxis domain={[0, 100]} tickCount={6} />
+            <Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.35} />
+            <ChartTooltip />
+          </RadarChart>
+        </ResponsiveContainer>
+      </CardContent>
     </Card>
   </div>
 
@@ -931,8 +946,7 @@ export default function AnalyticsDashboardPage() {
 
         {/* 9 ACTIVITY HEATMAP */}
         <section className="order-7">
-          <h2 className="text-lg font-bold text-white mb-3">Activity Heatmap</h2>
-          <Card className="border-white/10 bg-slate-900/60"><CardContent className="h-[200px] p-6"><Heatmap activity={activity} /></CardContent></Card>
+          <Card className="border-white/10 bg-slate-900/60"><CardContent className="p-6"><Heatmap activity={activity} /></CardContent></Card>
         </section>
 
         <div className="flex justify-end text-sm text-slate-400">Total practice: {formatDuration(summary.totalDurationMinutes)} | Sessions: {summary.totalSessions}</div>

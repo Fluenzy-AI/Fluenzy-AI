@@ -111,10 +111,23 @@ function AnalyticsReportContent() {
   }, []);
 
   useEffect(() => {
+    const isPublic = searchParams.get("public") === "1";
+    const username = searchParams.get("username");
+    if (isPublic && username) {
+      const params = new URLSearchParams();
+      params.set("public", "1");
+      params.set("username", username);
+      const range = searchParams.get("range");
+      const sessionId = searchParams.get("sessionId");
+      if (range) params.set("range", range);
+      if (sessionId) params.set("sessionId", sessionId);
+      if (searchParams.get("print") === "1") params.set("print", "1");
+      window.location.replace(`/analytics?${params.toString()}`);
+      return;
+    }
+
     const load = async () => {
       const params = new URLSearchParams();
-      const username = searchParams.get("username");
-      const isPublic = searchParams.get("public") === "1";
       if (isPublic && username) {
         params.set("public", "1");
         params.set("username", username);

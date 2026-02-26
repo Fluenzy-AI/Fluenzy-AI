@@ -229,6 +229,18 @@ export async function GET(request: NextRequest) {
       const from = new Date(now);
       from.setDate(now.getDate() - 30);
       sessionWhere.startTime = { gte: from };
+    } else if (range === "3m") {
+      const from = new Date(now);
+      from.setMonth(now.getMonth() - 3);
+      sessionWhere.startTime = { gte: from };
+    } else if (range === "5m") {
+      const from = new Date(now);
+      from.setMonth(now.getMonth() - 5);
+      sessionWhere.startTime = { gte: from };
+    } else if (range === "1y") {
+      const from = new Date(now);
+      from.setFullYear(now.getFullYear() - 1);
+      sessionWhere.startTime = { gte: from };
     } else if (range === "last_session") {
       const latest = allSessionsForOptions[0];
       if (latest?.sessionId) {
