@@ -103,7 +103,7 @@ const HumanAvatar = ({
   );
 };
 
-const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) => void }> = ({ user, onSessionEnd }) => {
+const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) => void; onInterviewStart?: () => void }> = ({ user, onSessionEnd, onInterviewStart }) => {
   const { type } = useParams<{ type: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -184,6 +184,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
     setIsActive(false);
     setIsConnecting(false);
     setIsAiSpeaking(false);
+    onSessionEnd(user);
 
     if (saveResults) {
       const endTime = new Date();
@@ -273,11 +274,12 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
 
       setIsFinished(true);
     }
-  }, [type, sessionMeta]);
+  }, [type, sessionMeta, onSessionEnd, user]);
 
   const startSession = async () => {
     setIsConnecting(true);
     setError(null);
+    onInterviewStart?.();
     try {
       // Create a new instance with a named parameter for the API key.
       const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });

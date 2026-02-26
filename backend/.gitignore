@@ -65,3 +65,15 @@ logs/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# TensorFlow
+*.pb
+__pycache__/
+checkpoint
+epochs_pending*
+
+# Audio/Temp files
+*.mp3
+*.wav
+*.ogg
+temp_*

@@ -2,18 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { 
-  Camera, 
   CameraOff, 
   Activity, 
   Eye, 
   Smile, 
   AlertTriangle,
   TrendingUp,
-  X,
-  RefreshCw,
-  Video,
-  Volume2,
-  VolumeX
+  X
 } from 'lucide-react';
 
 interface BehavioralMetrics {
@@ -35,6 +30,19 @@ interface VideoAnalysisPanelProps {
   onSessionEnd?: (metrics: BehavioralMetrics) => void;
 }
 
+const DEFAULT_METRICS: BehavioralMetrics = {
+  confidence: 0,
+  eye_contact: 0,
+  posture: 0,
+  engagement: 0,
+  smile: 0,
+  head_stability: 0,
+  stress_level: 0,
+  filler_word_count: 0,
+  face_detected: false,
+  alerts: []
+};
+
 const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({ 
   sessionId, 
   isActive,
@@ -42,19 +50,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [isInterviewStarted, setIsInterviewStarted] = useState(false); // New: Tracks if interview button was clicked
-  const [metrics, setMetrics] = useState<BehavioralMetrics>({
-    confidence: 0,
-    eye_contact: 0,
-    posture: 0,
-    engagement: 0,
-    smile: 0,
-    head_stability: 0,
-    stress_level: 0,
-    filler_word_count: 0,
-    face_detected: false,
-    alerts: []
-  });
+  const [metrics, setMetrics] = useState<BehavioralMetrics>(DEFAULT_METRICS);
   const [metricsHistory, setMetricsHistory] = useState<BehavioralMetrics[]>([]);
   const [annotatedFrame, setAnnotatedFrame] = useState<string>("");
   const [wsConnected, setWsConnected] = useState(false);
@@ -80,9 +76,27 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
+  const getBehavioralWsUrl = useCallback(() => {
+    const session = encodeURIComponent(sessionId);
+    const envBase = (process.env.NEXT_PUBLIC_WS_URL || '').trim().replace(/\/+$/, '');
+
+    if (envBase) {
+      if (envBase.endsWith('/ws/behavioral')) return `${envBase}/${session}`;
+      if (envBase.endsWith('/ws')) return `${envBase}/behavioral/${session}`;
+      return `${envBase}/ws/behavioral/${session}`;
+    }
+
+    if (typeof window !== 'undefined') {
+      const wsProtocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      return `${wsProtocol}://${window.location.hostname}:8000/ws/behavioral/${session}`;
+    }
+
+    return `ws://localhost:8000/ws/behavioral/${session}`;
+  }, [sessionId]);
+
   // Connect to WebSocket with auto-reconnect
   const connectWebSocket = useCallback(() => {
-    const wsUrl = `ws://localhost:8000/ws/behavioral/${sessionId}`;
+    const wsUrl = getBehavioralWsUrl();
     
     // Close existing connection if any
     if (wsRef.current) {
@@ -156,17 +170,16 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
 
     ws.onerror = (err) => {
       console.error("❌ WebSocket error:", err);
-      setError("Failed to connect to analysis server");
+      setError(`Failed to connect to analysis server. Ensure backend is running on ${wsUrl}`);
     };
 
     wsRef.current = ws;
-  }, [sessionId, isAnalyzing]);
+  }, [getBehavioralWsUrl, isAnalyzing]);
 
-  // Start camera - Called when "Start Interview" button is clicked
+  // Start camera and behavioral analysis together when interview starts
   const startCamera = async () => {
     try {
       console.log("📷 Starting camera...");
-      setIsInterviewStarted(true); // Mark interview as started
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
@@ -178,12 +191,6 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
       });
       
       streamRef.current = stream;
-      
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      
       console.log("✅ Camera started successfully");
       setIsCameraOn(true);
       
@@ -227,7 +234,10 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     setWsConnected(false);
     setIsProcessingFrame(false);
     pendingFrameRef.current = false;
-    setIsInterviewStarted(false); // Reset interview started state
+    setMetrics(DEFAULT_METRICS);
+    setMetricsHistory([]);
+    setAnnotatedFrame("");
+    setError(null);
   };
 
   // Process frames and send to backend with throttling, downscaling, and backpressure
@@ -311,20 +321,6 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     }
   }, [isAnalyzing, isProcessingFrame]);
 
-  // Start analysis
-  const startAnalysis = () => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      connectWebSocket();
-      
-      // Wait for connection
-      setTimeout(() => {
-        setIsAnalyzing(true);
-      }, 1000);
-    } else {
-      setIsAnalyzing(true);
-    }
-  };
-
   // Stop analysis
   const stopAnalysis = () => {
     setIsAnalyzing(false);
@@ -375,6 +371,27 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     };
   }, [isAnalyzing, isCameraOn, processFrame]);
 
+  // Attach MediaStream only after video element is mounted
+  useEffect(() => {
+    const attachStream = async () => {
+      if (!isCameraOn || !videoRef.current || !streamRef.current) {
+        return;
+      }
+
+      try {
+        if (videoRef.current.srcObject !== streamRef.current) {
+          videoRef.current.srcObject = streamRef.current;
+        }
+        await videoRef.current.play();
+      } catch (err) {
+        console.error("❌ Error playing camera stream:", err);
+        setError("Camera stream start failed. Please allow camera permission and retry.");
+      }
+    };
+
+    attachStream();
+  }, [isCameraOn]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -382,18 +399,17 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     };
   }, []);
 
-  // Auto-start when interview is explicitly started by user clicking button
+  // Auto-start/stop strictly based on parent interview state
   useEffect(() => {
-    // Only auto-start if user has clicked the Start Interview button AND isActive is true
-    if (isInterviewStarted && isActive && !isCameraOn) {
+    if (isActive && !isCameraOn) {
       startCamera();
     }
     
     // Stop when interview ends
-    if (!isActive && isCameraOn) {
+    if (!isActive && (isCameraOn || isAnalyzing)) {
       stopCamera();
     }
-  }, [isActive, isInterviewStarted, isCameraOn]);
+  }, [isActive, isCameraOn, isAnalyzing]);
 
   // Get color based on score
   const getScoreColor = (score: number) => {
@@ -425,32 +441,16 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
         
         <div className="flex items-center gap-2">
           {!isCameraOn ? (
-            <button
-              onClick={startCamera}
-              className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs rounded-lg transition-colors"
-            >
-              <Camera size={14} />
-              Start Interview
-            </button>
+            <span className="text-xs text-slate-400">Waiting for interview start...</span>
           ) : (
             <>
-              {!isAnalyzing ? (
-                <button
-                  onClick={startAnalysis}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded-lg transition-colors"
-                >
-                  <Video size={14} />
-                  Start Analysis
-                </button>
-              ) : (
-                <button
-                  onClick={stopAnalysis}
-                  className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs rounded-lg transition-colors"
-                >
-                  <CameraOff size={14} />
-                  Stop
-                </button>
-              )}
+              <button
+                onClick={stopAnalysis}
+                className="flex items-center gap-2 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs rounded-lg transition-colors"
+              >
+                <CameraOff size={14} />
+                Stop
+              </button>
               <button
                 onClick={stopCamera}
                 className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
@@ -627,7 +627,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
       )}
 
       {/* Alerts */}
-      {metrics.alerts && metrics.alerts.length > 0 && (
+      {isCameraOn && isAnalyzing && metrics.alerts && metrics.alerts.length > 0 && (
         <div className="px-4 pb-4">
           <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3">
             <div className="flex items-center gap-2 text-amber-400 mb-2">

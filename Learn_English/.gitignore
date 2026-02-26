@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Package lock (use yarn for this project)
+package-lock.json
+
+# Build outputs
+*.tsbuildinfo

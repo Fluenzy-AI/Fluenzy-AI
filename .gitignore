@@ -4,7 +4,7 @@
 /node_modules
 /.pnp
 .pnp.*
-.yarn/*
+yarn/*
 !.yarn/patches
 !.yarn/plugins
 !.yarn/releases
@@ -48,5 +48,27 @@ stripe_setup.md
 .env
 .env.local
 
-
 /razorpay-test
+
+# ML Models (downloaded weights)
+yolov8n.pt
+*.pt
+*.pth
+*.ckpt
+*.h5
+
+# Temporary files
+src/tmpclaude*
+*.tmp
+
+# Uploaded files (user generated content)
+public/uploads/
+
+# Random test images
+pixora-*.jpg
+
+# Package lock (optional - uncomment if you want to ignore)
+# package-lock.json
+
+# Prisma migrations - optional
+# prisma/migrations/

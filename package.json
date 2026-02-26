@@ -10,7 +10,7 @@
     "dev:next": "next dev",
     "build": "npx prisma generate && next build",
     "start": "node server.js",
-    "backend": "python backend/setup_venv.py && python -m uvicorn main:app --reload --port 8000 --app-dir backend",
+    "backend": "python backend/setup_venv.py && (backend\\venv\\Scripts\\python -m uvicorn main:app --reload --port 8000 --app-dir backend || backend/venv/bin/python -m uvicorn main:app --reload --port 8000 --app-dir backend)",
     "frontend": "node server.js"
   },
   "dependencies": {

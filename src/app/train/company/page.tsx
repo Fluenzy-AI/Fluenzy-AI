@@ -20,8 +20,10 @@ export default function CompanyPage() {
   }
 
   return (
-    <div className={`min-h-screen ${currentTheme.background} ${currentTheme.text} theme-transition`}>
-      <LearnEnglishWrapper mode="company" />
+    <div className={`min-h-screen flex flex-col ${currentTheme.background} ${currentTheme.text} theme-transition`}>
+      <div className="flex-1 overflow-auto">
+        <LearnEnglishWrapper mode="company" />
+      </div>
       <Footer />
     </div>
   );

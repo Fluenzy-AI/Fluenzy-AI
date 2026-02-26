@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { 
   Building2, 
   ArrowLeft, 
-  Search, 
   Briefcase, 
   TrendingUp, 
   FileText, 
@@ -67,29 +66,33 @@ const CompanyHRDashboard: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => step > 1 ? prevStep() : router.push('/train')}
-          className="flex items-center gap-2 text-slate-400 font-bold text-sm hover:text-slate-600 transition-colors"
-        >
-          <ArrowLeft size={16} />
-          {step > 1 ? 'Previous Step' : 'Back to Modules'}
-        </button>
-        <div className="flex gap-2">
-          {[1, 2, 3, 4, 5].map(s => (
-            <div key={s} className={`h-1.5 w-12 rounded-full transition-all ${step >= s ? 'bg-blue-600' : 'bg-slate-100'}`}></div>
-          ))}
-        </div>
-      </div>
+    <div className="flex flex-col min-h-[calc(100vh-4rem)] px-4 sm:px-6 lg:px-8 py-6">
+      <div className="flex-1 flex items-start justify-center w-full max-w-5xl mx-auto">
+        <div className="w-full space-y-6 animate-in fade-in duration-500">
+          {/* Progress Header */}
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <button
+              onClick={() => step > 1 ? prevStep() : router.push('/train')}
+              className="flex items-center gap-2 text-muted-foreground font-bold text-sm hover:text-foreground transition-colors"
+            >
+              <ArrowLeft size={16} />
+              {step > 1 ? 'Previous Step' : 'Back to Modules'}
+            </button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              {[1, 2, 3, 4, 5].map(s => (
+                <div key={s} className={`h-1.5 flex-1 sm:flex-none sm:w-12 rounded-full transition-all ${step >= s ? 'bg-primary' : 'bg-border'}`}></div>
+              ))}
+            </div>
+          </div>
 
-      <div className="bg-white rounded-[3rem] border border-slate-100 shadow-xl overflow-hidden min-h-[500px] flex flex-col">
+          {/* Main Card */}
+          <div className="bg-card/95 backdrop-blur-xl rounded-3xl sm:rounded-[3rem] border border-border shadow-2xl min-h-[500px] flex flex-col">
         {/* Step 1: Company */}
         {step === 1 && (
-          <div className="p-12 space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
+          <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
             <div className="text-center space-y-2">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Select Target Company</h2>
-              <p className="text-slate-500 font-medium">Choose a company or add a custom one to unlock its specific HR culture.</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-card-foreground tracking-tight">Select Target Company</h2>
+              <p className="text-muted-foreground font-medium text-sm sm:text-base">Choose a company or add a custom one to unlock its specific HR culture.</p>
             </div>
             
             {!showCustomForm ? (
@@ -101,34 +104,34 @@ const CompanyHRDashboard: React.FC = () => {
                       setSelection({ ...selection, company: c.name, companyLogo: c.logo }); 
                       nextStep(); 
                     } }
-                    className={`p-8 rounded-3xl border-2 transition-all flex flex-col items-center justify-center gap-4 hover:shadow-lg ${
-                      selection.company === c.name ? 'border-blue-600 bg-blue-50' : 'border-slate-50 bg-white hover:border-slate-200'
+                    className={`p-8 rounded-3xl border-2 transition-all flex flex-col items-center justify-center gap-4 hover:shadow-lg hover:-translate-y-0.5 ${
+                      selection.company === c.name ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-border bg-background/60 hover:border-primary/30'
                     }`}
                   >
                     <img src={c.logo} alt={c.name} className="h-8 object-contain" />
-                    <span className="font-bold text-slate-700">{c.name}</span>
+                    <span className="font-bold text-card-foreground">{c.name}</span>
                   </button>
                 ))}
                 <button 
                   onClick={() => setShowCustomForm(true)}
-                  className="p-8 rounded-3xl border-2 border-dashed border-slate-200 flex flex-col items-center justify-center gap-4 hover:border-blue-300 hover:bg-slate-50 transition-all group"
+                  className="p-8 rounded-3xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-all group"
                 >
-                  <div className="w-12 h-12 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-100 group-hover:text-blue-600 transition-all">
+                  <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary transition-all">
                     <Plus size={24} />
                   </div>
-                  <span className="font-bold text-slate-400 group-hover:text-blue-600 transition-colors">Add Custom Company</span>
+                  <span className="font-bold text-muted-foreground group-hover:text-primary transition-colors">Add Custom Company</span>
                 </button>
               </div>
             ) : (
               <div className="max-w-md mx-auto space-y-6 animate-in zoom-in-95 duration-300">
-                <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 space-y-6">
+                <div className="bg-muted/60 p-8 rounded-[2.5rem] border border-border space-y-6">
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-2">Company Name</label>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest px-2">Company Name</label>
                     <div className="relative">
-                      <div className="absolute top-4 left-4 text-slate-400"><Building2 size={18} /></div>
+                      <div className="absolute top-4 left-4 text-muted-foreground"><Building2 size={18} /></div>
                       <input 
                         placeholder="e.g. Acme Corp"
-                        className="w-full bg-white border-0 rounded-2xl px-6 py-4 pl-12 font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                        className="w-full bg-card border border-border rounded-2xl px-6 py-4 pl-12 font-bold text-card-foreground outline-none focus:ring-2 focus:ring-primary transition-all"
                         value={selection.customCompany}
                         onChange={(e) => setSelection({ ...selection, customCompany: e.target.value })}
                         autoFocus
@@ -136,12 +139,12 @@ const CompanyHRDashboard: React.FC = () => {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-widest px-2">Logo URL (Optional)</label>
+                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest px-2">Logo URL (Optional)</label>
                     <div className="relative">
-                      <div className="absolute top-4 left-4 text-slate-400"><LinkIcon size={18} /></div>
+                      <div className="absolute top-4 left-4 text-muted-foreground"><LinkIcon size={18} /></div>
                       <input 
                         placeholder="https://example.com/logo.png"
-                        className="w-full bg-white border-0 rounded-2xl px-6 py-4 pl-12 font-bold text-slate-800 outline-none focus:ring-2 focus:ring-blue-600 transition-all"
+                        className="w-full bg-card border border-border rounded-2xl px-6 py-4 pl-12 font-bold text-card-foreground outline-none focus:ring-2 focus:ring-primary transition-all"
                         value={selection.customLogoUrl}
                         onChange={(e) => setSelection({ ...selection, customLogoUrl: e.target.value })}
                       />
@@ -150,7 +153,7 @@ const CompanyHRDashboard: React.FC = () => {
                   <div className="flex gap-4">
                     <button 
                       onClick={() => setShowCustomForm(false)}
-                      className="flex-1 py-4 font-bold text-slate-500 hover:text-slate-700"
+                      className="flex-1 py-4 font-bold text-muted-foreground hover:text-foreground"
                     >
                       Cancel
                     </button>
@@ -162,8 +165,8 @@ const CompanyHRDashboard: React.FC = () => {
                         }
                       }}
                       disabled={!selection.customCompany.trim()}
-                      className={`flex-[2] bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-100 transition-all ${
-                        !selection.customCompany.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'
+                      className={`flex-[2] bg-primary text-primary-foreground rounded-2xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 transition-all ${
+                        !selection.customCompany.trim() ? 'opacity-50 cursor-not-allowed' : 'hover:brightness-110'
                       }`}
                     >
                       Use Custom Company
@@ -177,18 +180,18 @@ const CompanyHRDashboard: React.FC = () => {
 
         {/* Step 2: Position */}
         {step === 2 && (
-          <div className="p-12 space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
+          <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
              <div className="text-center space-y-2">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Position & Level</h2>
-              <p className="text-slate-500 font-medium">Which role and experience level are you aiming for at <b>{selection.company === 'custom' ? selection.customCompany : selection.company}</b>?</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-card-foreground tracking-tight">Position & Level</h2>
+              <p className="text-muted-foreground font-medium text-sm sm:text-base">Which role and experience level are you aiming for at <b className="text-card-foreground">{selection.company === 'custom' ? selection.customCompany : selection.company}</b>?</p>
             </div>
             <div className="space-y-8 max-w-lg mx-auto">
                <div className="space-y-3">
-                  <label className="text-sm font-black uppercase text-slate-400 tracking-widest px-2">Job Role</label>
+                  <label className="text-sm font-black uppercase text-muted-foreground tracking-widest px-2">Job Role</label>
                   <select 
                     value={selection.role}
                     onChange={(e) => setSelection({ ...selection, role: e.target.value })}
-                    className="w-full bg-slate-50 border-0 rounded-2xl px-6 py-4 font-bold text-slate-800 focus:ring-2 focus:ring-blue-600 transition-all outline-none"
+                    className="w-full bg-muted/70 border border-border rounded-2xl px-6 py-4 font-bold text-card-foreground focus:ring-2 focus:ring-primary transition-all outline-none"
                   >
                     <option>Software Engineer</option>
                     <option>Data Analyst</option>
@@ -200,20 +203,20 @@ const CompanyHRDashboard: React.FC = () => {
                   {selection.role === 'custom' && (
                     <input 
                       placeholder="Enter job role..."
-                      className="w-full mt-2 bg-slate-50 border-0 rounded-2xl px-6 py-4 font-bold text-slate-800 outline-none"
+                      className="w-full mt-2 bg-muted/70 border border-border rounded-2xl px-6 py-4 font-bold text-card-foreground outline-none focus:ring-2 focus:ring-primary"
                       onChange={(e) => setSelection({ ...selection, customRole: e.target.value })}
                     />
                   )}
                </div>
                <div className="space-y-3">
-                  <label className="text-sm font-black uppercase text-slate-400 tracking-widest px-2">Experience Level</label>
+                  <label className="text-sm font-black uppercase text-muted-foreground tracking-widest px-2">Experience Level</label>
                   <div className="grid grid-cols-2 gap-4">
                     {['Intern', 'Fresher', 'Experienced', 'Managerial'].map(lvl => (
                       <button 
                         key={lvl}
                         onClick={() => setSelection({ ...selection, experience: lvl })}
                         className={`py-4 rounded-2xl font-bold transition-all border-2 ${
-                          selection.experience === lvl ? 'border-blue-600 bg-blue-600 text-white shadow-lg' : 'border-slate-100 bg-slate-50 text-slate-600'
+                          selection.experience === lvl ? 'border-primary bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'border-border bg-muted/50 text-card-foreground hover:border-primary/30'
                         }`}
                       >
                         {lvl}
@@ -223,7 +226,7 @@ const CompanyHRDashboard: React.FC = () => {
                </div>
             </div>
             <div className="flex justify-center pt-8">
-               <button onClick={nextStep} className="bg-slate-900 text-white px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 hover:bg-slate-800 transition-all">
+               <button onClick={nextStep} className="bg-foreground text-background px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 hover:opacity-90 transition-all">
                   Continue <ArrowRight size={16} />
                </button>
             </div>
@@ -232,10 +235,10 @@ const CompanyHRDashboard: React.FC = () => {
 
         {/* Step 3: Difficulty */}
         {step === 3 && (
-          <div className="p-12 space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
+          <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
              <div className="text-center space-y-2">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Interview Intensity</h2>
-              <p className="text-slate-500 font-medium">Adjust the difficulty of your HR simulation.</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-card-foreground tracking-tight">Interview Intensity</h2>
+              <p className="text-muted-foreground font-medium text-sm sm:text-base">Adjust the difficulty of your HR simulation.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-2xl mx-auto">
                {[
@@ -247,21 +250,21 @@ const CompanyHRDashboard: React.FC = () => {
                    key={d.id}
                    onClick={() => setSelection({ ...selection, difficulty: d.id })}
                    className={`p-6 rounded-3xl border-2 flex flex-col items-center text-center gap-4 transition-all ${
-                     selection.difficulty === d.id ? 'border-blue-600 bg-blue-50 shadow-md' : 'border-slate-50 bg-white hover:border-slate-100'
+                     selection.difficulty === d.id ? 'border-primary bg-primary/10 shadow-md shadow-primary/10' : 'border-border bg-background/50 hover:border-primary/30'
                    }`}
                  >
-                   <div className={`p-3 rounded-2xl ${selection.difficulty === d.id ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                   <div className={`p-3 rounded-2xl ${selection.difficulty === d.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                       <d.icon size={24} />
                    </div>
                    <div>
-                     <p className="font-black text-slate-900 uppercase tracking-widest text-[10px] mb-1">{d.id}</p>
-                     <p className="text-xs text-slate-500 font-medium">{d.desc}</p>
+                     <p className="font-black text-card-foreground uppercase tracking-widest text-[10px] mb-1">{d.id}</p>
+                     <p className="text-xs text-muted-foreground font-medium">{d.desc}</p>
                    </div>
                  </button>
                ))}
             </div>
             <div className="flex justify-center pt-10">
-               <button onClick={nextStep} className="bg-slate-900 text-white px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 hover:bg-slate-800 transition-all">
+               <button onClick={nextStep} className="bg-foreground text-background px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 hover:opacity-90 transition-all">
                   Almost Done <ArrowRight size={16} />
                </button>
             </div>
@@ -270,10 +273,10 @@ const CompanyHRDashboard: React.FC = () => {
 
         {/* Step 4: Round Selection (New Step) */}
         {step === 4 && (
-          <div className="p-12 space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
+          <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
              <div className="text-center space-y-2">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Select Interview Round</h2>
-              <p className="text-slate-500 font-medium">Which specific round would you like to practice today?</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-card-foreground tracking-tight">Select Interview Round</h2>
+              <p className="text-muted-foreground font-medium text-sm sm:text-base">Which specific round would you like to practice today?</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto">
                {[
@@ -294,18 +297,18 @@ const CompanyHRDashboard: React.FC = () => {
                    key={r.id}
                    onClick={() => { setSelection({ ...selection, roundType: r.id }); nextStep(); }}
                    className={`p-10 rounded-[2.5rem] border-2 flex flex-col items-center text-center gap-6 transition-all group ${
-                     selection.roundType === r.id ? 'border-blue-600 bg-blue-50 shadow-xl' : 'border-slate-50 bg-white hover:border-slate-100 hover:shadow-lg'
+                     selection.roundType === r.id ? 'border-primary bg-primary/10 shadow-xl shadow-primary/10' : 'border-border bg-background/60 hover:border-primary/30 hover:shadow-lg'
                    }`}
                  >
-                   <div className={`p-5 rounded-[1.5rem] transition-all group-hover:scale-110 ${selection.roundType === r.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-200' : 'bg-slate-100 text-slate-400'}`}>
+                   <div className={`p-5 rounded-[1.5rem] transition-all group-hover:scale-110 ${selection.roundType === r.id ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20' : 'bg-muted text-muted-foreground'}`}>
                       <r.icon size={32} />
                    </div>
                    <div className="space-y-2">
-                     <p className="font-black text-slate-900 text-lg leading-tight">{r.title}</p>
-                     <p className="text-sm text-slate-500 font-medium leading-relaxed">{r.desc}</p>
+                     <p className="font-black text-card-foreground text-lg leading-tight">{r.title}</p>
+                     <p className="text-sm text-muted-foreground font-medium leading-relaxed">{r.desc}</p>
                    </div>
                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all ${
-                     selection.roundType === r.id ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200'
+                     selection.roundType === r.id ? 'border-primary bg-primary text-primary-foreground' : 'border-border'
                    }`}>
                      {selection.roundType === r.id && <CheckCircle2 size={16} />}
                    </div>
@@ -317,10 +320,10 @@ const CompanyHRDashboard: React.FC = () => {
 
         {/* Step 5: Resume */}
         {step === 5 && (
-          <div className="p-12 space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
+          <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
              <div className="text-center space-y-2">
-              <h2 className="text-3xl font-black text-slate-900 tracking-tight">Personalize via Resume</h2>
-              <p className="text-slate-500 font-medium">Upload or paste resume content for role-specific questions.</p>
+              <h2 className="text-2xl sm:text-3xl font-black text-card-foreground tracking-tight">Personalize via Resume</h2>
+              <p className="text-muted-foreground font-medium text-sm sm:text-base">Upload or paste resume content for role-specific questions.</p>
             </div>
             <div className="max-w-xl mx-auto space-y-6">
                <div className="relative group">
@@ -331,20 +334,20 @@ const CompanyHRDashboard: React.FC = () => {
                     accept=".pdf,.doc,.docx,.txt"
                   />
                   <div className={`p-10 border-2 border-dashed rounded-3xl flex flex-col items-center gap-4 transition-all ${
-                    selection.fileName ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-slate-50 group-hover:border-blue-300'
+                    selection.fileName ? 'border-emerald-500/70 bg-emerald-500/10' : 'border-border bg-muted/60 group-hover:border-primary/40'
                   }`}>
-                    {selection.fileName ? <CheckCircle2 size={48} className="text-emerald-500" /> : <Upload size={48} className="text-slate-300" />}
+                    {selection.fileName ? <CheckCircle2 size={48} className="text-emerald-500" /> : <Upload size={48} className="text-muted-foreground" />}
                     <div className="text-center">
-                       <p className="font-bold text-slate-900">{selection.fileName || 'Click to upload PDF / DOC'}</p>
-                       <p className="text-xs text-slate-400 font-medium mt-1">AI will extract projects & skills automatically.</p>
+                       <p className="font-bold text-card-foreground">{selection.fileName || 'Click to upload PDF / DOC'}</p>
+                       <p className="text-xs text-muted-foreground font-medium mt-1">AI will extract projects & skills automatically.</p>
                     </div>
                   </div>
                </div>
                <div className="relative">
-                  <div className="absolute top-4 left-4 text-slate-400"><FileText size={18} /></div>
+                  <div className="absolute top-4 left-4 text-muted-foreground"><FileText size={18} /></div>
                   <textarea 
                     placeholder="Or paste resume summary/text here..."
-                    className="w-full h-32 bg-slate-50 border-0 rounded-3xl p-6 pl-12 font-medium text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-600"
+                    className="w-full h-32 bg-muted/70 border border-border rounded-3xl p-6 pl-12 font-medium text-sm text-card-foreground outline-none focus:ring-2 focus:ring-primary"
                     onChange={(e) => setSelection({ ...selection, resumeText: e.target.value })}
                   />
                </div>
@@ -352,7 +355,7 @@ const CompanyHRDashboard: React.FC = () => {
             <div className="flex justify-center pt-6">
                <button 
                  onClick={startInterview}
-                 className="bg-blue-600 text-white px-20 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-blue-200 hover:bg-blue-700 transition-all transform hover:scale-105"
+                 className="bg-primary text-primary-foreground px-20 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/25 hover:brightness-110 transition-all transform hover:scale-105"
                >
                  Launch Real-Time Interview
                </button>
@@ -361,18 +364,20 @@ const CompanyHRDashboard: React.FC = () => {
         )}
       </div>
 
-      <div className="bg-blue-900 rounded-[2.5rem] p-10 text-white flex items-center justify-between shadow-2xl overflow-hidden relative">
+      <div className="bg-gradient-to-br from-primary/85 to-secondary/85 rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-10 text-white flex items-center justify-between shadow-2xl overflow-hidden relative">
          <div className="relative z-10 space-y-2">
             <div className="flex items-center gap-2">
                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-               <p className="text-[10px] font-black uppercase tracking-widest text-blue-300">Live Simulation Status</p>
+               <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Live Simulation Status</p>
             </div>
-            <h3 className="text-2xl font-black">AI HR Engine Primed</h3>
-            <p className="text-blue-100/70 text-sm max-w-md">Our model has ingested 10,000+ real interview patterns from {selection.company === 'custom' ? selection.customCompany : selection.company} to ensure the highest fidelity round.</p>
+            <h3 className="text-xl sm:text-2xl font-black">AI HR Engine Primed</h3>
+            <p className="text-white/85 text-sm max-w-md">Our model has ingested 10,000+ real interview patterns from {selection.company === 'custom' ? selection.customCompany : selection.company} to ensure the highest fidelity round.</p>
          </div>
-         <div className="opacity-10 absolute right-[-20px] top-[-20px] rotate-12">
+         <div className="opacity-10 absolute right-[-20px] top-[-20px] rotate-12 hidden sm:block">
             <Building2 size={240} />
          </div>
+      </div>
+        </div>
       </div>
     </div>
   );

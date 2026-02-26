@@ -813,6 +813,6 @@ async def health_check_behavioral():
     """Health check for behavioral analysis"""
     return {
         "status": "healthy",
-        "mediapipe_available": behavioral_analyzer is not None,
+        "behavioral_endpoint_available": True,
         "timestamp": datetime.now().isoformat()
     }

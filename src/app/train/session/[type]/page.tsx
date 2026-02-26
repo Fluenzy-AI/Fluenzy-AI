@@ -99,7 +99,15 @@ const SessionPage = () => {
           {/* Main Voice Agent */}
           <div className={`${isVideoAnalysisEnabled && (isHRInterview || isCompanyWise) ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
             <div className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-6 md:p-8 lg:p-12 theme-transition`}>
-              <VoiceAgent user={user} onSessionEnd={() => {}} />
+              <VoiceAgent
+                user={user}
+                onSessionEnd={() => {
+                  setIsInterviewActive(false);
+                }}
+                onInterviewStart={() => {
+                  setIsInterviewActive(true);
+                }}
+              />
             </div>
           </div>
 
@@ -108,7 +116,7 @@ const SessionPage = () => {
             <div className="lg:col-span-1">
               <VideoAnalysisPanel 
                 sessionId={sessionId}
-                isActive={true}
+                isActive={isInterviewActive}
               />
             </div>
           )}
