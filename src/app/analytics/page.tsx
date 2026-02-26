@@ -359,17 +359,34 @@ export default function AnalyticsDashboardPage() {
       .filter((point): point is { date: string; stress: number; accuracy: number } => point !== null);
   }, [data]);
 
+  const accuracyVsSpeedSeries = useMemo(() => {
+    if (!data) return [];
+    const buckets = new Map<number, { total: number; count: number }>();
+    data.charts.accuracyVsSpeed.forEach((item) => {
+      if (!Number.isFinite(item.duration) || item.duration <= 0) return;
+      if (!Number.isFinite(item.score)) return;
+      const key = Math.round(item.duration);
+      const current = buckets.get(key) || { total: 0, count: 0 };
+      current.total += item.score;
+      current.count += 1;
+      buckets.set(key, current);
+    });
+
+    return Array.from(buckets.entries())
+      .map(([speed, value]) => ({
+        speed,
+        accuracy: Number((value.total / value.count).toFixed(1)),
+        samples: value.count,
+      }))
+      .sort((a, b) => a.speed - b.speed);
+  }, [data]);
+
   if (loading) return <div className="container mx-auto px-4 py-12">Loading analytics...</div>;
   if (!session?.user || !data) return <div className="container mx-auto px-4 py-12">No analytics data available yet.</div>;
 
   const { summary, distributions, trends, activity, insights, charts, textReport, advanced, filters, history } = data;
   const wpmLow = advanced.communication.idealWpmRange[0];
   const wpmHigh = advanced.communication.idealWpmRange[1];
-  const accuracyVsSpeedSeries = charts.accuracyVsSpeed.map((item, index) => ({
-    idx: index + 1,
-    speed: item.duration,
-    accuracy: item.score,
-  }));
   const communicationCompositeRadar = [
     { metric: "Communication", score: Number(summary.communicationScore.toFixed(1)) },
     { metric: "Confidence", score: Number(summary.confidenceScore.toFixed(1)) },
@@ -514,7 +531,7 @@ export default function AnalyticsDashboardPage() {
 
   <div className="grid gap-6 lg:grid-cols-2">
     <Card className="border-white/10 bg-slate-900/60"><CardHeader><CardTitle className="text-sm text-slate-300">Filler Word Frequency</CardTitle></CardHeader><CardContent className="h-[240px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={advanced.communication.fillerWords}><CartesianGrid strokeDasharray="3 3" stroke="#1f2937" /><XAxis dataKey="word" stroke="#94a3b8" fontSize={10} /><YAxis stroke="#94a3b8" fontSize={10} /><ChartTooltip /><Bar dataKey="count" fill="#10b981" /></BarChart></ResponsiveContainer></CardContent></Card>
-    <Card className="border-white/10 bg-slate-900/60"><CardHeader><CardTitle className="text-sm text-slate-300">Accuracy vs Speed</CardTitle></CardHeader><CardContent className="h-[260px]"><ResponsiveContainer width="100%" height="100%"><LineChart data={accuracyVsSpeedSeries}><CartesianGrid strokeDasharray="3 3" stroke="#1f2937" /><XAxis dataKey="speed" stroke="#94a3b8" fontSize={10} interval={0} /><YAxis dataKey="accuracy" domain={[0, 80]} stroke="#94a3b8" fontSize={10} /><ChartTooltip /><Legend /><Line type="linear" dataKey="accuracy" stroke="#fb923c" strokeWidth={2} dot={{ r: 3, fill: "#ffffff", stroke: "#fb923c", strokeWidth: 2 }} activeDot={{ r: 5, fill: "#ffffff", stroke: "#f97316", strokeWidth: 2 }} /><Brush dataKey="idx" height={18} stroke="#334155" /></LineChart></ResponsiveContainer></CardContent></Card>
+    <Card className="border-white/10 bg-slate-900/60"><CardHeader><CardTitle className="text-sm text-slate-300">Accuracy vs Speed</CardTitle></CardHeader><CardContent className="h-[260px]"><ResponsiveContainer width="100%" height="100%"><LineChart data={accuracyVsSpeedSeries}><CartesianGrid strokeDasharray="3 3" stroke="#1f2937" /><XAxis type="number" dataKey="speed" stroke="#94a3b8" fontSize={10} domain={["dataMin", "dataMax"]} tickCount={8} tickFormatter={(value) => `${value}m`} /><YAxis dataKey="accuracy" domain={[0, 100]} stroke="#94a3b8" fontSize={10} /><ChartTooltip formatter={(value, name) => [value, name === "accuracy" ? "Avg Accuracy" : "Samples"]} labelFormatter={(label) => `${label} min`} /><Legend /><Line type="monotone" dataKey="accuracy" stroke="#fb923c" strokeWidth={2} dot={{ r: 3, fill: "#ffffff", stroke: "#fb923c", strokeWidth: 2 }} activeDot={{ r: 5, fill: "#ffffff", stroke: "#f97316", strokeWidth: 2 }} /></LineChart></ResponsiveContainer></CardContent></Card>
   </div>
 
   <div className="grid gap-6 lg:grid-cols-2">
