@@ -30,6 +30,18 @@ interface VideoAnalysisPanelProps {
   onSessionEnd?: (metrics: BehavioralMetrics) => void;
 }
 
+interface BehavioralTimelinePoint {
+  timestamp: string;
+  confidence: number;
+  eye_contact: number;
+  posture: number;
+  engagement: number;
+  smile: number;
+  stress_level: number;
+  filler_word_count: number;
+  face_detected: boolean;
+}
+
 const DEFAULT_METRICS: BehavioralMetrics = {
   confidence: 0,
   eye_contact: 0,
@@ -75,6 +87,15 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   const wsRef = useRef<WebSocket | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+  const timelineRef = useRef<BehavioralTimelinePoint[]>([]);
+  const metricsRef = useRef<BehavioralMetrics>(DEFAULT_METRICS);
+  const startedAtRef = useRef<string | null>(null);
+  const savingRef = useRef(false);
+  const savedRef = useRef(false);
+
+  useEffect(() => {
+    metricsRef.current = metrics;
+  }, [metrics]);
 
   const getBehavioralWsUrl = useCallback(() => {
     const session = encodeURIComponent(sessionId);
@@ -131,6 +152,20 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
           
           setMetrics(newMetrics);
           setMetricsHistory(prev => [...prev.slice(-100), newMetrics]);
+          timelineRef.current.push({
+            timestamp: new Date().toISOString(),
+            confidence: newMetrics.confidence,
+            eye_contact: newMetrics.eye_contact,
+            posture: newMetrics.posture,
+            engagement: newMetrics.engagement,
+            smile: newMetrics.smile,
+            stress_level: newMetrics.stress_level,
+            filler_word_count: newMetrics.filler_word_count,
+            face_detected: newMetrics.face_detected,
+          });
+          if (timelineRef.current.length > 1500) {
+            timelineRef.current = timelineRef.current.slice(-1500);
+          }
           
           if (data.annotated_frame) {
             setAnnotatedFrame(data.annotated_frame);
@@ -180,6 +215,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   const startCamera = async () => {
     try {
       console.log("📷 Starting camera...");
+      startedAtRef.current = new Date().toISOString();
+      timelineRef.current = [];
+      savedRef.current = false;
       
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
@@ -203,8 +241,60 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     }
   };
 
+  const persistBehavioralAnalytics = useCallback(async () => {
+    if (savedRef.current || savingRef.current || !startedAtRef.current) {
+      return;
+    }
+
+    const timeline = timelineRef.current;
+    if (!timeline.length) {
+      return;
+    }
+
+    const avg = (pick: (p: BehavioralTimelinePoint) => number) =>
+      timeline.reduce((sum, item) => sum + pick(item), 0) / timeline.length;
+
+    const summaryPayload = {
+      confidence: Number(avg((p) => p.confidence).toFixed(1)),
+      eye_contact: Number(avg((p) => p.eye_contact).toFixed(1)),
+      posture: Number(avg((p) => p.posture).toFixed(1)),
+      engagement: Number(avg((p) => p.engagement).toFixed(1)),
+      smile: Number(avg((p) => p.smile).toFixed(1)),
+      stress_level: Number(avg((p) => p.stress_level).toFixed(1)),
+      filler_word_count: Number(avg((p) => p.filler_word_count).toFixed(1)),
+      face_detected_rate: Number(((timeline.filter((p) => p.face_detected).length / timeline.length) * 100).toFixed(1)),
+    };
+
+    const alerts = Array.from(new Set(metricsRef.current.alerts || []));
+    const sampledTimeline = timeline.filter((_, i) => i % 3 === 0).slice(-300);
+
+    try {
+      savingRef.current = true;
+      await fetch("/api/behavioral-analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sessionId,
+          startedAt: startedAtRef.current,
+          endedAt: new Date().toISOString(),
+          summary: summaryPayload,
+          timeline: sampledTimeline,
+          alerts,
+          sampleCount: timeline.length,
+        }),
+      });
+      savedRef.current = true;
+    } catch (err) {
+      console.error("Failed to persist behavioral analytics:", err);
+    } finally {
+      savingRef.current = false;
+    }
+  }, [sessionId]);
+
   // Stop camera
   const stopCamera = () => {
+    void persistBehavioralAnalytics();
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;

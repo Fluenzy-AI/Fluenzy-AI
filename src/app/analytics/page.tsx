@@ -79,6 +79,16 @@ interface AnalyticsResponse {
     accuracyVsSpeed: Array<{ duration: number; score: number }>;
   };
   advanced: {
+    behavioral: {
+      eyeContactScore: number;
+      postureScore: number;
+      smileScore: number;
+      stressLevel: number;
+      engagementScore: number;
+      bodyLanguageScore: number;
+      timeline: Array<{ date: string; eyeContact: number; posture: number; stress: number; engagement: number }>;
+      alerts: string[];
+    };
     communication: {
       fillerRate: number;
       fillerWords: Array<{ word: string; count: number }>;
@@ -445,66 +455,51 @@ export default function AnalyticsDashboardPage() {
         </div>
       </div>
 
-      {/* Metric Cards - Premium Design */}
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Card className="relative group border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-blue-500/10 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      {/* AI Video Analysis Section */}
+      <section className="grid gap-6 lg:grid-cols-3">
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl lg:col-span-2">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-300">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center shadow-md">
-                <Gauge className="h-4 w-4 text-white" />
+            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-500 flex items-center justify-center">
+                <Activity className="h-4 w-4 text-white" />
               </div>
-              Overall Performance
+              AI Video Analysis: Body Language Trend
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-black text-white">{Math.round(summary.overallScore)}</div>
-            <p className="text-xs text-slate-400 mt-2 font-medium">Status: <span className="text-cyan-400 font-bold">{summary.overallStatus}</span></p>
+          <CardContent className="h-[260px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={advanced.behavioral.timeline}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
+                <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} domain={[0, 100]} />
+                <ChartTooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b" }} />
+                <Line type="monotone" dataKey="eyeContact" stroke="#22d3ee" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="posture" stroke="#60a5fa" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="engagement" stroke="#34d399" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="stress" stroke="#f59e0b" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="relative group border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+
+        <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-300">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center shadow-md">
-                <MessageSquare className="h-4 w-4 text-white" />
-              </div>
-              Communication Score
-            </CardTitle>
+            <CardTitle className="text-sm font-bold text-slate-300">Body Language Snapshot</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-black text-white">{Math.round(summary.communicationScore)}</div>
-            <p className="text-xs text-slate-400 mt-2 font-medium">Clarity, grammar, confidence combined</p>
-          </CardContent>
-        </Card>
-        <Card className="relative group border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-indigo-500/10 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-300">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center shadow-md">
-                <BrainCircuit className="h-4 w-4 text-white" />
-              </div>
-              Technical Knowledge
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-black text-white">{Math.round(summary.technicalScore)}</div>
-            <p className="text-xs text-slate-400 mt-2 font-medium">Accuracy across technical questions</p>
-          </CardContent>
-        </Card>
-        <Card className="relative group border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:scale-[1.02] hover:shadow-xl hover:shadow-amber-500/10 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-amber-600/5 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-sm font-bold text-slate-300">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shadow-md">
-                <Timer className="h-4 w-4 text-white" />
-              </div>
-              Avg Time / Question
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-black text-white">{summary.avgTimePerQuestion}m</div>
-            <p className="text-xs text-slate-400 mt-2 font-medium">Total practice: <span className="text-amber-400 font-bold">{formatDuration(summary.totalDurationMinutes)}</span></p>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex items-center justify-between"><span className="text-slate-400">Overall Body Language</span><span className="text-white font-semibold">{advanced.behavioral.bodyLanguageScore}%</span></div>
+            <div className="flex items-center justify-between"><span className="text-slate-400">Eye Contact</span><span className="text-white font-semibold">{advanced.behavioral.eyeContactScore}%</span></div>
+            <div className="flex items-center justify-between"><span className="text-slate-400">Posture</span><span className="text-white font-semibold">{advanced.behavioral.postureScore}%</span></div>
+            <div className="flex items-center justify-between"><span className="text-slate-400">Smile/Expression</span><span className="text-white font-semibold">{advanced.behavioral.smileScore}%</span></div>
+            <div className="flex items-center justify-between"><span className="text-slate-400">Stress Level</span><span className="text-white font-semibold">{advanced.behavioral.stressLevel}%</span></div>
+            <Separator className="bg-slate-800" />
+            <div className="space-y-2">
+              {advanced.behavioral.alerts.slice(0, 2).map((alert) => (
+                <Badge key={alert} variant="outline" className="border-amber-500/40 text-amber-200">
+                  {alert}
+                </Badge>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </section>
@@ -583,17 +578,18 @@ export default function AnalyticsDashboardPage() {
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center">
                 <BarChart3 className="h-4 w-4 text-white" />
               </div>
-              Communication Skills Snapshot
+              Behavioral Metrics Snapshot
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[240px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={[
-                  { name: "Communication", value: Math.round(summary.communicationScore) },
-                  { name: "Confidence", value: Math.round(summary.confidenceScore) },
-                  { name: "Grammar", value: Math.round(summary.grammarScore) },
-                  { name: "Vocabulary", value: Math.round(summary.vocabularyScore) },
+                  { name: "Eye Contact", value: Math.round(advanced.behavioral.eyeContactScore) },
+                  { name: "Posture", value: Math.round(advanced.behavioral.postureScore) },
+                  { name: "Smile", value: Math.round(advanced.behavioral.smileScore) },
+                  { name: "Engagement", value: Math.round(advanced.behavioral.engagementScore) },
+                  { name: "Stress", value: Math.max(0, Math.round(100 - advanced.behavioral.stressLevel)) },
                 ]}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
@@ -628,21 +624,6 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
       </section>
-
-      {/* Activity Heatmap - Premium Design */}
-      <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300">
-        <CardHeader>
-          <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
-              <Flame className="h-4 w-4 text-white" />
-            </div>
-            Activity Heatmap
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="h-[200px] p-6">
-          <Heatmap activity={activity} />
-        </CardContent>
-      </Card>
 
       {/* Advanced Communication Insights */}
       <section className="grid gap-6 lg:grid-cols-3 animate-in fade-in slide-in-from-bottom-2">
@@ -1121,34 +1102,6 @@ export default function AnalyticsDashboardPage() {
         </Card>
       </section>
 
-      {/* Communication vs Confidence */}
-      <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
-          <CardHeader>
-            <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center">
-                <Mic2 className="h-4 w-4 text-white" />
-              </div>
-              Communication vs Confidence
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="h-[320px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={[{ name: "Communication", value: summary.communicationScore }, { name: "Confidence", value: summary.confidenceScore }]}>
-                <defs>
-                  <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.8} />
-                    <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.1} />
-                  </linearGradient>
-                </defs>
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
-                <ChartTooltip contentStyle={{ background: "#0f172a", border: "1px solid #1e293b" }} />
-                <Area type="monotone" dataKey="value" stroke="#38bdf8" fill="url(#areaGrad)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
       {/* Final Insights Section */}
       <section className="grid gap-6 lg:grid-cols-2">
         <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-emerald-500/5 transition-all duration-300">
@@ -1233,6 +1186,21 @@ export default function AnalyticsDashboardPage() {
           </CardContent>
         </Card>
       </section>
+
+      {/* Activity Heatmap - Premium Design */}
+      <Card className="border-white/10 bg-gradient-to-br from-slate-900/60 to-slate-900/40 backdrop-blur-xl hover:shadow-xl hover:shadow-amber-500/5 transition-all duration-300">
+        <CardHeader>
+          <CardTitle className="text-sm font-bold text-slate-300 flex items-center gap-2">
+            <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center">
+              <Flame className="h-4 w-4 text-white" />
+            </div>
+            Activity Heatmap
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="h-[200px] p-6">
+          <Heatmap activity={activity} />
+        </CardContent>
+      </Card>
 
         <div className="flex justify-end">
           <Button variant="outline" onClick={() => router.push("/train")}>Start Next Practice</Button>

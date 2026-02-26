@@ -504,6 +504,91 @@ export async function GET(request: NextRequest) {
     const reattemptSuccessRate = totalGroups ? Number(((successGroups / totalGroups) * 100).toFixed(1)) : 0;
 
     const predictedConfidence = clamp(100 - fillerRate * 2 - Math.max(0, 70 - sentenceStructureScore) * 0.6);
+    let eyeContactScore = 0;
+    let postureScore = 0;
+    let smileScore = 0;
+    let stressLevel = 0;
+    let engagementScore = 0;
+    let bodyLanguageScore = 0;
+    let behavioralTimeline: Array<{ date: string; eyeContact: number; posture: number; stress: number; engagement: number }> = [];
+    let behavioralAlerts: string[] = ["No AI video analysis data yet. Complete one HR/company interview to unlock."];
+
+    try {
+      const rawBehavioral = await (prisma as any).$runCommandRaw({
+        find: "behavioral_analytics",
+        filter: { userId },
+        sort: { createdAt: 1 },
+        limit: 500,
+      });
+      const behavioralDocs = rawBehavioral?.cursor?.firstBatch || [];
+
+      const toNumber = (value: unknown) => {
+        const parsed = typeof value === "number" ? value : Number(value);
+        return Number.isFinite(parsed) ? parsed : null;
+      };
+
+      if (behavioralDocs.length) {
+        eyeContactScore = Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.eye_contact))) || 0).toFixed(1));
+        postureScore = Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.posture))) || 0).toFixed(1));
+        smileScore = Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.smile))) || 0).toFixed(1));
+        stressLevel = Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.stress_level))) || 0).toFixed(1));
+        engagementScore = Number((average(behavioralDocs.map((d: any) => toNumber(d?.summary?.engagement))) || 0).toFixed(1));
+        bodyLanguageScore = Number((average([
+          eyeContactScore,
+          postureScore,
+          smileScore,
+          100 - stressLevel,
+          engagementScore,
+        ]) || 0).toFixed(1));
+
+        const timelineMap = new Map<string, { eye: number[]; posture: number[]; stress: number[]; engagement: number[] }>();
+        behavioralDocs.forEach((doc: any) => {
+          const points = Array.isArray(doc?.timeline) ? doc.timeline : [];
+          points.forEach((point: any) => {
+            const timestamp = String(point?.timestamp || doc?.createdAt || "");
+            const date = timestamp ? timestamp.slice(0, 10) : "";
+            if (!date) return;
+            if (!timelineMap.has(date)) timelineMap.set(date, { eye: [], posture: [], stress: [], engagement: [] });
+            const bucket = timelineMap.get(date)!;
+            const eye = toNumber(point?.eye_contact);
+            const posture = toNumber(point?.posture);
+            const stress = toNumber(point?.stress_level);
+            const engagement = toNumber(point?.engagement);
+            if (eye != null) bucket.eye.push(eye);
+            if (posture != null) bucket.posture.push(posture);
+            if (stress != null) bucket.stress.push(stress);
+            if (engagement != null) bucket.engagement.push(engagement);
+          });
+        });
+
+        behavioralTimeline = Array.from(timelineMap.entries())
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([date, values]) => ({
+            date,
+            eyeContact: Number((average(values.eye) || 0).toFixed(1)),
+            posture: Number((average(values.posture) || 0).toFixed(1)),
+            stress: Number((average(values.stress) || 0).toFixed(1)),
+            engagement: Number((average(values.engagement) || 0).toFixed(1)),
+          }));
+
+        const alertCounts = new Map<string, number>();
+        behavioralDocs.forEach((doc: any) => {
+          const alerts = Array.isArray(doc?.alerts) ? doc.alerts : [];
+          alerts.forEach((alert: unknown) => {
+            if (typeof alert !== "string" || !alert.trim()) return;
+            alertCounts.set(alert, (alertCounts.get(alert) || 0) + 1);
+          });
+        });
+        behavioralAlerts = alertCounts.size
+          ? Array.from(alertCounts.entries())
+              .sort((a, b) => b[1] - a[1])
+              .slice(0, 4)
+              .map(([alert]) => alert)
+          : ["No repeated behavioral alerts detected."];
+      }
+    } catch (behavioralError) {
+      console.error("Behavioral analytics read error:", behavioralError);
+    }
 
     const companyReadiness = Array.from(companyCounts.entries()).map(([name, count]) => {
       const companySessions = sessions.filter((s) => s.targetCompany === name);
@@ -610,6 +695,16 @@ export async function GET(request: NextRequest) {
         accuracyVsSpeed,
       },
       advanced: {
+        behavioral: {
+          eyeContactScore: Number(eyeContactScore.toFixed(1)),
+          postureScore: Number(postureScore.toFixed(1)),
+          smileScore: Number(smileScore.toFixed(1)),
+          stressLevel: Number(stressLevel.toFixed(1)),
+          engagementScore: Number(engagementScore.toFixed(1)),
+          bodyLanguageScore,
+          timeline: behavioralTimeline,
+          alerts: behavioralAlerts,
+        },
         communication: {
           fillerRate: Number(fillerRate.toFixed(1)),
           fillerWords: Array.from(fillerStats.counts.entries()).map(([word, count]) => ({ word, count })),

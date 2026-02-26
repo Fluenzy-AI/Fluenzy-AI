@@ -58,6 +58,11 @@ const secondaryNavItems = [
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/billing', label: 'Billing', icon: CreditCard },
 ];
+const topQuickLinks = [
+  { href: '/history', label: 'History' },
+  { href: '/analytics', label: 'Analytics' },
+  { href: '/interview-guide', label: 'Interview Guide' },
+];
 
 const themeOptions: { value: ThemeName; label: string; icon: typeof Moon }[] = [
   { value: 'dark', label: 'Dark', icon: Moon },
@@ -354,6 +359,26 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
             {/* Right - Actions */}
             <div className="flex items-center gap-2">
+              {/* Quick Links */}
+              <div className="hidden lg:flex items-center gap-1 mr-1">
+                {topQuickLinks.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? `${currentTheme.text} bg-white/10`
+                          : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+
               {/* Theme Toggle */}
               <div className="relative">
                 <button
