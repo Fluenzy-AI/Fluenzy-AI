@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,6 +14,11 @@ import {
   CartesianGrid,
   LineChart,
   Line,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
   ResponsiveContainer,
   XAxis,
   YAxis,
@@ -95,8 +101,467 @@ const getStatusColor = (status: string) => {
   return "bg-amber-100 text-amber-700";
 };
 
+function ProfessionalPrintReport({
+  data,
+  candidateName,
+  reportDate,
+}: {
+  data: AnalyticsResponse;
+  candidateName: string;
+  reportDate: string;
+}) {
+  const totalPages = 5;
+  const score = Math.round(data.summary.overallScore);
+  const risk = score >= 75 ? "Low" : score >= 55 ? "Moderate" : "High";
+  const reliability = Math.max(0, Math.min(100, Math.round(100 - data.advanced.communication.fillerRate)));
+  const anyData = data as any;
+  const behavioral = anyData?.advanced?.behavioral || {};
+  const wpm = Number(data.advanced.communication.speakingWpm ?? 0);
+  const [idealLow, idealHigh] = data.advanced.communication.idealWpmRange;
+  const speakingPaceRadarValue = (() => {
+    if (!Number.isFinite(wpm) || wpm <= 0) return 0;
+    if (wpm >= idealLow && wpm <= idealHigh) return 100;
+    if (wpm < idealLow) return Math.max(0, Math.min(100, (wpm / idealLow) * 100));
+    return Math.max(0, Math.min(100, 100 - ((wpm - idealHigh) / idealHigh) * 100));
+  })();
+  const bodyLanguageRadarData =
+    Array.isArray(behavioral?.compositeRadar) && behavioral.compositeRadar.length > 0
+      ? behavioral.compositeRadar.map((item: any) => ({
+          metric: String(item?.metric ?? ""),
+          score: Number(item?.score ?? 0),
+        }))
+      : [
+          { metric: "Eye Contact", score: Number(behavioral?.eyeContactScore ?? 0) },
+          { metric: "Posture", score: Number(behavioral?.postureScore ?? 0) },
+          { metric: "Smile", score: Number(behavioral?.smileScore ?? 0) },
+          { metric: "Engagement", score: Number(behavioral?.engagementScore ?? 0) },
+          { metric: "Stress Control", score: Math.max(0, 100 - Number(behavioral?.stressLevel ?? 0)) },
+          { metric: "Face Detection", score: Number(behavioral?.faceDetectionRate ?? 0) },
+        ];
+  const communicationRadarData = [
+    { metric: "Communication", score: Number(data.summary.communicationScore ?? 0) },
+    { metric: "Confidence", score: Number(data.summary.confidenceScore ?? 0) },
+    { metric: "Grammar", score: Number(data.summary.grammarScore ?? 0) },
+    { metric: "Speaking Pace", score: Number(speakingPaceRadarValue ?? 0) },
+    { metric: "Sentence Structure", score: Number(data.advanced.communication.sentenceStructureScore ?? 0) },
+    { metric: "Tone Consistency", score: Number(data.advanced.communication.toneConsistency ?? 0) },
+  ];
+
+  const PageShell = ({ page, title, children }: { page: number; title: string; children: React.ReactNode }) => (
+    <section className="pdf-page bg-white text-slate-900">
+      <header className="pdf-header flex items-center justify-between border-b border-slate-200 pb-2">
+        <div className="flex items-center gap-2">
+          <Image src="/image/final_logo-removebg-preview.png" alt="Flunez AI" width={22} height={22} />
+          <span className="text-sm font-semibold text-slate-900">Flunez AI</span>
+        </div>
+        <div className="text-xs text-slate-600">{candidateName}</div>
+        <div className="text-xs text-slate-600">Page {page}/{totalPages}</div>
+      </header>
+      <div className="pt-3 pdf-main">
+        <h2 className="text-[18px] font-semibold mb-3">{title}</h2>
+        {children}
+      </div>
+      <footer className="pdf-footer mt-1 flex items-center justify-between border-t border-slate-200 pt-2 text-[10px]">
+        <span className="font-semibold text-indigo-700">Confidential</span>
+        <span className="font-semibold text-sky-700">Generated: {reportDate}</span>
+        <span className="font-semibold text-violet-700">Flunez AI Analytics</span>
+      </footer>
+    </section>
+  );
+
+  return (
+    <div className="bg-slate-100 p-4 print:p-0">
+      <section className="pdf-page bg-gradient-to-br from-white to-slate-100 text-slate-900">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Image src="/image/final_logo-removebg-preview.png" alt="Flunez AI" width={34} height={34} />
+            <div className="text-sm font-bold tracking-wide text-sky-900">Flunez AI</div>
+          </div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-slate-500">Confidential</div>
+        </div>
+        <div className="mt-8 text-center">
+          <h1 className="text-[24px] font-bold">AI Interview Intelligence Performance Report</h1>
+          <p className="mt-2 text-sm text-slate-600">Corporate Candidate Evaluation</p>
+        </div>
+        <div className="mt-6 grid gap-3 md:grid-cols-2">
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em]">Candidate Name</p>
+            <p className="mt-1 text-sm font-semibold">{candidateName}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em]">Total Sessions</p>
+            <p className="mt-1 text-sm font-semibold">{data.summary.totalSessions}</p>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-white p-3">
+            <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em]">Total Practice Time</p>
+            <p className="mt-1 text-sm font-semibold">{formatDuration(data.summary.totalDurationMinutes)}</p>
+          </div>
+        </div>
+        <div className="mt-6 flex items-center justify-center">
+          <div className="h-28 w-28 rounded-full border-8 border-sky-500/30 bg-white flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-[10px] text-slate-500 uppercase">Overall</div>
+              <div className="text-3xl font-bold text-sky-700">{score}</div>
+            </div>
+          </div>
+        </div>
+        <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
+          <div className="rounded-lg border border-slate-300 bg-white p-3 font-semibold text-rose-700">
+            Risk Level: <strong className="text-rose-800">{risk}</strong>
+          </div>
+          <div className="rounded-lg border border-slate-300 bg-white p-3 font-semibold text-emerald-700">
+            AI Confidence Reliability: <strong className="text-emerald-800">{reliability}%</strong>
+          </div>
+        </div>
+        <footer className="pdf-footer mt-3 flex items-center justify-between border-t border-slate-300 pt-2 text-[10px]">
+          <span className="font-semibold text-indigo-700">Confidential</span>
+          <span className="font-semibold text-sky-700">Generated: {reportDate}</span>
+          <span className="font-semibold text-violet-700">Flunez AI | Page 1/{totalPages}</span>
+        </footer>
+      </section>
+
+      <PageShell page={2} title="Executive Summary">
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            ["Overall Score", Math.round(data.summary.overallScore)],
+            ["Communication", Math.round(data.summary.communicationScore)],
+            ["Confidence", Math.round(data.summary.confidenceScore)],
+            ["Grammar", Math.round(data.summary.grammarScore)],
+            ["Speaking Pace", `${data.advanced.communication.speakingWpm} WPM`],
+            ["Body Language", "From AI Video Section"],
+          ].map(([label, value]) => (
+            <div key={String(label)} className="rounded-lg border border-slate-200 p-3 bg-white">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500">{label}</p>
+              <p className="mt-1 text-xl font-semibold">{value}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Skill Progress Over Time</CardTitle></CardHeader>
+            <CardContent className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.trends}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="date" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <ChartTooltip />
+                  <Line dataKey="communication" stroke="#0284c7" dot={false} isAnimationActive={false} />
+                  <Line dataKey="confidence" stroke="#7c3aed" dot={false} isAnimationActive={false} />
+                  <Line dataKey="grammar" stroke="#16a34a" dot={false} isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Accuracy vs Speed</CardTitle></CardHeader>
+            <CardContent className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.charts.accuracyVsSpeed}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="duration" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <ChartTooltip />
+                  <Line dataKey="score" stroke="#ea580c" dot={false} isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+        <div className="mt-4">
+          <h3 className="mb-2 text-sm font-semibold text-slate-900">Priority Chart Order</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <Card className="border-slate-200 bg-white">
+              <CardHeader><CardTitle className="text-sm">Body Language Composite Radar</CardTitle></CardHeader>
+              <CardContent className="h-[230px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={bodyLanguageRadarData}>
+                    <PolarGrid stroke="#cbd5e1" />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: "#334155", fontSize: 11 }} />
+                    <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 10 }} />
+                    <Radar dataKey="score" stroke="#06b6d4" fill="#67e8f9" fillOpacity={0.35} isAnimationActive={false} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+            <Card className="border-slate-200 bg-white">
+              <CardHeader><CardTitle className="text-sm">Communication Composite Radar</CardTitle></CardHeader>
+              <CardContent className="h-[230px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <RadarChart data={communicationRadarData}>
+                    <PolarGrid stroke="#cbd5e1" />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: "#334155", fontSize: 11 }} />
+                    <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 10 }} />
+                    <Radar dataKey="score" stroke="#0284c7" fill="#38bdf8" fillOpacity={0.35} isAnimationActive={false} />
+                  </RadarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </PageShell>
+
+      <PageShell page={3} title="Speech & Communication Intelligence">
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Filler Word Frequency</CardTitle></CardHeader>
+            <CardContent className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.advanced.communication.fillerWords.slice(0, 8)}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="word" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <ChartTooltip />
+                  <Bar dataKey="count" fill="#0ea5e9" isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Speaking Pace vs Ideal</CardTitle></CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p>Current Pace: <strong>{data.advanced.communication.speakingWpm} WPM</strong></p>
+              <p>Ideal Range: {data.advanced.communication.idealWpmRange[0]}-{data.advanced.communication.idealWpmRange[1]} WPM</p>
+              <p>Pace Quality: <strong>{data.advanced.communication.speakingPaceScore}</strong></p>
+              <p>Sentence Structure: <strong>{data.advanced.communication.sentenceStructureScore}</strong></p>
+              <p>Tone Consistency: <strong>{data.advanced.communication.toneConsistency}</strong></p>
+              <p>Hesitation Index: <strong>{data.advanced.communication.hesitationIndex}</strong></p>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white col-span-2">
+            <CardHeader><CardTitle className="text-sm">Confidence Tracking</CardTitle></CardHeader>
+            <CardContent className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={data.advanced.communication.sessionConfidenceTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="date" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <ChartTooltip />
+                  <Area dataKey="confidence" stroke="#16a34a" fill="#bbf7d0" isAnimationActive={false} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Confidence Timeline (Turns)</CardTitle></CardHeader>
+            <CardContent className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={data.advanced.communication.confidenceTimeline}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="turn" fontSize={10} />
+                  <YAxis fontSize={10} domain={[0, 100]} />
+                  <ChartTooltip />
+                  <Line dataKey="confidence" stroke="#0ea5e9" dot={false} isAnimationActive={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Practice by Module (Mini)</CardTitle></CardHeader>
+            <CardContent className="h-[180px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.distributions.module.slice(0, 6)}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" fontSize={9} />
+                  <YAxis fontSize={10} />
+                  <ChartTooltip />
+                  <Bar dataKey="count" fill="#6366f1" isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+      </PageShell>
+
+      <PageShell page={4} title="Interview Accuracy & Company Readiness">
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Question Difficulty Distribution</CardTitle></CardHeader>
+            <CardContent className="h-[210px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.advanced.questions.difficultyDistribution}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="label" fontSize={10} />
+                  <YAxis fontSize={10} />
+                  <ChartTooltip />
+                  <Bar dataKey="count" fill="#38bdf8" isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Accuracy by Interview Type</CardTitle></CardHeader>
+            <CardContent className="h-[210px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.advanced.questions.accuracyByType}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="type" fontSize={9} />
+                  <YAxis fontSize={10} domain={[0, 100]} />
+                  <ChartTooltip />
+                  <Bar dataKey="accuracy" fill="#22c55e" isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Company-wise Readiness</CardTitle></CardHeader>
+            <CardContent className="h-[210px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.advanced.company.readiness}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" fontSize={9} />
+                  <YAxis fontSize={10} domain={[0, 100]} />
+                  <ChartTooltip />
+                  <Bar dataKey="score" fill="#f97316" isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Most Needed Skill Gaps</CardTitle></CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              {data.advanced.company.readiness.slice(0, 5).map((company) => (
+                <div key={company.name}>
+                  <p className="font-semibold">{company.name}</p>
+                  <p className="text-slate-600">{company.missingSkills.join(", ") || "No major gaps"}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </PageShell>
+
+      <PageShell page={5} title="Practice Distribution & AI Coach Recommendations">
+        <div className="grid grid-cols-2 gap-3">
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">Practice Distribution by Module</CardTitle></CardHeader>
+            <CardContent className="h-[220px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.distributions.module}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" fontSize={9} />
+                  <YAxis fontSize={10} />
+                  <ChartTooltip />
+                  <Bar dataKey="count" fill="#0ea5e9" isAnimationActive={false} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white">
+            <CardHeader><CardTitle className="text-sm">AI Coach Summary</CardTitle></CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <p>{data.advanced.coach.readinessSummary}</p>
+              <p><strong>Focus:</strong> {data.advanced.coach.nextSessionFocus}</p>
+              <p><strong>Top Strengths:</strong> {data.advanced.coach.strengths.join(", ")}</p>
+              <p><strong>Needs Focus:</strong> {data.advanced.coach.weaknesses.join(", ")}</p>
+            </CardContent>
+          </Card>
+          <Card className="border-slate-200 bg-white col-span-2">
+            <CardHeader><CardTitle className="text-sm">7-Day Improvement Plan</CardTitle></CardHeader>
+            <CardContent className="text-sm">
+              <ul className="space-y-1">
+                {data.advanced.coach.plan7Day.map((step) => (
+                  <li key={step}>- {step}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
+      </PageShell>
+
+      <style jsx global>{`
+        .pdf-page {
+          width: min(210mm, 100%);
+          min-height: auto;
+          margin: 0 auto 2px auto;
+          padding: 6mm;
+          display: flex;
+          flex-direction: column;
+          box-sizing: border-box;
+          color: #0f172a;
+        }
+        .pdf-main {
+          flex: 1;
+        }
+        .pdf-page:last-child {
+          margin-bottom: 0;
+        }
+        .pdf-page p,
+        .pdf-page span,
+        .pdf-page li,
+        .pdf-page h1,
+        .pdf-page h2,
+        .pdf-page h3 {
+          color: #0f172a !important;
+          opacity: 1 !important;
+        }
+        .pdf-page .text-slate-400,
+        .pdf-page .text-slate-500,
+        .pdf-page .text-slate-600 {
+          color: #1f2937 !important;
+        }
+        .pdf-page .border-slate-200 {
+          border-color: #cbd5e1 !important;
+        }
+        .pdf-page .bg-white {
+          background: #ffffff !important;
+        }
+        .pdf-page .recharts-cartesian-grid line {
+          stroke: #dbe3ee !important;
+          stroke-opacity: 1 !important;
+        }
+        .pdf-page .recharts-text,
+        .pdf-page .recharts-cartesian-axis-tick-value {
+          fill: #0f172a !important;
+          color: #0f172a !important;
+          opacity: 1 !important;
+          font-weight: 500 !important;
+        }
+        .pdf-page .recharts-legend-item-text {
+          color: #0f172a !important;
+        }
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 6mm;
+          }
+          html,
+          body {
+            background: #ffffff !important;
+            color: #0f172a !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .pdf-page {
+            width: auto !important;
+            margin: 0 !important;
+            min-height: calc(297mm - 12mm) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            page-break-after: auto;
+            break-after: auto;
+            page-break-inside: avoid;
+            break-inside: avoid-page;
+            box-shadow: none !important;
+            background: #ffffff !important;
+            padding: 4mm !important;
+          }
+          .pdf-main {
+            flex: 1;
+          }
+          .pdf-page + .pdf-page {
+            page-break-before: always;
+            break-before: page;
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 function AnalyticsReportContent() {
   const searchParams = useSearchParams();
+  const { data: session } = useSession();
   const [data, setData] = useState<AnalyticsResponse | null>(null);
 
   useEffect(() => {
@@ -113,25 +578,15 @@ function AnalyticsReportContent() {
   useEffect(() => {
     const isPublic = searchParams.get("public") === "1";
     const username = searchParams.get("username");
-    if (isPublic && username) {
-      const params = new URLSearchParams();
-      params.set("public", "1");
-      params.set("username", username);
-      const range = searchParams.get("range");
-      const sessionId = searchParams.get("sessionId");
-      if (range) params.set("range", range);
-      if (sessionId) params.set("sessionId", sessionId);
-      if (searchParams.get("print") === "1") params.set("print", "1");
-      window.location.replace(`/analytics?${params.toString()}`);
-      return;
-    }
 
     const load = async () => {
       const params = new URLSearchParams();
+      const range = searchParams.get("range");
       if (isPublic && username) {
         params.set("public", "1");
         params.set("username", username);
       }
+      if (range) params.set("range", range);
       const query = params.toString();
       const res = await fetch(`/api/analytics${query ? `?${query}` : ""}`);
       if (res.ok) {
@@ -164,16 +619,31 @@ function AnalyticsReportContent() {
   if (!data) {
     return <div className="min-h-screen bg-slate-950 p-10 text-slate-100">Preparing report...</div>;
   }
+  const isPublic = searchParams.get("public") === "1";
+  const username = searchParams.get("username");
+  const isPrintMode = searchParams.get("print") === "1";
+  const candidateName = isPublic ? (username || "Public Candidate") : (session?.user?.name || session?.user?.email || "Candidate");
+  const primaryCompany = data.advanced.company.readiness[0]?.name || "General";
+  const reportDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+  if (isPrintMode) {
+    return (
+      <ProfessionalPrintReport
+        data={data}
+        candidateName={candidateName}
+        reportDate={reportDate}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 print:bg-slate-950">
-      <div className="mx-auto max-w-5xl px-6 py-10 print:py-6">
+      <div className="mx-auto max-w-5xl px-6 py-10 print:max-w-none print:px-2 print:py-4">
         <header className="flex items-center justify-between border-b border-slate-800 pb-6">
           <div className="flex items-center gap-3">
             <Image src="/image/final_logo-removebg-preview.png" alt="Fluenzy AI" width={36} height={36} />
             <div>
               <p className="text-sm font-semibold text-slate-400">Fluenzy AI</p>
-              <h1 className="text-2xl font-bold">Analytics Dashboard – Communication Performance Report</h1>
+              <h1 className="text-2xl font-bold">Analytics Dashboard - Communication Performance Report</h1>
             </div>
           </div>
           <Badge className={`${getStatusColor(data.summary.overallStatus)} border-0 px-3 py-1 text-xs font-semibold`}
@@ -181,6 +651,21 @@ function AnalyticsReportContent() {
             {data.summary.overallStatus}
           </Badge>
         </header>
+
+        <section className="mt-4 grid gap-3 md:grid-cols-3 print:break-inside-avoid">
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-3">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Candidate</p>
+            <p className="mt-1 text-sm font-semibold text-slate-100">{candidateName}</p>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-3">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Primary Company</p>
+            <p className="mt-1 text-sm font-semibold text-slate-100">{primaryCompany}</p>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-900 p-3">
+            <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Report Date</p>
+            <p className="mt-1 text-sm font-semibold text-slate-100">{reportDate}</p>
+          </div>
+        </section>
 
         <section className="mt-8 grid gap-4 md:grid-cols-5 print:break-inside-avoid">
           {summaryCards.map((card) => (
@@ -753,6 +1238,28 @@ function AnalyticsReportContent() {
         </div>
       </div>
 
+      <style jsx global>{`
+        @media print {
+          @page {
+            size: A4;
+            margin: 10mm;
+          }
+          html,
+          body {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+            background: #0b1220 !important;
+          }
+          .print-page-break {
+            break-before: page;
+          }
+          .print\\:break-inside-avoid {
+            break-inside: avoid;
+            page-break-inside: avoid;
+          }
+        }
+      `}</style>
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -837,3 +1344,4 @@ export default function AnalyticsReportPage() {
     </Suspense>
   );
 }
+

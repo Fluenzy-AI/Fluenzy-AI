@@ -436,7 +436,7 @@ export default function AnalyticsDashboardPage() {
                 params.set("public", "1");
                 params.set("username", publicUsername);
               }
-              window.open(`/analytics?${params.toString()}`, "_blank", "noopener,noreferrer");
+              window.open(`/analytics/report?${params.toString()}`, "_blank", "noopener,noreferrer");
             }}
           >
             Export PDF
