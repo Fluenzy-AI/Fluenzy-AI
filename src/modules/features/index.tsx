@@ -115,7 +115,7 @@ const Features = () => {
           className="mb-10 text-center md:mb-14"
         >
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Core Training Ecosystem</p>
-          <h2 className="text-3xl font-bold text-white sm:text-4xl lg:text-5xl">AI Interview Intelligence Operating System</h2>
+          <h2 className="fluid-h2 font-bold text-white">AI Interview Intelligence Operating System</h2>
         </motion.div>
 
         <motion.div
@@ -126,7 +126,7 @@ const Features = () => {
           className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {ecosystem.map((feature) => (
-            <motion.div key={feature.title} variants={cardVariants} whileHover={{ y: -8 }} className="group">
+            <motion.div key={feature.title} variants={cardVariants} whileHover={{ y: -8 }} className="group" data-touch-hover>
               <div className="relative h-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 p-6 shadow-2xl transition-all duration-500 group-hover:border-white/20 group-hover:shadow-purple-500/15">
                 <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-10`} />
                 <div className="relative z-10">

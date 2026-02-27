@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import "./globals.css";
 import Provider from "./providers";
 import LayoutWrapper from "../components/LayoutWrapper";
@@ -157,9 +158,11 @@ export default function RootLayout({
         />
         <ThemeProvider>
           <Provider>
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
+            <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+            </Suspense>
           </Provider>
         </ThemeProvider>
       </body>

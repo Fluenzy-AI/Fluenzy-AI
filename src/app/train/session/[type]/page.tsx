@@ -2,14 +2,14 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import VoiceAgent from "../../../../../Learn_English/components/VoiceAgent";
 import VideoAnalysisPanel from "../../../../components/VideoAnalysisPanel";
 import { UserProfile, ModuleType } from "../../../../../Learn_English/types";
 import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 import { INITIAL_USER } from "../../../../../Learn_English/constants";
 
-const SessionPage = () => {
+const SessionPageContent = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
@@ -126,4 +126,10 @@ const SessionPage = () => {
   );
 };
 
-export default SessionPage;
+export default function SessionPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SessionPageContent />
+    </Suspense>
+  );
+}

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
-import { Activity, Eye, Gauge, ShieldAlert, Sparkles } from "lucide-react";
+import { Activity, Eye, Gauge, Sparkles } from "lucide-react";
 
 const coreMetrics = [
   { label: "Overall Score", value: 92 },
@@ -41,12 +41,12 @@ const AnalyticsIntelligence = () => {
             <Activity className="h-4 w-4" />
             Real-Time Analytics OS
           </div>
-          <h2 className="text-3xl font-bold text-white sm:text-4xl lg:text-5xl">
+          <h2 className="fluid-h2 font-bold text-white">
             Behavioral Intelligence + Performance Strategy
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           {coreMetrics.map((metric, index) => (
             <motion.div
               key={metric.label}
@@ -79,7 +79,7 @@ const AnalyticsIntelligence = () => {
             className="glass rounded-2xl border border-white/10 p-5 lg:col-span-2"
           >
             <h3 className="mb-4 text-lg font-semibold text-white">Confidence vs Accuracy Quadrant</h3>
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               {["Ideal Zone", "Overconfidence", "Self-Doubt", "Weak Zone"].map((zone, i) => (
                 <div
                   key={zone}
@@ -161,9 +161,11 @@ const AnalyticsIntelligence = () => {
           ))}
         </div>
 
-        <div className="mt-6 inline-flex items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-xs text-blue-200">
+        <div className="mt-6 flex w-full items-center gap-2 rounded-full border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-xs text-blue-200 sm:inline-flex sm:w-auto">
           <Sparkles className="h-4 w-4" />
-          Predictive metrics are updated from live interview behaviors and scoring trends.
+          <span className="break-words">
+            Predictive metrics are updated from live interview behaviors and scoring trends.
+          </span>
         </div>
       </div>
     </section>

@@ -32,7 +32,7 @@ const LandingPage = () => {
 
   // If not logged in, show the full landing page
   return (
-    <div>
+    <div className="overflow-x-hidden">
       <Hero />
       <TrustSection />
       <TrainingShowcase />

@@ -134,6 +134,7 @@ const FeedbackSection = () => {
                     transition={{ type: "spring", stiffness: 100, damping: 18, delay: index * 0.06 }}
                     whileHover={{ y: -5, scale: 1.02 }}
                     className="group"
+                    data-touch-hover
                   >
                     <div
                       className={`relative overflow-hidden rounded-xl border border-card-border/50 p-6 shadow-lg transition-all duration-300 ${styles.border}`}

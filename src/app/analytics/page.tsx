@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -279,7 +279,7 @@ const Heatmap = ({ activity }: { activity: Array<{ date: string; count: number }
   );
 };
 
-export default function AnalyticsDashboardPage() {
+function AnalyticsDashboardPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -953,5 +953,13 @@ export default function AnalyticsDashboardPage() {
         <div className="flex justify-end text-sm text-slate-400">Total practice: {formatDuration(summary.totalDurationMinutes)} | Sessions: {summary.totalSessions}</div>
       </div>
     </div>
+  );
+}
+
+export default function AnalyticsDashboardPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+      <AnalyticsDashboardPageContent />
+    </Suspense>
   );
 }

@@ -69,7 +69,7 @@ const AdvancedFeatures = () => {
           transition={{ duration: 0.7 }}
           className="mb-14 text-center"
         >
-          <h2 className="mb-6 text-4xl font-bold lg:text-6xl">
+          <h2 className="fluid-h2 mb-6 font-bold">
             <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 !bg-clip-text text-transparent">
               Enterprise AI
             </span>
@@ -91,6 +91,7 @@ const AdvancedFeatures = () => {
               transition={{ duration: 0.55, delay: index * 0.05 }}
               whileHover={{ y: -6 }}
               className="group"
+              data-touch-hover
             >
               <div className="glass relative h-full overflow-hidden rounded-2xl border border-card-border/50 p-6 shadow-xl transition-all duration-500 group-hover:border-purple-500/50 group-hover:shadow-purple-500/20">
                 <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />

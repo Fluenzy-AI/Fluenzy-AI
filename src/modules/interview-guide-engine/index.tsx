@@ -29,9 +29,9 @@ const InterviewGuideEngine = () => {
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-xs uppercase tracking-[0.22em] text-cyan-300">Interview Guide Generation Engine</p>
-              <h2 className="mt-2 text-2xl font-bold text-white sm:text-3xl">Strategy, Answers, and Execution System</h2>
+              <h2 className="fluid-h2 mt-2 font-bold text-white">Strategy, Answers, and Execution System</h2>
             </div>
-            <button className="inline-flex items-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200 transition hover:bg-blue-500/20">
+            <button className="touch-target inline-flex w-full items-center justify-center gap-2 rounded-xl border border-blue-400/30 bg-blue-500/10 px-4 py-2 text-sm font-semibold text-blue-200 transition hover:bg-blue-500/20 sm:w-auto">
               <Download className="h-4 w-4" />
               Export as Smart PDF
             </button>

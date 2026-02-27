@@ -28,7 +28,7 @@ const PerformanceEvolution = () => {
           viewport={{ once: true }}
           className="mb-10 text-center"
         >
-          <h2 className="text-3xl font-bold text-white sm:text-4xl">Performance Evolution Engine</h2>
+          <h2 className="fluid-h2 font-bold text-white">Performance Evolution Engine</h2>
         </motion.div>
 
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">

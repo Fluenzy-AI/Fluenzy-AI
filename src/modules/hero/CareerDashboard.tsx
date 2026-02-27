@@ -63,6 +63,7 @@ const CareerDashboard = () => {
         transition={{ duration: 0.6, ease: "easeInOut" }}
         whileHover={{ y: -6, rotateX: 2, rotateY: -1 }}
         className="dynamic-border-glow glass relative rounded-2xl border border-purple-400/25 bg-gradient-to-br from-slate-800/65 to-purple-900/30 p-5 shadow-2xl sm:p-6"
+        data-touch-hover
       >
         <motion.div
           animate={{ y: [0, -8, 0] }}
@@ -121,6 +122,7 @@ const CareerDashboard = () => {
         transition={{ duration: 0.65, ease: [0.25, 1, 0.5, 1] }}
         whileHover={{ y: -6 }}
         className="glass relative rounded-2xl border border-blue-400/25 bg-gradient-to-br from-slate-800/65 to-blue-900/30 p-5 shadow-2xl sm:p-6"
+        data-touch-hover
       >
         <div className="mb-6 flex items-center space-x-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-500/20">

@@ -82,7 +82,7 @@ const Hero = () => {
               },
             }}
           >
-            <h1 className="mb-5 text-4xl font-bold leading-[1.08] sm:text-5xl lg:text-6xl xl:text-7xl">
+            <h1 className="fluid-h1 mb-5 font-bold max-w-[18ch] mx-auto xl:mx-0">
               {headlineWords.map((word, i) => (
                 <motion.span
                   key={`${word}-${i}`}
@@ -108,7 +108,7 @@ const Hero = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="mx-auto mb-7 max-w-xl text-base text-gray-300 sm:text-lg xl:mx-0"
+            className="fluid-body mx-auto mb-7 max-w-2xl text-gray-300 xl:mx-0"
           >
             AI Interviewer • HR + Technical + GD Training • Real-Time Behavioral Analytics • Performance Intelligence
           </motion.p>
@@ -124,7 +124,7 @@ const Hero = () => {
               <Button
                 size="lg"
                 asChild
-                className="glow-effect relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-4 font-semibold text-white shadow-xl transition-all duration-300 hover:from-purple-700 hover:to-blue-700 hover:shadow-purple-500/40 sm:w-auto"
+                className="touch-target glow-effect relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-4 font-semibold text-white shadow-xl transition-all duration-300 hover:from-purple-700 hover:to-blue-700 hover:shadow-purple-500/40 sm:w-auto"
               >
                 <Link href="/login" onMouseDown={triggerRipple}>
                   {ripple && (
@@ -141,7 +141,7 @@ const Hero = () => {
                 variant="outline"
                 size="lg"
                 onClick={() => scrollToSection("features")}
-                className="w-full rounded-xl border-purple-500/40 px-8 py-4 text-purple-200 backdrop-blur-md transition-all duration-300 hover:border-purple-400 hover:bg-purple-500/10 sm:w-auto"
+                className="touch-target w-full rounded-xl border-purple-500/40 px-8 py-4 text-purple-200 backdrop-blur-md transition-all duration-300 hover:border-purple-400 hover:bg-purple-500/10 sm:w-auto"
               >
                 Explore Features
                 <ArrowRight className="ml-2 h-4 w-4" />

@@ -23,7 +23,7 @@ const ProFeatures = () => {
           viewport={{ once: true }}
           className="glass rounded-3xl border border-white/10 p-6 sm:p-8"
         >
-          <h2 className="mb-6 text-3xl font-bold text-white">Pro Features</h2>
+          <h2 className="fluid-h2 mb-6 font-bold text-white">Pro Features</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {proItems.map((item, index) => (
               <motion.div

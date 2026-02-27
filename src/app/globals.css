@@ -272,6 +272,19 @@
     scroll-behavior: smooth;
   }
 
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  img,
+  video,
+  canvas,
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
   .dark body {
     background: linear-gradient(
       135deg,
@@ -572,6 +585,39 @@
     box-shadow:
       0 0 0 1px hsl(271 81% 56% / 0.35),
       0 18px 44px hsl(232 77% 59% / 0.16);
+  }
+
+  .fluid-h1 {
+    font-size: clamp(2rem, 5vw, 4.5rem);
+    line-height: 1.08;
+  }
+
+  .fluid-h2 {
+    font-size: clamp(1.5rem, 3.2vw, 3rem);
+    line-height: 1.15;
+  }
+
+  .fluid-body {
+    font-size: clamp(0.95rem, 1.2vw, 1.125rem);
+    line-height: 1.7;
+  }
+
+  .touch-target {
+    min-height: 44px;
+  }
+
+  @media (hover: none), (pointer: coarse) {
+    [data-touch-hover]:hover {
+      transform: none !important;
+      box-shadow: inherit !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .dynamic-border-glow,
+    .glow-effect {
+      box-shadow: none !important;
+    }
   }
 }
 
