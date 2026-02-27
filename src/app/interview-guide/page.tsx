@@ -838,36 +838,7 @@ const InterviewGuidePageContent = () => {
       <div style={igThemeVars} className="interview-guide-page relative z-10 min-h-screen bg-[color:var(--ig-bg)] text-[color:var(--ig-text)]">
         <div className="mx-auto max-w-6xl px-4 py-8 md:py-10">
         <div className="space-y-6">
-          <header className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 backdrop-blur-xl md:p-6">
-            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-blue-300">
-                  <Sparkles size={12} />
-                  AI Powered
-                </div>
-                <h1 className="text-2xl font-semibold tracking-tight text-[color:var(--ig-heading)] md:text-3xl">
-                  Interview Strategy Generator
-                </h1>
-                <p className="text-sm text-slate-400">
-                  Build an interview plan in 3 guided steps with role context and deep JD analysis.
-                </p>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Link href="/interview-guide/history">
-                  <Button variant="ghost" className="h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-[color:var(--ig-text)] hover:bg-white/10">
-                    <History size={16} className="mr-2" />
-                    History
-                  </Button>
-                </Link>
-                <Link href="/analytics">
-                  <Button variant="ghost" className="h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-[color:var(--ig-text)] hover:bg-white/10">
-                    <BarChart3 size={16} className="mr-2" />
-                    Analytics
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </header>
+
 
           <Card className="overflow-hidden rounded-2xl border-white/10 bg-slate-900/75 shadow-xl backdrop-blur-2xl">
             <CardHeader className="space-y-3 border-b border-white/10 p-5 md:p-6">
