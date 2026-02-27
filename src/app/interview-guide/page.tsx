@@ -27,7 +27,6 @@ import {
   ChevronDown,
   ChevronUp,
   ChevronLeft,
-  CheckCircle2,
   Clock,
   Star,
   Lightbulb,
@@ -40,7 +39,6 @@ import {
   ArrowRight,
   Search,
   Upload,
-  BadgeCheck,
   PanelTopClose,
   PanelTopOpen,
   BarChart3,
@@ -51,6 +49,7 @@ import {
   Circle,
 } from "lucide-react";
 import Link from "next/link";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface GuideSection {
   title: string;
@@ -137,9 +136,9 @@ const SectionAccordion = ({
           <div
             className={`w-10 h-10 md:w-11 md:h-11 rounded-xl bg-gradient-to-br ${color} flex items-center justify-center transition-transform duration-300 flex-shrink-0`}
           >
-            <Icon size={19} className="text-white" />
+            <Icon size={19} className="text-[color:var(--ig-heading)]" />
           </div>
-          <h2 className="text-base md:text-lg font-semibold text-white tracking-tight text-left">
+          <h2 className="text-base md:text-lg font-semibold text-[color:var(--ig-heading)] tracking-tight text-left">
             {title}
           </h2>
         </div>
@@ -185,7 +184,7 @@ const CopyButton = ({ text }: { text: string }) => {
         )}
       </div>
       {copied && (
-        <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-emerald-500 text-white text-[10px] font-black rounded-md animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-none">
+        <span className="absolute -top-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-emerald-500 text-[color:var(--ig-heading)] text-[10px] font-black rounded-md animate-in fade-in slide-in-from-bottom-2 duration-300 pointer-events-none">
           COPIED
         </span>
       )}
@@ -211,7 +210,7 @@ const QuestionCard = ({
         <div className="w-9 h-9 rounded-lg bg-blue-500/10 text-blue-300 flex items-center justify-center text-sm font-semibold flex-shrink-0 border border-blue-500/20">
           {index}
         </div>
-        <h4 className="font-semibold text-white text-base leading-snug">
+        <h4 className="font-semibold text-[color:var(--ig-heading)] text-base leading-snug">
           {question}
         </h4>
       </div>
@@ -260,7 +259,7 @@ const IntroductionCard = ({
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] font-semibold text-indigo-300 uppercase tracking-[0.12em] mb-0.5">Duration</span>
-            <span className="font-semibold text-white text-sm tracking-tight">{duration}</span>
+            <span className="font-semibold text-[color:var(--ig-heading)] text-sm tracking-tight">{duration}</span>
           </div>
         </div>
         <CopyButton text={content} />
@@ -282,6 +281,7 @@ const IntroductionCard = ({
 
 const InterviewGuidePageContent = () => {
   const { data: session, status } = useSession();
+  const { resolvedTheme } = useTheme();
   const router = useRouter();
   const searchParams = useSearchParams();
   const guideId = searchParams.get("id");
@@ -332,6 +332,49 @@ const InterviewGuidePageContent = () => {
   const [compactView, setCompactView] = useState(false);
   const [lastPracticedAt, setLastPracticedAt] = useState<string>("");
   const [viewMode, setViewMode] = useState<"ui" | "pdf">("ui");
+
+  const igThemeVars =
+    resolvedTheme === "light"
+      ? ({
+          "--ig-bg": "#f3f5f8",
+          "--ig-surface": "#ffffff",
+          "--ig-surface-soft": "#f8fafc",
+          "--ig-surface-alt": "#f1f5f9",
+          "--ig-border": "#dbe3ee",
+          "--ig-heading": "#0f172a",
+          "--ig-text": "#1e293b",
+          "--ig-muted": "#64748b",
+          "--ig-accent": "#2563eb",
+          "--ig-accent-soft": "#dbeafe",
+          "--ig-accent-hover": "#1d4ed8",
+        } as React.CSSProperties)
+      : resolvedTheme === "midnight"
+        ? ({
+            "--ig-bg": "#121826",
+            "--ig-surface": "#1a2233",
+            "--ig-surface-soft": "#1f2937",
+            "--ig-surface-alt": "#273244",
+            "--ig-border": "#334155",
+            "--ig-heading": "#e5e7eb",
+            "--ig-text": "#cbd5e1",
+            "--ig-muted": "#94a3b8",
+            "--ig-accent": "#4f46e5",
+            "--ig-accent-soft": "#312e81",
+            "--ig-accent-hover": "#6366f1",
+          } as React.CSSProperties)
+        : ({
+            "--ig-bg": "#111827",
+            "--ig-surface": "#1f2937",
+            "--ig-surface-soft": "#253346",
+            "--ig-surface-alt": "#2a3b52",
+            "--ig-border": "#334155",
+            "--ig-heading": "#e2e8f0",
+            "--ig-text": "#cbd5e1",
+            "--ig-muted": "#94a3b8",
+            "--ig-accent": "#3b82f6",
+            "--ig-accent-soft": "#1e3a8a",
+            "--ig-accent-hover": "#60a5fa",
+          } as React.CSSProperties);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -792,7 +835,8 @@ const InterviewGuidePageContent = () => {
     const canSubmit = !!usage?.canGenerate && !!targetRole.trim() && jobDescription.trim().length >= 50;
 
     return (
-      <div className="relative z-10 mx-auto max-w-6xl px-4 py-8 md:py-10">
+      <div style={igThemeVars} className="interview-guide-page relative z-10 min-h-screen bg-[color:var(--ig-bg)] text-[color:var(--ig-text)]">
+        <div className="mx-auto max-w-6xl px-4 py-8 md:py-10">
         <div className="space-y-6">
           <header className="rounded-2xl border border-white/10 bg-slate-900/70 p-5 backdrop-blur-xl md:p-6">
             <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
@@ -801,7 +845,7 @@ const InterviewGuidePageContent = () => {
                   <Sparkles size={12} />
                   AI Powered
                 </div>
-                <h1 className="text-2xl font-semibold tracking-tight text-white md:text-3xl">
+                <h1 className="text-2xl font-semibold tracking-tight text-[color:var(--ig-heading)] md:text-3xl">
                   Interview Strategy Generator
                 </h1>
                 <p className="text-sm text-slate-400">
@@ -810,13 +854,13 @@ const InterviewGuidePageContent = () => {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Link href="/interview-guide/history">
-                  <Button variant="ghost" className="h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-slate-200 hover:bg-white/10">
+                  <Button variant="ghost" className="h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-[color:var(--ig-text)] hover:bg-white/10">
                     <History size={16} className="mr-2" />
                     History
                   </Button>
                 </Link>
                 <Link href="/analytics">
-                  <Button variant="ghost" className="h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-slate-200 hover:bg-white/10">
+                  <Button variant="ghost" className="h-10 rounded-xl border border-white/10 bg-white/5 px-4 text-sm text-[color:var(--ig-text)] hover:bg-white/10">
                     <BarChart3 size={16} className="mr-2" />
                     Analytics
                   </Button>
@@ -825,28 +869,10 @@ const InterviewGuidePageContent = () => {
             </div>
           </header>
 
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Trusted by</p>
-              <p className="mt-1 text-lg font-semibold text-white">500,000+ Candidates</p>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Model Precision</p>
-              <p className="mt-1 text-lg font-semibold text-cyan-300">GPT-4 Optimized</p>
-            </div>
-            <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Analytics Badge</p>
-              <p className="mt-1 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
-                <BadgeCheck size={14} />
-                Live Success Tracking
-              </p>
-            </div>
-          </div>
-
           <Card className="overflow-hidden rounded-2xl border-white/10 bg-slate-900/75 shadow-xl backdrop-blur-2xl">
             <CardHeader className="space-y-3 border-b border-white/10 p-5 md:p-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-white md:text-lg">
+                <CardTitle className="text-base font-semibold text-[color:var(--ig-heading)] md:text-lg">
                   Step {currentStep} of 3
                 </CardTitle>
                 <span className="text-xs font-medium text-slate-400">
@@ -861,9 +887,9 @@ const InterviewGuidePageContent = () => {
                 />
               </div>
               <div className="grid grid-cols-3 gap-2 text-[11px] text-slate-400">
-                <div className={currentStep === 1 ? "text-white" : ""}>Role & Company</div>
-                <div className={currentStep === 2 ? "text-white" : ""}>Communication Context</div>
-                <div className={currentStep === 3 ? "text-white" : ""}>JD & Analysis</div>
+                <div className={currentStep === 1 ? "text-[color:var(--ig-heading)]" : ""}>Role & Company</div>
+                <div className={currentStep === 2 ? "text-[color:var(--ig-heading)]" : ""}>Communication Context</div>
+                <div className={currentStep === 3 ? "text-[color:var(--ig-heading)]" : ""}>JD & Analysis</div>
               </div>
             </CardHeader>
 
@@ -871,7 +897,7 @@ const InterviewGuidePageContent = () => {
               {currentStep === 1 && (
                 <section className="space-y-5 rounded-xl border border-white/10 bg-slate-950/40 p-4 md:p-5">
                   <div className="space-y-1">
-                    <h2 className="text-lg font-semibold text-white">Role & Company</h2>
+                    <h2 className="text-lg font-semibold text-[color:var(--ig-heading)]">Role & Company</h2>
                     <p className="text-sm text-slate-400">Set your target role and hiring context.</p>
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -886,7 +912,7 @@ const InterviewGuidePageContent = () => {
                         value={targetRole}
                         onBlur={() => markFieldTouched("targetRole")}
                         onChange={(e) => setTargetRole(e.target.value)}
-                        className={`h-12 rounded-xl border bg-slate-900/80 text-white placeholder:text-slate-500 focus-visible:ring-2 ${
+                        className={`h-12 rounded-xl border bg-slate-900/80 text-[color:var(--ig-heading)] placeholder:text-slate-500 focus-visible:ring-2 ${
                           roleInvalid ? "border-rose-500/70 focus-visible:ring-rose-500/40" : "border-white/10 focus-visible:ring-blue-500/40"
                         }`}
                       />
@@ -900,7 +926,7 @@ const InterviewGuidePageContent = () => {
                         placeholder="Stripe, Google, Netflix"
                         value={targetCompany}
                         onChange={(e) => setTargetCompany(e.target.value)}
-                        className="h-12 rounded-xl border border-white/10 bg-slate-900/80 text-white placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-blue-500/40"
+                        className="h-12 rounded-xl border border-white/10 bg-slate-900/80 text-[color:var(--ig-heading)] placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-blue-500/40"
                       />
                     </div>
                   </div>
@@ -910,17 +936,17 @@ const InterviewGuidePageContent = () => {
               {currentStep === 2 && (
                 <section className="space-y-5 rounded-xl border border-white/10 bg-slate-950/40 p-4 md:p-5">
                   <div className="space-y-1">
-                    <h2 className="text-lg font-semibold text-white">Communication & Experience Context</h2>
+                    <h2 className="text-lg font-semibold text-[color:var(--ig-heading)]">Communication & Experience Context</h2>
                     <p className="text-sm text-slate-400">Tune strategy depth for your interview narrative.</p>
                   </div>
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <div className="space-y-2">
                       <label className="text-xs font-medium text-slate-300">Communication Level</label>
                       <Select value={communicationLevel} onValueChange={setCommunicationLevel}>
-                        <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-slate-900/80 text-white focus:ring-2 focus:ring-cyan-500/40">
+                        <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-slate-900/80 text-[color:var(--ig-heading)] focus:ring-2 focus:ring-cyan-500/40">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-white/10 bg-slate-900 text-white">
+                        <SelectContent className="rounded-xl border-white/10 bg-slate-900 text-[color:var(--ig-heading)]">
                           <SelectItem value="Beginner">Beginner</SelectItem>
                           <SelectItem value="Intermediate">Intermediate</SelectItem>
                           <SelectItem value="Advanced">Advanced</SelectItem>
@@ -933,7 +959,7 @@ const InterviewGuidePageContent = () => {
                         placeholder="Mention years of experience, domain projects, strengths, and goals..."
                         value={experienceContext}
                         onChange={(e) => setExperienceContext(e.target.value)}
-                        className="min-h-[110px] rounded-xl border border-white/10 bg-slate-900/80 text-white placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-cyan-500/40"
+                        className="min-h-[110px] rounded-xl border border-white/10 bg-slate-900/80 text-[color:var(--ig-heading)] placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-cyan-500/40"
                       />
                     </div>
                   </div>
@@ -943,7 +969,7 @@ const InterviewGuidePageContent = () => {
               {currentStep === 3 && (
                 <section className="space-y-5 rounded-xl border border-white/10 bg-slate-950/40 p-4 md:p-5">
                   <div className="space-y-1">
-                    <h2 className="text-lg font-semibold text-white">Job Description + AI Analysis</h2>
+                    <h2 className="text-lg font-semibold text-[color:var(--ig-heading)]">Job Description + AI Analysis</h2>
                     <p className="text-sm text-slate-400">
                       Add complete JD for better strategy quality. Minimum 50 characters required.
                     </p>
@@ -968,9 +994,9 @@ const InterviewGuidePageContent = () => {
                     <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-white/5">
                       <Upload size={18} className="text-slate-300" />
                     </div>
-                    <p className="text-sm font-medium text-slate-200">Drag and drop JD file or upload text file</p>
+                    <p className="text-sm font-medium text-[color:var(--ig-text)]">Drag and drop JD file or upload text file</p>
                     <p className="mt-1 text-xs text-slate-500">Supported: .txt, .md, .json</p>
-                    <label className="mt-3 inline-flex cursor-pointer items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-white/10">
+                    <label className="mt-3 inline-flex cursor-pointer items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-[color:var(--ig-text)] hover:bg-white/10">
                       Choose File
                       <input
                         type="file"
@@ -1001,7 +1027,7 @@ const InterviewGuidePageContent = () => {
                       onBlur={() => markFieldTouched("jobDescription")}
                       onChange={(e) => setJobDescription(e.target.value)}
                       placeholder="Paste complete job description here..."
-                      className={`min-h-[220px] rounded-xl border bg-slate-900/80 text-white placeholder:text-slate-500 focus-visible:ring-2 ${
+                      className={`min-h-[220px] rounded-xl border bg-slate-900/80 text-[color:var(--ig-heading)] placeholder:text-slate-500 focus-visible:ring-2 ${
                         jdInvalid ? "border-rose-500/70 focus-visible:ring-rose-500/40" : "border-white/10 focus-visible:ring-indigo-500/40"
                       }`}
                     />
@@ -1015,7 +1041,7 @@ const InterviewGuidePageContent = () => {
                       onClick={() => setJdAnalysisOpen((prev) => !prev)}
                       className="flex w-full items-center justify-between p-4 text-left"
                     >
-                      <span className="inline-flex items-center gap-2 text-sm font-medium text-white">
+                      <span className="inline-flex items-center gap-2 text-sm font-medium text-[color:var(--ig-heading)]">
                         <Sparkles size={16} className="text-indigo-300" />
                         Deep AI Analysis
                       </span>
@@ -1030,7 +1056,7 @@ const InterviewGuidePageContent = () => {
                         <Button
                           onClick={runJdAnalysis}
                           disabled={jdAnalyzing || !jobDescription.trim()}
-                          className="h-10 rounded-lg bg-indigo-600 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60"
+                          className="h-10 rounded-lg bg-indigo-600 text-sm font-medium text-[color:var(--ig-heading)] hover:bg-indigo-500 disabled:opacity-60"
                         >
                           {jdAnalyzing ? (
                             <>
@@ -1070,12 +1096,12 @@ const InterviewGuidePageContent = () => {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Account Tier</p>
-                      <p className="text-sm font-semibold text-white">{usage.plan}</p>
+                      <p className="text-sm font-semibold text-[color:var(--ig-heading)]">{usage.plan}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Quota Remaining</p>
-                      <p className={`text-lg font-semibold ${usage.canGenerate ? "text-white" : "text-rose-300"}`}>
-                        {usage.remaining === "Unlimited" ? "âˆž" : usage.remaining}
+                      <p className={`text-lg font-semibold ${usage.canGenerate ? "text-[color:var(--ig-heading)]" : "text-rose-300"}`}>
+                        {usage.remaining === "Unlimited" ? "Unlimited" : usage.remaining}
                       </p>
                     </div>
                   </div>
@@ -1099,26 +1125,26 @@ const InterviewGuidePageContent = () => {
                   variant="ghost"
                   onClick={goPreviousStep}
                   disabled={currentStep === 1}
-                  className="h-10 rounded-lg border border-white/10 bg-white/5 px-4 text-slate-200 hover:bg-white/10 disabled:opacity-40"
+                  className="h-10 rounded-lg border border-white/10 bg-white/5 px-4 text-[color:var(--ig-text)] hover:bg-white/10 disabled:opacity-40"
                 >
                   <ChevronLeft className="mr-1 h-4 w-4" />
                   Back
                 </Button>
                 <div className="flex items-center gap-2">
                   {currentStep < 3 ? (
-                    <Button onClick={goNextStep} className="h-10 rounded-lg bg-blue-600 px-4 text-white hover:bg-blue-500">
+                    <Button onClick={goNextStep} className="h-10 rounded-lg bg-blue-600 px-4 text-[color:var(--ig-heading)] hover:bg-blue-500">
                       Next
                       <ArrowRight className="ml-1 h-4 w-4" />
                     </Button>
                   ) : !usage?.canGenerate ? (
-                    <Button onClick={() => router.push("/pricing")} className="h-10 rounded-lg bg-amber-600 px-4 text-white hover:bg-amber-500">
+                    <Button onClick={() => router.push("/pricing")} className="h-10 rounded-lg bg-amber-600 px-4 text-[color:var(--ig-heading)] hover:bg-amber-500">
                       Upgrade Plan
                     </Button>
                   ) : (
                     <Button
                       onClick={generateGuide}
                       disabled={loading || !canSubmit}
-                      className="h-10 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 px-5 text-white hover:opacity-90 disabled:opacity-40"
+                      className="h-10 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 px-5 text-[color:var(--ig-heading)] hover:opacity-90 disabled:opacity-40"
                     >
                       {loading ? (
                         <>
@@ -1138,17 +1164,40 @@ const InterviewGuidePageContent = () => {
             </CardContent>
           </Card>
 
+          <section className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
+            <p className="text-sm font-medium text-[color:var(--ig-heading)]">Keep Your Profile Updated</p>
+            <p className="mt-2 text-sm text-slate-400 leading-6">
+              For the best output, keep your profile updated with projects, education, experience, skills, and other relevant details.
+              Your interview strategy is personalized based on this profile data. For better context, regularly review your previous{" "}
+              <Link href="/interview-guide/history" className="underline underline-offset-2">
+                History
+              </Link>{" "}
+              and{" "}
+              <Link href="/analytics" className="underline underline-offset-2">
+                Analytics
+              </Link>{" "}
+              as well.
+            </p>
+            <div className="mt-3">
+              <Link href="/profile">
+                <Button variant="ghost" className="h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-[color:var(--ig-text)] hover:bg-white/10">
+                  Go to Profile
+                </Button>
+              </Link>
+            </div>
+          </section>
+
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
             <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
-              <p className="text-sm font-medium text-white">Personalized</p>
+              <p className="text-sm font-medium text-[color:var(--ig-heading)]">Personalized</p>
               <p className="mt-1 text-xs text-slate-400">Role-specific strategy mapped to your context.</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
-              <p className="text-sm font-medium text-white">JD Analysis</p>
+              <p className="text-sm font-medium text-[color:var(--ig-heading)]">JD Analysis</p>
               <p className="mt-1 text-xs text-slate-400">Extracts recruiter expectations and skill signals.</p>
             </div>
             <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
-              <p className="text-sm font-medium text-white">PDF Ready</p>
+              <p className="text-sm font-medium text-[color:var(--ig-heading)]">PDF Ready</p>
               <p className="mt-1 text-xs text-slate-400">Export your generated strategy in one click.</p>
             </div>
           </div>
@@ -1164,19 +1213,19 @@ const InterviewGuidePageContent = () => {
               <Button
                 variant="ghost"
                 onClick={goPreviousStep}
-                className="h-11 rounded-lg border border-white/10 bg-white/5 px-4 text-slate-200"
+                className="h-11 rounded-lg border border-white/10 bg-white/5 px-4 text-[color:var(--ig-text)]"
               >
                 Back
               </Button>
               {!usage?.canGenerate ? (
-                <Button onClick={() => router.push("/pricing")} className="h-11 flex-1 rounded-lg bg-amber-600 text-white hover:bg-amber-500">
+                <Button onClick={() => router.push("/pricing")} className="h-11 flex-1 rounded-lg bg-amber-600 text-[color:var(--ig-heading)] hover:bg-amber-500">
                   Upgrade Plan
                 </Button>
               ) : (
                 <Button
                   onClick={generateGuide}
                   disabled={loading || !canSubmit}
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-white disabled:opacity-40"
+                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-[color:var(--ig-heading)] disabled:opacity-40"
                 >
                   {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Generate Expert Strategy"}
                 </Button>
@@ -1184,6 +1233,7 @@ const InterviewGuidePageContent = () => {
             </div>
           </div>
         )}
+        </div>
       </div>
     );
   }
@@ -1213,39 +1263,39 @@ const InterviewGuidePageContent = () => {
   };
 
   const technicalItems = technicalQuestionsByLevel[technicalFilter] || [];
-  const sectionBoxClass = `scroll-mt-24 rounded-2xl border border-slate-700/70 bg-slate-900/75 ${compactView ? "p-3 md:p-4" : "p-4 md:p-5"}`;
+  const sectionBoxClass = `scroll-mt-24 overflow-hidden rounded-2xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface)] shadow-[0_1px_3px_rgba(15,23,42,0.08)] ${compactView ? "p-3 md:p-4" : "p-4 md:p-5"}`;
   const mainGapClass = compactView ? "space-y-3" : "space-y-4";
   const pdfPreviewPath = "/api/interview-guide/pdf/69a12f4b109384aeddbeca57";
 
   return (
-    <div className="min-h-screen bg-[#0F172A] text-slate-100">
-      <div className="mx-auto w-full max-w-[1320px] px-4 py-6 md:px-6 md:py-8">
+    <div style={igThemeVars} className="interview-guide-page min-h-screen bg-[color:var(--ig-bg)] text-[color:var(--ig-text)]">
+      <div className="w-full px-4 py-6 md:px-6 md:py-8">
         <div className="space-y-6">
-          <section className="rounded-2xl border border-slate-700/70 bg-slate-900/80 p-4 shadow-sm md:p-6">
+          <section className="rounded-2xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface)] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)] md:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="space-y-3">
                 <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-slate-400">Candidate</p>
-                    <p className="font-semibold text-white">{userProfile?.name || session?.user?.name || "Candidate"}</p>
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-[color:var(--ig-muted)]">Candidate</p>
+                    <p className="font-semibold text-[color:var(--ig-heading)]">{userProfile?.name || session?.user?.name || "Candidate"}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-slate-400">Target Role</p>
-                    <p className="font-semibold text-white">{userProfile?.targetRole || targetRole || "Not specified"}</p>
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-[color:var(--ig-muted)]">Target Role</p>
+                    <p className="font-semibold text-[color:var(--ig-heading)]">{userProfile?.targetRole || targetRole || "Not specified"}</p>
                   </div>
                   <div>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-slate-400">Company</p>
-                    <p className="font-semibold text-white">{userProfile?.targetCompany || targetCompany || "General"}</p>
+                    <p className="text-[11px] uppercase tracking-[0.14em] text-[color:var(--ig-muted)]">Company</p>
+                    <p className="font-semibold text-[color:var(--ig-heading)]">{userProfile?.targetCompany || targetCompany || "General"}</p>
                   </div>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 font-medium text-blue-200">
+                  <span className="rounded-full border border-sky-200/35 bg-sky-300/10 px-3 py-1 font-medium text-[color:var(--ig-text)]">
                     {communicationLevel} level
                   </span>
-                  <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 font-medium text-violet-200">
+                  <span className="rounded-full border border-sky-200/35 bg-sky-300/10 px-3 py-1 font-medium text-[color:var(--ig-text)]">
                     {guideNavSections.length} sections
                   </span>
-                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 font-medium text-emerald-200">
+                  <span className="rounded-full border border-emerald-200/35 bg-emerald-300/10 px-3 py-1 font-medium text-emerald-50">
                     Readiness {readinessScore}%
                   </span>
                 </div>
@@ -1257,8 +1307,8 @@ const InterviewGuidePageContent = () => {
                   onClick={() => setViewMode("ui")}
                   className={`h-10 rounded-xl border px-3 text-xs font-medium ${
                     viewMode === "ui"
-                      ? "border-blue-500/50 bg-blue-500/20 text-blue-100"
-                      : "border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-800"
+                      ? "border-[color:var(--ig-accent)] bg-[color:var(--ig-accent-soft)] text-[color:var(--ig-text)]"
+                      : "border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
                   }`}
                 >
                     UI Page 1
@@ -1268,8 +1318,8 @@ const InterviewGuidePageContent = () => {
                   onClick={() => setViewMode("pdf")}
                   className={`h-10 rounded-xl border px-3 text-xs font-medium ${
                     viewMode === "pdf"
-                      ? "border-violet-500/50 bg-violet-500/20 text-violet-100"
-                      : "border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-800"
+                      ? "border-[color:var(--ig-accent)] bg-[color:var(--ig-accent-soft)] text-[color:var(--ig-text)]"
+                      : "border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
                   }`}
                 >
                     PDF Page 2
@@ -1281,13 +1331,13 @@ const InterviewGuidePageContent = () => {
                     setCurrentGuideId(null);
                     router.push("/interview-guide");
                   }}
-                  className="h-10 rounded-xl border border-slate-700 bg-slate-800/80 px-3 text-xs font-medium text-slate-200 hover:bg-slate-800"
+                  className="h-10 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] px-3 text-xs font-medium text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
                 >
                   <ArrowRight className="mr-1 h-4 w-4 rotate-180" />
                   New Roadmap
                 </Button>
                 <Link href="/interview-guide/history">
-                  <Button variant="ghost" className="h-10 rounded-xl border border-slate-700 bg-slate-800/80 px-3 text-xs font-medium text-slate-200 hover:bg-slate-800">
+                  <Button variant="ghost" className="h-10 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] px-3 text-xs font-medium text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]">
                     <History className="mr-1 h-4 w-4" />
                     Archive
                   </Button>
@@ -1295,7 +1345,7 @@ const InterviewGuidePageContent = () => {
                 <Button
                   onClick={() => window.print()}
                   variant="ghost"
-                  className="h-10 rounded-xl border border-slate-700 bg-slate-800/80 px-3 text-xs font-medium text-slate-200 hover:bg-slate-800"
+                  className="h-10 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] px-3 text-xs font-medium text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
                 >
                   <Printer className="mr-1 h-4 w-4" />
                   Print
@@ -1303,7 +1353,7 @@ const InterviewGuidePageContent = () => {
                 <Button
                   onClick={() => setCompactView((prev) => !prev)}
                   variant="ghost"
-                  className="h-10 rounded-xl border border-slate-700 bg-slate-800/80 px-3 text-xs font-medium text-slate-200 hover:bg-slate-800"
+                  className="h-10 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] px-3 text-xs font-medium text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
                 >
                   {compactView ? <LayoutGrid className="mr-1 h-4 w-4" /> : <Rows3 className="mr-1 h-4 w-4" />}
                   {compactView ? "Expanded" : "Compact"}
@@ -1311,7 +1361,7 @@ const InterviewGuidePageContent = () => {
                 <Button
                   onClick={downloadPDF}
                   disabled={pdfLoading}
-                  className="h-10 rounded-xl bg-gradient-to-r from-blue-600 to-violet-600 px-4 text-xs font-medium uppercase tracking-[0.12em] text-white hover:opacity-90 disabled:opacity-50"
+                  className="h-10 rounded-xl bg-[color:var(--ig-accent)] px-4 text-xs font-medium uppercase tracking-[0.12em] text-[color:var(--ig-heading)] hover:bg-[color:var(--ig-accent-hover)] disabled:opacity-50"
                 >
                   {pdfLoading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}
                   Export PDF
@@ -1320,66 +1370,69 @@ const InterviewGuidePageContent = () => {
             </div>
 
             <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <article className="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-400">Readiness Level</p>
-                <p className="mt-2 text-2xl font-semibold text-white">{readinessScore}%</p>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-800">
-                  <div className="h-full rounded-full bg-blue-500 transition-all duration-700" style={{ width: `${readinessScore}%` }} />
+              <article className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Readiness Level</p>
+                <p className="mt-2 text-2xl font-semibold text-[color:var(--ig-heading)]">{readinessScore}%</p>
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--ig-surface-alt)]">
+                  <div className="h-full rounded-full bg-cyan-400 transition-all duration-700" style={{ width: `${readinessScore}%` }} />
                 </div>
               </article>
 
-              <article className="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-slate-400">Key Focus Areas</p>
+              <article className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
+                <p className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Key Focus Areas</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {(jdInsights.length ? jdInsights : ["Preparation", "Communication", "Role Fit"]).slice(0, 4).map((item) => (
-                    <span key={item} className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-1 text-xs text-violet-200">
+                    <span key={item} className="rounded-full border border-sky-300/30 bg-sky-400/10 px-2.5 py-1 text-xs text-[color:var(--ig-text)]">
                       {item}
                     </span>
                   ))}
                 </div>
               </article>
 
-              <article className="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
+              <article className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-[11px] uppercase tracking-[0.12em] text-slate-400">Preparation Status</p>
-                  <span className="text-xs text-emerald-300">{checklistCompleted.size}/{checklistItems.length || 0}</span>
+                  <p className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Preparation Status</p>
+                  <span className="text-xs text-[color:var(--ig-muted)]">{checklistCompleted.size}/{checklistItems.length || 0}</span>
                 </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-800">
-                  <div className="h-full rounded-full bg-emerald-500 transition-all duration-700" style={{ width: `${checklistProgress}%` }} />
+                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--ig-surface-alt)]">
+                  <div className="h-full rounded-full bg-teal-400 transition-all duration-700" style={{ width: `${checklistProgress}%` }} />
                 </div>
               </article>
             </div>
 
-            <div className="mt-3 flex items-center justify-between text-xs text-slate-400">
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--ig-muted)]">
               <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Last practiced: {lastPracticedAt || "Just now"}</span>
               <span>Last updated: {new Date().toLocaleDateString()}</span>
             </div>
           </section>
 
           {viewMode === "ui" ? (
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-            <main className={mainGapClass} style={{ scrollBehavior: "smooth" }}>
+          <div>
+            <main
+              className={`${mainGapClass} min-w-0 w-full [&_p]:leading-7 [&_li]:leading-7`}
+              style={{ scrollBehavior: "smooth" }}
+            >
               <section id="preparation" className={sectionBoxClass}>
-                <h2 className="text-[22px] font-semibold text-white">Preparation Strategy</h2>
-                <p className="mt-1 text-sm text-slate-400">Time-boxed actions before your interview day.</p>
+                <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Preparation Strategy</h2>
+                <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Time-boxed actions before your interview day.</p>
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
                   {guide.section1_preparation?.oneDayBefore && (
-                    <Card className="rounded-xl border-slate-700 bg-slate-950/50 p-0">
-                      <CardHeader className="pb-2"><CardTitle className="text-base text-white">24 Hours Before</CardTitle></CardHeader>
-                      <CardContent className="space-y-2 text-sm text-slate-300">
+                    <Card className="rounded-xl border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-0">
+                      <CardHeader className="pb-2"><CardTitle className="text-base text-[color:var(--ig-heading)]">24 Hours Before</CardTitle></CardHeader>
+                      <CardContent className="space-y-2 break-words text-sm text-[color:var(--ig-text)]">
                         {guide.section1_preparation.oneDayBefore.map((item: string, idx: number) => (
-                          <div key={idx} className="flex gap-2"><Circle className="mt-1 h-3 w-3 text-blue-300" />{item}</div>
+                          <div key={idx} className="flex gap-2"><Circle className="mt-1 h-3 w-3 text-cyan-300" />{item}</div>
                         ))}
                       </CardContent>
                     </Card>
                   )}
 
                   {guide.section1_preparation?.oneHourBefore && (
-                    <Card className="rounded-xl border-slate-700 bg-slate-950/50 p-0">
-                      <CardHeader className="pb-2"><CardTitle className="text-base text-white">One Hour Before</CardTitle></CardHeader>
-                      <CardContent className="space-y-2 text-sm text-slate-300">
+                    <Card className="rounded-xl border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-0">
+                      <CardHeader className="pb-2"><CardTitle className="text-base text-[color:var(--ig-heading)]">One Hour Before</CardTitle></CardHeader>
+                      <CardContent className="space-y-2 break-words text-sm text-[color:var(--ig-text)]">
                         {guide.section1_preparation.oneHourBefore.map((item: string, idx: number) => (
-                          <div key={idx} className="flex gap-2"><Circle className="mt-1 h-3 w-3 text-violet-300" />{item}</div>
+                          <div key={idx} className="flex gap-2"><Circle className="mt-1 h-3 w-3 text-sky-300" />{item}</div>
                         ))}
                       </CardContent>
                     </Card>
@@ -1397,12 +1450,12 @@ const InterviewGuidePageContent = () => {
                   )}
 
                   {guide.section1_preparation?.duringInterview && (
-                    <Card className="rounded-xl border-slate-700 bg-slate-950/50 p-0 md:col-span-2">
-                      <CardHeader className="pb-2"><CardTitle className="text-base text-white">Final Countdown Checklist</CardTitle></CardHeader>
-                      <CardContent className="grid gap-3 text-sm text-slate-300 md:grid-cols-2">
+                    <Card className="rounded-xl border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-0 md:col-span-2">
+                      <CardHeader className="pb-2"><CardTitle className="text-base text-[color:var(--ig-heading)]">Final Countdown Checklist</CardTitle></CardHeader>
+                      <CardContent className="grid gap-3 break-words text-sm text-[color:var(--ig-text)] md:grid-cols-2">
                         {Object.entries(guide.section1_preparation.duringInterview).map(([key, value]) => (
-                          <div key={key} className="rounded-lg border border-slate-700 bg-slate-900/70 p-3">
-                            <p className="text-[11px] uppercase tracking-[0.12em] text-blue-300">{key}</p>
+                          <div key={key} className="rounded-lg border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] p-3">
+                            <p className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">{key}</p>
                             <p className="mt-1">{value as string}</p>
                           </div>
                         ))}
@@ -1414,18 +1467,18 @@ const InterviewGuidePageContent = () => {
 
               {guide.section1_preparation?.starMethod && (
                 <section id="star-method" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-semibold text-white">STAR Method</h2>
-                  <p className="mt-1 text-sm text-slate-400">Framework flow for behavior-based answers.</p>
+                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">STAR Method</h2>
+                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Framework flow for behavior-based answers.</p>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {Object.entries(guide.section1_preparation.starMethod).map(([key, value], idx) => {
-                      const stepLabel = ["S", "T", "A", "R"][idx] || "•";
+                      const stepLabel = ["S", "T", "A", "R"][idx] || "*";
                       return (
-                        <div key={key} className="relative rounded-xl border border-slate-700 bg-slate-950/50 p-4">
-                          <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-500/20 text-xs font-semibold text-blue-200">
+                        <div key={key} className="relative rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
+                          <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-cyan-400/20 text-xs font-semibold text-[color:var(--ig-text)]">
                             {stepLabel}
                           </div>
-                          <p className="text-xs uppercase tracking-[0.12em] text-slate-400">{key}</p>
-                          <p className="mt-1 text-sm text-slate-300">{value as string}</p>
+                          <p className="text-xs uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">{key}</p>
+                          <p className="mt-1 break-words text-sm text-[color:var(--ig-text)]">{value as string}</p>
                         </div>
                       );
                     })}
@@ -1435,29 +1488,29 @@ const InterviewGuidePageContent = () => {
 
               {guide.section2_introduction && (
                 <section id="introduction" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-semibold text-white">Personal Introduction</h2>
-                  <p className="mt-1 text-sm text-slate-400">Switch between concise and detailed introduction lengths.</p>
-                  <div className="mt-4 inline-flex rounded-xl border border-slate-700 bg-slate-950/60 p-1">
+                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Personal Introduction</h2>
+                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Switch between concise and detailed introduction lengths.</p>
+                  <div className="mt-4 inline-flex rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-1">
                     {introTabs.map((tab) => (
                       <button
                         key={tab.key}
                         onClick={() => setActiveIntroTab(tab.key)}
                         className={`rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
-                          activeIntroTab === tab.key ? "bg-blue-600 text-white" : "text-slate-300 hover:bg-slate-800"
+                          activeIntroTab === tab.key ? "bg-[color:var(--ig-accent)] text-[color:var(--ig-heading)]" : "text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-alt)]"
                         }`}
                       >
                         {tab.label}
                       </button>
                     ))}
                   </div>
-                  <div className="mt-4 rounded-xl border border-slate-700 bg-slate-950/50 p-4">
-                    <p className="text-sm leading-relaxed text-slate-300 whitespace-pre-wrap">{activeIntroContent}</p>
+                  <div className="mt-4 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
+                    <p className="text-sm leading-relaxed text-[color:var(--ig-text)] whitespace-pre-wrap break-words">{activeIntroContent}</p>
                   </div>
                   {guide.section2_introduction?.tips?.length > 0 && (
                     <div className="mt-4 grid gap-2 md:grid-cols-2">
                       {guide.section2_introduction.tips.map((tip: string, idx: number) => (
-                        <div key={idx} className="rounded-lg border border-slate-700 bg-slate-950/40 p-3 text-sm text-slate-300">
-                          <span className="mr-2 text-blue-300">{idx + 1}.</span>{tip}
+                        <div key={idx} className="rounded-lg border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-3 text-sm text-[color:var(--ig-text)]">
+                          <span className="mr-2 text-[color:var(--ig-muted)]">{idx + 1}.</span>{tip}
                         </div>
                       ))}
                     </div>
@@ -1467,13 +1520,13 @@ const InterviewGuidePageContent = () => {
 
               {guide.section3_hrQuestions?.questions?.length > 0 && (
                 <section id="hr-questions" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-semibold text-white">HR Questions</h2>
-                  <p className="mt-1 text-sm text-slate-400">Collapsible Q&A cards with strategy tips.</p>
+                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">HR Questions</h2>
+                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Collapsible Q&A cards with strategy tips.</p>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {guide.section3_hrQuestions.questions.map((q: any, idx: number) => {
                       const isOpen = expandedHrItems.has(idx);
                       return (
-                        <div key={idx} className="rounded-xl border border-slate-700 bg-slate-950/50">
+                        <div key={idx} className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)]">
                           <button
                             onClick={() =>
                               setExpandedHrItems((prev) => {
@@ -1486,17 +1539,17 @@ const InterviewGuidePageContent = () => {
                             className="flex w-full items-center justify-between gap-3 p-4 text-left"
                           >
                             <div>
-                              <p className="font-medium text-white">{q.question}</p>
-                              <span className="mt-1 inline-block rounded-full border border-violet-500/30 bg-violet-500/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-violet-200">
+                              <p className="font-medium text-[color:var(--ig-heading)] break-words">{q.question}</p>
+                              <span className="mt-1 inline-block rounded-full border border-sky-300/30 bg-sky-400/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--ig-text)]">
                                 Behavioral
                               </span>
                             </div>
-                            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                            <ChevronDown className={`h-4 w-4 text-[color:var(--ig-muted)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
                           </button>
                           {isOpen && (
-                            <div className="border-t border-slate-700 p-4 text-sm text-slate-300 space-y-3">
-                              <p className="whitespace-pre-wrap">{q.answer}</p>
-                              {q.tips && <p className="rounded-lg border border-blue-500/20 bg-blue-500/10 p-3 text-blue-100">{q.tips}</p>}
+                            <div className="border-t border-[color:var(--ig-border)] p-4 text-sm text-[color:var(--ig-text)] space-y-3">
+                              <p className="whitespace-pre-wrap break-words">{q.answer}</p>
+                              {q.tips && <p className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 p-3 text-[color:var(--ig-text)]">{q.tips}</p>}
                             </div>
                           )}
                         </div>
@@ -1508,8 +1561,8 @@ const InterviewGuidePageContent = () => {
 
               {guide.section4_technicalQuestions && (
                 <section id="technical-questions" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-semibold text-white">Technical Questions</h2>
-                  <p className="mt-1 text-sm text-slate-400">Filter by proficiency and expand answers.</p>
+                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Technical Questions</h2>
+                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Filter by proficiency and expand answers.</p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {(["beginner", "intermediate", "advanced"] as const).map((level) => (
                       <button
@@ -1517,8 +1570,8 @@ const InterviewGuidePageContent = () => {
                         onClick={() => setTechnicalFilter(level)}
                         className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
                           technicalFilter === level
-                            ? "bg-blue-600 text-white"
-                            : "border border-slate-700 bg-slate-950/60 text-slate-300 hover:bg-slate-800"
+                            ? "bg-[color:var(--ig-accent)] text-[color:var(--ig-heading)]"
+                            : "border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-alt)]"
                         }`}
                       >
                         {level}
@@ -1530,7 +1583,7 @@ const InterviewGuidePageContent = () => {
                       const key = `${technicalFilter}-${idx}`;
                       const isOpen = expandedTechItems.has(key);
                       return (
-                        <div key={key} className="rounded-xl border border-slate-700 bg-slate-950/50">
+                        <div key={key} className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)]">
                           <button
                             onClick={() =>
                               setExpandedTechItems((prev) => {
@@ -1542,11 +1595,11 @@ const InterviewGuidePageContent = () => {
                             }
                             className="flex w-full items-center justify-between gap-2 p-4 text-left"
                           >
-                            <p className="font-medium text-white">{q.question}</p>
-                            <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                            <p className="font-medium text-[color:var(--ig-heading)] break-words">{q.question}</p>
+                            <ChevronDown className={`h-4 w-4 text-[color:var(--ig-muted)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
                           </button>
                           {isOpen && (
-                            <div className="border-t border-slate-700 p-4 text-sm text-slate-300 whitespace-pre-wrap">{q.answer}</div>
+                            <div className="border-t border-[color:var(--ig-border)] p-4 text-sm text-[color:var(--ig-text)] whitespace-pre-wrap break-words">{q.answer}</div>
                           )}
                         </div>
                       );
@@ -1557,8 +1610,8 @@ const InterviewGuidePageContent = () => {
 
               {guide.section5_companySpecific && (
                 <section id="company-fit" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-semibold text-white">Company Fit</h2>
-                  <p className="mt-1 text-sm text-slate-400">Institutional alignment narratives in modular cards.</p>
+                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Company Fit</h2>
+                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Institutional alignment narratives in modular cards.</p>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">
                     {[
                       { title: "Why This Company", content: guide.section5_companySpecific.whyThisCompany },
@@ -1568,12 +1621,12 @@ const InterviewGuidePageContent = () => {
                     ]
                       .filter((item) => item.content)
                       .map((item) => (
-                        <div key={item.title} className="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
+                        <div key={item.title} className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
                           <div className="mb-2 flex items-center justify-between">
-                            <p className="text-xs uppercase tracking-[0.12em] text-blue-300">{item.title}</p>
+                            <p className="text-xs uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">{item.title}</p>
                             <CopyButton text={item.content as string} />
                           </div>
-                          <p className="text-sm text-slate-300">{item.content as string}</p>
+                          <p className="text-sm text-[color:var(--ig-text)] break-words">{item.content as string}</p>
                         </div>
                       ))}
                   </div>
@@ -1582,11 +1635,11 @@ const InterviewGuidePageContent = () => {
 
               {guide.section6_communication && (
                 <section id="communication-upgrade" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-semibold text-white">Communication Upgrade</h2>
-                  <p className="mt-1 text-sm text-slate-400">Improve clarity, vocabulary and response control.</p>
+                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Communication Upgrade</h2>
+                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Improve clarity, vocabulary and response control.</p>
                   <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
-                      <p className="text-xs uppercase tracking-[0.12em] text-slate-400">Filler Replacement Grid</p>
+                    <div className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
+                      <p className="text-xs uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Filler Replacement Grid</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {(guide.section6_communication.fillerWordsToAvoid || []).map((word: string, idx: number) => (
                           <span key={idx} className="rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs text-red-100">
@@ -1601,14 +1654,14 @@ const InterviewGuidePageContent = () => {
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-slate-700 bg-slate-950/50 p-4">
-                      <p className="text-xs uppercase tracking-[0.12em] text-slate-400">Power Phrases</p>
+                    <div className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
+                      <p className="text-xs uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Power Phrases</p>
                       <div className="mt-3 grid gap-2">
                         {(guide.section6_communication.powerPhrases || []).map((phrase: string, idx: number) => (
                           <button
                             key={idx}
                             onClick={() => navigator.clipboard.writeText(phrase)}
-                            className="rounded-lg border border-blue-500/20 bg-blue-500/10 px-3 py-2 text-left text-sm text-blue-100 hover:bg-blue-500/15"
+                            className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-left text-sm text-[color:var(--ig-text)] hover:bg-cyan-400/15"
                           >
                             {phrase}
                           </button>
@@ -1621,8 +1674,8 @@ const InterviewGuidePageContent = () => {
 
               {guide.section7_cheatSheet && (
                 <section id="rapid-memorization" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-semibold text-white">Rapid Memorization</h2>
-                  <p className="mt-1 text-sm text-slate-400">Flashcard style memory anchors for quick recall.</p>
+                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Rapid Memorization</h2>
+                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Flashcard style memory anchors for quick recall.</p>
                   <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
                     {(guide.section7_cheatSheet.keyLinesToMemorize || []).map((line: string, idx: number) => {
                       const flipped = flippedMemoItems.has(idx);
@@ -1637,17 +1690,17 @@ const InterviewGuidePageContent = () => {
                               return next;
                             })
                           }
-                          className="min-h-[140px] rounded-xl border border-slate-700 bg-slate-950/50 p-4 text-left transition-colors hover:bg-slate-900"
+                          className="min-h-[140px] rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4 text-left transition-colors hover:bg-[color:var(--ig-surface-alt)]"
                         >
                           {!flipped ? (
                             <div>
-                              <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Front</p>
-                              <p className="mt-2 text-sm text-white">{line}</p>
+                              <p className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Front</p>
+                              <p className="mt-2 text-sm text-[color:var(--ig-heading)]">{line}</p>
                             </div>
                           ) : (
                             <div>
-                              <p className="text-[10px] uppercase tracking-[0.12em] text-slate-400">Back</p>
-                              <p className="mt-2 text-sm text-slate-300">Why it matters: reinforces concise, high-confidence recall under pressure.</p>
+                              <p className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Back</p>
+                              <p className="mt-2 text-sm text-[color:var(--ig-text)]">Why it matters: reinforces concise, high-confidence recall under pressure.</p>
                             </div>
                           )}
                         </button>
@@ -1661,15 +1714,15 @@ const InterviewGuidePageContent = () => {
                 <section id="final-checklist" className={sectionBoxClass}>
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                      <h2 className="text-[22px] font-semibold text-white">Final Checklist</h2>
-                      <p className="mt-1 text-sm text-slate-400">Interactive completion tracker.</p>
+                      <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Final Checklist</h2>
+                      <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Interactive completion tracker.</p>
                     </div>
                     <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-100">
                       Progress: {checklistCompleted.size}/{checklistItems.length} Completed
                     </span>
                   </div>
-                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-800">
-                    <div className="h-full rounded-full bg-emerald-500 transition-all duration-700" style={{ width: `${checklistProgress}%` }} />
+                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-[color:var(--ig-surface-alt)]">
+                    <div className="h-full rounded-full bg-teal-400 transition-all duration-700" style={{ width: `${checklistProgress}%` }} />
                   </div>
                   <div className="mt-4 grid gap-2 md:grid-cols-2">
                     {checklistItems.map((item: string, idx: number) => {
@@ -1688,7 +1741,7 @@ const InterviewGuidePageContent = () => {
                           className={`flex items-start gap-3 rounded-lg border p-3 text-left text-sm transition-colors ${
                             done
                               ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-100"
-                              : "border-slate-700 bg-slate-950/50 text-slate-300 hover:bg-slate-900"
+                              : "border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-alt)]"
                           }`}
                         >
                           <span className={`mt-0.5 h-4 w-4 rounded border ${done ? "border-emerald-300 bg-emerald-400" : "border-slate-500"}`} />
@@ -1701,43 +1754,18 @@ const InterviewGuidePageContent = () => {
               )}
             </main>
 
-            <aside className="hidden lg:block">
-              <div className="sticky top-20 rounded-2xl border border-slate-700/70 bg-slate-900/80 p-3">
-                <p className="px-2 pb-2 text-[11px] uppercase tracking-[0.14em] text-slate-400">Guide Navigator</p>
-                <nav className="space-y-1">
-                  {guideNavSections.map((item) => {
-                    const active = activeGuideSection === item.id;
-                    const done = completedGuideSections.has(item.id);
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
-                        className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-xs font-medium transition-colors ${
-                          active
-                            ? "bg-blue-600/20 text-blue-100"
-                            : "text-slate-300 hover:bg-slate-800"
-                        }`}
-                      >
-                        <span>{item.label}</span>
-                        {done && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />}
-                      </button>
-                    );
-                  })}
-                </nav>
-              </div>
-            </aside>
           </div>
           ) : (
-            <section className="rounded-2xl border border-slate-700/70 bg-slate-900/75 p-3 md:p-4">
+            <section className="rounded-2xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface)] p-3 md:p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
               <div className="mb-3 flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">PDF Page 2 Preview</h2>
-                  <p className="text-xs text-slate-400">Current page ke andar PDF style preview mode.</p>
+                  <h2 className="text-lg font-semibold text-[color:var(--ig-heading)]">PDF Page 2 Preview</h2>
+                  <p className="text-xs text-[color:var(--ig-muted)]">Current page ke andar PDF style preview mode.</p>
                 </div>
                 <Button
                   variant="ghost"
                   onClick={() => window.open(pdfPreviewPath, "_blank", "noopener,noreferrer")}
-                  className="h-9 rounded-lg border border-slate-700 bg-slate-800/80 px-3 text-xs text-slate-200 hover:bg-slate-800"
+                  className="h-9 rounded-lg border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] px-3 text-xs text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-alt)]"
                 >
                   Open Full
                 </Button>
@@ -1773,6 +1801,7 @@ const InterviewGuidePage = () => {
 };
 
 export default InterviewGuidePage;
+
 
 
 

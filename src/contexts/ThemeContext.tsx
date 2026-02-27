@@ -144,7 +144,7 @@ export const themeConfig = {
     accent: 'text-[#5B6CFF]',
   },
   midnight: {
-    name: 'Midnight',
+    name: 'Night',
     background: 'bg-[#0a1929]',
     cardBg: 'bg-[#0f2744]/60',
     cardBorder: 'border-blue-500/30',
@@ -153,3 +153,4 @@ export const themeConfig = {
     accent: 'text-blue-400',
   },
 };
+

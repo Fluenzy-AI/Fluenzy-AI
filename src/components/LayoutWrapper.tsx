@@ -68,7 +68,7 @@ const themeOptions: { value: ThemeName; label: string; icon: typeof Moon }[] = [
   { value: 'dark', label: 'Dark', icon: Moon },
   { value: 'light', label: 'Light', icon: Sun },
   { value: 'system', label: 'System', icon: Monitor },
-  { value: 'midnight', label: 'Midnight', icon: Moon },
+  { value: 'midnight', label: 'Night', icon: Moon },
 ];
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -616,3 +616,4 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     </div>
   );
 }
+
