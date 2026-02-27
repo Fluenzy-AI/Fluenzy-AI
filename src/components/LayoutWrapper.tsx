@@ -78,6 +78,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const { theme, setTheme, resolvedTheme } = useTheme();
   
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarHovered, setSidebarHovered] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showThemeMenu, setShowThemeMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -134,7 +135,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isEmbedded = searchParams.get("embed") === "1" || isEmbeddedFromLocation;
   const isReportPrintMode = pathname.startsWith('/analytics/report') && searchParams.get("print") === "1";
   const hideFooter =
-    ['/train', '/history', '/features', '/pricing', '/analytics'].some(path => pathname.startsWith(path)) ||
+    ['/train', '/history', '/features', '/pricing', '/analytics', '/interview-guide'].some(path => pathname.startsWith(path)) ||
     pathname.startsWith('/analytics/report') ||
     isEmbedded;
   const hideNav = isEmbedded || isReportPrintMode;
@@ -142,6 +143,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   
   // Show persistent sidebar if logged in and not on a special page
   const showSidebar = !!session?.user && !hideNav && !isAuthPage;
+  const shouldExpandSidebar = sidebarOpen || sidebarHovered;
 
   // Don't render sidebar wrapper on pages without sidebar
   if (!showSidebar) {
@@ -305,15 +307,19 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     <div className={`min-h-screen flex flex-col ${currentTheme.background}`}>
       <div className="flex flex-1">
         {/* Desktop Sidebar */}
-        <aside className={`hidden lg:flex flex-col border-r ${currentTheme.cardBorder} ${currentTheme.background} transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-20'} relative`}>
-          <Sidebar collapsed={!sidebarOpen} />
+        <aside
+          onMouseEnter={() => !sidebarOpen && setSidebarHovered(true)}
+          onMouseLeave={() => setSidebarHovered(false)}
+          className={`hidden lg:flex flex-col border-r ${currentTheme.cardBorder} ${currentTheme.background} transition-all duration-300 ${shouldExpandSidebar ? 'w-64' : 'w-20'} relative`}
+        >
+          <Sidebar collapsed={!shouldExpandSidebar} />
           
           {/* Collapse Toggle */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className={`absolute top-1/2 -right-3 transform -translate-y-1/2 w-6 h-6 rounded-full ${currentTheme.cardBg} border ${currentTheme.cardBorder} flex items-center justify-center ${currentTheme.textMuted} hover:${currentTheme.text} transition-colors z-10`}
           >
-            <ChevronRight size={14} className={`transition-transform ${sidebarOpen ? 'rotate-180' : ''}`} />
+            <ChevronRight size={14} className={`transition-transform ${shouldExpandSidebar ? 'rotate-180' : ''}`} />
           </button>
         </aside>
 
