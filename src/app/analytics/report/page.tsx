@@ -170,7 +170,7 @@ function ProfessionalPrintReport({
   );
 
   return (
-    <div className="bg-slate-100 p-4 print:p-0">
+    <div className="bg-slate-100 p-4 print:p-0" data-analytics-report-ready="1">
       <section className="pdf-page bg-gradient-to-br from-white to-slate-100 text-slate-900">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -625,6 +625,28 @@ function AnalyticsReportContent() {
   const candidateName = isPublic ? (username || "Public Candidate") : (session?.user?.name || session?.user?.email || "Candidate");
   const primaryCompany = data.advanced.company.readiness[0]?.name || "General";
   const reportDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" });
+
+  if (isPublic && !isPrintMode) {
+    const params = new URLSearchParams();
+    params.set("public", "1");
+    if (username) params.set("username", username);
+    const range = searchParams.get("range");
+    if (range) params.set("range", range);
+    params.set("embed", "1");
+
+    return (
+      <div className="min-h-screen bg-slate-950 text-slate-100">
+        <div className="mx-auto w-full max-w-[1600px] px-4 py-4">
+          <iframe
+            title="Public Analytics Dashboard"
+            src={`/analytics?${params.toString()}`}
+            className="h-[calc(100vh-40px)] w-full rounded-xl border border-slate-800 bg-slate-950"
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (isPrintMode) {
     return (
       <ProfessionalPrintReport

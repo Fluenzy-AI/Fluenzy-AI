@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -73,6 +73,7 @@ const themeOptions: { value: ThemeName; label: string; icon: typeof Moon }[] = [
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const { theme, setTheme, resolvedTheme } = useTheme();
   
@@ -123,8 +124,20 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     }
   }, [session]);
 
-  const hideFooter = ['/train', '/history', '/features', '/pricing'].some(path => pathname.startsWith(path));
-  const hideNav = pathname.startsWith('/analytics/report');
+  const [isEmbeddedFromLocation, setIsEmbeddedFromLocation] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const value = new URLSearchParams(window.location.search).get("embed") === "1";
+    setIsEmbeddedFromLocation(value);
+  }, [pathname, searchParams]);
+
+  const isEmbedded = searchParams.get("embed") === "1" || isEmbeddedFromLocation;
+  const isReportPrintMode = pathname.startsWith('/analytics/report') && searchParams.get("print") === "1";
+  const hideFooter =
+    ['/train', '/history', '/features', '/pricing', '/analytics'].some(path => pathname.startsWith(path)) ||
+    pathname.startsWith('/analytics/report') ||
+    isEmbedded;
+  const hideNav = isEmbedded || isReportPrintMode;
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
   
   // Show persistent sidebar if logged in and not on a special page

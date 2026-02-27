@@ -283,6 +283,7 @@ export default function AnalyticsDashboardPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const isEmbeddedView = searchParams.get("embed") === "1";
   const isPublicView = searchParams.get("public") === "1";
   const publicUsername = searchParams.get("username") || "";
   const [data, setData] = useState<AnalyticsResponse | null>(null);
@@ -379,6 +380,18 @@ export default function AnalyticsDashboardPage() {
   if ((!session?.user && !isPublicView) || !data) return <div className="container mx-auto px-4 py-12">No analytics data available yet.</div>;
 
   const { summary, distributions, trends, activity, insights, charts, textReport, advanced, history } = data;
+  const handleOpenPrintableReport = () => {
+    const params = new URLSearchParams();
+    params.set("print", "1");
+    params.set("range", range);
+    if (isPublicView && publicUsername) {
+      params.set("public", "1");
+      params.set("username", publicUsername);
+    }
+    const reportUrl = `/analytics/report?${params.toString()}`;
+    window.open(reportUrl, "_blank", "noopener,noreferrer");
+  };
+
   const wpmLow = advanced.communication.idealWpmRange[0];
   const wpmHigh = advanced.communication.idealWpmRange[1];
   const communicationCompositeRadar = [
@@ -400,7 +413,7 @@ export default function AnalyticsDashboardPage() {
   const stressPerformancePreview = stressPerformanceSeries.slice(-8);
   return (
     <div className="overflow-x-hidden">
-      <HeaderOffset />
+      {!isEmbeddedView && <HeaderOffset />}
       <div className="container mx-auto px-4 pb-12 flex flex-col gap-8">
         <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/40 to-slate-900/70 p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
@@ -426,20 +439,8 @@ export default function AnalyticsDashboardPage() {
             <option value="5m" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>Last 5 Months</option>
             <option value="1y" style={{ color: "#0f172a", backgroundColor: "#ffffff" }}>Last 1 Year</option>
           </select>
-          <Button
-            variant="outline"
-            onClick={() => {
-              const params = new URLSearchParams();
-              params.set("print", "1");
-              params.set("range", range);
-              if (isPublicView && publicUsername) {
-                params.set("public", "1");
-                params.set("username", publicUsername);
-              }
-              window.open(`/analytics/report?${params.toString()}`, "_blank", "noopener,noreferrer");
-            }}
-          >
-            Export PDF
+          <Button variant="outline" onClick={handleOpenPrintableReport}>
+            Export Report PDF
           </Button>
           {isPublicView && publicUsername && (
             <Button asChild variant="outline" className="border-slate-600 text-slate-200 hover:bg-slate-800">
