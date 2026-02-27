@@ -331,6 +331,7 @@ const InterviewGuidePageContent = () => {
   const [completedGuideSections, setCompletedGuideSections] = useState<Set<string>>(new Set());
   const [compactView, setCompactView] = useState(false);
   const [lastPracticedAt, setLastPracticedAt] = useState<string>("");
+  const [viewMode, setViewMode] = useState<"ui" | "pdf">("ui");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -1214,6 +1215,7 @@ const InterviewGuidePageContent = () => {
   const technicalItems = technicalQuestionsByLevel[technicalFilter] || [];
   const sectionBoxClass = `scroll-mt-24 rounded-2xl border border-slate-700/70 bg-slate-900/75 ${compactView ? "p-3 md:p-4" : "p-4 md:p-5"}`;
   const mainGapClass = compactView ? "space-y-3" : "space-y-4";
+  const pdfPreviewPath = "/api/interview-guide/pdf/69a12f4b109384aeddbeca57";
 
   return (
     <div className="min-h-screen bg-[#0F172A] text-slate-100">
@@ -1250,6 +1252,28 @@ const InterviewGuidePageContent = () => {
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("ui")}
+                  className={`h-10 rounded-xl border px-3 text-xs font-medium ${
+                    viewMode === "ui"
+                      ? "border-blue-500/50 bg-blue-500/20 text-blue-100"
+                      : "border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-800"
+                  }`}
+                >
+                    UI Page 1
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => setViewMode("pdf")}
+                  className={`h-10 rounded-xl border px-3 text-xs font-medium ${
+                    viewMode === "pdf"
+                      ? "border-violet-500/50 bg-violet-500/20 text-violet-100"
+                      : "border-slate-700 bg-slate-800/80 text-slate-200 hover:bg-slate-800"
+                  }`}
+                >
+                    PDF Page 2
+                </Button>
                 <Button
                   variant="ghost"
                   onClick={() => {
@@ -1332,6 +1356,7 @@ const InterviewGuidePageContent = () => {
             </div>
           </section>
 
+          {viewMode === "ui" ? (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
             <main className={mainGapClass} style={{ scrollBehavior: "smooth" }}>
               <section id="preparation" className={sectionBoxClass}>
@@ -1702,6 +1727,30 @@ const InterviewGuidePageContent = () => {
               </div>
             </aside>
           </div>
+          ) : (
+            <section className="rounded-2xl border border-slate-700/70 bg-slate-900/75 p-3 md:p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-semibold text-white">PDF Page 2 Preview</h2>
+                  <p className="text-xs text-slate-400">Current page ke andar PDF style preview mode.</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => window.open(pdfPreviewPath, "_blank", "noopener,noreferrer")}
+                  className="h-9 rounded-lg border border-slate-700 bg-slate-800/80 px-3 text-xs text-slate-200 hover:bg-slate-800"
+                >
+                  Open Full
+                </Button>
+              </div>
+              <div className="overflow-hidden rounded-xl border border-slate-700 bg-white">
+                <iframe
+                  title="Interview Guide PDF Preview"
+                  src={pdfPreviewPath}
+                  className="h-[72vh] w-full md:h-[78vh]"
+                />
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </div>
