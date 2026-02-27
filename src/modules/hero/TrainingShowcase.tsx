@@ -57,12 +57,12 @@ const trainingPaths = [
 
 const TrainingShowcase = () => {
   return (
-    <section className="py-24 relative overflow-hidden bg-slate-950">
+    <section className="py-20 md:py-24 relative overflow-hidden bg-slate-950">
       {/* Background Decor */}
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-purple-600/5 rounded-full blur-[120px]" />
       <div className="absolute bottom-0 left-1/4 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[120px]" />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container mx-auto px-4 md:px-8 xl:px-16 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -125,7 +125,7 @@ const TrainingShowcase = () => {
                     <span className="text-[10px] uppercase tracking-tighter font-black text-purple-400/80">Active Neural Path</span>
                   </div>
                   
-                  <Link href="/train" className="flex items-center space-x-1 text-white group/link">
+                  <Link href="/login" className="flex items-center space-x-1 text-white group/link">
                     <span className="text-sm font-bold border-b border-transparent group-hover/link:border-white transition-all">Start Track</span>
                     <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
                   </Link>

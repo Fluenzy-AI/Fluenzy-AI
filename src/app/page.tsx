@@ -66,7 +66,7 @@ export default function Page() {
               </p>
               <div className="flex flex-wrap gap-3">
                 <a
-                  href="/train"
+                  href="/login"
                   className="rounded-full bg-gradient-to-r from-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-purple-500/30 transition hover:shadow-purple-500/50"
                 >
                   Start Training
@@ -172,7 +172,7 @@ export default function Page() {
                 <p className="mt-3 text-sm leading-relaxed text-slate-300">
                   You can explore the full set of modules on the <a href="/features" className="text-slate-100 underline underline-offset-4 hover:text-white">features page</a>,
                   compare plan options on the <a href="/pricing" className="text-slate-100 underline underline-offset-4 hover:text-white">pricing page</a>,
-                  or jump directly into <a href="/train" className="text-slate-100 underline underline-offset-4 hover:text-white">training</a>.
+                  or jump directly into <a href="/login" className="text-slate-100 underline underline-offset-4 hover:text-white">training</a>.
                   If you are building momentum toward a job change, the internal skill tracking and report insights help you connect
                   daily practice with real hiring milestones.
                 </p>

@@ -131,19 +131,19 @@ const Pricing = () => {
       if (planName !== "Free") {
         router.push("/billing");
       } else {
-        // Start Free - redirect to home or sign in
+        // Start Free - send unauthenticated users to login
         if (session?.user) {
-          router.push("/");
+          router.push("/train");
         } else {
-          // Sign in logic, but since it's client, maybe just redirect to home
-          router.push("/");
+          router.push("/login");
         }
       }
     } else {
-      // On home page - scroll to editor
-      const element = document.getElementById("editor");
-      if (element) {
-        element.scrollIntoView({ behavior: "smooth" });
+      // On landing pages route users to login before training actions
+      if (session?.user) {
+        router.push("/train");
+      } else {
+        router.push("/login");
       }
     }
   };

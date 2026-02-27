@@ -3,202 +3,182 @@ import React from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, Clock, Zap } from "lucide-react";
 
+const items = [
+  {
+    title: "Accuracy Rate",
+    value: "95%",
+    desc: "Industry-leading precision in evaluation",
+    icon: CheckCircle,
+    accent: "green",
+    progress: 95,
+  },
+  {
+    title: "Always Available",
+    value: "24/7",
+    desc: "Practice anytime with AI",
+    icon: Clock,
+    accent: "blue",
+    progress: 100,
+  },
+  {
+    title: "Unlimited Sessions",
+    value: "∞",
+    desc: "Practice without limits",
+    icon: Zap,
+    accent: "purple",
+    progress: 92,
+  },
+  {
+    title: "Instant Feedback",
+    value: "< 200ms",
+    desc: "Zero latency real-time voice analysis",
+    icon: Zap,
+    accent: "amber",
+    progress: 88,
+  },
+  {
+    title: "Behavioral Metrics",
+    value: "50+",
+    desc: "Analyzes tone, pace, confidence, and filler words",
+    icon: CheckCircle,
+    accent: "pink",
+    progress: 86,
+  },
+  {
+    title: "Global Benchmarking",
+    value: "Top 1%",
+    desc: "Compare your score with FAANG candidates",
+    icon: Clock,
+    accent: "cyan",
+    progress: 90,
+  },
+];
+
+const accentMap: Record<string, { border: string; glow: string; iconBg: string; text: string }> = {
+  green: {
+    border: "hover:border-green-500/60",
+    glow: "from-green-500/5 to-emerald-500/5",
+    iconBg: "from-green-500 to-emerald-500",
+    text: "text-green-400",
+  },
+  blue: {
+    border: "hover:border-blue-500/60",
+    glow: "from-blue-500/5 to-cyan-500/5",
+    iconBg: "from-blue-500 to-cyan-500",
+    text: "text-blue-400",
+  },
+  purple: {
+    border: "hover:border-purple-500/60",
+    glow: "from-purple-500/5 to-pink-500/5",
+    iconBg: "from-purple-500 to-pink-500",
+    text: "text-purple-400",
+  },
+  amber: {
+    border: "hover:border-amber-500/60",
+    glow: "from-amber-500/5 to-orange-500/5",
+    iconBg: "from-amber-500 to-orange-500",
+    text: "text-amber-400",
+  },
+  pink: {
+    border: "hover:border-pink-500/60",
+    glow: "from-pink-500/5 to-rose-500/5",
+    iconBg: "from-pink-500 to-rose-500",
+    text: "text-pink-400",
+  },
+  cyan: {
+    border: "hover:border-cyan-500/60",
+    glow: "from-cyan-500/5 to-sky-500/5",
+    iconBg: "from-cyan-500 to-sky-500",
+    text: "text-cyan-400",
+  },
+};
+
 const FeedbackSection = () => {
   return (
-    <section className="py-16 relative overflow-hidden">
-      {/* Background effects */}
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl" />
+    <section className="relative overflow-hidden py-20 md:py-24">
+      <div className="absolute left-1/4 top-0 h-96 w-96 rounded-full bg-purple-500/5 blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl" />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container relative z-10 mx-auto px-4 md:px-8 xl:px-16">
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.8 }}
-          className="text-center mb-16"
+          transition={{ duration: 0.6 }}
+          className="mb-14 text-center md:mb-16"
         >
-          <h2 className="text-2xl lg:text-4xl font-bold mb-4">
+          <h2 className="mb-4 text-2xl font-bold lg:text-4xl">
             <span className="text-white">Real-Time AI </span>
             <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 !bg-clip-text text-transparent">
               Feedback & Analytics
             </span>
           </h2>
-          <p className="text-base text-gray-300 max-w-2xl mx-auto">
+          <p className="mx-auto max-w-2xl text-base text-gray-300">
             Get instant scoring, detailed benchmarks, and actionable insights to improve your interview performance.
           </p>
         </motion.div>
 
-        <div className="max-w-4xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="glass rounded-2xl p-8 border border-card-border/50 shadow-xl relative overflow-hidden"
-          >
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 rounded-3xl" />
-
-            <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Accuracy Rate */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="group"
-              >
-                <div className="glass rounded-xl p-6 border border-card-border/50 hover:border-green-500/60 transition-all duration-300 shadow-lg hover:shadow-green-500/20 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                  <div className="relative z-10 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-12 h-12 mx-auto rounded-lg bg-gradient-to-br from-green-500 to-emerald-500 p-3 shadow-md">
-                        <CheckCircle className="w-full h-full text-white" />
+        <div className="mx-auto max-w-6xl">
+          <div className="glass relative overflow-hidden rounded-2xl border border-card-border/50 p-5 shadow-xl sm:p-8">
+            <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500/5 to-blue-500/5" />
+            <div className="relative z-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {items.map((item, index) => {
+                const styles = accentMap[item.accent];
+                const fromLeft = index % 2 === 0;
+                return (
+                  <motion.div
+                    key={item.title}
+                    initial={{ opacity: 0, x: fromLeft ? -36 : 36, y: 16 }}
+                    whileInView={{ opacity: 1, x: 0, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ type: "spring", stiffness: 100, damping: 18, delay: index * 0.06 }}
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="group"
+                  >
+                    <div
+                      className={`relative overflow-hidden rounded-xl border border-card-border/50 p-6 shadow-lg transition-all duration-300 ${styles.border}`}
+                    >
+                      <div
+                        className={`absolute inset-0 rounded-xl bg-gradient-to-br ${styles.glow} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+                      />
+                      <div className="relative z-10 text-center">
+                        <div className="relative mb-4">
+                          <div className={`mx-auto h-12 w-12 rounded-lg bg-gradient-to-br p-3 shadow-md ${styles.iconBg}`}>
+                            <item.icon className="h-full w-full text-white" />
+                          </div>
+                        </div>
+                        <div className="mb-1 text-2xl font-bold text-white">{item.value}</div>
+                        <div className={`mb-2 text-sm font-semibold ${styles.text}`}>{item.title}</div>
+                        <div className="mb-4 text-xs text-gray-300">{item.desc}</div>
+                        <div className="h-1.5 w-full rounded-full bg-slate-700">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${item.progress}%` }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.65, delay: 0.1 + index * 0.05, ease: "easeInOut" }}
+                            className={`h-1.5 rounded-full bg-gradient-to-r ${styles.iconBg}`}
+                          />
+                        </div>
                       </div>
                     </div>
-                    <div className="text-2xl font-bold text-white mb-2">95%</div>
-                    <div className="text-sm font-semibold text-green-400 mb-2">Accuracy Rate</div>
-                    <div className="text-xs text-gray-300">Industry-leading precision in evaluation</div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* 24/7 Availability */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="group"
-              >
-                <div className="glass rounded-xl p-6 border border-card-border/50 hover:border-blue-500/60 transition-all duration-300 shadow-lg hover:shadow-blue-500/20 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-cyan-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                  <div className="relative z-10 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-12 h-12 mx-auto rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 p-3 shadow-md">
-                        <Clock className="w-full h-full text-white" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-2">24/7</div>
-                    <div className="text-sm font-semibold text-blue-400 mb-2">Always Available</div>
-                    <div className="text-xs text-gray-300">Practice anytime with AI</div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Unlimited Sessions */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 0.8 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="group"
-              >
-                <div className="glass rounded-xl p-6 border border-card-border/50 hover:border-purple-500/60 transition-all duration-300 shadow-lg hover:shadow-purple-500/20 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-pink-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                  <div className="relative z-10 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-12 h-12 mx-auto rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 p-3 shadow-md">
-                        <Zap className="w-full h-full text-white" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-2">∞</div>
-                    <div className="text-sm font-semibold text-purple-400 mb-2">Unlimited Sessions</div>
-                    <div className="text-xs text-gray-300">Practice without limits</div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Instant Feedback */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 1.0 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="group"
-              >
-                <div className="glass rounded-xl p-6 border border-card-border/50 hover:border-amber-500/60 transition-all duration-300 shadow-lg hover:shadow-amber-500/20 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 to-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                  <div className="relative z-10 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-12 h-12 mx-auto rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 p-3 shadow-md">
-                        <Zap className="w-full h-full text-white" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-2">{"< 200ms"}</div>
-                    <div className="text-sm font-semibold text-amber-400 mb-2">Instant Feedback</div>
-                    <div className="text-xs text-gray-300">Zero latency real-time voice analysis</div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Behavioral Metrics */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 1.2 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="group"
-              >
-                <div className="glass rounded-xl p-6 border border-card-border/50 hover:border-pink-500/60 transition-all duration-300 shadow-lg hover:shadow-pink-500/20 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-pink-500/5 to-rose-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                  <div className="relative z-10 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-12 h-12 mx-auto rounded-lg bg-gradient-to-br from-pink-500 to-rose-500 p-3 shadow-md">
-                        <CheckCircle className="w-full h-full text-white" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-2">50+</div>
-                    <div className="text-sm font-semibold text-pink-400 mb-2">Behavioral Metrics</div>
-                    <div className="text-xs text-gray-300">Analyzes tone, pace, confidence, and filler words</div>
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Global Benchmarking */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.8, delay: 1.4 }}
-                whileHover={{ scale: 1.05, y: -5 }}
-                className="group"
-              >
-                <div className="glass rounded-xl p-6 border border-card-border/50 hover:border-cyan-500/60 transition-all duration-300 shadow-lg hover:shadow-cyan-500/20 relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-sky-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl" />
-                  <div className="relative z-10 text-center">
-                    <div className="relative mb-4">
-                      <div className="w-12 h-12 mx-auto rounded-lg bg-gradient-to-br from-cyan-500 to-sky-500 p-3 shadow-md">
-                        <Clock className="w-full h-full text-white" />
-                      </div>
-                    </div>
-                    <div className="text-2xl font-bold text-white mb-2">Top 1%</div>
-                    <div className="text-sm font-semibold text-cyan-400 mb-2">Global Benchmarking</div>
-                    <div className="text-xs text-gray-300">Compare your score with FAANG candidates</div>
-                  </div>
-                </div>
-              </motion.div>
+                  </motion.div>
+                );
+              })}
             </div>
 
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.8, delay: 1.0 }}
-              className="mt-12 text-center"
+              transition={{ duration: 0.55, delay: 0.2 }}
+              className="mt-10 text-center"
             >
-              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-full px-6 py-3 border border-purple-500/30 backdrop-blur-sm">
+              <div className="inline-flex items-center space-x-2 rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-900/50 to-blue-900/50 px-6 py-3 backdrop-blur-sm">
                 <Zap className="h-5 w-5 text-purple-400" />
                 <span className="font-medium text-purple-200">Instant scoring • Detailed benchmarks • Actionable insights</span>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         </div>
       </div>
     </section>

@@ -4,15 +4,15 @@ import Footer from "@/components/footer";
 import HeaderOffset from "@/components/HeaderOffset";
 
 export const metadata: Metadata = {
-  title: "FluenzyAI Features: AI Interview & English Training",
-  description: "Explore FluenzyAI's comprehensive features for AI-powered interview preparation and English fluency. Master HR interviews, technical questions, group discussions, and spoken English with advanced AI coaching.",
-  keywords: "AI interview practice, mock interview AI, group discussion AI, English speaking practice with AI, HR interview preparation, technical interview practice",
+  title: "FluenzyAI Features: AI Interview Intelligence Operating System",
+  description: "Explore FluenzyAI's AI Interview Intelligence Operating System: behavioral analytics, strategic preparation, performance intelligence, and enterprise-grade AI interview simulation.",
+  keywords: "AI interview intelligence, behavioral analytics interview, performance intelligence, mock interview AI, HR interview preparation, technical interview practice",
   alternates: {
     canonical: "https://www.fluenzyai.app/features",
   },
   openGraph: {
-    title: "FluenzyAI Features: AI Interview & English Training",
-    description: "Explore FluenzyAI's comprehensive features for AI-powered interview preparation and English fluency.",
+    title: "FluenzyAI Features: AI Interview Intelligence Operating System",
+    description: "Explore FluenzyAI's AI Interview Intelligence Operating System with behavioral analytics and performance intelligence.",
     url: "https://www.fluenzyai.app/features",
     type: "website",
     images: [
@@ -26,8 +26,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "FluenzyAI Features: AI Interview & English Training",
-    description: "Explore FluenzyAI's comprehensive features for AI-powered interview preparation and English fluency.",
+    title: "FluenzyAI Features: AI Interview Intelligence Operating System",
+    description: "Explore FluenzyAI's AI Interview Intelligence Operating System with behavioral analytics and performance intelligence.",
     images: ["https://www.fluenzyai.app/og-image.jpg"],
   },
 };
@@ -55,14 +55,14 @@ export default function FeaturesPage() {
           </div>
           
           <h1 className="text-4xl lg:text-6xl font-black text-center mb-5 leading-tight">
-            <span className="text-white">Everything you need to </span>
+            <span className="text-white">Interview Intelligence </span>
             <br className="hidden lg:block" />
             <span className="bg-gradient-to-r from-blue-400 via-violet-400 to-cyan-400 !bg-clip-text text-transparent">
-              ace your interviews
+              Operating System
             </span>
           </h1>
           <p className="text-base lg:text-lg text-slate-400 text-center max-w-3xl mx-auto leading-relaxed mb-8">
-            From interview mastery to English fluency — our advanced AI modules deliver personalized training paths that adapt to your learning style and help you build lasting confidence.
+            Full-stack AI interviewer, behavioral analytics, strategic preparation, and performance intelligence for real hiring outcomes.
           </p>
           
           {/* Stats strip */}

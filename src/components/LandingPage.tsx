@@ -1,12 +1,15 @@
 "use client";
 import AdvancedFeatures from "@/modules/advanced-features";
-import Footer from "@/components/footer";
+import AnalyticsIntelligence from "@/modules/analytics-intelligence";
+import FinalCta from "@/modules/final-cta";
 import Features from "@/modules/features";
 import FeedbackSection from "@/modules/feedback";
 import Hero from "@/modules/hero";
+import InterviewGuideEngine from "@/modules/interview-guide-engine";
+import PerformanceEvolution from "@/modules/performance-evolution";
 import Pricing from "@/modules/pricing";
+import ProFeatures from "@/modules/pro-features";
 import TrustSection from "@/modules/trust";
-import TargetCompaniesRibbon from "@/modules/hero/TargetCompaniesRibbon";
 import TrainingShowcase from "@/modules/hero/TrainingShowcase";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -34,9 +37,14 @@ const LandingPage = () => {
       <TrustSection />
       <TrainingShowcase />
       <Features />
+      <AnalyticsIntelligence />
       <FeedbackSection />
+      <InterviewGuideEngine />
       <AdvancedFeatures />
+      <PerformanceEvolution />
+      <ProFeatures />
       <Pricing />
+      <FinalCta />
     </div>
   );
 };

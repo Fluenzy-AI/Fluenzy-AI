@@ -268,6 +268,10 @@
     min-height: 100vh;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   .dark body {
     background: linear-gradient(
       135deg,
@@ -475,6 +479,43 @@
     transform: translateY(-10px);
   }
 }
+@keyframes hero-gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+@keyframes ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 0.45;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(18);
+    opacity: 0;
+  }
+}
+@keyframes logo-rail {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+@keyframes logo-rail-ltr {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
 
 @layer utilities {
   .animate-accordion-down {
@@ -494,6 +535,43 @@
   }
   .animate-float {
     animation: float 3s ease-in-out infinite;
+  }
+
+  .hero-gradient-animate {
+    background-size: 200% 200%;
+    animation: hero-gradient-shift 18s ease-in-out infinite;
+  }
+
+  .button-ripple {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgb(255 255 255 / 0.6), rgb(255 255 255 / 0));
+    pointer-events: none;
+    animation: ripple 680ms ease-out forwards;
+  }
+
+  .mobile-logo-rail {
+    overflow: hidden;
+    width: 100%;
+    position: relative;
+  }
+
+  .mobile-logo-track {
+    display: flex;
+    width: max-content;
+    animation: logo-rail 22s linear infinite;
+  }
+
+  .mobile-logo-track-ltr {
+    animation: logo-rail-ltr 22s linear infinite;
+  }
+
+  .dynamic-border-glow {
+    box-shadow:
+      0 0 0 1px hsl(271 81% 56% / 0.35),
+      0 18px 44px hsl(232 77% 59% / 0.16);
   }
 }
 

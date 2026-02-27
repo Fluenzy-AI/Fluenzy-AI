@@ -1,167 +1,165 @@
 "use client";
-import { BookOpen, MessageSquare, UserPlus, Code, Building2, Users, ArrowRight, Sparkles } from "lucide-react";
 import React from "react";
 import { motion, Variants } from "framer-motion";
+import { Briefcase, Code, Users, Building2, Languages, Bot, ArrowRight } from "lucide-react";
 
-const features = [
+const ecosystem = [
   {
-    icon: BookOpen,
-    title: "English Learning",
-    description:
-      "Enhance your professional communication with AI-driven conversations, instant grammar feedback, and targeted fluency exercises that prepare you for global workplaces.",
-    gradient: "from-blue-500 to-cyan-500",
-    shadow: "shadow-blue-500/20",
-    glow: "from-blue-500/10 to-cyan-500/10",
-    badge: "Language",
-    delay: 0.1,
-  },
-  {
-    icon: MessageSquare,
-    title: "Daily Conversation",
-    description:
-      "Build confidence in everyday workplace interactions through realistic role-playing scenarios, networking simulations, and team collaboration practice with AI mentors.",
-    gradient: "from-violet-500 to-purple-500",
-    shadow: "shadow-violet-500/20",
-    glow: "from-violet-500/10 to-purple-500/10",
-    badge: "Practice",
-    delay: 0.2,
-  },
-  {
-    icon: UserPlus,
+    icon: Briefcase,
     title: "HR Interview Coach",
-    description:
-      "Ace your HR interviews with comprehensive preparation covering behavioral questions, situational judgment, and personality assessments guided by AI experts.",
+    points: [
+      "Behavioral questions",
+      "STAR method detection",
+      "Leadership principle mapping",
+      "Company-personalized answers",
+      "Perfect answer AI rewriting",
+    ],
     gradient: "from-orange-500 to-amber-500",
-    shadow: "shadow-orange-500/20",
-    glow: "from-orange-500/10 to-amber-500/10",
-    badge: "Interview",
-    delay: 0.3,
+    badge: "Behavioral",
   },
   {
     icon: Code,
     title: "Technical Mastery",
-    description:
-      "Sharpen your technical skills with adaptive coding challenges, system design simulations, and algorithmic problem-solving powered by intelligent AI tutors.",
-    gradient: "from-emerald-500 to-teal-500",
-    shadow: "shadow-emerald-500/20",
-    glow: "from-emerald-500/10 to-teal-500/10",
-    badge: "Technical",
-    delay: 0.4,
-  },
-  {
-    icon: Building2,
-    title: "Company Tracks",
-    description:
-      "Get insider preparation for top companies with customized interview questions, case studies, and cultural insights tailored to your target employers.",
-    gradient: "from-cyan-500 to-blue-500",
-    shadow: "shadow-cyan-500/20",
-    glow: "from-cyan-500/10 to-blue-500/10",
-    badge: "Strategy",
-    delay: 0.5,
+    points: [
+      "DSA challenges",
+      "System design evaluation",
+      "API architecture questions",
+      "Database decision testing",
+      "AI model deployment reasoning",
+    ],
+    gradient: "from-emerald-500 to-cyan-500",
+    badge: "Engineering",
   },
   {
     icon: Users,
     title: "GD Agent",
-    description:
-      "Excel in group discussions with AI-moderated practice sessions, leadership role-playing, and constructive feedback on your communication and collaboration skills.",
-    gradient: "from-rose-500 to-pink-500",
-    shadow: "shadow-rose-500/20",
-    glow: "from-rose-500/10 to-pink-500/10",
+    points: [
+      "AI-powered group discussion simulator",
+      "Multi-role simulation",
+      "Speaking time analytics",
+      "Dominance tracking",
+      "Engagement tracking",
+    ],
+    gradient: "from-violet-500 to-pink-500",
     badge: "Collaboration",
-    delay: 0.6,
+  },
+  {
+    icon: Building2,
+    title: "Company Tracks",
+    points: [
+      "Google, Amazon, Microsoft preparation",
+      "Company-wise readiness scoring",
+      "Cultural alignment evaluation",
+      "Role-specific strategy layers",
+      "Interview-loop modeling",
+    ],
+    gradient: "from-blue-500 to-cyan-500",
+    badge: "Strategy",
+  },
+  {
+    icon: Languages,
+    title: "English Learning & Daily Conversation",
+    points: [
+      "Business English",
+      "Fluency training",
+      "Grammar correction",
+      "Professional communication polishing",
+      "Workplace speaking drills",
+    ],
+    gradient: "from-sky-500 to-indigo-500",
+    badge: "Communication",
+  },
+  {
+    icon: Bot,
+    title: "Real-Time AI Interviewer",
+    points: [
+      "Live interview simulation",
+      "Follow-up dynamic questioning",
+      "Resume-aware questions",
+      "Experience-based difficulty calibration",
+      "Performance intelligence feedback",
+    ],
+    gradient: "from-purple-500 to-blue-500",
+    badge: "Intelligence",
   },
 ];
 
-const containerVariants = {
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.08 },
   },
 };
 
 const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 0, y: 28 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] },
+    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
   },
 };
 
 const Features = () => {
   return (
-    <section id="features" className="py-16 relative overflow-hidden bg-gradient-to-b from-slate-800 to-slate-900">
-      {/* Background effects */}
-      <div className="absolute top-20 left-1/4 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[120px]" />
-      <div className="absolute bottom-20 right-1/4 w-[500px] h-[500px] bg-violet-500/5 rounded-full blur-[120px]" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-cyan-500/3 rounded-full blur-[100px]" />
+    <section id="features" className="relative overflow-hidden bg-gradient-to-b from-slate-800 to-slate-900 py-20 md:py-24">
+      <div className="absolute left-1/4 top-20 h-[500px] w-[500px] rounded-full bg-blue-500/5 blur-[120px]" />
+      <div className="absolute bottom-20 right-1/4 h-[500px] w-[500px] rounded-full bg-violet-500/5 blur-[120px]" />
 
-      <div className="container mx-auto px-4 relative z-10">
+      <div className="container relative z-10 mx-auto px-4 md:px-8 xl:px-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-10 text-center md:mb-14"
+        >
+          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">Core Training Ecosystem</p>
+          <h2 className="text-3xl font-bold text-white sm:text-4xl lg:text-5xl">AI Interview Intelligence Operating System</h2>
+        </motion.div>
+
         <motion.div
           variants={containerVariants}
           initial="hidden"
           whileInView="visible"
-          viewport={{ once: true, margin: "-50px" }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          viewport={{ once: true, margin: "-40px" }}
+          className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
-          {features.map((feature, index) => (
-            <FeatureCard key={feature.title} feature={feature} index={index} />
+          {ecosystem.map((feature) => (
+            <motion.div key={feature.title} variants={cardVariants} whileHover={{ y: -8 }} className="group">
+              <div className="relative h-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 p-6 shadow-2xl transition-all duration-500 group-hover:border-white/20 group-hover:shadow-purple-500/15">
+                <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-10`} />
+                <div className="relative z-10">
+                  <div className="mb-4 flex items-center justify-between">
+                    <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${feature.gradient} p-3 shadow-lg`}>
+                      <feature.icon className="h-full w-full text-white" />
+                    </div>
+                    <span className="rounded-full border border-white/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                      {feature.badge}
+                    </span>
+                  </div>
+
+                  <h3 className="mb-3 text-lg font-bold text-white">{feature.title}</h3>
+                  <div className="space-y-1.5">
+                    {feature.points.map((point) => (
+                      <div key={point} className="text-sm text-slate-300">
+                        • {point}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition group-hover:text-white">
+                    <span>Explore Capability</span>
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           ))}
         </motion.div>
       </div>
     </section>
   );
 };
-
-function FeatureCard({ feature, index }: { feature: any; index: number }) {
-  const { icon: Icon, title, description, gradient, shadow, glow, badge, delay } = feature;
-
-  return (
-    <motion.div
-      variants={cardVariants}
-      whileHover={{ y: -6, transition: { duration: 0.3 } }}
-      className="group cursor-pointer"
-    >
-      <div className={`h-full rounded-2xl border border-white/[0.08] bg-gradient-to-br from-slate-900/80 to-slate-800/60 backdrop-blur-xl p-7 transition-all duration-500 relative overflow-hidden hover:border-white/20 hover:${shadow} hover:shadow-2xl`}>
-        {/* Hover gradient overlay */}
-        <div className={`absolute inset-0 bg-gradient-to-br ${glow} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl`} />
-        
-        {/* Top accent line */}
-        <div className={`absolute top-0 left-6 right-6 h-[2px] bg-gradient-to-r ${gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
-
-        <div className="relative z-10">
-          {/* Badge + Icon Row */}
-          <div className="flex items-start justify-between mb-5">
-            <div
-              className={`w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} p-3 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 shadow-lg`}
-            >
-              <Icon className="w-full h-full text-white" />
-            </div>
-            <span className={`text-[10px] uppercase tracking-wider font-bold px-2.5 py-1 rounded-full border border-white/10 text-slate-400 group-hover:text-slate-200 group-hover:border-white/20 transition-all duration-300`}>
-              {badge}
-            </span>
-          </div>
-
-          <h3 className="text-lg font-bold mb-2.5 text-white group-hover:text-white transition-colors duration-300">
-            {title}
-          </h3>
-
-          <p className="text-sm text-slate-400 leading-relaxed group-hover:text-slate-300 transition-colors duration-300 mb-5">
-            {description}
-          </p>
-
-          {/* Explore link */}
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 group-hover:text-white transition-all duration-300">
-            <span>Explore</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform duration-300" />
-          </div>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
 
 export default Features;
