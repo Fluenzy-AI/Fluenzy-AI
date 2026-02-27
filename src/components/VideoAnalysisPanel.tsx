@@ -37,9 +37,20 @@ interface BehavioralTimelinePoint {
   posture: number;
   engagement: number;
   smile: number;
+  head_stability: number;
   stress_level: number;
   filler_word_count: number;
   face_detected: boolean;
+}
+
+interface BehavioralAlertSnapshot {
+  id: string;
+  timestamp: string;
+  issueCode: string;
+  issueDetected: string;
+  observation: string;
+  suggestion: string;
+  imageData: string;
 }
 
 const DEFAULT_METRICS: BehavioralMetrics = {
@@ -89,6 +100,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   const animationFrameRef = useRef<number | null>(null);
   const timelineRef = useRef<BehavioralTimelinePoint[]>([]);
   const metricsRef = useRef<BehavioralMetrics>(DEFAULT_METRICS);
+  const alertSnapshotsRef = useRef<BehavioralAlertSnapshot[]>([]);
+  const lastSnapshotAtRef = useRef<number>(0);
+  const snapshotCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const startedAtRef = useRef<string | null>(null);
   const savingRef = useRef(false);
   const savedRef = useRef(false);
@@ -96,6 +110,116 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   useEffect(() => {
     metricsRef.current = metrics;
   }, [metrics]);
+
+  const buildSnapshotForIssue = useCallback(
+    (issueCode: string): Omit<BehavioralAlertSnapshot, "id" | "timestamp" | "imageData"> | null => {
+      switch (issueCode) {
+        case "LOW_EYE_CONTACT":
+          return {
+            issueCode,
+            issueDetected: "Low Eye Contact",
+            observation: "Candidate is frequently looking away from the camera.",
+            suggestion: "Maintain direct eye contact with the camera lens to project confidence."
+          };
+        case "POOR_POSTURE":
+          return {
+            issueCode,
+            issueDetected: "Poor Posture",
+            observation: "Shoulder alignment and sitting posture appear inconsistent.",
+            suggestion: "Sit upright with shoulders aligned and keep your head centered."
+          };
+        case "HIGH_STRESS":
+          return {
+            issueCode,
+            issueDetected: "High Stress",
+            observation: "Facial tension suggests elevated stress during responses.",
+            suggestion: "Pause briefly and use controlled breathing before key answers."
+          };
+        case "NO_FACE":
+          return {
+            issueCode,
+            issueDetected: "Face Not Detected",
+            observation: "Face tracking was interrupted due to camera framing.",
+            suggestion: "Center your face in frame with stable lighting and minimal movement."
+          };
+        case "NEGATIVE_EXPRESSION":
+          return {
+            issueCode,
+            issueDetected: "Negative Expression",
+            observation: "Facial expression appears flat or tense for sustained periods.",
+            suggestion: "Keep a natural, attentive expression to improve interviewer perception."
+          };
+        case "LOW_ENGAGEMENT":
+          return {
+            issueCode,
+            issueDetected: "Low Engagement",
+            observation: "Visual engagement indicators dropped during interaction.",
+            suggestion: "Use attentive posture and nod naturally to show active involvement."
+          };
+        default:
+          return null;
+      }
+    },
+    []
+  );
+
+  const resolvePriorityIssue = useCallback((newMetrics: BehavioralMetrics): string | null => {
+    const alertSet = new Set((newMetrics.alerts || []).map((a) => String(a).toUpperCase()));
+
+    if (alertSet.has("NO_FACE") || !newMetrics.face_detected) return "NO_FACE";
+    if (alertSet.has("HIGH_STRESS") || newMetrics.stress_level > 70) return "HIGH_STRESS";
+    if (alertSet.has("POOR_POSTURE") || newMetrics.posture < 50) return "POOR_POSTURE";
+    if (alertSet.has("LOW_EYE_CONTACT") || newMetrics.eye_contact < 40) return "LOW_EYE_CONTACT";
+    if (newMetrics.smile < 30) return "NEGATIVE_EXPRESSION";
+    if (newMetrics.engagement < 45) return "LOW_ENGAGEMENT";
+    return null;
+  }, []);
+
+  const captureBehavioralSnapshot = useCallback(
+    (newMetrics: BehavioralMetrics) => {
+      const issueCode = resolvePriorityIssue(newMetrics);
+      if (!issueCode) return;
+
+      const now = Date.now();
+      const SNAPSHOT_COOLDOWN_MS = 15000;
+      const MAX_SNAPSHOTS = 6;
+
+      if (now - lastSnapshotAtRef.current < SNAPSHOT_COOLDOWN_MS) return;
+      if (alertSnapshotsRef.current.length >= MAX_SNAPSHOTS) return;
+
+      const issueMeta = buildSnapshotForIssue(issueCode);
+      if (!issueMeta) return;
+
+      const video = videoRef.current;
+      if (!video || video.readyState < 2) return;
+
+      if (!snapshotCanvasRef.current) {
+        snapshotCanvasRef.current = document.createElement("canvas");
+      }
+
+      const canvas = snapshotCanvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return;
+
+      const width = Math.min(video.videoWidth || 640, 640);
+      const height = Math.min(video.videoHeight || 480, 480);
+      canvas.width = width;
+      canvas.height = height;
+      ctx.drawImage(video, 0, 0, width, height);
+
+      const imageData = canvas.toDataURL("image/jpeg", 0.65);
+      if (!imageData.startsWith("data:image/jpeg;base64,")) return;
+
+      alertSnapshotsRef.current.push({
+        id: `${issueCode}_${now}`,
+        timestamp: new Date(now).toISOString(),
+        imageData,
+        ...issueMeta,
+      });
+      lastSnapshotAtRef.current = now;
+    },
+    [buildSnapshotForIssue, resolvePriorityIssue]
+  );
 
   const getBehavioralWsUrl = useCallback(() => {
     const session = encodeURIComponent(sessionId);
@@ -159,6 +283,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
             posture: newMetrics.posture,
             engagement: newMetrics.engagement,
             smile: newMetrics.smile,
+            head_stability: newMetrics.head_stability,
             stress_level: newMetrics.stress_level,
             filler_word_count: newMetrics.filler_word_count,
             face_detected: newMetrics.face_detected,
@@ -170,6 +295,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
           if (data.annotated_frame) {
             setAnnotatedFrame(data.annotated_frame);
           }
+          captureBehavioralSnapshot(newMetrics);
         } else if (message.type === "busy") {
           // Backend is busy - drop pending frame and wait
           console.log("⚠️ Backend busy, dropping frame");
@@ -209,7 +335,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     };
 
     wsRef.current = ws;
-  }, [getBehavioralWsUrl, isAnalyzing]);
+  }, [captureBehavioralSnapshot, getBehavioralWsUrl, isAnalyzing]);
 
   // Start camera and behavioral analysis together when interview starts
   const startCamera = async () => {
@@ -217,6 +343,8 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
       console.log("📷 Starting camera...");
       startedAtRef.current = new Date().toISOString();
       timelineRef.current = [];
+      alertSnapshotsRef.current = [];
+      lastSnapshotAtRef.current = 0;
       savedRef.current = false;
       
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -260,6 +388,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
       posture: Number(avg((p) => p.posture).toFixed(1)),
       engagement: Number(avg((p) => p.engagement).toFixed(1)),
       smile: Number(avg((p) => p.smile).toFixed(1)),
+      head_stability: Number(avg((p) => p.head_stability).toFixed(1)),
       stress_level: Number(avg((p) => p.stress_level).toFixed(1)),
       filler_word_count: Number(avg((p) => p.filler_word_count).toFixed(1)),
       face_detected_rate: Number(((timeline.filter((p) => p.face_detected).length / timeline.length) * 100).toFixed(1)),
@@ -280,6 +409,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
           summary: summaryPayload,
           timeline: sampledTimeline,
           alerts,
+          alertSnapshots: alertSnapshotsRef.current,
           sampleCount: timeline.length,
         }),
       });
@@ -327,6 +457,8 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     setMetrics(DEFAULT_METRICS);
     setMetricsHistory([]);
     setAnnotatedFrame("");
+    alertSnapshotsRef.current = [];
+    lastSnapshotAtRef.current = 0;
     setError(null);
   };
 
