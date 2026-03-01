@@ -1,4 +1,4 @@
-/* Tailwind v4 core */
+﻿/* Tailwind v4 core */
 @import "tailwindcss";
 
 /* System font stack with Geist as preferred (loaded via CDN when available) */
@@ -2379,4 +2379,142 @@
 [data-theme="light"] .bg-gradient-to-br.from-slate-800\/80.to-slate-900\/80 {
   background: linear-gradient(to bottom right, rgba(248, 250, 252, 0.95), #FFFFFF) !important;
   border-color: rgba(168, 85, 247, 0.2) !important;
+}
+/* ===== ANALYTICS DASHBOARD - LIGHT THEME OVERRIDES ===== */
+.analytics-light {
+  background-color: #f1f5f9;
+}
+
+/* Cards */
+.analytics-light .bg-slate-900\/60 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07), 0 0 0 1px #e2e8f0 !important;
+  border-left: 3px solid #6366f1 !important;
+}
+.analytics-light .bg-slate-900 {
+  background-color: #ffffff !important;
+}
+.analytics-light .border-white\/10 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Text */
+.analytics-light .text-white {
+  color: #0f172a !important;
+}
+.analytics-light .text-slate-300 {
+  color: #1d4ed8 !important;
+}
+.analytics-light .text-slate-400 {
+  color: #475569 !important;
+}
+.analytics-light .text-slate-500 {
+  color: #64748b !important;
+}
+
+/* Score values */
+.analytics-light .text-2xl.font-bold {
+  color: #4f46e5 !important;
+}
+.analytics-light .text-3xl.font-bold {
+  color: #4f46e5 !important;
+}
+
+/* Progress bar tracks */
+.analytics-light .bg-slate-800 {
+  background-color: #e2e8f0 !important;
+}
+.analytics-light .bg-slate-800\/50 {
+  background-color: #e2e8f0 !important;
+}
+
+/* Quadrant summary boxes */
+.analytics-light .border-emerald-500\/30 { border-color: rgba(16,185,129,0.5) !important; background-color: #f0fdf4 !important; }
+.analytics-light .text-emerald-200 { color: #059669 !important; font-weight: 600 !important; }
+.analytics-light .border-amber-500\/30 { border-color: rgba(245,158,11,0.5) !important; background-color: #fffbeb !important; }
+.analytics-light .text-amber-200 { color: #b45309 !important; font-weight: 600 !important; }
+.analytics-light .border-sky-500\/30 { border-color: rgba(14,165,233,0.5) !important; background-color: #f0f9ff !important; }
+.analytics-light .text-sky-200 { color: #0284c7 !important; font-weight: 600 !important; }
+.analytics-light .border-red-500\/30 { border-color: rgba(239,68,68,0.5) !important; background-color: #fef2f2 !important; }
+.analytics-light .text-red-200 { color: #dc2626 !important; font-weight: 600 !important; }
+
+/* Badges */
+.analytics-light .border-emerald-500\/40 { border-color: rgba(16,185,129,0.6) !important; color: #065f46 !important; background-color: #d1fae5 !important; }
+.analytics-light .border-amber-500\/40 { border-color: rgba(245,158,11,0.6) !important; color: #92400e !important; background-color: #fef3c7 !important; }
+.analytics-light .border-sky-500\/40 { border-color: rgba(14,165,233,0.6) !important; color: #075985 !important; background-color: #e0f2fe !important; }
+.analytics-light .border-slate-700 { border-color: #cbd5e1 !important; background-color: #f8fafc !important; }
+
+/* Progress bar fill colors */
+.analytics-light .bg-purple-400 { background-color: #7c3aed !important; }
+.analytics-light .bg-sky-400 { background-color: #0284c7 !important; }
+.analytics-light .bg-amber-400 { background-color: #d97706 !important; }
+.analytics-light .bg-violet-400 { background-color: #7c3aed !important; }
+.analytics-light .bg-emerald-500 { background-color: #059669 !important; }
+
+/* Recharts: Cartesian axis text */
+.analytics-light .recharts-cartesian-axis-tick-value,
+.analytics-light .recharts-text.recharts-cartesian-axis-tick-value {
+  fill: #374151 !important;
+}
+
+/* Recharts: Radar labels */
+.analytics-light .recharts-polar-angle-axis-tick text {
+  fill: #1e40af !important;
+  font-weight: 600 !important;
+}
+.analytics-light .recharts-polar-radius-axis-tick text {
+  fill: #6b7280 !important;
+}
+
+/* Recharts: Polar grid */
+.analytics-light .recharts-polar-grid-concentric-polygon,
+.analytics-light .recharts-polar-grid-angle line {
+  stroke: #cbd5e1 !important;
+}
+
+/* Recharts: Cartesian grid */
+.analytics-light .recharts-cartesian-grid-horizontal line,
+.analytics-light .recharts-cartesian-grid-vertical line {
+  stroke: #e2e8f0 !important;
+}
+
+/* Recharts: Legend */
+.analytics-light .recharts-legend-item-text {
+  color: #374151 !important;
+  fill: #374151 !important;
+}
+
+/* Recharts: Tooltip */
+.analytics-light .recharts-default-tooltip {
+  background-color: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+}
+.analytics-light .recharts-tooltip-label {
+  color: #0f172a !important;
+  font-weight: 600 !important;
+}
+.analytics-light .recharts-tooltip-item {
+  color: #374151 !important;
+}
+
+/* Recharts: Label list */
+.analytics-light .recharts-label-list text,
+.analytics-light .recharts-label text {
+  fill: #374151 !important;
+}
+
+/* Recharts: Brush */
+.analytics-light .recharts-brush {
+  fill: #f1f5f9 !important;
+  stroke: #cbd5e1 !important;
+}
+.analytics-light .recharts-brush-traveller rect {
+  fill: #6366f1 !important;
+}
+
+/* Dividers inside cards */
+.analytics-light .border-t.border-white\/10 {
+  border-color: #e2e8f0 !important;
 }

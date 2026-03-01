@@ -561,11 +561,13 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
                 }`}>
                   {isEnglishLearning
                     ? 'Your AI English Coach is Ready'
-                    : sessionMeta?.lessonTitle
-                      ? sessionMeta.lessonTitle
-                      : sessionMeta?.isCompanyWise
-                        ? `${sessionMeta?.company ? sessionMeta.company + ' ' : ''}Interview is Ready`
-                        : 'HR Interview is Ready'
+                    : isConversationPractice
+                      ? 'Your AI Friend is Ready'
+                      : sessionMeta?.lessonTitle
+                        ? sessionMeta.lessonTitle
+                        : sessionMeta?.isCompanyWise
+                          ? `${sessionMeta?.company ? sessionMeta.company + ' ' : ''}Interview is Ready`
+                          : 'HR Interview is Ready'
                   }
                 </h3>
                 <p className={`text-xs md:text-sm font-medium leading-relaxed hidden md:block ${
@@ -573,9 +575,11 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
                 }`}>
                   {isEnglishLearning
                     ? (lessonContext?.coachMessage || 'Get ready to practice your English speaking skills with personalized coaching.')
-                    : sessionMeta?.isCompanyWise
-                      ? 'Prepare for your company-specific interview with structured practice and expert feedback.'
-                      : `Practice behavioral and HR questions${sessionMeta?.lessonTitle ? ` for: ${sessionMeta.lessonTitle}` : ''} with expert AI coaching.`
+                    : isConversationPractice
+                      ? 'Chat with your AI friend in English — casual, natural, and fun. Great for building everyday fluency.'
+                      : sessionMeta?.isCompanyWise
+                        ? 'Prepare for your company-specific interview with structured practice and expert feedback.'
+                        : `Practice behavioral and HR questions${sessionMeta?.lessonTitle ? ` for: ${sessionMeta.lessonTitle}` : ''} with expert AI coaching.`
                   }
                 </p>
               </div>
@@ -586,9 +590,11 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
             }`}>
               {isEnglishLearning
                 ? (lessonContext?.coachMessage || 'Get ready to practice your English speaking skills.')
-                : sessionMeta?.isCompanyWise
-                  ? 'Company-specific structured interview practice.'
-                  : `HR behavioral practice${sessionMeta?.lessonTitle ? `: ${sessionMeta.lessonTitle}` : ''}.`
+                : isConversationPractice
+                  ? 'Chat with your AI friend in English — casual and fun.'
+                  : sessionMeta?.isCompanyWise
+                    ? 'Company-specific structured interview practice.'
+                    : `HR behavioral practice${sessionMeta?.lessonTitle ? `: ${sessionMeta.lessonTitle}` : ''}.`
               }
             </p>
             {lessonContext && (
@@ -611,7 +617,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
                   : 'from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700'
               }`}
             >
-              {isEnglishLearning ? 'Start Practice' : 'Start Interview'}
+              {isEnglishLearning ? 'Start Practice' : isConversationPractice ? 'Start Conversation' : 'Start Interview'}
             </button>
           </div>
         </div>
@@ -634,22 +640,26 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
                     } w-14 h-14 md:w-24 md:h-24`}
                   />
                   <p className={`text-xs font-semibold mt-2 tracking-wide text-center ${isLight ? 'text-slate-500' : 'text-slate-300'}`}>
-                    {isEnglishLearning ? 'AI Coach' : (sessionMeta?.isCompanyWise ? 'Company Coach' : 'HR Coach')}
+                    {isEnglishLearning ? 'AI Coach' : isConversationPractice ? 'AI Friend' : (sessionMeta?.isCompanyWise ? 'Company Coach' : 'HR Coach')}
                   </p>
                 </div>
                 <div className="flex-1 md:w-full space-y-2 md:space-y-4 text-left md:text-center">
                   <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${isLight ? 'text-slate-400' : 'text-slate-400'}`}>
-                    {isEnglishLearning ? 'English Practice' : 'Interview Practice'}
+                    {isEnglishLearning ? 'English Practice' : isConversationPractice ? 'Daily Conversation' : 'Interview Practice'}
                   </h4>
                   <p className={`text-sm md:text-xl font-bold leading-snug ${isLight ? 'text-slate-800' : 'text-white'}`}>
                     {isAiSpeaking
                       ? (isEnglishLearning
                           ? 'Your coach is speaking. Listen carefully.'
-                          : 'Your coach is providing feedback. Listen carefully.'
+                          : isConversationPractice
+                            ? 'Your friend is talking. Listen carefully.'
+                            : 'Your coach is providing feedback. Listen carefully.'
                         )
                       : (isEnglishLearning
                           ? 'Your turn! Speak clearly.'
-                          : 'Your turn! Answer professionally.'
+                          : isConversationPractice
+                            ? 'Your turn! Just chat naturally.'
+                            : 'Your turn! Answer professionally.'
                         )
                     }
                   </p>
@@ -674,7 +684,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
             onClick={async () => { setIsSaving(true); await cleanup(true); }}
             className="w-full md:w-auto bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white px-8 py-4 rounded-full font-black uppercase tracking-[0.1em] shadow-2xl hover:scale-105 active:scale-95 transition-all text-sm flex items-center justify-center gap-3"
           >
-            {isEnglishLearning ? 'End Practice' : 'End Interview'} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            {isEnglishLearning ? 'End Practice' : isConversationPractice ? 'End Conversation' : 'End Interview'} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       )}

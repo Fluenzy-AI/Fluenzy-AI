@@ -42,9 +42,10 @@ import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
 
 const navItems = [
   { href: '/train', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/train/live', label: 'Live GD', icon: Radio },
   { href: '/train/hr', label: 'HR Interview', icon: User },
   { href: '/train/gd-coach', label: 'GD Coach', icon: GraduationCap },
-  { href: '/train/gd', label: 'GD Agent', icon: Users },
+  { href: '/train/gd/ai', label: 'GD Agent', icon: Users },
   { href: '/train/technical', label: 'Technical', icon: Code },
   { href: '/train/company', label: 'Company', icon: Building2 },
   { href: '/train/daily', label: 'Daily Practice', icon: MessageSquare },

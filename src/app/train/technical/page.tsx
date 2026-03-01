@@ -1,7 +1,6 @@
 "use client";
 
 import LearnEnglishWrapper from "@/modules/train/LearnEnglishWrapper";
-import Footer from "@/components/footer";
 import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 import { useEffect, useState } from "react";
 
@@ -22,7 +21,6 @@ export default function TechnicalPage() {
   return (
     <div className={`min-h-screen ${currentTheme.background} ${currentTheme.text} theme-transition`}>
       <LearnEnglishWrapper mode="technical" />
-      <Footer />
     </div>
   );
 }

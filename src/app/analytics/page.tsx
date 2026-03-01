@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -376,6 +377,9 @@ function AnalyticsDashboardPageContent() {
       .sort((a, b) => a.speed - b.speed);
   }, [data]);
 
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light';
+
   if (loading) return <div className="container mx-auto px-4 py-12">Loading analytics...</div>;
   if ((!session?.user && !isPublicView) || !data) return <div className="container mx-auto px-4 py-12">No analytics data available yet.</div>;
 
@@ -395,12 +399,12 @@ function AnalyticsDashboardPageContent() {
   const wpmLow = advanced.communication.idealWpmRange[0];
   const wpmHigh = advanced.communication.idealWpmRange[1];
   const communicationCompositeRadar = [
-    { metric: "Communication", score: Number(summary.communicationScore.toFixed(1)) },
-    { metric: "Confidence", score: Number(summary.confidenceScore.toFixed(1)) },
+    { metric: "Comm.", score: Number(summary.communicationScore.toFixed(1)) },
+    { metric: "Confid.", score: Number(summary.confidenceScore.toFixed(1)) },
     { metric: "Grammar", score: Number(summary.grammarScore.toFixed(1)) },
-    { metric: "Speaking Pace", score: Number(advanced.communication.speakingWpm.toFixed(1)) },
-    { metric: "Sentence Structure", score: Number(advanced.communication.sentenceStructureScore.toFixed(1)) },
-    { metric: "Tone Consistency", score: Number(advanced.communication.toneConsistency.toFixed(1)) },
+    { metric: "Sp.Pace", score: Number(advanced.communication.speakingWpm.toFixed(1)) },
+    { metric: "Sentence", score: Number(advanced.communication.sentenceStructureScore.toFixed(1)) },
+    { metric: "Tone", score: Number(advanced.communication.toneConsistency.toFixed(1)) },
   ];
   const hasGrammarInsights =
     advanced.grammar.categories.length > 0 ||
@@ -412,22 +416,22 @@ function AnalyticsDashboardPageContent() {
   const confidenceDifficultyPreview = advanced.confidence.confidenceVsDifficulty.slice(0, 8);
   const stressPerformancePreview = stressPerformanceSeries.slice(-8);
   return (
-    <div className="overflow-x-hidden">
+    <div className={`overflow-x-hidden w-full max-w-full${isLight ? ' analytics-light' : ''}`}>
       {!isEmbeddedView && <HeaderOffset />}
-      <div className="container mx-auto px-4 pb-12 flex flex-col gap-8">
-        <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/40 to-slate-900/70 p-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+      <div className="container mx-auto px-3 sm:px-4 pb-12 flex flex-col gap-6 md:gap-8">
+        <div className={`rounded-2xl border p-4 sm:p-6 ${isLight ? 'bg-gradient-to-br from-slate-50 to-white border-gray-200' : 'bg-gradient-to-br from-slate-900/40 to-slate-900/70 border-white/10'}`}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl md:text-4xl font-black text-white">Analytics Dashboard</h1>
-              <p className="text-sm text-slate-400">Your communication-first performance report with clear next steps.</p>
+              <h1 className={`text-2xl sm:text-3xl md:text-4xl font-black ${isLight ? 'text-gray-900' : 'text-white'}`}>Analytics Dashboard</h1>
+              <p className={`text-xs sm:text-sm mt-1 ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>Your communication-first performance report with clear next steps.</p>
             </div>
-            <Badge variant="outline" className="border-amber-500/40 text-amber-200">{summary.overallStatus}</Badge>
+            <Badge variant="outline" className={isLight ? 'border-amber-500/60 text-amber-700 w-fit' : 'border-amber-500/40 text-amber-200 w-fit'}>{summary.overallStatus}</Badge>
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <select
-            className="bg-slate-900 border border-slate-700 rounded px-3 py-1 text-sm text-slate-200"
+            className={`border rounded px-3 py-1.5 text-sm ${isLight ? 'bg-white border-gray-300 text-gray-800' : 'bg-slate-900 border-slate-700 text-slate-200'}`}
             value={range}
             onChange={(e) => setRange(e.target.value)}
           >
@@ -456,8 +460,8 @@ function AnalyticsDashboardPageContent() {
 
         {/* 1 OVERALL PERFORMANCE SUMMARY */}
         <section className="order-1">
-          <h2 className="text-lg font-bold text-white mb-3">Overall Performance Summary</h2>
-          <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
+          <h2 className={`text-lg font-bold mb-3 ${isLight ? 'text-gray-900' : 'text-white'}`}>Overall Performance Summary</h2>
+          <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
             {[
               ["Overall Score", Math.round(summary.overallScore)],
               ["Communication", Math.round(summary.communicationScore)],
@@ -522,22 +526,32 @@ function AnalyticsDashboardPageContent() {
         </section>
 
         <section className="order-2 space-y-6">
-  <h2 className="text-lg font-bold text-white">Priority Chart Order</h2>
+  <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Priority Chart Order</h2>
 
-  <div className="grid gap-6 lg:grid-cols-2">
+  <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
     <Card className="border-white/10 bg-slate-900/60">
       <CardHeader><CardTitle className="text-sm text-slate-300">Body Language Composite Radar</CardTitle></CardHeader>
-      <CardContent className="h-[300px]"><ResponsiveContainer width="100%" height="100%"><RadarChart data={advanced.behavioral.compositeRadar}><PolarGrid /><PolarAngleAxis dataKey="metric" /><PolarRadiusAxis domain={[0, 100]} /><Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.35} /><ChartTooltip /></RadarChart></ResponsiveContainer></CardContent>
+      <CardContent className="h-[260px] sm:h-[300px] px-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <RadarChart data={advanced.behavioral.compositeRadar} outerRadius="55%">
+            <PolarGrid stroke="#334155" />
+            <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+            <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 8, fill: '#64748b' }} />
+            <Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.35} />
+            <ChartTooltip />
+          </RadarChart>
+        </ResponsiveContainer>
+      </CardContent>
     </Card>
     <Card className="border-white/10 bg-slate-900/60">
       <CardHeader><CardTitle className="text-sm text-slate-300">Communication Composite Radar</CardTitle></CardHeader>
-      <CardContent className="h-[300px]">
+      <CardContent className="h-[260px] sm:h-[300px] px-0">
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={communicationCompositeRadar}>
-            <PolarGrid />
-            <PolarAngleAxis dataKey="metric" />
-            <PolarRadiusAxis domain={[0, 100]} tickCount={6} />
-            <Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.35} />
+          <RadarChart data={communicationCompositeRadar} outerRadius="55%">
+            <PolarGrid stroke="#334155" />
+            <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: '#94a3b8' }} />
+            <PolarRadiusAxis domain={[0, 100]} tickCount={4} tick={{ fontSize: 8, fill: '#64748b' }} />
+            <Radar dataKey="score" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.35} />
             <ChartTooltip />
           </RadarChart>
         </ResponsiveContainer>
@@ -572,7 +586,7 @@ function AnalyticsDashboardPageContent() {
 </section>
         {/* 3 SPEECH & COMMUNICATION INTELLIGENCE */}
         <section className="order-2 space-y-4">
-          <h2 className="text-lg font-bold text-white">Speech & Communication Intelligence</h2>
+          <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Speech & Communication Intelligence</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="border-white/10 bg-slate-900/60"><CardHeader><CardTitle className="text-sm text-slate-300">Speaking Pace vs Ideal</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-3xl font-bold text-white">{advanced.communication.speakingWpm} WPM</p><div className="h-3 bg-slate-800 rounded"><div className="h-3 bg-emerald-500 rounded" style={{ width: `${Math.min(100, (advanced.communication.speakingWpm / 220) * 100)}%` }} /></div><p className="text-xs text-slate-400">Ideal {wpmLow}-{wpmHigh} WPM</p><p className="text-sm text-slate-300">Pace quality: {advanced.communication.speakingPaceScore}</p><p className="text-sm text-slate-300">Sentence: {advanced.communication.sentenceStructureScore}</p></CardContent></Card>
             <Card className="border-white/10 bg-slate-900/60">
@@ -596,7 +610,7 @@ function AnalyticsDashboardPageContent() {
         </section>
 
         <section className="order-5 space-y-4">
-          <h2 className="text-lg font-bold text-white">Text-based Report Intelligence</h2>
+          <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Text-based Report Intelligence</h2>
           <Card className="border-white/10 bg-slate-900/60">
             <CardHeader><CardTitle className="text-sm text-slate-300">Text Volume by Company</CardTitle></CardHeader>
             <CardContent className="h-[240px]">
@@ -615,7 +629,7 @@ function AnalyticsDashboardPageContent() {
 
         {/* 4 CONFIDENCE & SESSION TRACKING */}
         <section className="order-5 space-y-4">
-          <h2 className="text-lg font-bold text-white">Confidence & Session Tracking</h2>
+          <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Confidence & Session Tracking</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="border-white/10 bg-slate-900/60">
               <CardHeader><CardTitle className="text-sm text-slate-300">Confidence Timeline (Latest Session)</CardTitle></CardHeader>
@@ -745,7 +759,7 @@ function AnalyticsDashboardPageContent() {
 
         {/* 5 INTERVIEW ACCURACY INTELLIGENCE */}
         <section className="order-4 space-y-4">
-          <h2 className="text-lg font-bold text-white">Interview Accuracy Intelligence</h2>
+          <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Interview Accuracy Intelligence</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="border-white/10 bg-slate-900/60"><CardHeader><CardTitle className="text-sm text-slate-300">Reattempt & Difficulty</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-slate-300 text-sm">Reattempt success rate: <span className="text-white font-semibold">{advanced.questions.reattemptSuccessRate}%</span></p><div className="h-[220px]"><ResponsiveContainer width="100%" height="100%"><BarChart data={advanced.questions.difficultyDistribution}><CartesianGrid strokeDasharray="3 3" stroke="#1f2937" /><XAxis dataKey="label" stroke="#94a3b8" fontSize={10} /><YAxis stroke="#94a3b8" fontSize={10} /><ChartTooltip /><Bar dataKey="count" fill="#38bdf8" /></BarChart></ResponsiveContainer></div></CardContent></Card>
             <Card className="border-white/10 bg-slate-900/60">
@@ -767,7 +781,7 @@ function AnalyticsDashboardPageContent() {
 
         {/* 6 COMPANY READINESS INTELLIGENCE */}
         <section className="order-4 space-y-4">
-          <h2 className="text-lg font-bold text-white">Company Readiness Intelligence</h2>
+          <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Company Readiness Intelligence</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="border-white/10 bg-slate-900/60"><CardHeader><CardTitle className="text-sm text-slate-300">Skill Gap Signals</CardTitle></CardHeader><CardContent className="space-y-3">{advanced.company.readiness.slice(0, 4).map((c) => (<div key={c.name}><p className="text-white font-semibold">{c.name}</p><div className="flex flex-wrap gap-1 mt-1">{c.missingSkills.map((s) => (<Badge key={`${c.name}-${s}`} variant="outline" className="border-amber-500/40 text-amber-200">{s}</Badge>))}</div></div>))}</CardContent></Card>
             <Card className="border-white/10 bg-slate-900/60">
@@ -800,7 +814,7 @@ function AnalyticsDashboardPageContent() {
 
         {/* 7 PRACTICE DISTRIBUTION */}
         <section className="order-5 space-y-4">
-          <h2 className="text-lg font-bold text-white">Practice Distribution</h2>
+          <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Practice Distribution</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="border-white/10 bg-slate-900/60">
               <CardHeader><CardTitle className="text-sm text-slate-300">Practice Statistics</CardTitle></CardHeader>
@@ -818,7 +832,7 @@ function AnalyticsDashboardPageContent() {
 
         {/* 8 AI COACH INSIGHTS */}
         <section className="order-6 space-y-4">
-          <h2 className="text-lg font-bold text-white">AI Coach Insights</h2>
+          <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>AI Coach Insights</h2>
           <div className="grid gap-6 lg:grid-cols-2">
             <Card className="border-white/10 bg-slate-900/60">
               <CardHeader><CardTitle className="text-sm text-slate-300">AI Coach Insights</CardTitle></CardHeader>
@@ -950,7 +964,7 @@ function AnalyticsDashboardPageContent() {
           <Card className="border-white/10 bg-slate-900/60"><CardContent className="p-6"><Heatmap activity={activity} /></CardContent></Card>
         </section>
 
-        <div className="flex justify-end text-sm text-slate-400">Total practice: {formatDuration(summary.totalDurationMinutes)} | Sessions: {summary.totalSessions}</div>
+        <div className={`flex justify-end text-xs sm:text-sm ${isLight ? 'text-gray-500' : 'text-slate-400'}`}>Total practice: {formatDuration(summary.totalDurationMinutes)} | Sessions: {summary.totalSessions}</div>
       </div>
     </div>
   );
