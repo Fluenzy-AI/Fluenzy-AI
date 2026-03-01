@@ -409,7 +409,7 @@ async function processPaymentAuthorized(
 ): Promise<{ success: boolean; message: string }> {
   try {
     // Create payment history record
-    const paymentDetails = await razorpay.payments.fetch(paymentId);
+    const paymentDetails: any = await razorpay.payments.fetch(paymentId);
     
     await (prisma as any).paymentHistory.create({
       data: {
