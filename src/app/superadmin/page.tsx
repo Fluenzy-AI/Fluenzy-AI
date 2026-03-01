@@ -128,6 +128,23 @@ export default function SuperAdminDashboard() {
   });
 
   const [activeSection, setActiveSection] = useState('users');
+
+  // ── College Partners state ──────────────────────────────────────────
+  const [colleges, setColleges] = useState<any[]>([]);
+  const [collegesLoading, setCollegesLoading] = useState(false);
+  const [collegeFiler, setCollegeFiler] = useState('ALL');
+  const [collegeSearch, setCollegeSearch] = useState('');
+  const [expandedCollege, setExpandedCollege] = useState<string | null>(null);
+  const [collegeStudents, setCollegeStudents] = useState<Record<string, any[]>>({});
+  const [collegeStudentsLoading, setCollegeStudentsLoading] = useState<string | null>(null);
+  const [collegeActionLoading, setCollegeActionLoading] = useState<string | null>(null);
+  const [approveModal, setApproveModal] = useState<any | null>(null);
+  const [rejectModal, setRejectModal] = useState<any | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
+  const [approveSeats, setApproveSeats] = useState(200);
+  const [approvePlan, setApprovePlan] = useState('Free');
+  // ─────────────────────────────────────────────────────────────────────
+
   const [planPricing, setPlanPricing] = useState({
     Free: { name: 'Free', price: 0, currency: 'INR', status: 'active', updatedAt: null as Date | null },
     Standard: { name: 'Standard', price: 150, currency: 'INR', status: 'active', updatedAt: null as Date | null },
@@ -238,6 +255,39 @@ export default function SuperAdminDashboard() {
     } catch (error) {
       console.error("Failed to fetch plan pricing:", error);
     }
+  };
+
+  const fetchCollegePartners = async (statusFilter = 'ALL') => {
+    setCollegesLoading(true);
+    try {
+      const url = statusFilter !== 'ALL' ? `/api/superadmin/college-partners?status=${statusFilter}` : '/api/superadmin/college-partners';
+      const res = await fetch(url);
+      if (res.ok) { const d = await res.json(); setColleges(d.colleges ?? []); }
+    } catch (e) { console.error(e); } finally { setCollegesLoading(false); }
+  };
+
+  const fetchCollegeStudents = async (collegeId: string) => {
+    if (collegeStudents[collegeId]) { setExpandedCollege(expandedCollege === collegeId ? null : collegeId); return; }
+    setCollegeStudentsLoading(collegeId);
+    try {
+      const res = await fetch(`/api/superadmin/college-partners?collegeId=${collegeId}&include=students`);
+      if (res.ok) { const d = await res.json(); setCollegeStudents(prev => ({ ...prev, [collegeId]: d.students ?? [] })); }
+    } catch (e) { console.error(e); } finally {
+      setCollegeStudentsLoading(null);
+      setExpandedCollege(collegeId);
+    }
+  };
+
+  const doCollegeAction = async (collegeId: string, action: string, extra?: object) => {
+    setCollegeActionLoading(collegeId + action);
+    try {
+      const res = await fetch('/api/superadmin/college-partners', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ collegeAdminId: collegeId, action, ...extra }),
+      });
+      if (res.ok) { await fetchCollegePartners(collegeFiler); setApproveModal(null); setRejectModal(null); setRejectReason(''); }
+    } catch (e) { console.error(e); } finally { setCollegeActionLoading(null); }
   };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
@@ -431,6 +481,7 @@ export default function SuperAdminDashboard() {
     { key: 'logs',         label: 'System Logs',       icon: '📋' },
     { key: 'latest-topics',label: 'Latest Topics',     icon: '📰' },
     { key: 'email-management', label: 'Email Management', icon: '✉️' },
+    { key: 'college-partners', label: 'College Partners', icon: '🏫' },
   ];
 
   if (status === "loading") return <div>Loading...</div>;
@@ -1168,6 +1219,194 @@ export default function SuperAdminDashboard() {
         {activeSection === 'email-management' && (<>
           <EmailManagement />
         </>)}
+
+        {activeSection === 'college-partners' && (() => {
+          // Lazy-load on first visit
+          if (!collegesLoading && colleges.length === 0) fetchCollegePartners(collegeFiler);
+          const statusColors: Record<string, string> = {
+            PENDING: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/40',
+            APPROVED: 'bg-green-500/20 text-green-400 border border-green-500/40',
+            REJECTED: 'bg-red-500/20 text-red-400 border border-red-500/40',
+            SUSPENDED: 'bg-orange-500/20 text-orange-400 border border-orange-500/40',
+          };
+          const filtered = colleges.filter(c => {
+            if (collegeFiler !== 'ALL' && c.status !== collegeFiler) return false;
+            if (collegeSearch) { const q = collegeSearch.toLowerCase(); return c.collegeName?.toLowerCase().includes(q) || c.email?.toLowerCase().includes(q) || c.domain?.toLowerCase().includes(q); }
+            return true;
+          });
+          const stats = { total: colleges.length, pending: colleges.filter(c => c.status === 'PENDING').length, approved: colleges.filter(c => c.status === 'APPROVED').length, suspended: colleges.filter(c => c.status === 'SUSPENDED').length };
+          return (
+            <div className="space-y-5">
+              {/* Stats */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[['Total', stats.total, 'text-indigo-400'], ['Pending', stats.pending, 'text-yellow-400'], ['Approved', stats.approved, 'text-green-400'], ['Suspended', stats.suspended, 'text-orange-400']].map(([l, v, c]: any) => (
+                  <div key={l} className="rounded-xl border border-white/10 bg-slate-800/60 p-4">
+                    <p className={`text-2xl font-bold ${c}`}>{v}</p>
+                    <p className="text-xs text-slate-400 mt-0.5">{l} Colleges</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Filters */}
+              <div className="flex flex-wrap gap-3">
+                <input value={collegeSearch} onChange={e => setCollegeSearch(e.target.value)} placeholder="Search college / email / domain…" className="flex-1 min-w-[200px] bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-violet-500" />
+                <div className="flex gap-1.5">
+                  {['ALL','PENDING','APPROVED','REJECTED','SUSPENDED'].map(s => (
+                    <button key={s} onClick={() => { setCollegeFiler(s); fetchCollegePartners(s); }} className={`px-3 py-2 rounded-lg text-xs font-medium border transition-all ${ collegeFiler === s ? 'bg-violet-600/30 text-violet-300 border-violet-500/50' : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white' }`}>{s}</button>
+                  ))}
+                </div>
+                <button onClick={() => fetchCollegePartners(collegeFiler)} className="px-3 py-2 rounded-lg bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs transition-all">↻ Refresh</button>
+              </div>
+
+              {/* Table */}
+              {collegesLoading ? (
+                <div className="flex justify-center py-16 text-slate-400">Loading…</div>
+              ) : filtered.length === 0 ? (
+                <div className="text-center py-16 text-slate-400">No colleges found.</div>
+              ) : (
+                <div className="rounded-xl border border-white/10 overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead className="border-b border-white/10 bg-slate-900/60">
+                      <tr className="text-xs text-slate-400 uppercase tracking-wide">
+                        <th className="text-left px-4 py-3">College</th>
+                        <th className="text-left px-4 py-3">Domain</th>
+                        <th className="text-left px-4 py-3">Status</th>
+                        <th className="text-left px-4 py-3">Seats</th>
+                        <th className="text-left px-4 py-3">Plan</th>
+                        <th className="text-left px-4 py-3">Registered</th>
+                        <th className="text-right px-4 py-3">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {filtered.map((c: any) => (
+                        <>
+                          <tr key={c.id} className="hover:bg-white/[0.03] transition-colors">
+                            <td className="px-4 py-3">
+                              <p className="font-medium text-white">{c.collegeName}</p>
+                              <p className="text-xs text-slate-500">{c.email}</p>
+                            </td>
+                            <td className="px-4 py-3 font-mono text-xs text-slate-400">{c.domain}</td>
+                            <td className="px-4 py-3">
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${ statusColors[c.status] ?? 'bg-slate-700 text-slate-400' }`}>{c.status}</span>
+                            </td>
+                            <td className="px-4 py-3 text-slate-300">
+                              <p className="text-sm">{c.usedSeats ?? 0}/{c.totalSeats ?? 0}</p>
+                              <div className="w-16 h-1 bg-slate-700 rounded-full mt-1 overflow-hidden">
+                                <div className="h-full bg-violet-500 rounded-full" style={{ width: `${c.totalSeats > 0 ? Math.min(100, (c.usedSeats / c.totalSeats) * 100) : 0}%` }} />
+                              </div>
+                            </td>
+                            <td className="px-4 py-3 text-slate-400 text-xs">{c.allocatedPlan ?? '—'}</td>
+                            <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">{new Date(c.createdAt).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'2-digit' })}</td>
+                            <td className="px-4 py-3">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button onClick={() => fetchCollegeStudents(c.id)} className="px-2.5 py-1.5 rounded-lg bg-slate-700/60 text-slate-300 hover:text-white text-xs border border-slate-600 transition-all">{expandedCollege === c.id ? '▲ Hide' : '👥 Students'}</button>
+                                {c.status === 'PENDING' && <button onClick={() => { setApproveModal(c); setApproveSeats(200); setApprovePlan('Free'); }} className="px-2.5 py-1.5 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 text-xs transition-all">✓ Approve</button>}
+                                {c.status === 'PENDING' && <button onClick={() => { setRejectModal(c); setRejectReason(''); }} className="px-2.5 py-1.5 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-xs transition-all">✕ Reject</button>}
+                                {c.status === 'APPROVED' && <button onClick={() => doCollegeAction(c.id, 'suspend')} disabled={!!collegeActionLoading} className="px-2.5 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 text-xs transition-all disabled:opacity-50">⏸ Suspend</button>}
+                                {(c.status === 'SUSPENDED' || c.status === 'REJECTED') && <button onClick={() => doCollegeAction(c.id, 'reactivate')} disabled={!!collegeActionLoading} className="px-2.5 py-1.5 rounded-lg bg-violet-500/20 text-violet-400 border border-violet-500/30 hover:bg-violet-500/30 text-xs transition-all disabled:opacity-50">↺ Reactivate</button>}
+                              </div>
+                            </td>
+                          </tr>
+
+                          {/* Expanded Students Row */}
+                          {expandedCollege === c.id && (
+                            <tr key={`students-${c.id}`}>
+                              <td colSpan={7} className="bg-slate-900/60 border-t border-white/5 px-6 py-4">
+                                <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Students — {c.collegeName}</p>
+                                {collegeStudentsLoading === c.id ? (
+                                  <p className="text-slate-500 text-sm">Loading students…</p>
+                                ) : !collegeStudents[c.id] || collegeStudents[c.id].length === 0 ? (
+                                  <p className="text-slate-500 text-sm">No students enrolled yet.</p>
+                                ) : (
+                                  <div className="overflow-x-auto">
+                                    <table className="w-full text-xs">
+                                      <thead>
+                                        <tr className="text-slate-500 border-b border-white/5">
+                                          <th className="text-left py-2 pr-4">Name</th>
+                                          <th className="text-left py-2 pr-4">Email</th>
+                                          <th className="text-left py-2 pr-4">Dept</th>
+                                          <th className="text-left py-2 pr-4">Year</th>
+                                          <th className="text-left py-2 pr-4">Status</th>
+                                          <th className="text-left py-2">Onboarded</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody className="divide-y divide-white/5">
+                                        {collegeStudents[c.id].map((s: any) => (
+                                          <tr key={s.id} className="hover:bg-white/[0.02]">
+                                            <td className="py-2 pr-4 text-slate-200">{s.studentName}</td>
+                                            <td className="py-2 pr-4 text-slate-400">{s.email}</td>
+                                            <td className="py-2 pr-4 text-slate-400">{s.department ?? '—'}</td>
+                                            <td className="py-2 pr-4 text-slate-400">{s.year ?? '—'}</td>
+                                            <td className="py-2 pr-4">
+                                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${ s.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : s.status === 'SUSPENDED' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400' }`}>{s.status}</span>
+                                            </td>
+                                            <td className="py-2 text-slate-400">{s.onboardedAt ? new Date(s.onboardedAt).toLocaleDateString('en-IN') : <span className="text-yellow-500/70 text-[10px]">Invite Pending</span>}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          )}
+                        </>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {/* Approve Modal */}
+              {approveModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                    <h3 className="text-lg font-semibold text-white mb-1">Approve College Partner</h3>
+                    <p className="text-sm text-slate-400 mb-5">{approveModal.collegeName} — <span className="font-mono text-xs">{approveModal.domain}</span></p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Total Seats</label>
+                        <input type="number" min="1" value={approveSeats} onChange={e => setApproveSeats(+e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Allocated Plan</label>
+                        <select value={approvePlan} onChange={e => setApprovePlan(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500">
+                          <option value="Free">Free</option>
+                          <option value="Standard">Standard</option>
+                          <option value="Pro">Pro</option>
+                          <option value="Enterprise">Enterprise</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                      <button onClick={() => setApproveModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:text-white text-sm transition-all">Cancel</button>
+                      <button disabled={!!collegeActionLoading} onClick={() => doCollegeAction(approveModal.id, 'approve', { totalSeats: approveSeats, allocatedPlan: approvePlan })} className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-all disabled:opacity-50">{collegeActionLoading ? 'Approving…' : '✓ Confirm Approval'}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Reject Modal */}
+              {rejectModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                    <h3 className="text-lg font-semibold text-white mb-1">Reject Application</h3>
+                    <p className="text-sm text-slate-400 mb-5">{rejectModal.collegeName} — <span className="font-mono text-xs">{rejectModal.email}</span></p>
+                    <div>
+                      <label className="text-xs text-slate-400 block mb-1">Reason (shown to college admin)</label>
+                      <textarea rows={3} value={rejectReason} onChange={e => setRejectReason(e.target.value)} placeholder="Optional reason…" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 resize-none" />
+                    </div>
+                    <div className="flex gap-3 mt-5">
+                      <button onClick={() => setRejectModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:text-white text-sm transition-all">Cancel</button>
+                      <button disabled={!!collegeActionLoading} onClick={() => doCollegeAction(rejectModal.id, 'reject', { reason: rejectReason })} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all disabled:opacity-50">{collegeActionLoading ? 'Rejecting…' : '✕ Confirm Rejection'}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
       </div>
     </div>
   );

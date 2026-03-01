@@ -12,6 +12,20 @@ enum Role {
   Admin
   Modaretor
   SUPER_ADMIN
+  COLLEGE_ADMIN
+}
+
+enum CollegeAdminStatus {
+  PENDING    // Awaiting superadmin approval
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum CollegeStudentStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
 }
 
 enum Plan {
@@ -729,6 +743,146 @@ model LatestTopic {
 
   @@index([companyName])
   @@index([createdAt])
+}
+
+// ==================== COLLEGE / UNIVERSITY ADMIN SYSTEM ====================
+
+model CollegeAdmin {
+  id                String              @id @default(auto()) @map("_id") @db.ObjectId
+  collegeName       String
+  adminName         String
+  email             String              @unique
+  password          String
+  designation       String
+  contactNumber     String
+  domain            String              // e.g. gla.ac.in
+  logoUrl           String?
+  address           String?
+  website           String?
+  status            CollegeAdminStatus  @default(PENDING)
+  approvedBy        String?             @db.ObjectId  // superadmin id
+  approvedAt        DateTime?
+  rejectionReason   String?
+
+  // Plan allocation
+  totalSeats        Int                 @default(0)
+  usedSeats         Int                 @default(0)
+  allocatedPlan     Plan                @default(Free)
+  planExpiresAt     DateTime?
+  moduleLimits      Json?               // per-module limits for students
+
+  // Billing
+  billedCentrally   Boolean             @default(true)
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  students          CollegeStudent[]
+  batches           CollegeBatch[]
+  otpRecords        CollegeOtpVerification[]
+  paymentHistories  CollegePaymentHistory[]
+
+  @@index([domain])
+  @@index([status])
+}
+
+model CollegeOtpVerification {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  email           String
+  otp             String
+  type            String    @default("college_signup") // "college_signup" | "college_login_2fa"
+  attempts        Int       @default(0)
+  expiresAt       DateTime
+  verified        Boolean   @default(false)
+  // Pending data stored until verified
+  pendingName     String?
+  pendingPassword String?
+  pendingMeta     Json?     // collegeName, designation, contactNumber, domain
+
+  createdAt       DateTime  @default(now())
+
+  collegeAdminId  String?   @db.ObjectId
+  collegeAdmin    CollegeAdmin? @relation(fields: [collegeAdminId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model CollegeBatch {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  collegeAdminId  String    @db.ObjectId
+  collegeAdmin    CollegeAdmin @relation(fields: [collegeAdminId], references: [id], onDelete: Cascade)
+  name            String    // e.g. "Batch 2026", "CSE 2025"
+  department      String?
+  graduationYear  Int?
+  description     String?
+  studentCount    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  students        CollegeStudent[]
+
+  @@index([collegeAdminId])
+}
+
+model CollegeStudent {
+  id              String              @id @default(auto()) @map("_id") @db.ObjectId
+  collegeAdminId  String              @db.ObjectId
+  collegeAdmin    CollegeAdmin        @relation(fields: [collegeAdminId], references: [id], onDelete: Cascade)
+  batchId         String?             @db.ObjectId
+  batch           CollegeBatch?       @relation(fields: [batchId], references: [id])
+  
+  // Linked user (created when student first logs in / onboards)
+  userId          String?             @unique @db.ObjectId
+
+  // Student details
+  studentName     String
+  email           String              @unique
+  department      String?
+  year            Int?
+  rollNumber      String?
+
+  status          CollegeStudentStatus @default(ACTIVE)
+
+  // Plan override (if different from college plan)
+  customPlan      Plan?
+  customPlanExpiresAt DateTime?
+
+  // Onboarding
+  inviteToken     String?             @unique
+  inviteSentAt    DateTime?
+  onboardedAt     DateTime?
+  tempPassword    String?             // hashed temporary password
+
+  adminNotes      String?
+  warningFlags    String[]            @default([])
+
+  tags            String[]            @default([])
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([collegeAdminId])
+  @@index([status])
+}
+
+model CollegePaymentHistory {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  collegeAdminId  String    @db.ObjectId
+  collegeAdmin    CollegeAdmin @relation(fields: [collegeAdminId], references: [id], onDelete: Cascade)
+  plan            Plan
+  seats           Int
+  amount          Float
+  currency        String    @default("INR")
+  status          String    @default("paid") // paid, pending, failed
+  invoiceId       String?
+  paymentMethod   String?
+  validFrom       DateTime
+  validTill       DateTime
+  notes           String?
+  createdAt       DateTime  @default(now())
+
+  @@index([collegeAdminId])
 }
 
 // ─── Email Management ───────────────────────────────────────────────────────

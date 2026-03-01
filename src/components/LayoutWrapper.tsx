@@ -141,6 +141,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const hideNav = isEmbedded || isReportPrintMode;
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
   const isSuperAdminPage = pathname.startsWith('/superadmin');
+  const isCollegePage = pathname.startsWith('/college');
 
   // ── Super Admin: completely separate clean layout ──────────────────────────
   if (isSuperAdminPage) {
@@ -255,6 +256,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         </main>
       </div>
     );
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // ── College Portal: completely separate layout (no main-site nav) ──────────
+  if (isCollegePage) {
+    return <>{children}</>;
   }
   // ────────────────────────────────────────────────────────────────────────────
 

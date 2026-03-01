@@ -415,6 +415,33 @@ const MobileLandingPage = () => {
           </div>
         </motion.div>
       </section>
+
+      {/* ── College CTA ── */}
+      <section className="mx-4 mb-8 rounded-3xl bg-gradient-to-br from-[#0d1330] to-[#0f1840] border border-indigo-500/20 p-6">
+        <div className="flex items-center gap-3 mb-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
+            <Briefcase className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <p className="text-white font-bold text-sm">For Colleges & Universities</p>
+            <p className="text-slate-400 text-xs">Manage student training from one dashboard</p>
+          </div>
+        </div>
+        <div className="flex flex-col gap-2 mt-4">
+          <Link
+            href="/college/login"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm"
+          >
+            College Admin Sign In
+          </Link>
+          <Link
+            href="/college/signup"
+            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-white/[0.05] border border-indigo-500/30 text-slate-300 font-semibold text-sm"
+          >
+            Apply for Partnership
+          </Link>
+        </div>
+      </section>
     </div>
   );
 };
