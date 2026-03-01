@@ -40,9 +40,10 @@ const STATUS_STYLES: Record<string, { box: string; label: string; icon: string }
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const authSession = await getServerSession(authOptions);
     if (!authSession?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -54,7 +55,7 @@ export async function GET(
     if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
     const payment = await (prisma as any).paymentHistory.findFirst({
-      where: { id: params.id, userId: user.id },
+      where: { id: id, userId: user.id },
       include: { receipt: true },
     });
     if (!payment) return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
