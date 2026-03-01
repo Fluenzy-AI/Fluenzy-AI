@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
 import Razorpay from "razorpay";
+import { getPlanConfig, handleSubscriptionRenewal } from "@/lib/billing";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY!,
@@ -73,16 +74,14 @@ export async function POST(request: NextRequest) {
     const hasRequestDiscount = Number.isFinite(parsedDiscount);
     const hasRequestFinal = Number.isFinite(parsedFinal);
 
-    // Get plan pricing for amount
-    const planPricing = await (prisma as any).planPricing.findUnique({
-      where: { plan: plan },
-    });
+    // Get plan configuration for amount and limits
+    const planPricing = await getPlanConfig(plan);
 
     if (!planPricing) {
       return NextResponse.json({ error: `Pricing not found for plan: ${plan}` }, { status: 400 });
     }
 
-    // Calculate discount and final amount
+    // Calculate discount and final amount using pricing from database
     let discountAmount = hasRequestDiscount ? parsedDiscount : 0;
     let couponType = null;
     let couponDiscountValue: number | null = null;
@@ -145,23 +144,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Update user plan
-    const usageLimit = plan === 'Standard' ? 999999 : (plan === 'Pro' ? 100 : 3);
+    // Update user plan with proper limits from pricing
+    // Use the database pricing instead of hardcoded values
+    const usageLimit = planPricing.totalMonthlyLimit || (plan === 'Standard' || plan === 'Enterprise' ? 999999 : (plan === 'Pro' ? 30 : 2));
+    const billingDays = planPricing.billingCycleDays || 30;
+    const newRenewalDate = new Date(Date.now() + billingDays * 24 * 60 * 60 * 1000);
 
     const updatedUser = await prisma.users.update({
       where: { id: user.id },
       data: {
         plan: plan as any,
         usageLimit: usageLimit,
-        renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        // Reset training module usage counters
-        englishUsage: 0,
-        dailyUsage: 0,
-        hrUsage: 0,
-        technicalUsage: 0,
-        companyUsage: 0,
-        mockUsage: 0,
-        gdUsage: 0,
+        renewalDate: newRenewalDate,
+        // Reset training module usage counters for new billing cycle
+        // Note: Usage is now tracked in MonthlyUsage table
       },
     });
 
@@ -205,6 +201,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Update receipt validTill with actual renewal date
+    const receiptValidTill = newRenewalDate;
+    const receiptValidFrom = new Date();
+
     await (prisma as any).receipt.create({
       data: {
         paymentHistoryId: paymentHistory.id,
@@ -221,8 +221,8 @@ export async function POST(request: NextRequest) {
         couponCode: couponCode || null,
         couponType: couponType || null,
         discountValue: couponDiscountValue,
-        validFrom: new Date(),
-        validTill: user.renewalDate || null,
+        validFrom: receiptValidFrom,
+        validTill: receiptValidTill,
         receiptUrl: receiptUrl,
         snapshot: {
           receiptNumber,

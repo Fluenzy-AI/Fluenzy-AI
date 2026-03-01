@@ -73,6 +73,14 @@ const EnglishDashboard: React.FC<{ user: UserProfile }> = ({ user }) => {
     };
 
     checkUsage();
+
+    // Listen for usage updates from other components
+    const handleUsageUpdate = () => checkUsage();
+    window.addEventListener('usage-updated', handleUsageUpdate);
+
+    return () => {
+      window.removeEventListener('usage-updated', handleUsageUpdate);
+    };
   }, []);
 
   useEffect(() => {

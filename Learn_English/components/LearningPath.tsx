@@ -184,10 +184,28 @@ const LearningPath: React.FC<{ ctaInfo?: any }> = ({ ctaInfo }) => {
       }
     };
     fetchUsage();
+
+    // Listen for usage updates from other components (e.g., session completion)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'usage-updated') {
+        fetchUsage();
+      }
+    };
+    
+    // Also listen for custom events for same-tab updates
+    const handleUsageUpdate = () => fetchUsage();
+    window.addEventListener('usage-updated', handleUsageUpdate);
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('usage-updated', handleUsageUpdate);
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   const getModuleUsage = (type: ModuleType) => {
-    if (!usageData) return { canUse: true, remaining: '...', isLocked: false };
+    if (!usageData) return { canUse: true, remaining: '...', isLocked: false, isUnlimited: false };
+    
     const moduleMap: Record<string, string> = {
       [ModuleType.ENGLISH_LEARNING]: 'english',
       [ModuleType.CONVERSATION_PRACTICE]: 'daily',
@@ -195,17 +213,42 @@ const LearningPath: React.FC<{ ctaInfo?: any }> = ({ ctaInfo }) => {
       [ModuleType.TECH_INTERVIEW]: 'technical',
       [ModuleType.COMPANY_WISE_HR]: 'company',
       [ModuleType.FULL_MOCK]: 'mock',
-      [ModuleType.GD_DISCUSSION]: 'gd',
-      [ModuleType.GD_COACH]: 'gd',
+      [ModuleType.GD_DISCUSSION]: 'gd',      // GD Agent - uses gdUsage field
+      [ModuleType.GD_COACH]: 'gdCoach',      // GD Coach - uses gdCoachUsage field (SEPARATE!)
       [ModuleType.VOCABULARY_BOOSTER]: 'vocabulary',
       [ModuleType.CORPORATE_VOICE]: 'corporateVoice',
     };
+    
     const key = moduleMap[type];
-    if (!key) return { canUse: true, remaining: 'N/A', isLocked: false };
-    const canUse = usageData.canUse[key];
-    const remaining = usageData.remaining[key];
-    const isLocked = !canUse && remaining !== 'Unlimited';
-    return { canUse, remaining, isLocked };
+    if (!key) return { canUse: true, remaining: 'N/A', isLocked: false, isUnlimited: false, limit: undefined };
+    
+    // GD Agent (GD_DISCUSSION) is a partial module - parent doesn't have session limit
+    // Only AI Agents sub-feature is limited
+    const isGDParent = type === ModuleType.GD_DISCUSSION;
+    
+    // Check if this is an unlimited module
+    const isModuleUnlimited = usageData.isUnlimited?.[key] || 
+                              usageData.vocabularyUnlimited && key === 'vocabulary' ||
+                              key === 'corporateVoice' ||
+                              isGDParent; // GD parent has sub-features, not a direct limit
+    
+    // For unlimited modules or partial modules (like GD parent), don't show session count
+    if (isModuleUnlimited) {
+      return { 
+        canUse: true, 
+        remaining: 'Unlimited', 
+        isLocked: false, 
+        isUnlimited: true,
+        limit: undefined,
+        hideSessions: isGDParent // Hide sessions for GD parent
+      };
+    }
+    
+    const canUse = usageData.canUse?.[key] ?? true;
+    const remaining = usageData.remaining?.[key];
+    const limit = usageData.limits?.[key];
+    const isLocked = !canUse;
+    return { canUse, remaining, isLocked, isUnlimited: false, limit, hideSessions: false };
   };
 
   const allModules = [

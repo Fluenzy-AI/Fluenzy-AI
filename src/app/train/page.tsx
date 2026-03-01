@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
@@ -24,6 +24,32 @@ import {
 import { Button } from '@/components/ui/button';
 import { useTheme, themeConfig } from '@/contexts/ThemeContext';
 
+// ===== CRITICAL FIX: Module Classifications =====
+// Unlimited modules that should NOT show session counts (no limit enforced)
+const UNLIMITED_MODULES = new Set([
+  'vocabulary',
+  'latestTopics',
+  'latest_topics',
+  'gd',         // GD Agent parent - unlimited
+  'gdPrivate',  // GD Private - unlimited
+  'gdRandom',   // GD Random - unlimited
+]);
+// LIMITED modules (show real remaining count): hr, gdCoach, technical, company, daily, english, corporateVoice
+
+// Module key mapping: UI key → API key
+const MODULE_KEY_MAP: Record<string, string> = {
+  'hr': 'hr',
+  'gd-coach': 'gdCoach',
+  'gd': 'gd',
+  'technical': 'technical',
+  'company': 'company',
+  'daily': 'daily',
+  'latest-topics': 'latestTopics',
+  'english': 'english',
+  'vocabulary': 'vocabulary',
+  'corporate-voice': 'corporateVoice',
+};
+
 interface PlanInfo {
   plan: string;
   planName: string;
@@ -35,6 +61,7 @@ interface UsageData {
   canUse: Record<string, boolean>;
   remaining: Record<string, number | string>;
   limit: Record<string, number>;
+  isUnlimited?: Record<string, boolean>;
 }
 
 interface Module {
@@ -48,8 +75,10 @@ interface Module {
   badge?: string;
   isLocked: boolean;
   sessions: number | string;
+  isUnlimited?: boolean;
 }
 
+// Default modules - NO HARDCODED session values, will be fetched from API
 const modules: Module[] = [
   {
     type: 'hr',
@@ -61,7 +90,7 @@ const modules: Module[] = [
     href: '/train/hr',
     badge: 'Popular',
     isLocked: false,
-    sessions: 5,
+    sessions: '-', // Will be updated from API
   },
   {
     type: 'gd-coach',
@@ -73,7 +102,7 @@ const modules: Module[] = [
     href: '/train/gd-coach',
     badge: 'Pro',
     isLocked: false,
-    sessions: 3,
+    sessions: '-', // Will be updated from API
   },
   {
     type: 'gd',
@@ -85,7 +114,7 @@ const modules: Module[] = [
     href: '/train/gd',
     badge: 'AI',
     isLocked: false,
-    sessions: 5,
+    sessions: 'Unlimited', // GD Agent parent is unlimited
   },
   {
     type: 'technical',
@@ -97,7 +126,7 @@ const modules: Module[] = [
     href: '/train/technical',
     badge: 'Advanced',
     isLocked: false,
-    sessions: 5,
+    sessions: '-', // Will be updated from API
   },
   {
     type: 'company',
@@ -109,7 +138,7 @@ const modules: Module[] = [
     href: '/train/company',
     badge: 'Premium',
     isLocked: false,
-    sessions: 3,
+    sessions: '-', // Will be updated from API
   },
   {
     type: 'daily',
@@ -120,7 +149,7 @@ const modules: Module[] = [
     gradient: 'from-sky-500 to-blue-500',
     href: '/train/daily',
     isLocked: false,
-    sessions: '∞',
+    sessions: '-', // Will be updated from API (Daily is LIMITED)
   },
   {
     type: 'latest-topics',
@@ -131,7 +160,7 @@ const modules: Module[] = [
     gradient: 'from-lime-500 to-green-500',
     href: '/train/latest-topics',
     isLocked: false,
-    sessions: 10,
+    sessions: 'Unlimited', // Will be confirmed from API
   },
   {
     type: 'english',
@@ -142,7 +171,7 @@ const modules: Module[] = [
     gradient: 'from-blue-500 to-indigo-500',
     href: '/train/english',
     isLocked: false,
-    sessions: '∞',
+    sessions: '-', // Will be updated from API (English is LIMITED)
   },
   {
     type: 'vocabulary',
@@ -153,7 +182,7 @@ const modules: Module[] = [
     gradient: 'from-orange-500 to-red-500',
     href: '/train/vocabulary',
     isLocked: false,
-    sessions: '∞',
+    sessions: 'Unlimited', // Will be confirmed from API
   },
   {
     type: 'corporate-voice',
@@ -164,7 +193,7 @@ const modules: Module[] = [
     gradient: 'from-cyan-500 to-blue-500',
     href: '/train/corporate-voice',
     isLocked: false,
-    sessions: '∞',
+    sessions: '-', // Will be updated from API (Voice Practice is LIMITED)
   },
 ];
 
@@ -174,8 +203,48 @@ export default function TrainPage() {
   const { resolvedTheme } = useTheme();
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+
+  // ===== CRITICAL FIX: Fetch usage data correctly =====
+  const fetchUsageData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      console.log('[TRAIN_PAGE_FETCH_START] Fetching usage data from /api/training-usage');
+      
+      const [usageRes, planRes] = await Promise.all([
+        fetch('/api/training-usage'),
+        fetch('/api/user-plan'),
+      ]);
+      
+      if (usageRes.ok) {
+        const data = await usageRes.json();
+        console.log('[TRAIN_PAGE_FETCH_SUCCESS] Usage data received:', {
+          gdCoach: data.remaining?.gdCoach,
+          gd: data.remaining?.gd,
+          hr: data.remaining?.hr,
+          remaining: data.remaining,
+          isUnlimited: data.isUnlimited
+        });
+        setUsageData(data);
+      } else {
+        console.warn('[TRAIN_PAGE_FETCH_FAILED] Usage fetch failed:', usageRes.status);
+      }
+      
+      if (planRes.ok) {
+        const data = await planRes.json();
+        console.log('[TRAIN_PAGE_PLAN_FETCHED] Plan data:', data.planName);
+        setPlanInfo(data);
+      } else {
+        console.warn('[TRAIN_PAGE_PLAN_FAILED] Plan fetch failed:', planRes.status);
+      }
+    } catch (error) {
+      console.error('[TRAIN_PAGE_FETCH_ERROR] Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -184,45 +253,118 @@ export default function TrainPage() {
   }, [status, router]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [usageRes, planRes] = await Promise.all([
-          fetch('/api/training-usage'),
-          fetch('/api/user-plan'),
-        ]);
-        
-        if (usageRes.ok) {
-          const data = await usageRes.json();
-          setUsageData(data);
-        }
-        
-        if (planRes.ok) {
-          const data = await planRes.json();
-          setPlanInfo(data);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
     if (session?.user) {
-      fetchData();
+      console.log('[TRAIN_PAGE_LOAD] Session detected, checking for recent updates');
+      
+      // Check if there was a recent usage update (in case we navigated back from session)
+      const lastUpdate = localStorage.getItem('usage-updated');
+      if (lastUpdate) {
+        const updateTime = parseInt(lastUpdate);
+        const now = Date.now();
+        const timeDiff = now - updateTime;
+        
+        console.log(`[TRAIN_PAGE_RECENT_UPDATE_CHECK] Last update: ${timeDiff}ms ago`);
+        
+        // If update was within last 10 seconds, refetch immediately
+        if (timeDiff < 10000) {
+          console.log('[TRAIN_PAGE_RECENT_UPDATE_FOUND] Recent update detected, refetching immediately');
+          fetchUsageData();
+        }
+      } else {
+        console.log('[TRAIN_PAGE_NO_RECENT_UPDATE] No recent update in localStorage');
+      }
+      
+      // Initial fetch
+      fetchUsageData();
+      
+      // Listen for usage updates from other sources (same tab)
+      const handleUsageUpdate = (event: Event) => {
+        let moduleInfo = 'unknown';
+        if (event instanceof CustomEvent) {
+          moduleInfo = event.detail?.module || 'unknown';
+          console.log('[TRAIN_PAGE_EVENT_RECEIVED] Usage update event received:', {
+            module: event.detail?.module,
+            timestamp: event.detail?.timestamp,
+            lessonsCompleted: event.detail?.lessonsCompleted
+          });
+        } else {
+          console.log('[TRAIN_PAGE_EVENT_RECEIVED] Generic usage-updated event received');
+        }
+        
+        console.log(`[TRAIN_PAGE_REFETCH_TRIGGERED] Module (${moduleInfo}) session completed, refetching usage data...`);
+        fetchUsageData();
+      };
+      
+      window.addEventListener('usage-updated', handleUsageUpdate);
+      console.log('[TRAIN_PAGE_LISTENER_ATTACHED] Event listener attached for usage-updated');
+      
+      return () => {
+        window.removeEventListener('usage-updated', handleUsageUpdate);
+        console.log('[TRAIN_PAGE_LISTENER_REMOVED] Event listener removed');
+      };
     }
-  }, [session]);
+  }, [session, fetchUsageData]);
 
   const getUpdatedModules = () => {
-    if (!usageData) return modules;
+    console.log('[TRAIN_PAGE_GET_MODULES_START] usageData:', usageData ? 'loaded' : 'null');
     
     return modules.map(mod => {
-      const key = mod.type;
-      const canUse = usageData.canUse[key] ?? true;
-      const remaining = usageData.remaining[key] ?? (planInfo?.isUnlimited ? '∞' : 3);
-      const isLocked = !canUse && remaining !== 'Unlimited' && remaining !== '∞';
+      // Get the correct API key for this module
+      const apiKey = MODULE_KEY_MAP[mod.type] || mod.type;
       
+      // Check if this is an unlimited module
+      const isUnlimitedModule = UNLIMITED_MODULES.has(apiKey);
+      
+      // If no API data yet, show loading state for limited modules only
+      if (!usageData) {
+        const result = {
+          ...mod,
+          sessions: isUnlimitedModule ? 'Unlimited' : '-',
+          isUnlimited: isUnlimitedModule,
+          isLocked: false, // Don't lock until we have data
+        };
+        if (mod.type === 'gd-coach') {
+          console.log('[TRAIN_PAGE_GDCOACH_LOADING] GD Coach in loading state:', result.sessions);
+        }
+        return result;
+      }
+
+      // Get usage info from API response
+      const canUse = usageData.canUse?.[apiKey] ?? true;
+      const remaining = usageData.remaining?.[apiKey];
+      const isApiUnlimited = usageData.isUnlimited?.[apiKey] ?? isUnlimitedModule;
+      
+      // Determine lock status
+      const isLocked = !canUse && remaining !== 'Unlimited' && remaining !== '∞' && remaining !== undefined;
+      
+      // Determine session display
+      let sessionDisplay: number | string;
+      if (isUnlimitedModule || isApiUnlimited) {
+        sessionDisplay = 'Unlimited';
+      } else if (remaining === undefined) {
+        sessionDisplay = '-'; // Loading
+      } else {
+        sessionDisplay = remaining;
+      }
+
+      if (mod.type === 'gd-coach') {
+        console.log('[TRAIN_PAGE_GDCOACH_DATA]', {
+          type: mod.type,
+          apiKey: apiKey,
+          remaining: remaining,
+          isApiUnlimited: isApiUnlimited,
+          isLocked: isLocked,
+          sessionDisplay: sessionDisplay
+        });
+      }
+
+      console.log(`[MODULE] ${mod.type} → apiKey: ${apiKey}, unlimited: ${isUnlimitedModule}, sessions: ${sessionDisplay}`);
+
       return {
         ...mod,
         isLocked,
-        sessions: remaining,
+        sessions: sessionDisplay,
+        isUnlimited: isUnlimitedModule || isApiUnlimited,
       };
     });
   };
@@ -333,7 +475,16 @@ export default function TrainPage() {
                   <div className="flex items-center gap-2">
                     <Sparkles size={14} className="text-[#22D3EE]" />
                     <span className={`text-sm ${currentTheme.textMuted}`}>
-                      {mod.sessions} {mod.sessions === 1 ? 'session' : 'sessions'}
+                      {/* CRITICAL FIX: Show correct session info based on module type */}
+                      {mod.isUnlimited ? (
+                        'Unlimited'
+                      ) : mod.sessions === '-' ? (
+                        'Loading...'
+                      ) : (
+                        <>
+                          {mod.sessions} {mod.sessions === 1 ? 'session' : 'sessions'}
+                        </>
+                      )}
                     </span>
                   </div>
                   

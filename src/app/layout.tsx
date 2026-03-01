@@ -4,6 +4,7 @@ import "./globals.css";
 import Provider from "./providers";
 import LayoutWrapper from "../components/LayoutWrapper";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import LoginTracker from "@/components/LoginTracker";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.fluenzyai.app"),
@@ -158,6 +159,7 @@ export default function RootLayout({
         />
         <ThemeProvider>
           <Provider>
+            <LoginTracker />
             <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
               <LayoutWrapper>
                 {children}

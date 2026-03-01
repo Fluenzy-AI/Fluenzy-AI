@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
+import { incrementModuleUsage } from '@/lib/billing';
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,7 +45,24 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ success: true });
+    // Increment English learning usage count using centralized billing system
+    console.log(`[SESSION_COMPLETE] User: ${user.id}, Module: ENGLISH_LEARNING, SessionID: ${lessonId}`);
+    const usageResult = await incrementModuleUsage(user.id, 'english');
+
+    if (!usageResult.success) {
+      console.error(`[INCREMENT_FAILED] User: ${user.id}, Module: english, Error: ${usageResult.error}`);
+      return NextResponse.json({
+        error: usageResult.error || 'Failed to record usage',
+        success: false
+      }, { status: 500 });
+    }
+
+    return NextResponse.json({ 
+      success: true,
+      usage: usageResult.currentUsage,
+      remaining: usageResult.remaining,
+      message: 'English learning lesson completed'
+    });
   } catch (error) {
     console.error('Lesson completion error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

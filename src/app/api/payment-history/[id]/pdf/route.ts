@@ -1,0 +1,267 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import prisma from "@/lib/prisma";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const formatIst = (date: Date) =>
+  new Intl.DateTimeFormat("en-IN", {
+    timeZone: "Asia/Kolkata",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+
+const titleCase = (value?: string | null) => {
+  if (!value) return "N/A";
+  return value.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (m) => m.toUpperCase());
+};
+
+const fmt = (v?: number | null) =>
+  `₹${(Number.isFinite(v) ? Number(v) : 0).toFixed(0)}`;
+
+const getSessionLimit = (plan?: string | null) => {
+  if (plan === "Standard") return "Unlimited";
+  if (plan === "Pro") return "100";
+  return "N/A";
+};
+
+const STATUS_STYLES: Record<string, { box: string; label: string; icon: string }> = {
+  paid:            { box: "background:#ecfdf5;border:1px solid #34d399;color:#065f46",   label: "Paid",                        icon: "✅" },
+  free_via_coupon: { box: "background:#eff6ff;border:1px solid #60a5fa;color:#1e40af",   label: "Free via Coupon",             icon: "🎁" },
+  failed:          { box: "background:#fef2f2;border:1px solid #f87171;color:#991b1b",   label: "Payment Failed",              icon: "❌" },
+  refunded:        { box: "background:#fffbeb;border:1px solid #fbbf24;color:#92400e",   label: "Refunded",                    icon: "↩️" },
+};
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const authSession = await getServerSession(authOptions);
+    if (!authSession?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { email: authSession.user.email },
+    });
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    const payment = await (prisma as any).paymentHistory.findFirst({
+      where: { id: params.id, userId: user.id },
+      include: { receipt: true },
+    });
+    if (!payment) return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
+
+    const status = payment.status || "paid";
+    const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.paid;
+
+    const planName = payment.plan || "Standard";
+    const billingCycle = payment.billingCycle || "monthly";
+    const originalAmount = payment.originalAmount ?? 0;
+    const discountAmount = payment.discountAmount ?? 0;
+    const finalAmount = payment.finalAmount ?? 0;
+    const currency = payment.paymentCurrency || "INR";
+    const invoiceDate = formatIst(new Date(payment.date));
+    const invoiceNumber =
+      payment.receipt?.invoiceNumber ||
+      payment.invoiceId ||
+      `FLZ-${status.toUpperCase().slice(0, 3)}-${payment.id.slice(-6).toUpperCase()}`;
+
+    const gstin = process.env.FLUENZY_GSTIN || "";
+
+    let couponSection = "";
+    if (payment.couponUsed) {
+      couponSection = `
+        <div class="divider"></div>
+        <div class="section">
+          <div class="section-title">Coupon Applied</div>
+          <div class="meta-grid">
+            <div><span class="label">Code</span><span class="value">${payment.couponUsed}</span></div>
+            <div><span class="label">Discount</span><span class="value">${fmt(discountAmount)} off</span></div>
+          </div>
+        </div>`;
+    }
+
+    // Subscription validity only for successful payments
+    let validitySection = "";
+    if (status === "paid" || status === "free_via_coupon") {
+      const validFrom = formatIst(new Date(payment.date));
+      const validTill = user.renewalDate
+        ? formatIst(new Date(user.renewalDate))
+        : "N/A";
+      validitySection = `
+        <div class="divider"></div>
+        <div class="section">
+          <div class="section-title">Plan & Subscription Details</div>
+          <table class="table">
+            <thead><tr><th>Item</th><th>Detail</th></tr></thead>
+            <tbody>
+              <tr><td>Plan Name</td><td>${planName}</td></tr>
+              <tr><td>Billing Cycle</td><td>${titleCase(billingCycle)}</td></tr>
+              <tr><td>Sessions Included</td><td>${getSessionLimit(planName)}</td></tr>
+              <tr><td>Valid From</td><td>${validFrom}</td></tr>
+              <tr><td>Valid Till</td><td>${validTill}</td></tr>
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    const statusMessage: Record<string, string> = {
+      paid:            "Payment successful. Your subscription is now active.",
+      free_via_coupon: "Plan activated via coupon. Your subscription is now active.",
+      failed:          "This payment attempt was unsuccessful. You have not been charged.",
+      refunded:        "This payment has been refunded. Please allow 5-7 business days.",
+    };
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <title>Fluenzy AI – ${titleCase(status)} Statement</title>
+  <style>
+    @page { size: A4; margin: 18mm; }
+    body { font-family: 'Helvetica', 'Arial', sans-serif; color: #0f172a; margin:0; padding:0; font-size:11pt; }
+    .container { padding: 20px 24px; }
+    .header { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:12px; border-bottom:2px solid #e2e8f0; }
+    .logo { display:flex; align-items:center; gap:12px; }
+    .logo-badge { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#4f46e5,#7c3aed); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:20px; line-height:44px; text-align:center; }
+    .company h1 { font-size:18pt; margin:0 0 2px; }
+    .company p { margin:2px 0; color:#475569; font-size:9.5pt; }
+    .doc-type { text-align:right; }
+    .doc-type .type-label { font-size:16pt; font-weight:700; color:#4f46e5; }
+    .doc-type .inv-no { font-size:9pt; color:#64748b; margin-top:4px; }
+    .divider { margin:16px 0; height:1px; background:#e2e8f0; }
+    .section-title { font-size:11pt; font-weight:700; margin-bottom:10px; color:#1e293b; text-transform:uppercase; letter-spacing:.5px; font-size:9.5pt; }
+    .meta-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:7px 28px; font-size:10pt; }
+    .meta-grid div { display:flex; justify-content:space-between; border-bottom:1px dashed #f1f5f9; padding-bottom:4px; }
+    .label { color:#64748b; font-weight:600; }
+    .value { color:#0f172a; font-weight:700; }
+    .table { width:100%; border-collapse:collapse; margin-top:6px; font-size:10pt; }
+    .table th, .table td { border:1px solid #e2e8f0; padding:7px 10px; text-align:left; }
+    .table th { background:#f8fafc; font-weight:700; color:#334155; }
+    .price-table td:last-child, .price-table th:last-child { text-align:right; }
+    .total-row td { font-weight:700; background:#f8fafc; }
+    .status-box { margin:16px 0; padding:12px 16px; border-radius:10px; font-weight:600; font-size:10.5pt; }
+    .footer { margin-top:24px; padding-top:12px; border-top:1px solid #e2e8f0; font-size:9pt; color:#64748b; text-align:center; line-height:1.7; }
+    .free-badge { display:inline-block; background:#dcfce7; color:#166534; padding:2px 10px; border-radius:20px; font-size:9pt; font-weight:700; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-badge">F</div>
+      <div class="company">
+        <h1>Fluenzy AI</h1>
+        <p>AI Interview &amp; Communication Coach</p>
+        <p>https://www.fluenzyai.app</p>
+        <p>support@fluenzyai.app</p>
+        ${gstin ? `<p>GSTIN: ${gstin}</p>` : ""}
+      </div>
+    </div>
+    <div class="doc-type">
+      <div class="type-label">PAYMENT STATEMENT</div>
+      <div class="inv-no">${invoiceNumber}</div>
+      <div style="margin-top:6px;font-size:9.5pt;color:#64748b;">${invoiceDate}</div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Transaction Details</div>
+    <div class="meta-grid">
+      <div><span class="label">Document #</span><span class="value">${invoiceNumber}</span></div>
+      <div><span class="label">Date &amp; Time (IST)</span><span class="value">${invoiceDate}</span></div>
+      <div><span class="label">Payment ID</span><span class="value">${payment.paymentId || "N/A"}</span></div>
+      <div><span class="label">Order ID</span><span class="value">${payment.orderId || "N/A"}</span></div>
+      <div><span class="label">Status</span><span class="value">${statusStyle.icon} ${statusStyle.label}</span></div>
+      <div><span class="label">Method</span><span class="value">${titleCase(payment.paymentMethod)}</span></div>
+      <div><span class="label">Currency</span><span class="value">${currency}</span></div>
+      <div><span class="label">Plan</span><span class="value">${planName}</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Customer Details</div>
+    <div class="meta-grid">
+      <div><span class="label">Name</span><span class="value">${user.name || "N/A"}</span></div>
+      <div><span class="label">Email</span><span class="value">${user.email}</span></div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <div class="section">
+    <div class="section-title">Price Breakdown</div>
+    <table class="table price-table">
+      <thead>
+        <tr><th>Description</th><th>Amount</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>${planName} Plan (${titleCase(billingCycle)})</td><td>${fmt(originalAmount)}</td></tr>
+        <tr><td>Discount / Coupon${payment.couponUsed ? ` (${payment.couponUsed})` : ""}</td><td>− ${fmt(discountAmount)}</td></tr>
+        <tr class="total-row">
+          <td><strong>${status === "failed" ? "Attempted Amount" : "Amount Paid"}</strong></td>
+          <td><strong>${finalAmount === 0 ? `<span class="free-badge">FREE</span>` : fmt(finalAmount)}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  ${couponSection}
+  ${validitySection}
+
+  <div class="divider"></div>
+
+  <div class="status-box" style="${statusStyle.box};border-radius:10px;">
+    ${statusStyle.icon}&nbsp;&nbsp;${statusMessage[status] || "Transaction processed."}
+  </div>
+
+  <div class="footer">
+    This is a system-generated document. No signature required.<br/>
+    For payment support: <strong>support@fluenzyai.app</strong><br/>
+    Refund Policy: https://www.fluenzyai.app/return-and-refund-policy • Powered by Razorpay
+  </div>
+</div>
+</body>
+</html>`;
+
+    const puppeteer = (await import("puppeteer")).default;
+    const browser = await puppeteer.launch({
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+    const pg = await browser.newPage();
+    await pg.setContent(html, { waitUntil: "networkidle0" });
+    try {
+      const pdfBuffer = Buffer.from(
+        await pg.pdf({
+          format: "A4",
+          printBackground: true,
+          margin: { top: "18mm", right: "18mm", bottom: "18mm", left: "18mm" },
+        })
+      );
+      const filename = `FluenzyAI_${titleCase(status).replace(/ /g, "_")}_${invoiceNumber}.pdf`;
+      return new NextResponse(pdfBuffer, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${filename}"`,
+        },
+      });
+    } finally {
+      await browser.close();
+    }
+  } catch (error) {
+    console.error("[PAYMENT_PDF_ERROR]", error);
+    return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 });
+  }
+}

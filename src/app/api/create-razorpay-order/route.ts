@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import Razorpay from "razorpay";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
+import { getPlanConfig } from "@/lib/billing";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY!,
@@ -53,10 +54,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get plan pricing
-    const planPricing = await (prisma as any).planPricing.findUnique({
-      where: { plan: targetPlan },
-    });
+    // Get plan configuration using the billing utility
+    const planPricing = await getPlanConfig(targetPlan);
 
     if (!planPricing) {
       return NextResponse.json({ error: `Pricing not found for plan: ${targetPlan}` }, { status: 400 });
@@ -64,8 +63,9 @@ export async function POST(request: NextRequest) {
 
     // Handle coupon logic
     let appliedCoupon: any = null;
+    // Use annual price if annual billing, otherwise use monthly price
     const fallbackOriginalAmount = billingCycle === 'annual' && targetPlan !== 'Free'
-      ? Math.round(planPricing.price * 12 * 0.8)
+      ? (planPricing.annualPrice || Math.round(planPricing.price * 12 * 0.8))
       : planPricing.price;
     let originalAmount = requestOriginalAmount ?? fallbackOriginalAmount;
     let discountAmount = requestDiscountAmount ?? 0;
@@ -159,14 +159,19 @@ export async function POST(request: NextRequest) {
     // Check for 100% discount (free upgrade)
     const isFreeUpgrade = finalAmount === 0;
 
+    // Calculate billing days from pricing
+    const billingDays = planPricing.billingCycleDays || 30;
+
     if (isFreeUpgrade) {
       try {
+        const usageLimit = planPricing.totalMonthlyLimit || (targetPlan === 'Standard' || targetPlan === 'Enterprise' ? 999999 : (targetPlan === 'Pro' ? 30 : 2));
+        
         await prisma.users.update({
           where: { id: user.id },
           data: {
             plan: targetPlan as any,
-            usageLimit: targetPlan === 'Standard' ? 999999 : (targetPlan === 'Pro' ? 100 : 3),
-            renewalDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+            usageLimit: usageLimit,
+            renewalDate: new Date(Date.now() + billingDays * 24 * 60 * 60 * 1000),
           },
         });
 
@@ -180,6 +185,8 @@ export async function POST(request: NextRequest) {
         await (prisma as any).paymentHistory.create({
           data: {
             userId: user.id,
+            plan: targetPlan,
+            billingCycle: billingCycle,
             originalAmount: originalAmount,
             discountAmount: originalAmount,
             finalAmount: 0,

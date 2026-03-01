@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { validateModuleAccess, incrementModuleUsage, getPlanConfig } from "@/lib/billing";
 
 interface UserGuideInput {
   name: string;
@@ -44,56 +45,6 @@ interface UserGuideInput {
   jobDescription: string;
   derivedStrengths: string;
   derivedWeaknesses: string;
-}
-
-// Usage limits by plan (separate from training modules)
-const INTERVIEW_GUIDE_LIMITS: Record<string, number | null> = {
-  Free: 3,
-  Standard: null, // Unlimited
-  Pro: 100,
-};
-
-// Helper function to check and reset monthly usage for interview guides
-async function checkInterviewGuideMonthlyReset(user: any) {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-
-  // Get global settings for this plan
-  const planSettings = await (prisma as any).globalPlanSettings.findUnique({
-    where: { plan: user.plan?.toString() || 'Free' },
-  });
-
-  if (!planSettings || planSettings.status !== 'active') {
-    // Return default limits if no settings
-    return { needsReset: false };
-  }
-
-  const lastReset = new Date(planSettings.lastReset);
-  const lastResetMonth = lastReset.getMonth();
-  const lastResetYear = lastReset.getFullYear();
-
-  const needsReset = currentMonth !== lastResetMonth || currentYear !== lastResetYear;
-
-  if (needsReset) {
-    // Reset interview guide usage along with other modules
-    await (prisma.users.update as any)({
-      where: { id: user.id },
-      data: {
-        interviewGuideUsage: 0,
-      },
-    });
-
-    // Update last reset time
-    await (prisma as any).globalPlanSettings.update({
-      where: { plan: user.plan?.toString() || 'Free' },
-      data: { lastReset: now },
-    });
-
-    return { needsReset: true, resetUsage: 0 };
-  }
-
-  return { needsReset: false };
 }
 
 // Derive strengths and weaknesses from profile data and job description
@@ -436,22 +387,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check usage limits
+    // Check usage limits using centralized billing system
     const userPlan = user.plan?.toString() || "Free";
-    const limit = INTERVIEW_GUIDE_LIMITS[userPlan];
-    
-    // Check for monthly reset
-    const { needsReset, resetUsage } = await checkInterviewGuideMonthlyReset(user);
-    const currentUsage = needsReset ? (resetUsage ?? 0) : ((user as any).interviewGuideUsage || 0);
+    const accessResult = await validateModuleAccess(user.id, "interviewGuide");
 
-    if (limit !== null && currentUsage >= limit) {
+    if (!accessResult.allowed) {
       return NextResponse.json(
         {
-          error: "Usage limit reached",
-          message: `You've used all ${limit} Interview Guides for this month on ${userPlan} plan. Upgrade to get more!`,
-          limit,
-          used: currentUsage,
+          error: accessResult.error || "Usage limit reached",
+          message: `You've used all ${accessResult.limit} Interview Guides for this billing cycle on ${userPlan} plan. Upgrade to get more!`,
+          limit: accessResult.limit,
+          used: accessResult.currentUsage,
           remaining: 0,
+          resetAt: accessResult.resetAt,
           redirectToPricing: true,
         },
         { status: 403 }
@@ -612,17 +560,8 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Increment usage counter
-    await (prisma.users.update as any)({
-      where: { id: user.id },
-      data: {
-        interviewGuideUsage: { increment: 1 },
-      },
-    });
-
-    // Calculate remaining uses
-    const newUsage = currentUsage + 1;
-    const remaining = limit === null ? "Unlimited" : Math.max(0, limit - newUsage);
+    // Increment usage using centralized billing system
+    const usageResult = await incrementModuleUsage(user.id, "interviewGuide");
 
     return NextResponse.json({
       success: true,
@@ -635,9 +574,9 @@ export async function POST(request: NextRequest) {
         targetCompany: guideInput.targetCompany,
       },
       usage: {
-        used: newUsage,
-        limit: limit === null ? "Unlimited" : limit,
-        remaining,
+        used: usageResult.currentUsage,
+        limit: usageResult.limit,
+        remaining: usageResult.remaining,
       },
     });
   } catch (error: any) {
@@ -668,20 +607,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Get usage using centralized billing system
+    const accessResult = await validateModuleAccess(user.id, "interviewGuide");
     const userPlan = user.plan?.toString() || "Free";
-    const limit = INTERVIEW_GUIDE_LIMITS[userPlan];
-    
-    // Check for monthly reset
-    const { needsReset, resetUsage } = await checkInterviewGuideMonthlyReset(user);
-    const currentUsage = needsReset ? (resetUsage ?? 0) : ((user as any).interviewGuideUsage || 0);
 
     return NextResponse.json({
       plan: userPlan,
-      limit: limit === null ? "Unlimited" : limit,
-      used: currentUsage,
-      remaining: limit === null ? "Unlimited" : Math.max(0, limit - currentUsage),
-      canGenerate: limit === null || currentUsage < limit,
-      redirectToPricing: limit !== null && currentUsage >= limit,
+      limit: accessResult.limit,
+      used: accessResult.currentUsage,
+      remaining: accessResult.remaining,
+      canGenerate: accessResult.allowed,
+      resetAt: accessResult.resetAt,
+      billingMonth: accessResult.billingMonth,
+      billingYear: accessResult.billingYear,
     });
   } catch (error: any) {
     console.error("Usage check error:", error);

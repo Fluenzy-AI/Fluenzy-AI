@@ -312,6 +312,14 @@ const GDAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) => v
       }
     };
     checkUsage();
+
+    // Listen for usage updates from other components
+    const handleUsageUpdate = () => checkUsage();
+    window.addEventListener('usage-updated', handleUsageUpdate);
+
+    return () => {
+      window.removeEventListener('usage-updated', handleUsageUpdate);
+    };
   }, []);
 
   const nextStep = () => setStep(s => s + 1);

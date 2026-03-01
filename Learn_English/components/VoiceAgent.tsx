@@ -249,17 +249,80 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
 
         // Mark lesson as completed
         if (sessionMeta?.lessonId) {
-          const apiEndpoint = isEnglishLearning ? '/api/lesson-complete' : isGDCoach ? '/api/gd-complete' : '/api/hr-complete';
-          const storageKey = isEnglishLearning ? 'englishProgress' : isGDCoach ? 'gdProgress' : 'hrProgress';
+          // ===== CRITICAL FIX: Route to correct endpoint based on module type =====
+          let apiEndpoint = '/api/hr-complete'; // Default fallback
+          let storageKey = 'hrProgress';
+          let moduleLabel = 'HR_INTERVIEW';
+          
+          if (isEnglishLearning) {
+            apiEndpoint = '/api/lesson-complete';
+            storageKey = 'englishProgress';
+            moduleLabel = 'ENGLISH_LEARNING';
+          } else if (isGDCoach) {
+            apiEndpoint = '/api/gd-complete';
+            storageKey = 'gdProgress';
+            moduleLabel = 'GD_COACH';
+          } else if (type === ModuleType.TECH_INTERVIEW) {
+            apiEndpoint = '/api/technical-complete';
+            storageKey = 'technicalProgress';
+            moduleLabel = 'TECH_INTERVIEW';
+          } else if (type === ModuleType.COMPANY_WISE_HR || type === ModuleType.COMPANY_SPECIFIC) {
+            apiEndpoint = '/api/company-complete';
+            storageKey = 'companyProgress';
+            moduleLabel = 'COMPANY_WISE_HR';
+          } else if (type === ModuleType.CONVERSATION_PRACTICE) {
+            apiEndpoint = '/api/daily-complete';
+            storageKey = 'dailyProgress';
+            moduleLabel = 'CONVERSATION_PRACTICE';
+          } else if (type === ModuleType.FULL_MOCK) {
+            apiEndpoint = '/api/mock-complete';
+            storageKey = 'mockProgress';
+            moduleLabel = 'FULL_MOCK';
+          }
 
           try {
-            await fetch(apiEndpoint, {
+            console.log(`[SESSION_COMPLETE_DISPATCH_START] Module: ${moduleLabel}, Endpoint: ${apiEndpoint}, LessonID: ${sessionMeta.lessonId}`);
+            
+            const response = await fetch(apiEndpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ lessonId: sessionMeta.lessonId })
             });
+            
+            console.log(`[SESSION_COMPLETE_API_RESPONSE] Module: ${moduleLabel}, Status: ${response.status}, OK: ${response.ok}`);
+            
+            // Trigger usage refresh in other components
+            if (response.ok) {
+              const responseData = await response.json();
+              console.log(`[SESSION_COMPLETE_SUCCESS] Module: ${moduleLabel}, Response:`, responseData);
+              
+              // Set localStorage as backup
+              const updateTimestamp = Date.now().toString();
+              localStorage.setItem('usage-updated', updateTimestamp);
+              localStorage.setItem(`usage-updated-${moduleLabel}`, updateTimestamp);
+              console.log(`[SESSION_COMPLETE_STORAGE] Set usage-updated to ${updateTimestamp}`);
+              
+              // Dispatch custom event with module info
+              const event = new CustomEvent('usage-updated', { 
+                detail: { 
+                  module: moduleLabel, 
+                  timestamp: updateTimestamp,
+                  lessonsCompleted: 1
+                } 
+              });
+              window.dispatchEvent(event);
+              console.log(`[SESSION_COMPLETE_EVENT_DISPATCH] Event fired for ${moduleLabel}`);
+              
+              // Also trigger page visibility event in case other tabs are listening
+              if (document.visibilityState === 'visible') {
+                console.log(`[SESSION_COMPLETE_PAGE_VISIBLE] Current page is visible, UI should update`);
+              }
+            } else {
+              const errorText = await response.text();
+              console.error(`[SESSION_COMPLETE_FAILED] Module: ${moduleLabel}, Status: ${response.status}, Error: ${errorText}`);
+            }
           } catch (error) {
-            console.error('API completion failed, using localStorage');
+            console.error(`[SESSION_COMPLETE_ERROR] Module: ${moduleLabel}, Exception:`, error);
           }
 
           // Always update localStorage as backup
@@ -267,6 +330,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
           const progressData = JSON.parse(stored);
           progressData[sessionMeta.lessonId] = true;
           localStorage.setItem(storageKey, JSON.stringify(progressData));
+          console.log(`[SESSION_COMPLETE_PROGRESS_STORED] Lesson marked complete in ${storageKey}`);
         }
       } catch (error) {
         console.error('Session save error:', error);

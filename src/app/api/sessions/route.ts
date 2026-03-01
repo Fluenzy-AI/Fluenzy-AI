@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { calculateInterviewScore } from '@/lib/utils';
+import { incrementModuleUsage } from '@/lib/billing';
 
 const getDurationMinutes = (
   start?: Date | null,
@@ -49,6 +50,8 @@ export async function POST(request: NextRequest) {
       ? Math.round((new Date(endTime).getTime() - new Date(startTime).getTime()) / 60000)
       : null;
 
+    console.log('[SESSION_CREATE_START]', { userId: user.id, module, sessionId, timestamp: new Date().toISOString() });
+
     const newSession = await (prisma as any).session.create({
       data: {
         sessionId,
@@ -94,9 +97,55 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json({ sessionId: newSession.sessionId });
+    console.log('[SESSION_SAVED_SUCCESS]', { sessionId: newSession.sessionId, duration, score: score / 100 });
+
+    // ============================================================
+    // CRITICAL FIX: Increment module usage AFTER session created
+    // ============================================================
+    console.log('[USAGE_INCREMENT_START]', { userId: user.id, module, sessionId });
+    
+    const usageResult = await incrementModuleUsage(user.id, module as any);
+
+    if (!usageResult.success) {
+      console.error('[USAGE_INCREMENT_FAILED]', { 
+        userId: user.id, 
+        module, 
+        error: usageResult.error 
+      });
+      // Log error but don't fail - session is already saved and valuable
+    } else {
+      console.log('[USAGE_INCREMENT_SUCCESS]', { 
+        userId: user.id, 
+        module, 
+        newUsage: usageResult.currentUsage,
+        remaining: usageResult.remaining,
+        limitReached: usageResult.remaining === 0
+      });
+    }
+
+    // ============================================================
+    // Return comprehensive response with both session and usage info
+    // ============================================================
+    return NextResponse.json({
+      sessionId: newSession.sessionId,
+      session: {
+        id: newSession.id,
+        sessionId: newSession.sessionId,
+        module: newSession.module,
+        duration: newSession.duration,
+        score: score / 100,
+        status: calculatedStatus,
+        createdAt: newSession.createdAt
+      },
+      usage: {
+        currentUsage: usageResult.success ? usageResult.currentUsage : undefined,
+        remaining: usageResult.success ? usageResult.remaining : undefined,
+        isLimitExceeded: usageResult.success ? usageResult.remaining === 0 : undefined,
+        usageIncrementFailed: !usageResult.success
+      }
+    });
   } catch (error) {
-    console.error('Session save error:', error);
+    console.error('[SESSION_SAVE_ERROR]', { error, timestamp: new Date().toISOString() });
     return NextResponse.json({ error: 'Failed to save session' }, { status: 500 });
   }
 }

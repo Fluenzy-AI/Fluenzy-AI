@@ -577,10 +577,13 @@ export default function BillingPage() {
           </Card>
         )}
 
-        {/* Back to App */}
-        <div className="flex justify-center">
+        {/* Footer Actions */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
           <Button variant="outline" asChild>
             <Link href="/">Back to App</Link>
+          </Button>
+          <Button variant="ghost" asChild>
+            <Link href="/billing/history">View Payment History</Link>
           </Button>
         </div>
       </div>

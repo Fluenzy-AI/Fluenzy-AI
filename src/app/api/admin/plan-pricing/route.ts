@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { DEFAULT_PLAN_LIMITS } from "@/lib/billing";
 
 export async function GET() {
   try {
@@ -13,17 +14,73 @@ export async function GET() {
       pricingObj[pricing.plan] = {
         name: pricing.name,
         price: pricing.price,
+        annualPrice: pricing.annualPrice,
         currency: pricing.currency,
         status: pricing.status,
+        moduleLimits: pricing.moduleLimits,
+        razorpayPlanId: pricing.razorpayPlanId,
+        razorpayPriceId: pricing.razorpayPriceId,
+        isUnlimited: pricing.isUnlimited,
+        totalMonthlyLimit: pricing.totalMonthlyLimit,
+        billingCycleDays: pricing.billingCycleDays,
         updatedAt: pricing.updatedAt,
       };
     });
 
-    // Ensure all plans have defaults
+    // Ensure all plans have defaults (CORRECTED LIMITS)
     const defaults: Record<string, any> = {
-      Free: { name: 'Free', price: 0, currency: 'INR', status: 'active' },
-      Standard: { name: 'Standard', price: 150, currency: 'INR', status: 'active' },
-      Pro: { name: 'Pro', price: 20, currency: 'INR', status: 'active' },
+      Free: { 
+        name: 'Free', 
+        price: 0, 
+        annualPrice: 0,
+        currency: 'INR', 
+        status: 'active',
+        moduleLimits: DEFAULT_PLAN_LIMITS.Free,
+        razorpayPlanId: null,
+        razorpayPriceId: null,
+        isUnlimited: false,
+        totalMonthlyLimit: 2,
+        billingCycleDays: 30,
+      },
+      Standard: { 
+        name: 'Standard', 
+        price: 150, 
+        annualPrice: 1500,
+        currency: 'INR', 
+        status: 'active',
+        moduleLimits: DEFAULT_PLAN_LIMITS.Standard,
+        razorpayPlanId: null,
+        razorpayPriceId: null,
+        isUnlimited: false,
+        totalMonthlyLimit: 300,
+        billingCycleDays: 30,
+      },
+      Pro: { 
+        name: 'Pro', 
+        price: 20, 
+        annualPrice: 200,
+        currency: 'INR', 
+        status: 'active',
+        moduleLimits: DEFAULT_PLAN_LIMITS.Pro,
+        razorpayPlanId: null,
+        razorpayPriceId: null,
+        isUnlimited: false,
+        totalMonthlyLimit: 30,
+        billingCycleDays: 30,
+      },
+      Enterprise: { 
+        name: 'Enterprise', 
+        price: 0, 
+        annualPrice: 0,
+        currency: 'INR', 
+        status: 'active',
+        moduleLimits: DEFAULT_PLAN_LIMITS.Enterprise,
+        razorpayPlanId: null,
+        razorpayPriceId: null,
+        isUnlimited: true,
+        totalMonthlyLimit: 999999,
+        billingCycleDays: 30,
+      },
     };
 
     Object.keys(defaults).forEach(plan => {
@@ -53,7 +110,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Invalid plans data" }, { status: 400 });
     }
 
-    const planNames = ['Free', 'Standard', 'Pro'];
+    const planNames = ['Free', 'Standard', 'Pro', 'Enterprise'];
     const userId = session.user.id;
 
     for (const planName of planNames) {
@@ -64,16 +121,30 @@ export async function PUT(request: NextRequest) {
           update: {
             name: planData.name,
             price: planData.price,
+            annualPrice: planData.annualPrice,
             currency: planData.currency,
             status: planData.status,
+            moduleLimits: planData.moduleLimits,
+            razorpayPlanId: planData.razorpayPlanId,
+            razorpayPriceId: planData.razorpayPriceId,
+            isUnlimited: planData.isUnlimited,
+            totalMonthlyLimit: planData.totalMonthlyLimit,
+            billingCycleDays: planData.billingCycleDays,
             updatedBy: userId,
           },
           create: {
             plan: planName,
             name: planData.name,
             price: planData.price,
+            annualPrice: planData.annualPrice,
             currency: planData.currency,
             status: planData.status,
+            moduleLimits: planData.moduleLimits || DEFAULT_PLAN_LIMITS[planName],
+            razorpayPlanId: planData.razorpayPlanId,
+            razorpayPriceId: planData.razorpayPriceId,
+            isUnlimited: planData.isUnlimited,
+            totalMonthlyLimit: planData.totalMonthlyLimit,
+            billingCycleDays: planData.billingCycleDays || 30,
             updatedBy: userId,
           },
         });

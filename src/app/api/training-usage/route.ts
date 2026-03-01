@@ -1,91 +1,18 @@
 import prisma from "@/lib/prisma";
 import { getToken } from "next-auth/jwt";
 import { NextRequest, NextResponse } from "next/server";
-
-const MODULE_USAGE_FIELDS = {
-  english: "englishUsage",
-  daily: "dailyUsage",
-  hr: "hrUsage",
-  technical: "technicalUsage",
-  company: "companyUsage",
-  mock: "mockUsage",
-  gd: "gdUsage",
-} as const;
-
-// Helper function to check and reset monthly usage
-async function checkMonthlyReset(user: any) {
-  const now = new Date();
-  const currentMonth = now.getMonth();
-  const currentYear = now.getFullYear();
-
-  // Get global settings
-  const globalSettings = await (prisma as any).globalPlanSettings.findMany();
-  const settingsMap: Record<string, any> = {};
-  globalSettings.forEach((setting: any) => {
-    settingsMap[setting.plan] = setting;
-  });
-
-  const userPlan = user.plan?.toString() || 'Free';
-  const planSettings = settingsMap[userPlan];
-
-  if (!planSettings || planSettings.status !== 'active') {
-    // Default limits if no global settings or plan disabled
-    return { limit: 0, resetNeeded: false }; // Block usage if no settings
-  }
-
-  // Check if unlimited
-  if (planSettings.isUnlimited) {
-    return { limit: 999999, resetNeeded: false };
-  }
-
-  const lastReset = new Date(planSettings.lastReset);
-  const lastResetMonth = lastReset.getMonth();
-  const lastResetYear = lastReset.getFullYear();
-
-  const resetNeeded = currentMonth !== lastResetMonth || currentYear !== lastResetYear;
-
-  if (resetNeeded) {
-    // Reset usage including interviewGuideUsage
-    await (prisma.users.update as any)({
-      where: { id: user.id },
-      data: {
-        usageCount: 0,
-        englishUsage: 0,
-        dailyUsage: 0,
-        hrUsage: 0,
-        technicalUsage: 0,
-        companyUsage: 0,
-        mockUsage: 0,
-        gdUsage: 0,
-        interviewGuideUsage: 0,
-      },
-    });
-
-    // Update last reset
-    await (prisma as any).globalPlanSettings.update({
-      where: { plan: userPlan },
-      data: { lastReset: now },
-    });
-
-    // Refresh user data
-    const updatedUser = await prisma.users.findUnique({
-      where: { id: user.id },
-      select: {
-        englishUsage: true,
-        dailyUsage: true,
-        hrUsage: true,
-        technicalUsage: true,
-        companyUsage: true,
-        mockUsage: true,
-        gdUsage: true,
-      },
-    });
-
-    return { limit: planSettings.monthlyLimit || 0, resetNeeded: true, updatedUser };
-  }
-
-  return { limit: planSettings.monthlyLimit || 0, resetNeeded: false };
-}
+import { 
+  MODULE_USAGE_FIELDS, 
+  ModuleType, 
+  validateModuleAccess, 
+  incrementModuleUsage,
+  getUserUsageBreakdown,
+  getPlanConfig,
+  DEFAULT_PLAN_LIMITS,
+  getModuleAccessType,
+  UNLIMITED_MODULES,
+  LIMITED_MODULES
+} from "@/lib/billing";
 
 export async function GET(request: NextRequest) {
   try {
@@ -97,99 +24,79 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.users.findUnique({
       where: { email: token.email as string },
-      select: {
-        id: true,
-        plan: true,
-        englishUsage: true,
-        dailyUsage: true,
-        hrUsage: true,
-        technicalUsage: true,
-        companyUsage: true,
-        mockUsage: true,
-        gdUsage: true,
-      },
+      select: { id: true, plan: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check for monthly reset
-    const { limit, resetNeeded, updatedUser } = await checkMonthlyReset(user);
-    const currentUser = updatedUser ? { ...user, ...updatedUser } : user;
-
-    const usage = {
-      english: currentUser.englishUsage ?? 0,
-      daily: currentUser.dailyUsage ?? 0,
-      hr: currentUser.hrUsage ?? 0,
-      technical: currentUser.technicalUsage ?? 0,
-      company: currentUser.companyUsage ?? 0,
-      mock: currentUser.mockUsage ?? 0,
-      gd: currentUser.gdUsage ?? 0,
-      vocabulary: 0, // Reference module - no usage tracking
-      corporateVoice: 0, // Practice module - no usage tracking
-    };
-
-    // Check against global limits
-    const isUnlimited = limit >= 999999; // Pro plan
-    const canUse = isUnlimited ? {
-      english: true,
-      daily: true,
-      hr: true,
-      technical: true,
-      company: true,
-      mock: true,
-      gd: true,
-      vocabulary: true, // Always available - reference module
-      corporateVoice: true, // Always available - practice module
-    } : {
-      english: (currentUser.englishUsage ?? 0) < limit,
-      daily: (currentUser.dailyUsage ?? 0) < limit,
-      hr: (currentUser.hrUsage ?? 0) < limit,
-      technical: (currentUser.technicalUsage ?? 0) < limit,
-      company: (currentUser.companyUsage ?? 0) < limit,
-      mock: (currentUser.mockUsage ?? 0) < limit,
-      gd: (currentUser.gdUsage ?? 0) < limit,
-      vocabulary: true, // Always available - reference module
-      corporateVoice: true, // Always available - practice module
-    };
-
-    const remaining = isUnlimited ? {
-      english: "Unlimited",
-      daily: "Unlimited",
-      hr: "Unlimited",
-      technical: "Unlimited",
-      company: "Unlimited",
-      mock: "Unlimited",
-      gd: "Unlimited",
-      vocabulary: "Unlimited", // Always unlimited - reference module
-      corporateVoice: "Unlimited", // Always unlimited - practice module
-    } : {
-      english: Math.max(0, limit - (currentUser.englishUsage ?? 0)),
-      daily: Math.max(0, limit - (currentUser.dailyUsage ?? 0)),
-      hr: Math.max(0, limit - (currentUser.hrUsage ?? 0)),
-      technical: Math.max(0, limit - (currentUser.technicalUsage ?? 0)),
-      company: Math.max(0, limit - (currentUser.companyUsage ?? 0)),
-      mock: Math.max(0, limit - (currentUser.mockUsage ?? 0)),
-      gd: Math.max(0, limit - (currentUser.gdUsage ?? 0)),
-      vocabulary: "Unlimited", // Always unlimited - reference module
-      corporateVoice: "Unlimited", // Always unlimited - practice module
-    };
+    // Get comprehensive usage breakdown
+    const usageData = await getUserUsageBreakdown(user.id);
+    
+    if (!usageData) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
     // Get plan pricing for display name
-    const planPricing = await (prisma as any).planPricing.findUnique({
-      where: { plan: currentUser.plan },
-    });
+    const planConfig = await getPlanConfig(user.plan as string);
 
-    return NextResponse.json({
-      usage,
+    // Build canUse object with proper unlimited handling
+    const canUse: Record<string, boolean> = {};
+    const isUnlimited: Record<string, boolean> = {};
+    
+    // Check each module's access type
+    const allModuleKeys = [
+      'english', 'daily', 'hr', 'technical', 'company', 'mock', 'gdCoach', 'gd', 'interviewGuide',
+      'vocabulary', 'latestTopics', 'corporateVoice'
+    ];
+    
+    console.log('[TRAINING_USAGE] Checking modules:', allModuleKeys);
+    
+    for (const key of allModuleKeys) {
+      const moduleType = key as ModuleType;
+      const accessType = getModuleAccessType(moduleType);
+      
+      if (accessType === 'unlimited') {
+        // Unlimited modules are always accessible
+        canUse[key] = true;
+        isUnlimited[key] = true;
+        console.log(`[MODULE_UNLIMITED] ${key} is unlimited`);
+      } else if (accessType === 'limited') {
+        // Limited modules depend on remaining count - use from getUserUsageBreakdown
+        const remaining = usageData.remaining[key as keyof typeof usageData.remaining];
+        canUse[key] = (remaining || 0) > 0;
+        // Also check if returned isUnlimited from usage breakdown
+        isUnlimited[key] = usageData.isUnlimited?.[key] || false;
+        console.log(`[MODULE_LIMITED] ${key}: canUse=${canUse[key]}, remaining=${remaining}`);
+      } else if (accessType === 'partial') {
+        // Partial modules (like GD) - parent is unlimited, sub-features have limits
+        // GD parent module should be unlimited (no direct limit)
+        canUse[key] = true;
+        isUnlimited[key] = true;
+        console.log(`[MODULE_PARTIAL] ${key} parent is unlimited`);
+      }
+    }
+
+    const response = {
+      usage: usageData.usage,
+      limits: usageData.limits,
+      remaining: usageData.remaining,
+      plan: usageData.plan,
+      planName: planConfig?.name || usageData.plan,
+      billingMonth: usageData.billingMonth,
+      billingYear: usageData.billingYear,
+      resetAt: usageData.resetAt,
+      // Module-level access with unlimited status
       canUse,
-      remaining,
-      plan: currentUser.plan,
-      planName: planPricing?.name || currentUser.plan,
-      limit,
-      resetPerformed: resetNeeded,
-    });
+      isUnlimited,
+      // Vocabulary and Latest Topics are always unlimited
+      vocabularyUnlimited: true,
+      latestTopicsUnlimited: true,
+    };
+    
+    console.log('[TRAINING_USAGE_RESPONSE] Returning:', response);
+    return NextResponse.json(response);
   } catch (error) {
     console.error("Training usage check error:", error);
     return NextResponse.json(
@@ -208,87 +115,117 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { module } = body;
+    const { module, subFeature, mode = 'validate-then-increment' } = body;
 
-    if (!module || !MODULE_USAGE_FIELDS[module as keyof typeof MODULE_USAGE_FIELDS]) {
+    if (!module || !MODULE_USAGE_FIELDS[module as ModuleType]) {
+      // Check if it's an unlimited module (might not be in MODULE_USAGE_FIELDS)
+      const accessType = getModuleAccessType(module as ModuleType);
+      if (accessType === 'unlimited' || accessType === 'partial') {
+        // Unlimited or partial module - allow without incrementing
+        return NextResponse.json({
+          success: true,
+          usage: 0,
+          limit: 999999,
+          plan: "Free",
+          canUse: true,
+          remaining: 999999,
+          isUnlimited: true,
+        });
+      }
       return NextResponse.json({ error: "Invalid module" }, { status: 400 });
     }
 
     const user = await prisma.users.findUnique({
       where: { email: token.email as string },
-      select: {
-        id: true,
-        plan: true,
-        englishUsage: true,
-        dailyUsage: true,
-        hrUsage: true,
-        technicalUsage: true,
-        companyUsage: true,
-        mockUsage: true,
-        gdUsage: true,
-      },
+      select: { id: true, plan: true },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Check for monthly reset
-    const { limit } = await checkMonthlyReset(user);
+    // Use centralized validation with optional subFeature for partial modules
+    const accessResult = await validateModuleAccess(user.id, module as ModuleType, subFeature);
 
-    // Check if unlimited
-    if (limit >= 999999) {
-      return NextResponse.json({
-        success: true,
-        message: "Unlimited usage - no limits",
-        plan: user.plan,
-      });
-    }
-
-    const currentUsage = user[MODULE_USAGE_FIELDS[module as keyof typeof MODULE_USAGE_FIELDS] as keyof typeof user] as number;
-
-    if (currentUsage >= limit) {
+    if (!accessResult.allowed) {
       return NextResponse.json(
         {
-          error: "Usage limit reached",
-          usage: currentUsage,
-          limit,
-          plan: user.plan,
+          error: accessResult.error || "Usage limit reached",
+          usage: accessResult.currentUsage,
+          limit: accessResult.limit,
+          plan: accessResult.plan,
           canUse: false,
+          resetAt: accessResult.resetAt,
+          isUnlimited: accessResult.isUnlimited,
         },
         { status: 403 }
       );
     }
 
-    // Increment usage
-    const updateData = {
-      [MODULE_USAGE_FIELDS[module as keyof typeof MODULE_USAGE_FIELDS]]: currentUsage + 1,
-    };
+    // If unlimited, don't increment - just return success
+    if (accessResult.isUnlimited) {
+      return NextResponse.json({
+        success: true,
+        usage: 0,
+        limit: 999999,
+        plan: user.plan,
+        canUse: true,
+        remaining: 999999,
+        isUnlimited: true,
+      });
+    }
 
-    const updatedUser = await prisma.users.update({
-      where: { id: user.id },
-      data: updateData,
-      select: {
-        englishUsage: true,
-        dailyUsage: true,
-        hrUsage: true,
-        technicalUsage: true,
-        companyUsage: true,
-        mockUsage: true,
-        gdUsage: true,
-        plan: true,
-      },
-    });
+    // Only increment if mode is 'validate-then-increment'
+    // For session START, use mode='validate-only' to just check eligibility
+    // For session COMPLETE, use mode='validate-then-increment' to increment usage
+    if (mode !== 'validate-only') {
+      // Increment usage using centralized utility with subFeature
+      const result = await incrementModuleUsage(user.id, module as ModuleType, subFeature);
 
-    const newUsage = updatedUser[MODULE_USAGE_FIELDS[module as keyof typeof MODULE_USAGE_FIELDS] as keyof typeof updatedUser] as number;
+      if (!result.success) {
+        return NextResponse.json(
+          {
+            error: result.error || "Failed to increment usage",
+            usage: result.currentUsage,
+            limit: result.limit,
+            plan: user.plan,
+            canUse: false,
+            isUnlimited: false,
+          },
+          { status: 500 }
+        );
+      }
 
+      // Dispatch event for UI refresh
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('usage-updated'));
+      }
+      // Also set in localStorage for cross-tab sync
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('usage-updated', Date.now().toString());
+      }
+
+      return NextResponse.json({
+        success: true,
+        usage: result.currentUsage,
+        limit: result.limit,
+        plan: user.plan,
+        canUse: result.remaining > 0,
+        remaining: result.remaining,
+        isUnlimited: result.isUnlimited,
+      });
+    }
+
+    // validate-only mode: just return validation success without incrementing
     return NextResponse.json({
       success: true,
-      usage: newUsage,
-      limit,
-      plan: updatedUser.plan,
-      canUse: newUsage < limit,
-      remaining: Math.max(0, limit - newUsage),
+      usage: accessResult.currentUsage,
+      limit: accessResult.limit,
+      plan: user.plan,
+      canUse: true,
+      remaining: accessResult.remaining,
+      isUnlimited: false,
+      validatedOnly: true,
     });
   } catch (error) {
     console.error("Training usage increment error:", error);

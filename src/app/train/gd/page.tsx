@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter as useNavRouter } from 'next/navigation';
+import { useSession as useAuthSession } from 'next-auth/react';
 import Link from 'next/link';
 import { 
   Users, 
@@ -19,12 +20,82 @@ import {
   Clock,
   Star,
   MessageSquare,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from 'lucide-react';
 
+interface UsageData {
+  remaining: Record<string, number | string>;
+  canUse: Record<string, boolean>;
+  isUnlimited: Record<string, boolean>;
+}
+
 export default function GDSelectionPage() {
-  const router = useRouter();
+  const router = useNavRouter();
+  const { data: session } = useAuthSession();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [usageData, setUsageData] = useState<UsageData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch usage data
+  useEffect(() => {
+    const fetchUsageData = async () => {
+      try {
+        if (!session?.user) return;
+        
+        setIsLoading(true);
+        const response = await fetch('/api/training-usage');
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[GD_PAGE] Usage data:', data);
+          setUsageData(data);
+        }
+      } catch (error) {
+        console.error('[GD_PAGE] Error fetching usage:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (session?.user) {
+      // Check if there was a recent usage update (in case we navigated back from session)
+      const lastUpdate = localStorage.getItem('usage-updated');
+      if (lastUpdate) {
+        const updateTime = parseInt(lastUpdate);
+        const now = Date.now();
+        // If update was within last 10 seconds, refetch immediately
+        if (now - updateTime < 10000) {
+          console.log('[GD_PAGE] Recent usage update detected in localStorage, refetching...');
+        }
+      }
+      
+      fetchUsageData();
+      
+      // Listen for refetch events
+      const handleUsageUpdate = () => {
+        console.log('[GD_PAGE] Usage update event, refetching...');
+        fetchUsageData();
+      };
+      
+      window.addEventListener('usage-updated', handleUsageUpdate);
+      return () => window.removeEventListener('usage-updated', handleUsageUpdate);
+    }
+  }, [session]);
+
+  const getSessionDisplay = (moduleKey: string) => {
+    if (!usageData) {
+      return isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : '-';
+    }
+
+    const isUnlimited = usageData.isUnlimited?.[moduleKey];
+    const remaining = usageData.remaining?.[moduleKey];
+
+    if (isUnlimited) {
+      return <span className="text-xs text-emerald-400 font-semibold">Unlimited</span>;
+    }
+
+    return remaining !== undefined ? `${remaining} ${remaining === 1 ? 'session' : 'sessions'}` : '-';
+  };
 
   const cards = [
     {
@@ -47,7 +118,8 @@ export default function GDSelectionPage() {
       cta: 'Create / Join Private Room',
       ctaIcon: Users,
       href: '/train/gd/private',
-      stats: { label: 'Active Rooms', value: '12+' },
+      moduleKey: 'gd', // Parent module key
+      statLabel: 'Sessions Available',
     },
     {
       id: 'random',
@@ -69,7 +141,8 @@ export default function GDSelectionPage() {
       cta: 'Start Live GD',
       ctaIcon: Globe,
       href: '/train/live-gd',
-      stats: { label: 'Users Online', value: '50+' },
+      moduleKey: 'gd',
+      statLabel: 'Sessions Available',
     },
     {
       id: 'ai',
@@ -91,7 +164,8 @@ export default function GDSelectionPage() {
       cta: 'Start with AI Agents',
       ctaIcon: Bot,
       href: '/train/gd/ai',
-      stats: { label: 'Sessions Today', value: '200+' },
+      moduleKey: 'gd',
+      statLabel: 'Sessions Available',
       popular: true,
     },
   ];
@@ -160,14 +234,16 @@ export default function GDSelectionPage() {
                 <div className="absolute inset-[1px] bg-slate-800 rounded-2xl" />
 
                 <div className="relative z-10 flex flex-col flex-1">
-                  {/* Top Row: Icon + Stats */}
+                  {/* Top Row: Icon + Sessions */}
                   <div className="flex items-start justify-between mb-5">
                     <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${card.gradient} flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                       <card.icon className="w-7 h-7 text-white" />
                     </div>
                     <div className="text-right">
-                      <div className="text-xs text-slate-500 font-medium">{card.stats.label}</div>
-                      <div className="text-sm font-bold text-white">{card.stats.value}</div>
+                      <div className="text-xs text-slate-500 font-medium">{card.statLabel}</div>
+                      <div className="text-sm font-bold text-white flex items-center gap-1 justify-end">
+                        {getSessionDisplay(card.moduleKey)}
+                      </div>
                     </div>
                   </div>
 

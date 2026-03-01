@@ -44,9 +44,15 @@ model users {
   technicalUsage   Int      @default(0)
   companyUsage     Int      @default(0)
   mockUsage        Int      @default(0)
-  gdUsage          Int      @default(0)
+  gdCoachUsage    Int      @default(0)  // GD Coach - separate from GD Agent
+  gdUsage         Int      @default(0)
   interviewGuideUsage Int   @default(0)
+  
+  // Billing & Renewal fields
   renewalDate      DateTime?
+  billingCycle     String?  // monthly, annual
+  lastUsageReset   DateTime? // Track when usage was last reset
+  
   disabled         Boolean  @default(false)
   sessions         Session[]
   lessonProgress   LessonProgress[]
@@ -58,6 +64,7 @@ model users {
   paymentHistories PaymentHistory[]
   profile          UserProfile?
   subscriptions    subscriptions[]
+  monthlyUsages   MonthlyUsage[]
   gdQueue          GDQueue[]
   gdParticipants   GDParticipant[]
   gdHistory        GDHistory[]
@@ -375,8 +382,26 @@ model PlanPricing {
   plan        Plan     @unique
   name        String   // Display name
   price       Float    @default(0) // Monthly price
+  annualPrice Float?   // Annual price (optional discount)
   currency    String   @default("INR")
   status      String   @default("active") // active, disabled
+  
+  // Module-specific limits (JSON for flexibility)
+  moduleLimits Json?    // { english: 2, hr: 2, gd: 2, technical: 2, company: 2, mock: 2, daily: 2, interviewGuide: 1 }
+  
+  // Razorpay alignment
+  razorpayPlanId String? // Razorpay plan ID for subscription management
+  razorpayPriceId String? // Razorpay price/item ID
+  
+  // Usage tracking
+  isUnlimited   Boolean  @default(false)
+  
+  // Legacy fields (kept for backward compatibility during transition)
+  totalMonthlyLimit Int  @default(0) // Total sessions per month
+  
+  // Billing cycle
+  billingCycleDays Int  @default(30) // Default 30 days
+  
   updatedBy   String?  @db.ObjectId
   updatedAt   DateTime @updatedAt
   createdAt   DateTime @default(now())
@@ -392,6 +417,64 @@ model GlobalPlanSettings {
   updatedBy     String?  @db.ObjectId
   updatedAt     DateTime @updatedAt
   createdAt     DateTime @default(now())
+}
+
+// Monthly usage tracking per billing cycle
+model MonthlyUsage {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String   @db.ObjectId
+  user            users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  billingMonth    Int      // Month (1-12)
+  billingYear     Int      // Year (e.g., 2026)
+  billingCycleStart DateTime // Start of the billing cycle
+  billingCycleEnd   DateTime // End of the billing cycle
+  
+  // Module usage counts for this month
+  englishUsage     Int      @default(0)
+  dailyUsage       Int      @default(0)
+  hrUsage          Int      @default(0)
+  technicalUsage   Int      @default(0)
+  companyUsage     Int      @default(0)
+  mockUsage        Int      @default(0)
+  gdCoachUsage    Int      @default(0)  // GD Coach - separate from GD Agent
+  gdUsage         Int      @default(0)  // GD Agent (AI Agents, Private GD, Random Matching)
+  interviewGuideUsage Int   @default(0)
+  
+  // Total usage for the month
+  totalUsage       Int      @default(0)
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // Composite unique constraint to ensure one record per user per month
+  @@unique([userId, billingMonth, billingYear])
+  @@index([userId, billingYear, billingMonth])
+}
+
+// Razorpay webhook events for audit trail
+model RazorpayWebhookEvent {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  eventType       String   // payment.authorized, subscription.activated, subscription.renewed, etc.
+  webhookId       String   @unique // Razorpay's webhook ID
+  paymentId       String?
+  subscriptionId  String?
+  customerId      String?
+  plan            String?
+  status          String?
+  amount          Float?
+  currency        String?
+  
+  // Event data
+  payload         Json     // Raw webhook payload
+  processed       Boolean  @default(false)
+  processedAt     DateTime?
+  errorMessage    String?
+  
+  createdAt       DateTime @default(now())
+  
+  @@index([eventType])
+  @@index([subscriptionId])
+  @@index([processed, createdAt])
 }
 
 model InterviewGuide {

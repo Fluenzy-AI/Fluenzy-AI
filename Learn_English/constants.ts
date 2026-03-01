@@ -345,6 +345,15 @@ export const SYSTEM_INSTRUCTIONS: Record<ModuleType, string> = {
   4. Provide feedback on clarity, tone, pace, and professionalism.
   5. Simulate real corporate scenarios: client calls, meetings, presentations.
   6. Help users sound confident and polished in professional settings.`,
+
+  // New module types - map to existing instructions
+  [ModuleType.LATEST_TOPICS]: `You are a Vocabulary Enhancement AI Coach focused on building professional vocabulary.`,
+  
+  [ModuleType.GD_PRIVATE]: `You are running a LIVE Group Discussion (GD) room.`,
+  
+  [ModuleType.GD_RANDOM]: `You are running a LIVE Group Discussion (GD) room.`,
+  
+  [ModuleType.GD_AI_AGENTS]: `You are running a LIVE Group Discussion (GD) room.`,
 };
 
 export const INITIAL_LEARNING_PATH: LevelProgress[] = [

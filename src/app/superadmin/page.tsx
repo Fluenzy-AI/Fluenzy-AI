@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+// Tabs replaced by sidebar nav
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -126,6 +126,7 @@ export default function SuperAdminDashboard() {
     Pro: { monthlyLimit: 100, isUnlimited: false, status: 'active', updatedAt: null as Date | null },
   });
 
+  const [activeSection, setActiveSection] = useState('users');
   const [planPricing, setPlanPricing] = useState({
     Free: { name: 'Free', price: 0, currency: 'INR', status: 'active', updatedAt: null as Date | null },
     Standard: { name: 'Standard', price: 150, currency: 'INR', status: 'active', updatedAt: null as Date | null },
@@ -418,29 +419,55 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const ADMIN_NAV = [
+    { key: 'users',         label: 'User Management',  icon: '👥' },
+    { key: 'analytics',    label: 'Usage Analytics',   icon: '📊' },
+    { key: 'login-logs',   label: 'Login Logs',        icon: '🔐' },
+    { key: 'coupons',      label: 'Coupons',           icon: '🏷️' },
+    { key: 'payments',     label: 'Payments',          icon: '💳' },
+    { key: 'plan-settings',label: 'Plan Settings',     icon: '⚙️' },
+    { key: 'plan-pricing', label: 'Plan Pricing',      icon: '💰' },
+    { key: 'logs',         label: 'System Logs',       icon: '📋' },
+    { key: 'latest-topics',label: 'Latest Topics',     icon: '📰' },
+  ];
+
   if (status === "loading") return <div>Loading...</div>;
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Super Admin Dashboard</h1>
-        <Badge variant="destructive" className="mt-2">SUPER_ADMIN</Badge>
-      </div>
+    <div className="flex min-h-screen">
+      {/* Left sidebar navigation */}
+      <aside className="w-56 flex-shrink-0 sticky top-14 self-start h-[calc(100vh-3.5rem)] overflow-y-auto border-r border-white/10 bg-slate-900/50">
+        <div className="px-4 py-3 border-b border-white/10">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-slate-400">Admin Panel</p>
+        </div>
+        <nav className="p-2 space-y-0.5 py-3">
+          {ADMIN_NAV.map((item) => (
+            <button
+              key={item.key}
+              onClick={() => setActiveSection(item.key)}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${
+                activeSection === item.key
+                  ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
+                  : 'text-slate-400 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <span className="text-base leading-none">{item.icon}</span>
+              <span className="truncate">{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </aside>
 
-      <Tabs defaultValue="users" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="users">User Management</TabsTrigger>
-          <TabsTrigger value="analytics">Usage Analytics</TabsTrigger>
-          <TabsTrigger value="login-logs">Login Logs</TabsTrigger>
-          <TabsTrigger value="coupons">Coupons</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
-          <TabsTrigger value="plan-settings">Plan Settings</TabsTrigger>
-          <TabsTrigger value="plan-pricing">Plan Pricing</TabsTrigger>
-          <TabsTrigger value="logs">System Logs</TabsTrigger>
-          <TabsTrigger value="latest-topics">LatestTopic</TabsTrigger>
-        </TabsList>
+      {/* Main content */}
+      <div className="flex-1 p-6 overflow-auto min-w-0">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">
+            {ADMIN_NAV.find(n => n.key === activeSection)?.label}
+          </h1>
+          <Badge variant="destructive" className="mt-2">SUPER_ADMIN</Badge>
+        </div>
 
-        <TabsContent value="users">
+        {activeSection === 'users' && (<>
           <Card>
             <CardHeader>
               <CardTitle>User Management</CardTitle>
@@ -508,9 +535,9 @@ export default function SuperAdminDashboard() {
               </Table>
             </CardContent>
           </Card>
-        </TabsContent>
+        </>)}
 
-        <TabsContent value="analytics">
+        {activeSection === 'analytics' && (<>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <Card>
               <CardHeader>
@@ -545,9 +572,9 @@ export default function SuperAdminDashboard() {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        </>)}
 
-        <TabsContent value="login-logs">
+        {activeSection === 'login-logs' && (<>
           <Card>
             <CardHeader>
               <CardTitle>Login Logs</CardTitle>
@@ -588,9 +615,9 @@ export default function SuperAdminDashboard() {
               </Table>
             </CardContent>
           </Card>
-        </TabsContent>
+        </>)}
 
-        <TabsContent value="coupons">
+        {activeSection === 'coupons' && (<>
           <Card>
             <CardHeader>
               <CardTitle>Coupon Management</CardTitle>
@@ -636,7 +663,7 @@ export default function SuperAdminDashboard() {
                     coupons.map((coupon) => (
                       <TableRow key={coupon.id}>
                         <TableCell>{coupon.code}</TableCell>
-                        <TableCell>{coupon.discountType === 'PERCENTAGE' ? `${coupon.discountValue}%` : `$${coupon.discountValue}`}</TableCell>
+                        <TableCell>{coupon.discountType === 'PERCENTAGE' ? `${coupon.discountValue}%` : `₹${coupon.discountValue}`}</TableCell>
                         <TableCell>{coupon.maxUsage || 'Unlimited'}</TableCell>
                         <TableCell>{coupon.usages.length}</TableCell>
                         <TableCell>
@@ -748,7 +775,7 @@ export default function SuperAdminDashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                      <SelectItem value="FLAT">Flat Amount ($)</SelectItem>
+                      <SelectItem value="FLAT">Flat Amount (₹)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -845,9 +872,9 @@ export default function SuperAdminDashboard() {
               </div>
             </DialogContent>
           </Dialog>
-        </TabsContent>
+        </>)}
 
-        <TabsContent value="payments">
+        {activeSection === 'payments' && (<>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
             <Card>
               <CardHeader>
@@ -920,9 +947,9 @@ export default function SuperAdminDashboard() {
               </Table>
             </CardContent>
           </Card>
-        </TabsContent>
+        </>)}
 
-        <TabsContent value="plan-settings">
+        {activeSection === 'plan-settings' && (<>
           <Card>
             <CardHeader>
               <CardTitle>Global Plan Settings</CardTitle>
@@ -1017,9 +1044,9 @@ export default function SuperAdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </>)}
 
-        <TabsContent value="plan-pricing">
+        {activeSection === 'plan-pricing' && (<>
           <Card>
             <CardHeader>
               <CardTitle>Plan Pricing Management</CardTitle>
@@ -1116,9 +1143,9 @@ export default function SuperAdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </>)}
 
-        <TabsContent value="logs">
+        {activeSection === 'logs' && (<>
           <Card>
             <CardHeader>
               <CardTitle>System Logs</CardTitle>
@@ -1130,12 +1157,12 @@ export default function SuperAdminDashboard() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+        </>)}
 
-        <TabsContent value="latest-topics">
+        {activeSection === 'latest-topics' && (<>
           <LatestTopicTab />
-        </TabsContent>
-      </Tabs>
+        </>)}
+      </div>
     </div>
   );
 }

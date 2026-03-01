@@ -27,13 +27,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get plan pricing
-    const planPricing = await (prisma as any).planPricing.findUnique({
+    // Get plan pricing — fallback to hardcoded defaults if DB not seeded
+    const PLAN_PRICING_DEFAULTS: Record<string, { price: number; currency: string }> = {
+      Free:     { price: 0,   currency: 'INR' },
+      Standard: { price: 150, currency: 'INR' },
+      Pro:      { price: 20,  currency: 'INR' },
+    };
+
+    let planPricing = await (prisma as any).planPricing.findUnique({
       where: { plan: targetPlan },
-    });
+    }).catch(() => null);
 
     if (!planPricing) {
-      return NextResponse.json({ error: `Pricing not found for plan: ${targetPlan}` }, { status: 400 });
+      const def = PLAN_PRICING_DEFAULTS[targetPlan];
+      if (!def) {
+        return NextResponse.json({ error: `Pricing not found for plan: ${targetPlan}` }, { status: 400 });
+      }
+      planPricing = { plan: targetPlan, price: def.price, currency: def.currency };
     }
 
     // Calculate effective price based on billing cycle

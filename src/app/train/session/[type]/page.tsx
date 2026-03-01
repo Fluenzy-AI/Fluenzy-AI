@@ -41,23 +41,38 @@ const SessionPageContent = () => {
 
   useEffect(() => {
     if (status === "authenticated" && type) {
-      // Increment usage for the module
+      // VALIDATE-ONLY mode: Check access WITHOUT incrementing
+      // Increment happens AFTER session successfully completes (via session-end endpoint)
       const moduleMap: Record<string, string> = {
         [ModuleType.ENGLISH_LEARNING]: 'english',
         [ModuleType.CONVERSATION_PRACTICE]: 'daily',
         [ModuleType.HR_INTERVIEW]: 'hr',
         [ModuleType.TECH_INTERVIEW]: 'technical',
         [ModuleType.COMPANY_WISE_HR]: 'company',
-        [ModuleType.GD_COACH]: 'gd',
+        [ModuleType.GD_COACH]: 'gdCoach',  // FIX: GD Coach has separate limit from GD Agent
+        [ModuleType.GD_DISCUSSION]: 'gd',  // GD Agent parent
+        [ModuleType.GD_AI_AGENTS]: 'gd',   // GD AI Agents (limited sub-feature)
+        [ModuleType.GD_PRIVATE]: 'gd',     // GD Private (unlimited sub-feature)
+        [ModuleType.GD_RANDOM]: 'gd',      // GD Random (unlimited sub-feature)
       };
 
       const moduleKey = moduleMap[type] || type.toLowerCase().replace('_', '');
+      const subFeature = type === ModuleType.GD_AI_AGENTS ? 'gd_ai_agents' : 
+                        type === ModuleType.GD_PRIVATE ? 'gd_private' :
+                        type === ModuleType.GD_RANDOM ? 'gd_random' : undefined;
+
       if (moduleKey) {
+        // Only VALIDATE, don't increment yet
+        console.log(`[MODULE_ACCESS] User accessing ${type}, module: ${moduleKey}, subFeature: ${subFeature}`);
         fetch('/api/training-usage', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ module: moduleKey }),
-        }).catch(error => console.error('Failed to increment usage:', error));
+          body: JSON.stringify({ 
+            module: moduleKey,
+            subFeature,
+            mode: 'validate-only',  // Only validate, don't increment
+          }),
+        }).catch(error => console.error('Failed to validate module access:', error));
       }
     }
   }, [status, type]);
