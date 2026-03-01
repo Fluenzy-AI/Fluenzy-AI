@@ -26,6 +26,25 @@ enum DiscountType {
   FLAT
 }
 
+// ─── OTP Verification (Signup & 2FA) ────────────────────────────────────────
+model OtpVerification {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  email       String
+  otp         String
+  type        String   @default("signup") // "signup" | "login_2fa"
+  attempts    Int      @default(0)
+  expiresAt   DateTime
+  verified    Boolean  @default(false)
+  // Pending user data (stored until OTP verified for signup)
+  pendingName     String?
+  pendingPassword String? // already hashed
+
+  createdAt   DateTime @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
 model users {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
   name             String
@@ -710,4 +729,20 @@ model LatestTopic {
 
   @@index([companyName])
   @@index([createdAt])
+}
+
+// ─── Email Management ───────────────────────────────────────────────────────
+model EmailLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  subject     String
+  message     String
+  recipients  String[] // array of email addresses
+  recipientType String  // "single" | "multiple" | "all"
+  sentBy      String   // super admin email
+  status      String   @default("sent") // "sent" | "failed"
+  errorMsg    String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([sentBy])
 }

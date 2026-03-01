@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Role } from "@prisma/client";
 import LatestTopicTab from "@/components/LatestTopicTab";
+import EmailManagement from "@/components/EmailManagement";
 
 interface Analytics {
   totalUsers: number;
@@ -429,6 +430,7 @@ export default function SuperAdminDashboard() {
     { key: 'plan-pricing', label: 'Plan Pricing',      icon: '💰' },
     { key: 'logs',         label: 'System Logs',       icon: '📋' },
     { key: 'latest-topics',label: 'Latest Topics',     icon: '📰' },
+    { key: 'email-management', label: 'Email Management', icon: '✉️' },
   ];
 
   if (status === "loading") return <div>Loading...</div>;
@@ -1161,6 +1163,10 @@ export default function SuperAdminDashboard() {
 
         {activeSection === 'latest-topics' && (<>
           <LatestTopicTab />
+        </>)}
+
+        {activeSection === 'email-management' && (<>
+          <EmailManagement />
         </>)}
       </div>
     </div>

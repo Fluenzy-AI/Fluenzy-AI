@@ -1,5 +1,5 @@
 "use client";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Sparkles, X, User, CreditCard, LogOut, Bell, Search, ChevronRight } from "lucide-react";
@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sheet,
   SheetContent,
@@ -61,6 +61,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
   const [imageError, setImageError] = useState(false);
   const { data: session } = useSession();
   const pathname = usePathname();
+  const router = useRouter();
 
   // Use userData from props (from LayoutWrapper) or fall back to session
   const user = userData || (session?.user ? {
@@ -101,14 +102,6 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
     if (element) {
       element.scrollIntoView({ behavior: "smooth" });
       setIsMobileMenuOpen(false);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (session?.user) {
-      scrollToSection("editor");
-    } else {
-      await signIn("google", { callbackUrl: "/train" });
     }
   };
 
@@ -244,7 +237,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
               <Button
                 variant="hero"
                 className="h-9 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] sm:px-8 sm:text-xs sm:tracking-widest"
-                onClick={handleSubmit}
+                onClick={() => router.push("/login")}
               >
                 Sign In
               </Button>

@@ -7,7 +7,8 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Receipt, ExternalLink, CheckCircle2, XCircle, RefreshCw, Gift, Download, Loader2 } from "lucide-react";
+import { ArrowLeft, Receipt, ExternalLink, CheckCircle2, XCircle, RefreshCw, Gift, Download, Loader2, Mail } from "lucide-react";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 interface PaymentRecord {
@@ -45,6 +46,7 @@ export default function BillingHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [sendingInvoiceId, setSendingInvoiceId] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -57,6 +59,27 @@ export default function BillingHistoryPage() {
       fetchPaymentHistory();
     }
   }, [session]);
+
+  const sendInvoice = async (payment: PaymentRecord) => {
+    try {
+      setSendingInvoiceId(payment.id);
+      const res = await fetch("/api/send-invoice", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentId: payment.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error(data.error || "Failed to send invoice. Please try again.");
+        return;
+      }
+      toast.success(data.message || "Invoice sent to your registered email!");
+    } catch {
+      toast.error("Failed to send invoice. Please check your connection.");
+    } finally {
+      setSendingInvoiceId(null);
+    }
+  };
 
   const downloadPdf = async (payment: PaymentRecord) => {
     try {
@@ -176,6 +199,7 @@ export default function BillingHistoryPage() {
               const StatusIcon = statusCfg.icon;
               const hasDiscount = payment.discountAmount > 0;
               const isDownloading = downloadingId === payment.id;
+              const isSendingInvoice = sendingInvoiceId === payment.id;
 
               return (
                 <motion.div
@@ -247,13 +271,29 @@ export default function BillingHistoryPage() {
                           </div>
 
                           <div className="flex gap-2 flex-wrap justify-end">
+                            {/* Email invoice to registered address */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-7 gap-1 border-purple-500/40 hover:border-purple-500/70 hover:bg-purple-500/10"
+                              onClick={() => sendInvoice(payment)}
+                              disabled={isSendingInvoice || isDownloading}
+                              title="Email invoice to your registered email"
+                            >
+                              {isSendingInvoice ? (
+                                <><Loader2 size={12} className="animate-spin" />Sending...</>
+                              ) : (
+                                <><Mail size={12} />Email</>  
+                              )}
+                            </Button>
+
                             {/* PDF download — available for every status */}
                             <Button
                               variant="outline"
                               size="sm"
                               className="text-xs h-7 gap-1"
                               onClick={() => downloadPdf(payment)}
-                              disabled={isDownloading}
+                              disabled={isDownloading || isSendingInvoice}
                             >
                               {isDownloading ? (
                                 <><Loader2 size={12} className="animate-spin" />Generating...</>
