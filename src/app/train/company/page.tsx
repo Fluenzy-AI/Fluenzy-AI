@@ -1,7 +1,6 @@
 "use client";
 
 import LearnEnglishWrapper from "@/modules/train/LearnEnglishWrapper";
-import Footer from "@/components/footer";
 import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 import { useEffect, useState } from "react";
 
@@ -24,7 +23,6 @@ export default function CompanyPage() {
       <div className="flex-1 overflow-auto">
         <LearnEnglishWrapper mode="company" />
       </div>
-      <Footer />
     </div>
   );
 }

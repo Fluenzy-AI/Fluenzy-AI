@@ -19,6 +19,7 @@ import {
   Code2
 } from 'lucide-react';
 import { ModuleType } from '../types';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 const COMPANIES = [
   { id: 'google', name: 'Google', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' },
@@ -31,6 +32,8 @@ const COMPANIES = [
 
 const CompanyHRDashboard: React.FC = () => {
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light';
   const [step, setStep] = useState(1);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [selection, setSelection] = useState({
@@ -245,23 +248,45 @@ const CompanyHRDashboard: React.FC = () => {
                  { id: 'Beginner', icon: Briefcase, desc: 'Common HR questions, gentle pacing.' },
                  { id: 'Intermediate', icon: TrendingUp, desc: 'Situational & cultural fit rounds.' },
                  { id: 'Advanced', icon: Cpu, desc: 'High pressure, deep follow-ups.' }
-               ].map(d => (
+               ].map(d => {
+                 const isSelected = selection.difficulty === d.id;
+                 return (
                  <button 
                    key={d.id}
                    onClick={() => setSelection({ ...selection, difficulty: d.id })}
                    className={`p-6 rounded-3xl border-2 flex flex-col items-center text-center gap-4 transition-all ${
-                     selection.difficulty === d.id ? 'border-primary bg-primary/10 shadow-md shadow-primary/10' : 'border-border bg-background/50 hover:border-primary/30'
+                     isLight
+                       ? isSelected
+                         ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-200/60'
+                         : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md'
+                       : isSelected
+                         ? 'border-primary bg-primary/10 shadow-md shadow-primary/10'
+                         : 'border-border bg-background/50 hover:border-primary/30'
                    }`}
                  >
-                   <div className={`p-3 rounded-2xl ${selection.difficulty === d.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                   <div className={`p-3 rounded-2xl ${
+                     isLight
+                       ? isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'
+                       : isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                   }`}>
                       <d.icon size={24} />
                    </div>
                    <div>
-                     <p className="font-black text-card-foreground uppercase tracking-widest text-[10px] mb-1">{d.id}</p>
-                     <p className="text-xs text-muted-foreground font-medium">{d.desc}</p>
+                     <p className={`font-black uppercase tracking-widest text-[10px] mb-1 ${
+                       isLight ? (isSelected ? 'text-indigo-700' : 'text-slate-700') : 'text-card-foreground'
+                     }`}>{d.id}</p>
+                     <p className={`text-xs font-medium ${
+                       isLight ? 'text-slate-500' : 'text-muted-foreground'
+                     }`}>{d.desc}</p>
                    </div>
+                   {isSelected && isLight && (
+                     <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                       <CheckCircle2 size={12} className="text-white" />
+                     </div>
+                   )}
                  </button>
-               ))}
+                 );
+               })}
             </div>
             <div className="flex justify-center pt-10">
                <button onClick={nextStep} className="bg-foreground text-background px-12 py-4 rounded-2xl font-black uppercase tracking-widest text-xs flex items-center gap-2 hover:opacity-90 transition-all">

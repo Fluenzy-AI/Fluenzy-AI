@@ -33,6 +33,9 @@ import {
   Phone,
   BookMarked,
   LayoutDashboard,
+  Radio,
+  Lock,
+  Shuffle,
   Crown
 } from 'lucide-react';
 import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
@@ -86,6 +89,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const [imageError, setImageError] = useState(false);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+  const isLight = resolvedTheme === 'light';
 
   // Extract user info from planInfo
   const userData = planInfo?.user ? {
@@ -287,7 +291,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   }
 
   const Sidebar = ({ collapsed = false, mobile = false }: { collapsed?: boolean; mobile?: boolean }) => (
-    <div className={`flex flex-col h-full ${currentTheme.background} ${mobile ? 'w-full' : ''}`}>
+    <div className={`flex flex-col h-full ${isLight ? 'bg-white' : currentTheme.background} ${mobile ? 'w-full' : ''}`}>
       {/* Logo */}
       <div className={`p-4 border-b ${currentTheme.cardBorder} flex items-center justify-between`}>
         <Link href="/" className="flex items-center gap-3">
@@ -299,7 +303,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           )}
         </Link>
         {mobile && (
-          <button onClick={() => setMobileMenuOpen(false)} className={`p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text}`}>
+          <button onClick={() => setMobileMenuOpen(false)} className={`p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
             <X size={20} />
           </button>
         )}
@@ -323,20 +327,24 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 onClick={() => mobile && setMobileMenuOpen(false)}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                  ${isActive 
-                    ? `${currentTheme.accent} bg-cyan-500/10` 
-                    : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                  ${isActive
+                    ? isLight
+                      ? 'text-indigo-600 bg-indigo-50 font-semibold border-l-2 border-indigo-400'
+                      : `${currentTheme.accent} bg-cyan-500/10`
+                    : isLight
+                      ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                   }
                   ${collapsed ? 'justify-center' : ''}
                 `}
                 title={collapsed ? item.label : undefined}
               >
-                <item.icon size={20} className={isActive ? 'text-cyan-400' : ''} />
+                <item.icon size={20} className={isActive ? isLight ? 'text-indigo-500' : 'text-cyan-400' : ''} />
                 {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
                 {isActive && (
                   <motion.div
-                    layoutId="activeIndicator"
-                    className="ml-auto w-1.5 h-1.5 rounded-full bg-[#5B6CFF]"
+                    layoutId={mobile ? 'activeIndicator-mobile' : 'activeIndicator-desktop'}
+                    className={`ml-auto w-1.5 h-1.5 rounded-full ${isLight ? 'bg-indigo-500' : 'bg-[#5B6CFF]'}`}
                   />
                 )}
               </Link>
@@ -360,15 +368,19 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 onClick={() => mobile && setMobileMenuOpen(false)}
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                  ${isActive 
-                    ? `${currentTheme.accent} bg-cyan-500/10` 
-                    : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                  ${isActive
+                    ? isLight
+                      ? 'text-indigo-600 bg-indigo-50 font-semibold border-l-2 border-indigo-400'
+                      : `${currentTheme.accent} bg-cyan-500/10`
+                    : isLight
+                      ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                   }
                   ${collapsed ? 'justify-center' : ''}
                 `}
                 title={collapsed ? item.label : undefined}
               >
-                <item.icon size={20} className={isActive ? 'text-cyan-400' : ''} />
+                <item.icon size={20} className={isActive ? isLight ? 'text-indigo-500' : 'text-cyan-400' : ''} />
                 {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
               </Link>
             );
@@ -382,7 +394,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           <div className="relative">
             <button
               onClick={() => setShowThemeMenu(!showThemeMenu)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${currentTheme.cardBg} border ${currentTheme.cardBorder} hover:border-cyan-500/30 transition-colors`}
+              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${currentTheme.cardBg} border ${currentTheme.cardBorder} ${isLight ? 'hover:border-indigo-300 hover:bg-indigo-50/60 shadow-sm' : 'hover:border-cyan-500/30'} transition-all duration-200`}
             >
               <div className="flex items-center gap-2">
                 {React.createElement(themeOptions.find(t => t.value === theme)?.icon || Moon, { size: 16, className: currentTheme.text })}
@@ -408,9 +420,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                       }}
                       className={`
                         w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors
-                        ${theme === option.value 
-                          ? 'bg-cyan-500/20 text-cyan-400' 
-                          : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                        ${theme === option.value
+                          ? isLight ? 'bg-indigo-50 text-indigo-600 font-medium' : 'bg-cyan-500/20 text-cyan-400'
+                          : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                         }
                       `}
                     >
@@ -434,7 +446,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <aside
           onMouseEnter={() => !sidebarOpen && setSidebarHovered(true)}
           onMouseLeave={() => setSidebarHovered(false)}
-          className={`hidden lg:flex flex-col border-r ${currentTheme.cardBorder} ${currentTheme.background} transition-all duration-300 ${shouldExpandSidebar ? 'w-64' : 'w-20'} relative`}
+          className={`hidden lg:flex flex-col border-r ${currentTheme.cardBorder} ${isLight ? 'bg-white shadow-[2px_0_12px_rgba(0,0,0,0.06)]' : currentTheme.background} transition-all duration-300 ${shouldExpandSidebar ? 'w-64' : 'w-20'} relative`}
         >
           <Sidebar collapsed={!shouldExpandSidebar} />
           
@@ -448,28 +460,19 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         </aside>
 
         {/* Mobile Sidebar */}
-        <AnimatePresence>
-          {mobileMenuOpen && (
-            <>
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-                onClick={() => setMobileMenuOpen(false)}
-              />
-              <motion.div
-                initial={{ x: -280 }}
-                animate={{ x: 0 }}
-                exit={{ x: -280 }}
-                transition={{ type: 'spring', damping: 25 }}
-                className="fixed top-0 left-0 bottom-0 w-72 z-50 lg:hidden"
-              >
-                <Sidebar mobile />
-              </motion.div>
-            </>
-          )}
-        </AnimatePresence>
+        {/* Backdrop */}
+        <div
+          className={`fixed inset-0 bg-black/60 z-40 lg:hidden ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+          style={{ transition: 'opacity 0.6s ease' }}
+          onClick={() => setMobileMenuOpen(false)}
+        />
+        {/* Drawer */}
+        <div
+          className="fixed top-0 left-0 bottom-0 w-72 z-50 lg:hidden shadow-2xl"
+          style={{ transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform 0.75s cubic-bezier(0.25, 0.46, 0.45, 0.94)' }}
+        >
+          <Sidebar mobile />
+        </div>
 
         {/* Main Content */}
         <main className={`flex-1 flex flex-col min-h-screen ${showSidebar ? 'lg:pl-0' : ''}`}>
@@ -479,7 +482,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className={`lg:hidden p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}
+                className={`lg:hidden p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
               >
                 <Menu size={20} />
               </button>
@@ -504,6 +507,19 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             <div className="flex items-center gap-2">
               {/* Quick Links */}
               <div className="hidden lg:flex items-center gap-1 mr-1">
+                {/* Live Link */}
+                <Link
+                  href="/train/live"
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    pathname.startsWith('/train/live')
+                      ? isLight ? 'text-indigo-600 bg-indigo-50 font-semibold' : `${currentTheme.text} bg-white/10`
+                      : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                  }`}
+                >
+                  <Radio size={14} />
+                  Live
+                </Link>
+
                 {topQuickLinks.map((item) => {
                   const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
                   return (
@@ -512,8 +528,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                       href={item.href}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                         isActive
-                          ? `${currentTheme.text} bg-white/10`
-                          : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                          ? isLight ? 'text-indigo-600 bg-indigo-50 font-semibold' : `${currentTheme.text} bg-white/10`
+                          : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                       }`}
                     >
                       {item.label}
@@ -526,7 +542,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               <div className="relative">
                 <button
                   onClick={() => setShowThemeMenu(!showThemeMenu)}
-                  className={`p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5 transition-colors`}
+                  className={`p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} transition-colors`}
                   title="Change theme"
                 >
                   {theme === 'dark' && <Moon size={20} />}
@@ -557,9 +573,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                             }}
                             className={`
                               w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors
-                              ${theme === option.value 
-                                ? 'bg-[#5B6CFF]/20 text-[#5B6CFF]' 
-                                : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                              ${theme === option.value
+                                ? isLight ? 'bg-indigo-50 text-indigo-600 font-medium' : 'bg-[#5B6CFF]/20 text-[#5B6CFF]'
+                                : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                               }
                             `}
                           >
@@ -574,7 +590,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               </div>
 
               {/* Notifications */}
-              <button className={`p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5 relative`}>
+              <button className={`p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} relative`}>
                 <Bell size={20} />
                 <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
               </button>
@@ -584,7 +600,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 <div className="relative">
                   <button
                     onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className={`flex items-center gap-2 p-1.5 rounded-xl ${currentTheme.cardBg} border ${currentTheme.cardBorder} hover:border-[#5B6CFF]/30 transition-colors`}
+                    className={`flex items-center gap-2 p-1.5 rounded-xl ${currentTheme.cardBg} border ${currentTheme.cardBorder} ${isLight ? 'hover:border-indigo-300 hover:shadow-md' : 'hover:border-[#5B6CFF]/30'} transition-all duration-200`}
                   >
                     <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
                       {showAvatarImage ? (
@@ -655,7 +671,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
                           {/* Quick Actions */}
                           {planInfo?.plan !== 'Free' && (
-                            <div className="p-5 border-b border-dashed border-white/10">
+                            <div className={`p-5 border-b ${isLight ? 'border-slate-200 border-dashed' : 'border-dashed border-white/10'}`}>
                               <h4 className={`text-xs font-semibold uppercase tracking-wider ${currentTheme.textMuted} mb-3`}>
                                 Subscription
                               </h4>
@@ -682,12 +698,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                           )}
 
                           {/* Action Buttons */}
-                          <div className="p-3 bg-black/20">
+                          <div className={`p-3 ${isLight ? 'bg-slate-50 border-t border-slate-100' : 'bg-black/20'}`}>
                             <div className="grid grid-cols-2 gap-2">
                               <Link
                                 href="/profile"
                                 onClick={() => setShowProfileMenu(false)}
-                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5 transition-colors`}
+                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
                               >
                                 <User size={16} />
                                 Profile
@@ -695,7 +711,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                               <Link
                                 href="/billing"
                                 onClick={() => setShowProfileMenu(false)}
-                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5 transition-colors`}
+                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
                               >
                                 <CreditCard size={16} />
                                 Billing
@@ -703,7 +719,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                               <Link
                                 href="/history"
                                 onClick={() => setShowProfileMenu(false)}
-                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5 transition-colors`}
+                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
                               >
                                 <History size={16} />
                                 History

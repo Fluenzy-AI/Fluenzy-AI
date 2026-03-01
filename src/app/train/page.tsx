@@ -387,7 +387,15 @@ export default function TrainPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8">
+    <div className="p-4 md:p-6 lg:p-8 relative">
+      {/* Light theme ambient background */}
+      {resolvedTheme === 'light' && (
+        <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+          <div className="absolute -top-10 left-1/3 w-[450px] h-[450px] bg-gradient-to-br from-violet-100/90 via-indigo-50/70 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
+          <div className="absolute top-20 -right-20 w-[380px] h-[380px] bg-gradient-to-tl from-sky-100/80 via-cyan-50/60 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s', animationDelay: '2s' }} />
+          <div className="absolute bottom-0 left-0 w-[320px] h-[320px] bg-gradient-to-r from-purple-100/60 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '1s' }} />
+        </div>
+      )}
       {/* Hero Section - Premium SaaS Style */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -396,8 +404,18 @@ export default function TrainPage() {
       >
         {/* Background Glow Effect */}
         <div className="relative">
-          <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-to-br from-[#5B6CFF]/20 to-[#8B5CF6]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tl from-[#22D3EE]/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+          {resolvedTheme === 'light' ? (
+            <>
+              <div className="absolute -top-16 -left-8 w-80 h-80 bg-gradient-to-br from-violet-300/60 to-indigo-200/50 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDuration: '5s' }} />
+              <div className="absolute -top-4 right-4 w-64 h-64 bg-gradient-to-bl from-sky-200/70 to-cyan-100/50 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDuration: '7s', animationDelay: '1.5s' }} />
+              <div className="absolute bottom-0 left-1/2 w-48 h-40 bg-gradient-to-t from-fuchsia-200/40 to-transparent rounded-full blur-2xl pointer-events-none" />
+            </>
+          ) : (
+            <>
+              <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-to-br from-[#5B6CFF]/20 to-[#8B5CF6]/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tl from-[#22D3EE]/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+            </>
+          )}
           
           <div className="relative z-10">
             <h1 className={`text-3xl md:text-4xl lg:text-5xl font-black ${currentTheme.text} mb-4`}>
@@ -432,16 +450,19 @@ export default function TrainPage() {
               transition={{ delay: index * 0.05 }}
               className={`
                 group relative ${currentTheme.cardBg} border ${currentTheme.cardBorder} 
-                rounded-2xl p-6 transition-all duration-200
+                rounded-2xl p-6 transition-all duration-300
+                ${resolvedTheme === 'light' ? 'shadow-sm ring-1 ring-black/5' : ''}
                 ${mod.isLocked 
                   ? 'opacity-60' 
-                  : 'hover:border-[#5B6CFF]/30 hover:shadow-lg hover:shadow-[#5B6CFF]/10 hover:-translate-y-1 cursor-pointer'
+                  : resolvedTheme === 'light'
+                    ? 'hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-400/20 hover:-translate-y-2 hover:ring-indigo-100 cursor-pointer'
+                    : 'hover:border-[#5B6CFF]/30 hover:shadow-lg hover:shadow-[#5B6CFF]/10 hover:-translate-y-1 cursor-pointer'
                 }
               `}
               {...(mod.isLocked ? {} : { onClick: () => router.push(mod.href), role: 'button', tabIndex: 0, onKeyDown: (e) => e.key === 'Enter' && router.push(mod.href) })}
             >
               {/* Gradient Background Effect */}
-              <div className={`absolute -right-20 -top-20 w-40 h-40 bg-gradient-to-br ${mod.gradient} opacity-0 group-hover:opacity-10 blur-3xl transition-opacity duration-500`} />
+              <div className={`absolute -right-20 -top-20 w-40 h-40 bg-gradient-to-br ${mod.gradient} blur-3xl transition-opacity duration-500 ${resolvedTheme === 'light' ? 'opacity-0 group-hover:opacity-30' : 'opacity-0 group-hover:opacity-10'}`} />
 
               <div className="relative z-10">
                 {/* Header */}
@@ -463,7 +484,7 @@ export default function TrainPage() {
                 </div>
 
                 {/* Content */}
-                <h3 className={`text-lg font-bold ${currentTheme.text} mb-2 group-hover:text-[#5B6CFF] transition-colors`}>
+                <h3 className={`text-lg font-bold ${currentTheme.text} mb-2 transition-colors ${resolvedTheme === 'light' ? 'group-hover:text-indigo-600' : 'group-hover:text-[#5B6CFF]'}`}>
                   {mod.title}
                 </h3>
                 <p className={`text-sm ${currentTheme.textMuted} mb-4 line-clamp-2`}>
@@ -526,7 +547,7 @@ export default function TrainPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`${currentTheme.cardBg} border border-[#5B6CFF]/30 rounded-2xl p-6 bg-gradient-to-r from-[#5B6CFF]/10 to-[#8B5CF6]/10`}
+          className={`${currentTheme.cardBg} border ${resolvedTheme === 'light' ? 'border-indigo-200 shadow-lg shadow-indigo-100' : 'border-[#5B6CFF]/30'} rounded-2xl p-6 bg-gradient-to-r ${resolvedTheme === 'light' ? 'from-indigo-50 to-violet-50' : 'from-[#5B6CFF]/10 to-[#8B5CF6]/10'}`}
         >
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-start gap-4">

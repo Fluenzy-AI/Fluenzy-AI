@@ -22,16 +22,15 @@ const SessionPageContent = () => {
   const [isInterviewActive, setIsInterviewActive] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
 
-  // Check if this is an HR interview or Company-wise session
-  const isHRInterview = type === ModuleType.HR_INTERVIEW;
+  // Check if this is a Company-wise session (only one that gets Video Analysis)
   const isCompanyWise = type === ModuleType.COMPANY_WISE_HR;
   
-  // Auto-enable video analysis for HR/Company interviews
+  // Only enable video analysis for Company-wise sessions
   useEffect(() => {
-    if (isHRInterview || isCompanyWise) {
+    if (isCompanyWise) {
       setIsVideoAnalysisEnabled(true);
     }
-  }, [isHRInterview, isCompanyWise]);
+  }, [isCompanyWise]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -111,8 +110,18 @@ const SessionPageContent = () => {
 
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 lg:p-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Video Analysis Panel - Only for Company interviews, shown FIRST on mobile */}
+          {isCompanyWise && (
+            <div className="order-first lg:order-last lg:col-span-1">
+              <VideoAnalysisPanel 
+                sessionId={sessionId}
+                isActive={isInterviewActive}
+              />
+            </div>
+          )}
+
           {/* Main Voice Agent */}
-          <div className={`${isVideoAnalysisEnabled && (isHRInterview || isCompanyWise) ? 'lg:col-span-2' : 'lg:col-span-3'}`}>
+          <div className={`${isVideoAnalysisEnabled && isCompanyWise ? 'lg:col-span-2' : 'lg:col-span-3'} ${isCompanyWise ? 'order-last lg:order-first' : ''}`}>
             <div className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-6 md:p-8 lg:p-12 theme-transition`}>
               <VoiceAgent
                 user={user}
@@ -125,16 +134,6 @@ const SessionPageContent = () => {
               />
             </div>
           </div>
-
-          {/* Video Analysis Panel - Always visible for HR/Company interviews */}
-          {(isHRInterview || isCompanyWise) && (
-            <div className="lg:col-span-1">
-              <VideoAnalysisPanel 
-                sessionId={sessionId}
-                isActive={isInterviewActive}
-              />
-            </div>
-          )}
         </div>
       </div>
     </div>

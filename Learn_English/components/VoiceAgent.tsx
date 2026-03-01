@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, ModuleType, SessionRecord, QAPair, InterviewQA } from '../types';
 import { SYSTEM_INSTRUCTIONS } from '../constants';
+import { useTheme } from '../../src/contexts/ThemeContext';
 
 // --- Utility Functions for Audio ---
 function decode(base64: string) {
@@ -109,6 +110,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
   const searchParams = useSearchParams();
   const [isActive, setIsActive] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFinished, setIsFinished] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
@@ -117,6 +119,8 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
   const isHRInterview = type === ModuleType.HR_INTERVIEW;
   const isConversationPractice = type === ModuleType.CONVERSATION_PRACTICE;
   const isGDCoach = type === ModuleType.GD_COACH;
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light';
 
   const sessionMeta: any = {
     lessonId: searchParams.get('lessonId'),
@@ -483,63 +487,129 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
     }
   }, [isFinished, router]);
 
+  // Prevent user from closing/navigating away while data is saving
+  useEffect(() => {
+    if (!isSaving) return;
+    const handler = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [isSaving]);
+
   return (
-    <div className={`min-h-[85vh] flex flex-col ${isEnglishLearning ? 'bg-gradient-to-br from-slate-800/80 to-slate-900/80' : 'bg-slate-50'} rounded-3xl border ${isEnglishLearning ? 'border-slate-700/50' : 'border-slate-200'} shadow-2xl overflow-hidden relative backdrop-blur-xl`}>
-      <div className="bg-slate-800/60 backdrop-blur-xl border-slate-700/50 px-6 md:px-10 py-6 md:py-8 flex items-center justify-between border-b z-50">
-        <div className="flex items-center gap-3 md:gap-5">
-          <div className={`${isEnglishLearning ? 'bg-gradient-to-br from-blue-600 to-purple-600' : 'bg-gradient-to-br from-pink-600 to-purple-600'} text-white p-2 md:p-3 rounded-2xl shadow-lg`}>
-            <Sparkles size={20} className="md:w-6 md:h-6" />
+    <div className={`flex flex-col rounded-2xl md:rounded-3xl border overflow-hidden relative
+      ${isLight
+        ? 'bg-white border-slate-200 shadow-lg'
+        : isEnglishLearning
+          ? 'bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-slate-700/50 shadow-2xl backdrop-blur-xl'
+          : 'bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-slate-700/50 shadow-2xl backdrop-blur-xl'
+      }`}>
+      {/* Header */}
+      <div className={`px-4 md:px-8 py-3 md:py-5 flex items-center justify-between border-b z-50
+        ${isLight ? 'bg-white border-slate-100' : 'bg-slate-800/60 backdrop-blur-xl border-slate-700/50'}`}>
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
+          <div className={`flex-shrink-0 ${
+            isEnglishLearning ? 'bg-gradient-to-br from-blue-600 to-purple-600' : 'bg-gradient-to-br from-pink-500 to-purple-600'
+          } text-white p-2 rounded-xl shadow-lg`}>
+            <Sparkles size={18} />
           </div>
-          <div>
-            <h2 className="font-black text-white text-lg md:text-xl tracking-tight leading-tight">{topic}</h2>
+          <div className="min-w-0">
+            <h2 className={`font-black text-base md:text-lg tracking-tight leading-tight truncate ${
+              isLight ? 'text-slate-900' : 'text-white'
+            }`}>{topic}</h2>
             {isEnglishLearning && lessonContext && (
-              <p className="text-slate-300 text-sm font-medium mt-1">{lessonContext.objective}</p>
+              <p className={`text-xs font-medium mt-0.5 truncate ${isLight ? 'text-slate-500' : 'text-slate-300'}`}>{lessonContext.objective}</p>
             )}
           </div>
         </div>
-        <button onClick={() => router.push('/train')} className="p-2 md:p-3 text-slate-300 hover:bg-slate-700/50 hover:text-white rounded-2xl transition-all"><X size={20} className="md:w-6 md:h-6" /></button>
+        <button
+          onClick={() => router.push('/train')}
+          className={`flex-shrink-0 p-2 rounded-xl transition-all ml-2 ${
+            isLight ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-900' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+          }`}
+        >
+          <X size={18} />
+        </button>
       </div>
       
-      <div className="flex-1 p-6 md:p-10 flex flex-col items-center justify-center relative">
-        {error && <div className={`absolute top-10 ${isEnglishLearning ? 'bg-rose-900/50 text-rose-300 border-rose-700/50' : 'bg-rose-50 text-rose-600 border-rose-100'} px-6 py-3 rounded-full font-bold flex items-center gap-2 border z-[100]`}><Zap size={16} /> {error}</div>}
+      <div className="flex-1 p-4 md:p-8 flex flex-col items-center justify-center relative">
+        {error && <div className={`absolute top-4 left-4 right-4 md:left-auto md:right-auto px-4 py-2 rounded-xl font-bold flex items-center gap-2 border z-[100] text-sm ${
+          isLight ? 'bg-red-50 text-red-600 border-red-200' : 'bg-rose-900/50 text-rose-300 border-rose-700/50'
+        }`}><Zap size={14} /> {error}</div>}
         {!isActive && !isConnecting ? (
-        <div className="w-full max-w-2xl mx-auto">
-          <div className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl p-8 md:p-10 text-center space-y-8 animate-in fade-in duration-700">
-            <div className="space-y-8">
-              <div className="flex flex-col items-center space-y-6">
-                <div className="relative">
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 blur-xl scale-110" />
-                  <img
-                    src="/image/img.png"
-                    alt="AI English Coach"
-                    className="relative w-28 h-28 md:w-32 md:h-32 rounded-3xl border-2 border-slate-600/50 shadow-xl object-cover"
-                  />
-                  <p className="text-xs font-semibold text-slate-300 mt-3 tracking-wide">
-                    {isEnglishLearning ? 'AI English Coach' : 'AI HR Interview Coach'}
-                  </p>
-                </div>
-                <div className="space-y-3">
-                  <h3 className="text-2xl md:text-3xl font-black text-white leading-tight">
-                    {isEnglishLearning ? 'Your AI English Coach is Ready' : 'Your AI HR Interview Coach is Ready'}
-                  </h3>
-                  <p className="text-slate-300 max-w-lg mx-auto font-medium text-base leading-relaxed">
-                    {isEnglishLearning
-                      ? (lessonContext?.coachMessage || 'Get ready to practice your English speaking skills with personalized coaching.')
-                      : 'Prepare for your HR interview with structured practice and expert feedback on your responses.'
-                    }
-                  </p>
-                </div>
+        <div className="w-full max-w-lg mx-auto">
+          <div className={`rounded-2xl border p-5 md:p-8 text-center space-y-5 animate-in fade-in duration-500 ${
+            isLight
+              ? 'bg-gradient-to-br from-slate-50 to-white border-slate-200 shadow-md'
+              : 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border-slate-700/50 shadow-2xl'
+          }`}>
+            {/* Image + Title in row on mobile, column on desktop */}
+            <div className="flex flex-row md:flex-col items-center gap-4 md:gap-0 text-left md:text-center">
+              <div className="relative flex-shrink-0">
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 blur-lg scale-110" />
+                <img
+                  src="/image/img.png"
+                  alt="AI Coach"
+                  className="relative w-16 h-16 md:w-24 md:h-24 rounded-2xl border-2 border-slate-600/50 shadow-xl object-cover"
+                />
               </div>
-              {lessonContext && (
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-5">
-                  <p className="text-blue-300 text-sm font-semibold mb-2">🎯 Lesson Objective</p>
-                  <p className="text-white text-sm leading-relaxed">{lessonContext.objective}</p>
-                </div>
-              )}
+              <div className="flex-1 md:mt-3 space-y-1 md:space-y-2">
+                <h3 className={`text-lg md:text-2xl font-black leading-tight ${
+                  isLight ? 'text-slate-900' : 'text-white'
+                }`}>
+                  {isEnglishLearning
+                    ? 'Your AI English Coach is Ready'
+                    : sessionMeta?.lessonTitle
+                      ? sessionMeta.lessonTitle
+                      : sessionMeta?.isCompanyWise
+                        ? `${sessionMeta?.company ? sessionMeta.company + ' ' : ''}Interview is Ready`
+                        : 'HR Interview is Ready'
+                  }
+                </h3>
+                <p className={`text-xs md:text-sm font-medium leading-relaxed hidden md:block ${
+                  isLight ? 'text-slate-500' : 'text-slate-300'
+                }`}>
+                  {isEnglishLearning
+                    ? (lessonContext?.coachMessage || 'Get ready to practice your English speaking skills with personalized coaching.')
+                    : sessionMeta?.isCompanyWise
+                      ? 'Prepare for your company-specific interview with structured practice and expert feedback.'
+                      : `Practice behavioral and HR questions${sessionMeta?.lessonTitle ? ` for: ${sessionMeta.lessonTitle}` : ''} with expert AI coaching.`
+                  }
+                </p>
+              </div>
             </div>
+            {/* Description visible on mobile below row */}
+            <p className={`text-xs font-medium leading-relaxed md:hidden ${
+              isLight ? 'text-slate-500' : 'text-slate-400'
+            }`}>
+              {isEnglishLearning
+                ? (lessonContext?.coachMessage || 'Get ready to practice your English speaking skills.')
+                : sessionMeta?.isCompanyWise
+                  ? 'Company-specific structured interview practice.'
+                  : `HR behavioral practice${sessionMeta?.lessonTitle ? `: ${sessionMeta.lessonTitle}` : ''}.`
+              }
+            </p>
+            {lessonContext && (
+              <div className={`rounded-xl p-3 md:p-4 border ${
+                isLight ? 'bg-blue-50 border-blue-100' : 'bg-blue-500/10 border-blue-500/20'
+              }`}>
+                <p className={`text-xs font-semibold mb-1 ${
+                  isLight ? 'text-blue-500' : 'text-blue-300'
+                }`}>🎯 Lesson Objective</p>
+                <p className={`text-xs leading-relaxed ${
+                  isLight ? 'text-slate-700' : 'text-white'
+                }`}>{lessonContext.objective}</p>
+              </div>
+            )}
             <button
               onClick={startSession}
-              className="w-full md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-4 rounded-full font-black uppercase tracking-[0.1em] shadow-2xl hover:scale-105 active:scale-95 transition-all text-sm"
+              className={`w-full py-3 md:py-4 rounded-full font-black uppercase tracking-[0.1em] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all text-sm text-white bg-gradient-to-r ${
+                isEnglishLearning
+                  ? 'from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
+                  : 'from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700'
+              }`}
             >
               {isEnglishLearning ? 'Start Practice' : 'Start Interview'}
             </button>
@@ -547,38 +617,49 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
         </div>
         ) : (
           <div className="w-full max-w-2xl mx-auto">
-            <div className="bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl p-8 md:p-10 text-center space-y-8 animate-in zoom-in-95 duration-500">
-              <div className="flex flex-col items-center space-y-6">
-                <div className="relative">
-                  <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${isAiSpeaking ? 'from-blue-500/20 to-purple-500/20' : 'from-emerald-500/20 to-teal-500/20'} blur-xl scale-110`} />
+            <div className={`rounded-2xl border p-4 md:p-8 text-center space-y-4 md:space-y-6 animate-in zoom-in-95 duration-500 ${
+              isLight
+                ? 'bg-white border-slate-200 shadow-md'
+                : 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border-slate-700/50 shadow-2xl'
+            }`}>
+              {/* Mobile: row layout (image + info side by side); md+: column centered */}
+              <div className="flex flex-row md:flex-col items-center gap-4 md:gap-6 md:justify-center">
+                <div className="relative flex-shrink-0">
+                  <div className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${isAiSpeaking ? 'from-blue-500/20 to-purple-500/20' : 'from-emerald-500/20 to-teal-500/20'} blur-xl scale-110`} />
                   <img
                     src="/image/img.png"
-                    alt="AI English Coach"
-                    className="relative w-28 h-28 md:w-32 md:h-32 rounded-3xl border-2 border-slate-600/50 shadow-xl object-cover"
+                    alt="AI Coach"
+                    className={`relative rounded-2xl border-2 shadow-lg object-cover ${
+                      isLight ? 'border-slate-200' : 'border-slate-600/50'
+                    } w-14 h-14 md:w-24 md:h-24`}
                   />
-                  <p className="text-xs font-semibold text-slate-300 mt-3 tracking-wide">AI English Coach</p>
+                  <p className={`text-xs font-semibold mt-2 tracking-wide text-center ${isLight ? 'text-slate-500' : 'text-slate-300'}`}>
+                    {isEnglishLearning ? 'AI Coach' : (sessionMeta?.isCompanyWise ? 'Company Coach' : 'HR Coach')}
+                  </p>
                 </div>
-                <div className="space-y-4">
-                  <h4 className="text-xs font-black uppercase text-slate-400 tracking-[0.3em]">
-                    {isEnglishLearning ? 'English Practice Session' : 'HR Interview Practice'}
+                <div className="flex-1 md:w-full space-y-2 md:space-y-4 text-left md:text-center">
+                  <h4 className={`text-xs font-black uppercase tracking-[0.2em] ${isLight ? 'text-slate-400' : 'text-slate-400'}`}>
+                    {isEnglishLearning ? 'English Practice' : 'Interview Practice'}
                   </h4>
-                  <p className="text-xl md:text-2xl font-black text-white leading-tight">
+                  <p className={`text-sm md:text-xl font-bold leading-snug ${isLight ? 'text-slate-800' : 'text-white'}`}>
                     {isAiSpeaking
                       ? (isEnglishLearning
-                          ? 'Your AI Coach is guiding you through this lesson. Listen and respond naturally.'
-                          : 'Your HR Interview Coach is providing structured feedback. Listen carefully.'
+                          ? 'Your coach is speaking. Listen carefully.'
+                          : 'Your coach is providing feedback. Listen carefully.'
                         )
                       : (isEnglishLearning
-                          ? 'Your turn to practice! Speak clearly and confidently.'
-                          : 'Your turn to respond! Structure your answer professionally.'
+                          ? 'Your turn! Speak clearly.'
+                          : 'Your turn! Answer professionally.'
                         )
                     }
                   </p>
-                  <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-full border ${isAiSpeaking ? 'bg-blue-500/10 border-blue-500/30 text-blue-300 shadow-lg shadow-blue-500/10' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 shadow-lg shadow-emerald-500/10 animate-pulse'}`}>
-                    <Mic2 size={20} />
-                    <span className="text-sm font-semibold">
-                      {isAiSpeaking ? 'Coach Speaking' : (isEnglishLearning ? 'Your Turn' : 'Your Response')}
-                    </span>
+                  <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full border text-xs md:text-sm font-semibold ${
+                    isAiSpeaking
+                      ? (isLight ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-blue-500/10 border-blue-500/30 text-blue-300')
+                      : (isLight ? 'bg-emerald-50 border-emerald-200 text-emerald-600 animate-pulse' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300 animate-pulse')
+                  }`}>
+                    <Mic2 size={16} />
+                    <span>{isAiSpeaking ? 'Coach Speaking' : (isEnglishLearning ? 'Your Turn' : 'Your Response')}</span>
                   </div>
                 </div>
               </div>
@@ -588,19 +669,42 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
       </div>
 
       {isActive && (
-        <div className="mt-8 flex justify-center">
-          <button onClick={() => cleanup(true)} className="w-full md:w-auto bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white px-8 py-4 rounded-full font-black uppercase tracking-[0.1em] shadow-2xl hover:scale-105 active:scale-95 transition-all text-sm flex items-center justify-center gap-3">
+        <div className="mt-4 md:mt-8 flex justify-center">
+          <button
+            onClick={async () => { setIsSaving(true); await cleanup(true); }}
+            className="w-full md:w-auto bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white px-8 py-4 rounded-full font-black uppercase tracking-[0.1em] shadow-2xl hover:scale-105 active:scale-95 transition-all text-sm flex items-center justify-center gap-3"
+          >
             {isEnglishLearning ? 'End Practice' : 'End Interview'} <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       )}
 
-      {isConnecting && <div className={`absolute inset-0 ${isEnglishLearning ? 'bg-slate-900/95' : 'bg-white/95'} z-[100] flex flex-col items-center justify-center space-y-8`}>
-        <div className={`w-20 h-20 border-[6px] ${isEnglishLearning ? 'border-slate-700 border-t-blue-500' : 'border-slate-100 border-t-blue-600'} rounded-full animate-spin`} />
-        <p className="font-black text-white uppercase tracking-[0.2em] md:tracking-[0.4em] text-xs md:text-sm">
+      {isConnecting && <div className={`absolute inset-0 z-[100] flex flex-col items-center justify-center space-y-6 rounded-2xl md:rounded-3xl ${isLight ? 'bg-white/95' : 'bg-slate-900/95'}`}>
+        <div className={`w-16 h-16 md:w-20 md:h-20 border-[5px] rounded-full animate-spin ${isLight ? 'border-slate-200 border-t-blue-500' : 'border-slate-700 border-t-blue-400'}`} />
+        <p className={`font-black uppercase tracking-[0.2em] text-xs md:text-sm ${isLight ? 'text-slate-700' : 'text-white'}`}>
           {isEnglishLearning ? 'Preparing Your Coach...' : 'Setting Up Interview Environment...'}
         </p>
       </div>}
+
+      {isSaving && (
+        <div className={`absolute inset-0 z-[200] flex flex-col items-center justify-center space-y-5 rounded-2xl md:rounded-3xl ${isLight ? 'bg-white/98' : 'bg-slate-900/98'}`}
+          style={{ backdropFilter: 'blur(8px)' }}
+        >
+          {/* Pulsing save icon */}
+          <div className="relative flex items-center justify-center w-16 h-16">
+            <div className="absolute inset-0 rounded-full bg-emerald-400/20 animate-ping" />
+            <div className={`w-14 h-14 rounded-full border-4 border-t-emerald-500 animate-spin ${isLight ? 'border-slate-200' : 'border-slate-700'}`} />
+          </div>
+          <div className="text-center space-y-1 px-6">
+            <p className={`font-black text-sm md:text-base uppercase tracking-[0.2em] ${isLight ? 'text-slate-800' : 'text-white'}`}>
+              {isEnglishLearning ? 'Saving Practice Data...' : 'Saving Interview Data...'}
+            </p>
+            <p className={`text-xs ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+              Please wait, do not close this page
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
