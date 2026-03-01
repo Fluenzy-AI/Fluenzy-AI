@@ -1,6 +1,24 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { Building2, CheckCircle, XCircle, PauseCircle, RefreshCw, Eye, Loader2, Search, Filter } from "lucide-react";
+import {
+  Building2, CheckCircle, XCircle, PauseCircle, RefreshCw, Eye,
+  Loader2, Search, Filter, X, User, GraduationCap,
+  Activity, BookOpen, Calendar, Zap,
+} from "lucide-react";
+
+interface StudentUser {
+  plan?: string; usageCount?: number; usageLimit?: number;
+  hrUsage?: number; gdUsage?: number; technicalUsage?: number;
+  companyUsage?: number; englishUsage?: number;
+  renewalDate?: string; disabled?: boolean; createdAt?: string;
+}
+interface StudentDetail {
+  id: string; studentName: string; email: string;
+  department?: string; year?: number; rollNumber?: string;
+  status: string; customPlan?: string; customPlanExpiresAt?: string;
+  onboardedAt?: string; inviteSentAt?: string; createdAt: string;
+  user?: StudentUser;
+}
 
 interface CollegePartner {
   id: string;
@@ -34,6 +52,9 @@ export default function CollegePartnersPage() {
   const [reason, setReason] = useState("");
   const [seats, setSeats] = useState<Record<string, number>>({});
   const [plan, setPlan] = useState<Record<string, string>>({});
+  const [editSeats, setEditSeats] = useState<Record<string, number>>({});
+  const [editPlan, setEditPlan] = useState<Record<string, string>>({});
+  const [updateSuccess, setUpdateSuccess] = useState<string | null>(null);
 
   const fetchPartners = useCallback(async () => {
     setLoading(true);
@@ -68,6 +89,31 @@ export default function CollegePartnersPage() {
         setExpanded(null);
         setReason("");
         await fetchPartners();
+      }
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const doUpdate = async (id: string) => {
+    setActionLoading(id + "update");
+    setUpdateSuccess(null);
+    try {
+      const body: Record<string, unknown> = {
+        collegeAdminId: id,
+        action: "update",
+        totalSeats: editSeats[id],
+        allocatedPlan: editPlan[id],
+      };
+      const res = await fetch("/api/superadmin/college-partners", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (res.ok) {
+        setUpdateSuccess(id);
+        await fetchPartners();
+        setTimeout(() => setUpdateSuccess(null), 3000);
       }
     } finally {
       setActionLoading(null);
@@ -220,7 +266,8 @@ export default function CollegePartnersPage() {
                             <div><p className="text-slate-500 text-xs mb-0.5">Approved At</p><p className="text-slate-200">{p.approvedAt ? new Date(p.approvedAt).toLocaleDateString() : "—"}</p></div>
                             <div><p className="text-slate-500 text-xs mb-0.5">Email</p><p className="text-slate-200 break-all">{p.email}</p></div>
                           </div>
-                          {/* Approve with custom seats/plan */}
+
+                          {/* Approve with custom seats/plan — for PENDING */}
                           {p.status === "PENDING" && (
                             <div className="mt-4 flex flex-wrap items-end gap-3">
                               <div>
@@ -235,15 +282,53 @@ export default function CollegePartnersPage() {
                                   onChange={(e) => setPlan((s) => ({ ...s, [p.id]: e.target.value }))}
                                   className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
                                   <option value="Free">Free</option>
-                                  <option value="Standard">Standard</option>
-                                  <option value="Pro">Pro</option>
-                                  <option value="Enterprise">Enterprise</option>
+                                  <option value="Standard">Standard — Rs.150/student</option>
+                                  <option value="Pro">Pro — Rs.20/student</option>
+                                  <option value="Enterprise">Enterprise (Custom)</option>
                                 </select>
                               </div>
                               <button onClick={() => doAction(p.id, "approve")} disabled={!!actionLoading}
                                 className="flex items-center gap-2 px-5 py-2 rounded-xl bg-green-500/20 text-green-300 border border-green-500/30 text-sm hover:bg-green-500/30 transition-all disabled:opacity-50">
                                 <CheckCircle className="w-4 h-4" /> Approve with these settings
                               </button>
+                            </div>
+                          )}
+
+                          {/* Edit plan/seats for APPROVED colleges */}
+                          {(p.status === "APPROVED" || p.status === "SUSPENDED") && (
+                            <div className="mt-4 border-t border-slate-700/40 pt-4">
+                              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-3">Update Plan &amp; Seats</p>
+                              <div className="flex flex-wrap items-end gap-3">
+                                <div>
+                                  <label className="text-xs text-slate-400 block mb-1">Total Seats</label>
+                                  <input type="number" min="1"
+                                    value={editSeats[p.id] ?? p.totalSeats}
+                                    onChange={(e) => setEditSeats((s) => ({ ...s, [p.id]: +e.target.value }))}
+                                    className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 w-28 focus:outline-none focus:border-indigo-500" />
+                                </div>
+                                <div>
+                                  <label className="text-xs text-slate-400 block mb-1">Allocated Plan</label>
+                                  <select
+                                    value={editPlan[p.id] ?? (p.allocatedPlan ?? "Free")}
+                                    onChange={(e) => setEditPlan((s) => ({ ...s, [p.id]: e.target.value }))}
+                                    className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500">
+                                    <option value="Free">Free</option>
+                                    <option value="Standard">Standard — Rs.150/student</option>
+                                    <option value="Pro">Pro — Rs.20/student</option>
+                                    <option value="Enterprise">Enterprise (Custom)</option>
+                                  </select>
+                                </div>
+                                <button
+                                  onClick={() => doUpdate(p.id)}
+                                  disabled={!!actionLoading}
+                                  className="flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-sm hover:bg-indigo-500/30 transition-all disabled:opacity-50">
+                                  {actionLoading === p.id + "update" ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                                  Save Changes
+                                </button>
+                                {updateSuccess === p.id && (
+                                  <span className="flex items-center gap-1 text-green-400 text-xs"><CheckCircle className="w-3 h-3" />Updated!</span>
+                                )}
+                              </div>
                             </div>
                           )}
                         </td>

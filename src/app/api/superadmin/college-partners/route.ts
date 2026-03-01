@@ -31,11 +31,37 @@ export async function GET(req: NextRequest) {
         year: true,
         rollNumber: true,
         status: true,
+        customPlan: true,
+        customPlanExpiresAt: true,
         onboardedAt: true,
+        inviteSentAt: true,
         createdAt: true,
       } as any,
     });
-    return NextResponse.json({ students });
+
+    // Enrich with linked users record
+    const enriched = await Promise.all(
+      students.map(async (s: any) => {
+        const user = await prisma.users.findUnique({
+          where: { email: s.email },
+          select: {
+            plan: true,
+            usageCount: true,
+            usageLimit: true,
+            hrUsage: true,
+            gdUsage: true,
+            technicalUsage: true,
+            companyUsage: true,
+            englishUsage: true,
+            renewalDate: true,
+            disabled: true,
+            createdAt: true,
+          },
+        });
+        return { ...s, user };
+      })
+    );
+    return NextResponse.json({ students: enriched });
   }
 
   const where: Record<string, unknown> = {};
@@ -81,7 +107,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const { collegeAdminId, action, reason, totalSeats, allocatedPlan, planExpiresAt } = body as {
     collegeAdminId: string;
-    action: "approve" | "reject" | "suspend" | "reactivate";
+    action: "approve" | "reject" | "suspend" | "reactivate" | "update";
     reason?: string;
     totalSeats?: number;
     allocatedPlan?: string;
@@ -96,6 +122,16 @@ export async function PATCH(req: NextRequest) {
   if (!admin) return NextResponse.json({ error: "College admin not found." }, { status: 404 });
 
   const superAdminId = (session.user as any)?.id ?? "";
+
+  // "update" action: only update plan/seats without changing status
+  if (action === "update") {
+    const updateData: Record<string, unknown> = { approvedBy: superAdminId };
+    if (totalSeats !== undefined) updateData.totalSeats = Number(totalSeats);
+    if (allocatedPlan) updateData.allocatedPlan = allocatedPlan;
+    if (planExpiresAt) updateData.planExpiresAt = new Date(planExpiresAt);
+    await prisma.collegeAdmin.update({ where: { id: collegeAdminId }, data: updateData as any });
+    return NextResponse.json({ success: true, message: "College plan/seats updated successfully." });
+  }
 
   const statusMap: Record<string, string> = {
     approve: "APPROVED",

@@ -61,19 +61,18 @@ export default function CollegeSidebar() {
         })}
       </nav>
 
-      {/* Plan Badge */}
+      {/* Seats Usage */}
       {admin && (
         <div className="mx-3 mb-3 p-3 rounded-xl bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/20">
-          <p className="text-xs text-slate-400 font-medium">Current Plan</p>
-          <p className="text-sm font-bold text-indigo-300 mt-0.5">{admin.allocatedPlan}</p>
-          <div className="mt-2 flex items-center gap-2 text-xs text-slate-400">
-            <div className="flex-1 bg-slate-700 rounded-full h-1.5">
-              <div
-                className="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full transition-all"
-                style={{ width: admin.totalSeats > 0 ? `${Math.min(100, (admin.usedSeats / admin.totalSeats) * 100)}%` : "0%" }}
-              />
-            </div>
-            <span>{admin.usedSeats}/{admin.totalSeats > 0 ? admin.totalSeats : "∞"} seats</span>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-slate-400 font-medium">Seat Usage</p>
+            <span className="text-xs text-indigo-300 font-semibold">{admin.usedSeats}/{admin.totalSeats > 0 ? admin.totalSeats : "∞"} seats</span>
+          </div>
+          <div className="bg-slate-700 rounded-full h-1.5">
+            <div
+              className="bg-gradient-to-r from-indigo-500 to-purple-500 h-1.5 rounded-full transition-all"
+              style={{ width: admin.totalSeats > 0 ? `${Math.min(100, (admin.usedSeats / admin.totalSeats) * 100)}%` : "0%" }}
+            />
           </div>
         </div>
       )}

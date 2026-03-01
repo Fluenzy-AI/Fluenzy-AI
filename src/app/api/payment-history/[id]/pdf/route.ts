@@ -76,9 +76,11 @@ export async function GET(
       `FLZ-${status.toUpperCase().slice(0, 3)}-${payment.id.slice(-6).toUpperCase()}`;
 
     const gstin = process.env.FLUENZY_GSTIN || "";
+    const isCollegePurchase = payment.paymentMethod === "College Purchase";
+    const collegeSponsor = isCollegePurchase ? (payment.couponUsed ?? "Your Institution") : null;
 
     let couponSection = "";
-    if (payment.couponUsed) {
+    if (!isCollegePurchase && payment.couponUsed) {
       couponSection = `
         <div class="divider"></div>
         <div class="section">
@@ -204,6 +206,19 @@ export async function GET(
 
   <div class="section">
     <div class="section-title">Price Breakdown</div>
+    ${isCollegePurchase ? `
+    <table class="table price-table">
+      <thead><tr><th>Description</th><th>Amount</th></tr></thead>
+      <tbody>
+        <tr><td>${planName} Plan (${titleCase(billingCycle)})</td><td>Sponsored</td></tr>
+        <tr class="total-row">
+          <td><strong>Your Cost</strong></td>
+          <td><strong><span class="free-badge">FREE</span></strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <p style="margin:8px 0 0;font-size:9.5pt;color:#4f46e5;">This plan was sponsored by <strong>${collegeSponsor}</strong>. No payment was required from you.</p>
+    ` : `
     <table class="table price-table">
       <thead>
         <tr><th>Description</th><th>Amount</th></tr>
@@ -217,6 +232,7 @@ export async function GET(
         </tr>
       </tbody>
     </table>
+    `}
   </div>
 
   ${couponSection}

@@ -151,12 +151,17 @@ export default function SuperAdminDashboard() {
   const [expandedCollege, setExpandedCollege] = useState<string | null>(null);
   const [collegeStudents, setCollegeStudents] = useState<Record<string, any[]>>({});
   const [collegeStudentsLoading, setCollegeStudentsLoading] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<any | null>(null);
   const [collegeActionLoading, setCollegeActionLoading] = useState<string | null>(null);
   const [approveModal, setApproveModal] = useState<any | null>(null);
   const [rejectModal, setRejectModal] = useState<any | null>(null);
   const [rejectReason, setRejectReason] = useState('');
   const [approveSeats, setApproveSeats] = useState(200);
   const [approvePlan, setApprovePlan] = useState('Free');
+  const [editPlanModal, setEditPlanModal] = useState<any | null>(null);
+  const [editPlanSeats, setEditPlanSeats] = useState(200);
+  const [editPlanValue, setEditPlanValue] = useState('Free');
+  const [editPlanSuccess, setEditPlanSuccess] = useState(false);
   // ─────────────────────────────────────────────────────────────────────
 
   // ── College Coupons state ─────────────────────────────────────────────
@@ -1376,6 +1381,7 @@ export default function SuperAdminDashboard() {
                                 <button onClick={() => fetchCollegeStudents(c.id)} className="px-2.5 py-1.5 rounded-lg bg-slate-700/60 text-slate-300 hover:text-white text-xs border border-slate-600 transition-all">{expandedCollege === c.id ? '▲ Hide' : '👥 Students'}</button>
                                 {c.status === 'PENDING' && <button onClick={() => { setApproveModal(c); setApproveSeats(200); setApprovePlan('Free'); }} className="px-2.5 py-1.5 rounded-lg bg-green-500/20 text-green-400 border border-green-500/30 hover:bg-green-500/30 text-xs transition-all">✓ Approve</button>}
                                 {c.status === 'PENDING' && <button onClick={() => { setRejectModal(c); setRejectReason(''); }} className="px-2.5 py-1.5 rounded-lg bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 text-xs transition-all">✕ Reject</button>}
+                                {c.status === 'APPROVED' && <button onClick={() => { setEditPlanModal(c); setEditPlanSeats(c.totalSeats ?? 200); setEditPlanValue(c.allocatedPlan ?? 'Free'); setEditPlanSuccess(false); }} className="px-2.5 py-1.5 rounded-lg bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 hover:bg-indigo-500/30 text-xs transition-all">✏ Edit Plan</button>}
                                 {c.status === 'APPROVED' && <button onClick={() => doCollegeAction(c.id, 'suspend')} disabled={!!collegeActionLoading} className="px-2.5 py-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 hover:bg-orange-500/30 text-xs transition-all disabled:opacity-50">⏸ Suspend</button>}
                                 {(c.status === 'SUSPENDED' || c.status === 'REJECTED') && <button onClick={() => doCollegeAction(c.id, 'reactivate')} disabled={!!collegeActionLoading} className="px-2.5 py-1.5 rounded-lg bg-violet-500/20 text-violet-400 border border-violet-500/30 hover:bg-violet-500/30 text-xs transition-all disabled:opacity-50">↺ Reactivate</button>}
                               </div>
@@ -1400,8 +1406,10 @@ export default function SuperAdminDashboard() {
                                           <th className="text-left py-2 pr-4">Email</th>
                                           <th className="text-left py-2 pr-4">Dept</th>
                                           <th className="text-left py-2 pr-4">Year</th>
+                                          <th className="text-left py-2 pr-4">Plan</th>
                                           <th className="text-left py-2 pr-4">Status</th>
-                                          <th className="text-left py-2">Onboarded</th>
+                                          <th className="text-left py-2 pr-4">Onboarded</th>
+                                          <th className="text-left py-2">Actions</th>
                                         </tr>
                                       </thead>
                                       <tbody className="divide-y divide-white/5">
@@ -1412,9 +1420,15 @@ export default function SuperAdminDashboard() {
                                             <td className="py-2 pr-4 text-slate-400">{s.department ?? '—'}</td>
                                             <td className="py-2 pr-4 text-slate-400">{s.year ?? '—'}</td>
                                             <td className="py-2 pr-4">
+                                              <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${ s.customPlan === 'Pro' ? 'bg-purple-500/20 text-purple-300' : s.customPlan === 'Standard' ? 'bg-indigo-500/20 text-indigo-300' : s.customPlan === 'Enterprise' ? 'bg-amber-500/20 text-amber-300' : s.user?.plan === 'Pro' ? 'bg-purple-500/20 text-purple-300' : 'bg-slate-700 text-slate-400' }`}>{s.customPlan ?? s.user?.plan ?? 'Free'}</span>
+                                            </td>
+                                            <td className="py-2 pr-4">
                                               <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${ s.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' : s.status === 'SUSPENDED' ? 'bg-red-500/20 text-red-400' : 'bg-yellow-500/20 text-yellow-400' }`}>{s.status}</span>
                                             </td>
-                                            <td className="py-2 text-slate-400">{s.onboardedAt ? new Date(s.onboardedAt).toLocaleDateString('en-IN') : <span className="text-yellow-500/70 text-[10px]">Invite Pending</span>}</td>
+                                            <td className="py-2 pr-4 text-slate-400">{s.onboardedAt ? new Date(s.onboardedAt).toLocaleDateString('en-IN') : <span className="text-yellow-500/70 text-[10px]">Invite Pending</span>}</td>
+                                            <td className="py-2">
+                                              <button onClick={() => setSelectedStudent({ ...s, collegeName: c.collegeName })} className="px-2 py-1 rounded-lg bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30 text-[10px] font-medium transition-all">View Details</button>
+                                            </td>
                                           </tr>
                                         ))}
                                       </tbody>
@@ -1446,15 +1460,52 @@ export default function SuperAdminDashboard() {
                         <label className="text-xs text-slate-400 block mb-1">Allocated Plan</label>
                         <select value={approvePlan} onChange={e => setApprovePlan(e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500">
                           <option value="Free">Free</option>
-                          <option value="Standard">Standard</option>
-                          <option value="Pro">Pro</option>
-                          <option value="Enterprise">Enterprise</option>
+                          <option value="Standard">Standard — Rs.150/student/month</option>
+                          <option value="Pro">Pro — Rs.20/student/month</option>
+                          <option value="Enterprise">Enterprise (Custom)</option>
                         </select>
                       </div>
                     </div>
                     <div className="flex gap-3 mt-6">
                       <button onClick={() => setApproveModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:text-white text-sm transition-all">Cancel</button>
-                      <button disabled={!!collegeActionLoading} onClick={() => doCollegeAction(approveModal.id, 'approve', { totalSeats: approveSeats, allocatedPlan: approvePlan })} className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-all disabled:opacity-50">{collegeActionLoading ? 'Approving…' : '✓ Confirm Approval'}</button>
+                      <button disabled={!!collegeActionLoading} onClick={() => doCollegeAction(approveModal.id, 'approve', { totalSeats: approveSeats, allocatedPlan: approvePlan })} className="flex-1 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-sm transition-all disabled:opacity-50">{collegeActionLoading ? 'Approving...' : '✓ Confirm Approval'}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit Plan Modal — for already APPROVED colleges */}
+              {editPlanModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+                    <h3 className="text-lg font-semibold text-white mb-1">Edit Plan &amp; Seats</h3>
+                    <p className="text-sm text-slate-400 mb-5">{editPlanModal.collegeName} — <span className="font-mono text-xs">{editPlanModal.domain}</span></p>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Total Seats</label>
+                        <input type="number" min="1" value={editPlanSeats} onChange={e => setEditPlanSeats(+e.target.value)} className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Allocated Plan</label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[['Free', 'Rs.0'], ['Standard', 'Rs.150/student'], ['Pro', 'Rs.20/student'], ['Enterprise', 'Custom']].map(([p, price]) => (
+                            <button key={p} onClick={() => setEditPlanValue(p)}
+                              className={`flex flex-col items-start px-3 py-2.5 rounded-xl border text-sm transition-all ${editPlanValue === p ? 'border-indigo-500 bg-indigo-500/20 text-indigo-300' : 'border-slate-600 bg-slate-800 text-slate-300 hover:border-slate-500'}`}>
+                              <span className="font-semibold">{p}</span>
+                              <span className="text-xs text-slate-500">{price}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    {editPlanSuccess && <p className="mt-3 text-green-400 text-sm text-center">✓ Plan updated successfully!</p>}
+                    <div className="flex gap-3 mt-6">
+                      <button onClick={() => setEditPlanModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:text-white text-sm transition-all">Close</button>
+                      <button disabled={!!collegeActionLoading} onClick={async () => {
+                        await doCollegeAction(editPlanModal.id, 'update', { totalSeats: editPlanSeats, allocatedPlan: editPlanValue });
+                        setEditPlanSuccess(true);
+                        setTimeout(() => setEditPlanModal(null), 1500);
+                      }} className="flex-1 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition-all disabled:opacity-50">{collegeActionLoading ? 'Saving...' : 'Save Changes'}</button>
                     </div>
                   </div>
                 </div>
@@ -1646,6 +1697,95 @@ export default function SuperAdminDashboard() {
         })()}
 
       </div>
+
+      {/* Student Detail Modal */}
+      {selectedStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedStudent(null)}>
+          <div className="w-full max-w-2xl bg-[#0f172a] border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-indigo-500/10 to-purple-500/10">
+              <div>
+                <h2 className="text-white font-bold text-lg">{selectedStudent.studentName}</h2>
+                <p className="text-slate-400 text-sm">{selectedStudent.email}</p>
+                {selectedStudent.collegeName && <p className="text-indigo-400 text-xs mt-0.5">{selectedStudent.collegeName}</p>}
+              </div>
+              <button onClick={() => setSelectedStudent(null)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              {/* Academic Info */}
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Academic Details</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: "Roll Number", value: selectedStudent.rollNumber ?? "—" },
+                    { label: "Department", value: selectedStudent.department ?? "—" },
+                    { label: "Year", value: selectedStudent.year ? `Year ${selectedStudent.year}` : "—" },
+                    { label: "College Status", value: selectedStudent.status },
+                    { label: "Invite Sent", value: selectedStudent.inviteSentAt ? new Date(selectedStudent.inviteSentAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—" },
+                    { label: "Onboarded", value: selectedStudent.onboardedAt ? new Date(selectedStudent.onboardedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "Pending" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/40">
+                      <p className="text-slate-500 text-xs mb-0.5">{label}</p>
+                      <p className="text-slate-200 text-sm font-medium">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Plan Info */}
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Plan & Access</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: "Allocated Plan", value: selectedStudent.customPlan ?? selectedStudent.user?.plan ?? "Free", highlight: true },
+                    { label: "Platform Plan", value: selectedStudent.user?.plan ?? "Free" },
+                    { label: "Plan Valid Till", value: selectedStudent.customPlanExpiresAt ? new Date(selectedStudent.customPlanExpiresAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : selectedStudent.user?.renewalDate ? new Date(selectedStudent.user.renewalDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—" },
+                  ].map(({ label, value, highlight }) => (
+                    <div key={label} className={`rounded-xl p-3 border ${highlight ? "bg-indigo-500/10 border-indigo-500/30" : "bg-slate-800/50 border-slate-700/40"}`}>
+                      <p className="text-slate-500 text-xs mb-0.5">{label}</p>
+                      <p className={`text-sm font-bold ${highlight ? "text-indigo-300" : "text-slate-200"}`}>{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Usage Stats (from users table) */}
+              {selectedStudent.user && (
+                <div>
+                  <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Usage Stats</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                    {[
+                      { label: "Total Sessions", value: selectedStudent.user.usageCount ?? 0, max: selectedStudent.user.usageLimit },
+                      { label: "HR Interview", value: selectedStudent.user.hrUsage ?? 0 },
+                      { label: "GD Practice", value: selectedStudent.user.gdUsage ?? 0 },
+                      { label: "Technical", value: selectedStudent.user.technicalUsage ?? 0 },
+                      { label: "Company Tracks", value: selectedStudent.user.companyUsage ?? 0 },
+                      { label: "English", value: selectedStudent.user.englishUsage ?? 0 },
+                    ].map(({ label, value, max }) => (
+                      <div key={label} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/40 text-center">
+                        <p className="text-white font-bold text-lg">{value}{max !== undefined ? <span className="text-slate-500 text-xs font-normal">/{max}</span> : ""}</p>
+                        <p className="text-slate-500 text-[10px] mt-0.5">{label}</p>
+                      </div>
+                    ))}
+                  </div>
+                  {selectedStudent.user.disabled && (
+                    <p className="mt-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">⚠ Account is disabled on the platform</p>
+                  )}
+                </div>
+              )}
+
+              {!selectedStudent.user && (
+                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-3 text-yellow-400 text-sm">
+                  No platform account found. Student has not signed up yet.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

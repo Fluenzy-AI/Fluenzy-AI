@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Receipt, ExternalLink, CheckCircle2, XCircle, RefreshCw, Gift, Download, Loader2, Mail } from "lucide-react";
+import { ArrowLeft, Receipt, ExternalLink, CheckCircle2, XCircle, RefreshCw, Gift, Download, Loader2, Mail, Building2 } from "lucide-react";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 
@@ -33,10 +33,10 @@ interface PaymentRecord {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  paid: { label: "Paid", color: "bg-green-500/20 text-green-400 border-green-500/30", icon: CheckCircle2 },
-  free_via_coupon: { label: "Free (Coupon)", color: "bg-blue-500/20 text-blue-400 border-blue-500/30", icon: Gift },
-  failed: { label: "Failed", color: "bg-red-500/20 text-red-400 border-red-500/30", icon: XCircle },
-  refunded: { label: "Refunded", color: "bg-amber-500/20 text-amber-400 border-amber-500/30", icon: RefreshCw },
+  paid:            { label: "Paid",          color: "bg-green-500/20 text-green-400 border-green-500/30",  icon: CheckCircle2 },
+  free_via_coupon: { label: "Free (Coupon)", color: "bg-blue-500/20 text-blue-400 border-blue-500/30",    icon: Gift },
+  failed:          { label: "Failed",        color: "bg-red-500/20 text-red-400 border-red-500/30",        icon: XCircle },
+  refunded:        { label: "Refunded",      color: "bg-amber-500/20 text-amber-400 border-amber-500/30", icon: RefreshCw },
 };
 
 export default function BillingHistoryPage() {
@@ -200,6 +200,8 @@ export default function BillingHistoryPage() {
               const hasDiscount = payment.discountAmount > 0;
               const isDownloading = downloadingId === payment.id;
               const isSendingInvoice = sendingInvoiceId === payment.id;
+              const isCollegePurchase = payment.paymentMethod === "College Purchase";
+              const collegeName = isCollegePurchase ? (payment.couponUsed ?? "Your Institution") : null;
 
               return (
                 <motion.div
@@ -229,16 +231,28 @@ export default function BillingHistoryPage() {
                               <Badge className={`text-xs border ${statusCfg.color}`}>
                                 {statusCfg.label}
                               </Badge>
+                              {isCollegePurchase && (
+                                <Badge className="text-xs border bg-indigo-500/20 text-indigo-400 border-indigo-500/30 flex items-center gap-1">
+                                  <Building2 size={10} />
+                                  Paid by College
+                                </Badge>
+                              )}
                             </div>
                             <p className="text-sm text-muted-foreground mt-0.5">
                               {formatDate(payment.date)}
                             </p>
                             {payment.orderId && (
                               <p className="text-xs text-muted-foreground mt-0.5 font-mono">
-                                Order: {payment.orderId}
+                                {isCollegePurchase ? `Invoice: ${payment.orderId}` : `Order: ${payment.orderId}`}
                               </p>
                             )}
-                            {payment.couponUsed && (
+                            {isCollegePurchase && collegeName && (
+                              <p className="text-xs mt-0.5 flex items-center gap-1 text-indigo-400">
+                                <Building2 size={11} />
+                                Activated by: <strong>{collegeName}</strong>
+                              </p>
+                            )}
+                            {!isCollegePurchase && payment.couponUsed && (
                               <p className="text-xs text-green-400 mt-0.5">
                                 Coupon applied: {payment.couponUsed}
                               </p>
@@ -249,21 +263,23 @@ export default function BillingHistoryPage() {
                         {/* Right: Amount + Receipt */}
                         <div className="flex flex-col items-end gap-2">
                           <div className="text-right">
-                            {hasDiscount && payment.originalAmount != null && (
+                            {!isCollegePurchase && hasDiscount && payment.originalAmount != null && (
                               <p className="text-sm line-through text-muted-foreground">
                                 {formatAmount(payment.originalAmount, payment.paymentCurrency)}
                               </p>
                             )}
                             <p className={`text-xl font-bold ${
-                              payment.status === "failed" ? "text-red-400" : ""
+                              payment.status === "failed" ? "text-red-400" : isCollegePurchase ? "text-indigo-400" : ""
                             }`}>
                               {payment.status === "failed"
                                 ? "Not charged"
+                                : isCollegePurchase
+                                ? "₹0 (Paid by College)"
                                 : payment.finalAmount === 0
                                 ? "Free"
                                 : formatAmount(payment.finalAmount, payment.paymentCurrency)}
                             </p>
-                            {hasDiscount && (
+                            {!isCollegePurchase && hasDiscount && (
                               <p className="text-xs text-green-400">
                                 Saved {formatAmount(payment.discountAmount, payment.paymentCurrency)}
                               </p>

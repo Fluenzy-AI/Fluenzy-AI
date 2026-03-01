@@ -172,7 +172,7 @@ export default function CollegeStudentsPage() {
                   <th className="text-left px-4 py-3 text-slate-400 font-medium">Sessions</th>
                   <th className="text-left px-4 py-3 text-slate-400 font-medium">Avg Score</th>
                   <th className="text-left px-4 py-3 text-slate-400 font-medium">Last Login</th>
-                  <th className="px-4 py-3 w-10" />
+                  <th className="text-left px-4 py-3 text-slate-400 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -242,10 +242,10 @@ export default function CollegeStudentsPage() {
                           : <span className="text-slate-600">Never</span>}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1.5">
                           <Link href={`/college/students/${student.id}`}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-indigo-400/10 transition-all">
-                            <Eye className="w-4 h-4" />
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/25 hover:text-indigo-200 text-xs font-medium transition-all whitespace-nowrap">
+                            <Eye className="w-3.5 h-3.5" /> View Details
                           </Link>
                           <Link href={`/college/students/${student.id}/edit`}
                             className="p-1.5 rounded-lg text-slate-400 hover:text-amber-400 hover:bg-amber-400/10 transition-all">

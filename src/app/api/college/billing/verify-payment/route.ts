@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
+import { Plan } from "@prisma/client";
 import { getCollegeAdminFromRequest } from "@/lib/collegeAuth";
+import { sendStudentActivationEmail, sendStudentReceiptEmails, sendAdminBulkReceiptEmail } from "@/lib/collegeEmail";
 
 function generateInvoiceId(prefix = "INV-COL"): string {
   const ts = Date.now().toString(36).toUpperCase();
@@ -76,6 +78,8 @@ export async function POST(req: NextRequest) {
     const college = await prisma.collegeAdmin.findUnique({ where: { id: admin.id } });
     if (!college) return NextResponse.json({ error: "College not found." }, { status: 404 });
 
+    const planEnum = transaction.plan as Plan;
+
     let newStudentsCount = 0;
     for (const email of transaction.studentEmails) {
       const existing = await prisma.collegeStudent.findUnique({ where: { email } });
@@ -88,15 +92,28 @@ export async function POST(req: NextRequest) {
             email,
             status: "ACTIVE",
             inviteSentAt: new Date(),
+            customPlan: planEnum,
+            customPlanExpiresAt: validTill,
           },
         });
         newStudentsCount++;
-      } else if (existing.status !== "ACTIVE") {
+      } else {
+        // Update customPlan + status on existing CollegeStudent
         await prisma.collegeStudent.update({
           where: { id: existing.id },
-          data: { status: "ACTIVE" },
+          data: {
+            status: "ACTIVE",
+            customPlan: planEnum,
+            customPlanExpiresAt: validTill,
+          },
         });
       }
+
+      // Upgrade the linked users record (what the dashboard reads)
+      await prisma.users.updateMany({
+        where: { email },
+        data: { plan: planEnum, renewalDate: validTill },
+      });
     }
 
     // 5. Update college admin plan
@@ -137,6 +154,73 @@ export async function POST(req: NextRequest) {
         notes: `Razorpay payment ${razorpay_payment_id}`,
       },
     });
+
+    // 8. Create PaymentHistory record for each student who has a users account
+    const activatedStudentsInfo: Array<{ email: string; name?: string }> = [];
+    for (const email of transaction.studentEmails) {
+      const linkedUser = await (prisma as any).users.findUnique({
+        where: { email },
+        select: { id: true, name: true },
+      });
+      if (linkedUser) {
+        await (prisma as any).paymentHistory.create({
+          data: {
+            userId: linkedUser.id,
+            plan: String(transaction.plan),
+            billingCycle: "monthly",
+            paymentCurrency: "INR",
+            originalAmount: transaction.pricePerSeat,
+            discountAmount: 0,
+            finalAmount: 0,
+            paymentMethod: "College Purchase",
+            orderId: invoiceId,
+            paymentId: `college_${admin.id}`,
+            invoiceId,
+            status: "paid",
+            couponUsed: college.collegeName,
+            couponType: "college",
+            date: validFrom,
+          },
+        });
+      }
+      activatedStudentsInfo.push({ email, name: linkedUser?.name ?? undefined });
+    }
+
+    // 9. Send activation + receipt emails (fire-and-forget)
+    Promise.allSettled([
+      sendStudentActivationEmail({
+        studentEmails: transaction.studentEmails,
+        collegeName: college.collegeName,
+        plan: String(transaction.plan),
+        seats: transaction.seats,
+        validTill,
+        invoiceId,
+      }),
+      sendStudentReceiptEmails({
+        students: activatedStudentsInfo,
+        collegeName: college.collegeName,
+        plan: String(transaction.plan),
+        pricePerSeat: transaction.pricePerSeat,
+        validFrom,
+        validTill,
+        invoiceId,
+        seats: transaction.seats,
+      }),
+      sendAdminBulkReceiptEmail({
+        adminEmail: college.email,
+        collegeName: college.collegeName,
+        plan: String(transaction.plan),
+        seats: transaction.seats,
+        pricePerSeat: transaction.pricePerSeat,
+        couponCode: transaction.couponCode,
+        couponDiscount: transaction.couponDiscount,
+        totalAmount: transaction.finalAmount,
+        validFrom,
+        validTill,
+        invoiceId,
+        students: activatedStudentsInfo,
+      }),
+    ]).catch((err) => console.error("[verify-payment] email error:", err));
 
     return NextResponse.json({
       success: true,

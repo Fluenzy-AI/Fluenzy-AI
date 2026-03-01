@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
     const transactions = await prisma.collegeTransaction.findMany({
       where: { collegeAdminId: admin.id },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 50,
       select: {
         id: true,
         razorpayOrderId: true,
@@ -41,21 +41,46 @@ export async function GET(req: NextRequest) {
         status: true,
         invoiceId: true,
         invoiceUrl: true,
+        studentEmails: true,
         validFrom: true,
         validTill: true,
         createdAt: true,
       },
     });
 
+    // For each transaction, enrich with student details from CollegeStudent
+    const enrichedTransactions = await Promise.all(
+      transactions.map(async (tx) => {
+        if (!tx.studentEmails || tx.studentEmails.length === 0) return { ...tx, students: [] };
+        const students = await prisma.collegeStudent.findMany({
+          where: { email: { in: tx.studentEmails } },
+          select: {
+            id: true,
+            studentName: true,
+            email: true,
+            department: true,
+            year: true,
+            rollNumber: true,
+            customPlan: true,
+            customPlanExpiresAt: true,
+            status: true,
+            onboardedAt: true,
+          },
+        });
+        return { ...tx, students };
+      })
+    );
+
     const remainingSeats = Math.max(0, college.totalSeats - college.usedSeats);
     const isExpired = college.planExpiresAt ? new Date(college.planExpiresAt) < new Date() : true;
 
     return NextResponse.json({
       college: { ...college, remainingSeats, isExpired },
-      transactions,
+      transactions: enrichedTransactions,
     });
   } catch (err) {
     console.error("Billing GET error:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
