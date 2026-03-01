@@ -107,7 +107,7 @@ const FeedbackSection = () => {
           transition={{ duration: 0.6 }}
           className="mb-14 text-center md:mb-16"
         >
-          <h2 className="mb-4 text-2xl font-bold lg:text-4xl">
+          <h2 className="mb-4 text-2xl font-bold sm:text-3xl lg:text-4xl">
             <span className="text-white">Real-Time AI </span>
             <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 !bg-clip-text text-transparent">
               Feedback & Analytics

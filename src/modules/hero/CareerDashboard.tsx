@@ -10,7 +10,7 @@ const CareerDashboard = () => {
   const [typedQuestion, setTypedQuestion] = useState("");
   const [dotCycle, setDotCycle] = useState(".");
   const analyticsRef = useRef<HTMLDivElement | null>(null);
-  const analyticsInView = useInView(analyticsRef, { once: true, margin: "-80px" });
+  const analyticsInView = useInView(analyticsRef, { once: true, margin: "0px" });
 
   const scoreMotion = useMotionValue(0);
   const scoreSpring = useSpring(scoreMotion, { stiffness: 110, damping: 24 });
@@ -56,10 +56,10 @@ const CareerDashboard = () => {
   );
 
   return (
-    <div className="grid w-full max-w-6xl grid-cols-1 gap-6 lg:grid-cols-2 xl:gap-8">
+    <div className="grid w-full grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 xl:gap-8">
       <motion.div
-        initial={{ opacity: 0, x: -40 }}
-        animate={{ opacity: 1, x: 0 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeInOut" }}
         whileHover={{ y: -6, rotateX: 2, rotateY: -1 }}
         className="dynamic-border-glow glass relative rounded-2xl border border-purple-400/25 bg-gradient-to-br from-slate-800/65 to-purple-900/30 p-5 shadow-2xl sm:p-6"
@@ -116,10 +116,9 @@ const CareerDashboard = () => {
 
       <motion.div
         ref={analyticsRef}
-        initial={{ opacity: 0, x: 40 }}
-        whileInView={{ opacity: 1, x: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.65, ease: [0.25, 1, 0.5, 1] }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65, delay: 0.2, ease: [0.25, 1, 0.5, 1] }}
         whileHover={{ y: -6 }}
         className="glass relative rounded-2xl border border-blue-400/25 bg-gradient-to-br from-slate-800/65 to-blue-900/30 p-5 shadow-2xl sm:p-6"
         data-touch-hover
@@ -149,8 +148,7 @@ const CareerDashboard = () => {
               <div className="h-2 w-full rounded-full bg-slate-700">
                 <motion.div
                   initial={{ width: 0 }}
-                  whileInView={{ width: `${bar.value}%` }}
-                  viewport={{ once: true }}
+                  animate={{ width: analyticsInView ? `${bar.value}%` : '0%' }}
                   transition={{ duration: 0.7, delay: index * 0.12, ease: "easeInOut" }}
                   className={`h-2 rounded-full bg-gradient-to-r ${bar.color}`}
                 />
@@ -161,9 +159,8 @@ const CareerDashboard = () => {
           <div className="grid grid-cols-2 gap-4">
             <motion.div
               initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: 0.15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.45 }}
               className="text-center"
             >
               <div className="text-2xl font-bold text-blue-400">47</div>
@@ -171,9 +168,8 @@ const CareerDashboard = () => {
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 14 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.45, delay: 0.22 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.45, delay: 0.55 }}
               className="text-center"
             >
               <div className="text-2xl font-bold text-cyan-400">18</div>

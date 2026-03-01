@@ -30,15 +30,15 @@ const Hero = () => {
   return (
     <section
       id="hero"
-      className="hero-gradient-animate relative min-h-screen overflow-x-clip overflow-y-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pt-20"
+      className="hero-gradient-animate relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-28 md:pb-20"
     >
       <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-purple-900/60 to-slate-900/80" />
-      <div className="animate-float absolute left-10 top-20 h-64 w-64 rounded-full bg-purple-500/20 blur-3xl" />
+      <div className="animate-float absolute left-2 top-20 h-40 w-40 rounded-full bg-purple-500/20 blur-3xl sm:left-10 sm:h-64 sm:w-64" />
       <div
-        className="animate-float absolute bottom-20 right-10 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
+        className="animate-float absolute bottom-20 right-2 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl sm:right-10 sm:h-96 sm:w-96"
         style={{ animationDelay: "-1s" }}
       />
-      <div className="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-3xl animate-pulse" />
+      <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-3xl animate-pulse sm:h-96 sm:w-96" />
 
       {Array.from({ length: 12 }).map((_, i) => (
         <motion.span
@@ -55,14 +55,13 @@ const Hero = () => {
         />
       ))}
 
-      <div className="container relative z-10 mx-auto grid grid-cols-1 items-center gap-10 px-3 sm:px-4 md:px-8 xl:grid-cols-2 xl:gap-14 xl:px-16">
+      <div className="container relative z-10 mx-auto grid grid-cols-1 items-start gap-8 px-4 sm:px-6 md:px-8 xl:grid-cols-2 xl:items-center xl:gap-14 xl:px-16">
         <div className="text-center xl:text-left">
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="mb-6 inline-flex max-w-full items-center space-x-2 rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-900/50 to-blue-900/50 px-4 py-2.5 text-left backdrop-blur-sm sm:px-6 sm:py-3"
+            className="mb-5 inline-flex max-w-full items-center space-x-2 rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-900/50 to-blue-900/50 px-3 py-2 text-left backdrop-blur-sm sm:mb-6 sm:px-6 sm:py-3"
           >
             <Sparkles className="h-4 w-4 shrink-0 text-purple-400 sm:h-5 sm:w-5" />
             <span className="break-words text-xs font-medium text-purple-200 sm:text-sm">AI-Powered Interview Training</span>
@@ -70,8 +69,7 @@ const Hero = () => {
 
           <motion.div
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            animate="visible"
             variants={{
               hidden: {},
               visible: {
@@ -82,7 +80,7 @@ const Hero = () => {
               },
             }}
           >
-            <h1 className="fluid-h1 mb-5 font-bold max-w-[18ch] mx-auto xl:mx-0">
+            <h1 className="fluid-h1 mb-4 font-bold max-w-[18ch] mx-auto xl:mx-0 sm:mb-5">
               {headlineWords.map((word, i) => (
                 <motion.span
                   key={`${word}-${i}`}
@@ -105,20 +103,18 @@ const Hero = () => {
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
-            className="fluid-body mx-auto mb-7 max-w-2xl px-1 text-gray-300 xl:mx-0 xl:px-0"
+            className="fluid-body mx-auto mb-6 max-w-2xl px-1 text-gray-300 xl:mx-0 xl:px-0 sm:mb-7"
           >
             AI Interviewer • HR + Technical + GD Training • Real-Time Behavioral Analytics • Performance Intelligence
           </motion.p>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.6 }}
-            className="flex flex-col justify-center gap-4 sm:flex-row xl:justify-start"
+            className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4 xl:justify-start"
           >
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.97 }} className="w-full sm:w-auto">
               <Button
@@ -151,10 +147,9 @@ const Hero = () => {
 
           <motion.div
             initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            viewport={{ once: true }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 0.8 }}
-            className="mt-10 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-400 sm:gap-8 sm:text-sm xl:justify-start"
+            className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-400 sm:mt-10 sm:gap-8 sm:text-sm xl:justify-start"
           >
             <div className="group flex cursor-default items-center space-x-3">
               <div className="h-2.5 w-2.5 rounded-full bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse" />
@@ -168,10 +163,10 @@ const Hero = () => {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex justify-center"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+          className="flex w-full justify-center mt-4 xl:mt-0"
         >
           <CareerDashboard />
         </motion.div>

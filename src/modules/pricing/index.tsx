@@ -227,12 +227,12 @@ const Pricing = () => {
           transition={{ duration: 0.8 }}
           className="text-center mb-16"
         >
-          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-full px-6 py-3 mb-6 border border-purple-500/30 backdrop-blur-sm">
-            <Zap className="h-5 w-5 text-purple-400" />
-            <span className="font-medium text-purple-200">Flexible Pricing</span>
+          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-900/50 to-blue-900/50 rounded-full px-4 py-2 sm:px-6 sm:py-3 mb-5 sm:mb-6 border border-purple-500/30 backdrop-blur-sm">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400" />
+            <span className="font-medium text-purple-200 text-sm sm:text-base">Flexible Pricing</span>
           </div>
 
-          <h2 className="text-4xl lg:text-6xl font-bold mb-6">
+          <h2 className="text-3xl sm:text-4xl lg:text-6xl font-bold mb-4 sm:mb-6">
             <span className="text-white">Start Training </span>
             <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 !bg-clip-text text-transparent">
               Free Today
@@ -266,12 +266,12 @@ const Pricing = () => {
             </div>
           </div>
 
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+          <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto">
             Start your journey with our free plan featuring AI-powered training. Upgrade anytime to access unlimited sessions and premium features.
           </p>
         </motion.div>
 
-        <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8 max-w-6xl mx-auto">
           {loading ? (
             <div className="col-span-3 text-center py-12">Loading plans...</div>
           ) : (
@@ -294,7 +294,7 @@ const Pricing = () => {
               )}
 
               <div
-                className={`h-full glass rounded-3xl p-8 border transition-all duration-500 relative overflow-hidden ${
+                className={`h-full glass rounded-2xl sm:rounded-3xl p-5 sm:p-8 border transition-all duration-500 relative overflow-hidden ${
                   plan.popular
                     ? "border-purple-500/60 shadow-2xl shadow-purple-500/30 glow-border"
                     : "border-card-border/50 hover:border-purple-500/60 shadow-2xl hover:shadow-purple-500/30"
@@ -322,7 +322,7 @@ const Pricing = () => {
                       initial={{ scale: 1 }}
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ duration: 0.3 }}
-                      className="text-5xl font-bold text-white group-hover:text-cyan-200 transition-colors duration-300"
+                      className="text-4xl sm:text-5xl font-bold text-white group-hover:text-cyan-200 transition-colors duration-300"
                     >
                       {animatedPrice[plan.name] || (billingCycle === 'annual' && plan.name !== 'Free' ? Math.round(plan.price * 12 * 0.8) : plan.price)}
                     </motion.span>

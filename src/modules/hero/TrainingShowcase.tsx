@@ -68,14 +68,14 @@ const TrainingShowcase = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="text-center mb-20"
+          className="text-center mb-10 sm:mb-14 md:mb-20"
         >
-          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-full px-6 py-3 mb-6 border border-white/5 backdrop-blur-md shadow-2xl">
-            <Zap className="h-5 w-5 text-purple-400 animate-pulse" />
+          <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-purple-900/40 to-blue-900/40 rounded-full px-4 py-2 sm:px-6 sm:py-3 mb-5 sm:mb-6 border border-white/5 backdrop-blur-md shadow-2xl">
+            <Zap className="h-4 w-4 sm:h-5 sm:w-5 text-purple-400 animate-pulse" />
             <span className="font-bold text-xs uppercase tracking-widest text-purple-200">AI Training Laboratory</span>
           </div>
 
-          <h2 className="text-5xl lg:text-7xl font-extrabold mb-8 tracking-tighter">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-extrabold mb-4 sm:mb-6 md:mb-8 tracking-tighter">
             <span className="bg-gradient-to-r from-white via-white to-slate-500 !bg-clip-text text-transparent">
               Select Your
             </span>
@@ -84,12 +84,12 @@ const TrainingShowcase = () => {
               Practice Track
             </span>
           </h2>
-          <p className="text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base md:text-lg text-slate-400 max-w-2xl mx-auto leading-relaxed">
             Professional-grade interview simulations powered by advanced neural models. Each track is designed for deep skill acquisition.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 md:gap-8">
           {trainingPaths.map((type, index) => (
             <motion.div
               key={type.title}
@@ -99,19 +99,19 @@ const TrainingShowcase = () => {
               transition={{ duration: 0.6, delay: index * 0.1 }}
               className="group"
             >
-              <div className={`relative h-full bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] p-8 border border-white/5 hover:border-purple-500/30 transition-all duration-500 shadow-2xl flex flex-col`}>
+              <div className={`relative h-full bg-slate-900/40 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2.5rem] p-5 sm:p-8 border border-white/5 hover:border-purple-500/30 transition-all duration-500 shadow-2xl flex flex-col`}>
                 {/* Accent Glow */}
-                <div className={`absolute -inset-px bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-[2.5rem] pointer-events-none`} />
+                <div className={`absolute -inset-px bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-[1.5rem] sm:rounded-[2.5rem] pointer-events-none`} />
                 
-                <div className={`w-16 h-16 rounded-[1.25rem] bg-gradient-to-br ${type.color} flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.3)] relative z-10`}>
-                  <type.icon className="w-8 h-8 text-white drop-shadow-md" />
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-[1.25rem] bg-gradient-to-br ${type.color} flex items-center justify-center mb-5 sm:mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.3)] relative z-10`}>
+                  <type.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white drop-shadow-md" />
                 </div>
 
                 <div className="relative z-10 flex-grow">
-                  <h3 className="text-2xl font-bold text-white mb-4 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-purple-200 group-hover:!bg-clip-text transition-all">
+                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-purple-200 group-hover:!bg-clip-text transition-all">
                     {type.title}
                   </h3>
-                  <p className="text-slate-400 text-base leading-relaxed mb-8 group-hover:text-slate-300 transition-colors">
+                  <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-5 sm:mb-8 group-hover:text-slate-300 transition-colors">
                     {type.description}
                   </p>
                 </div>
@@ -140,24 +140,24 @@ const TrainingShowcase = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, delay: 0.4 }}
-          className="mt-24"
+          className="mt-10 sm:mt-16 md:mt-24"
         >
-          <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-[3rem] p-12 overflow-hidden border border-white/5">
+          <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl sm:rounded-3xl md:rounded-[3rem] p-5 sm:p-8 md:p-12 overflow-hidden border border-white/5">
             <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-purple-500/10 to-transparent blur-[80px]" />
             
-            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+<div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-12 items-center">
               <div>
-                <h3 className="text-3xl font-bold text-white mb-6">Real-Time AI Feedback</h3>
-                <p className="text-slate-400 text-lg leading-relaxed mb-8">
+                <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3 sm:mb-5 md:mb-6">Real-Time AI Feedback</h3>
+                <p className="text-slate-400 text-sm sm:text-base md:text-lg leading-relaxed mb-5 sm:gap-6 md:mb-8">
                   Every response is analyzed instantly with detailed scoring, improvement suggestions, and comparative benchmarks against successful candidates.
                 </p>
-                <div className="flex flex-wrap gap-8">
+                <div className="flex flex-wrap gap-6 sm:gap-8">
                    <div className="space-y-1">
-                      <div className="text-4xl font-extrabold text-white">95%</div>
+                      <div className="text-3xl sm:text-4xl font-extrabold text-white">95%</div>
                       <div className="text-xs uppercase tracking-widest text-slate-500 font-bold">Accuracy Rate</div>
                    </div>
                    <div className="space-y-1">
-                      <div className="text-4xl font-extrabold text-white">24/7</div>
+                      <div className="text-3xl sm:text-4xl font-extrabold text-white">24/7</div>
                       <div className="text-xs uppercase tracking-widest text-slate-500 font-bold">Always Active</div>
                    </div>
                 </div>
