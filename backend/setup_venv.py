@@ -1,12 +1,22 @@
 #!/usr/bin/env python3
 """
 Setup script to create and configure Python virtual environment for the backend.
-This script checks if venv exists, creates it if needed, and installs dependencies.
+
+This script is intentionally idempotent:
+  - Creates the venv only when it does not already exist.
+  - Installs/upgrades pip, setuptools, wheel, and project requirements.
+  - Writes a .venv_hash file with the MD5 of requirements.txt so the
+    Node.js start-backend.js launcher can skip this script on subsequent
+    runs when requirements.txt has not changed.
+
+Run directly:  python backend/setup_venv.py
+Or via npm:    npm run backend:setup
 """
 import os
 import sys
 import subprocess
 import shutil
+import hashlib
 from typing import Optional, List
 
 def setup_venv():
@@ -85,7 +95,14 @@ def setup_venv():
     # Install dependencies
     print("Installing dependencies from requirements.txt...")
     subprocess.run([venv_python, "-m", "pip", "install", "--prefer-binary", "-r", requirements_path], check=True)
-    
+
+    # Write requirements hash so start-backend.js can skip setup on future runs
+    hash_path = os.path.join(script_dir, ".venv_hash")
+    req_hash = hashlib.md5(open(requirements_path, "rb").read()).hexdigest()
+    with open(hash_path, "w") as f:
+        f.write(req_hash)
+    print(f"Saved requirements hash → {hash_path}")
+
     print("Setup completed successfully!")
 
 if __name__ == "__main__":

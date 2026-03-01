@@ -6,12 +6,14 @@
     "node": ">=20.x"
   },
   "scripts": {
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
-    "dev:next": "next dev",
+    "dev": "next dev",
+    "dev:full": "concurrently -n \"backend,frontend\" -c \"bgCyan.bold,bgGreen.bold\" \"npm run backend\" \"npm run dev\"",
     "build": "npx prisma generate && next build",
     "start": "node server.js",
-    "backend": "python backend/setup_venv.py && (backend\\venv\\Scripts\\python -m uvicorn main:app --reload --port 8000 --app-dir backend || backend/venv/bin/python -m uvicorn main:app --reload --port 8000 --app-dir backend)",
-    "frontend": "node server.js"
+    "backend": "node scripts/start-backend.js",
+    "backend:setup": "python backend/setup_venv.py",
+    "backend:start:win": "backend\\venv\\Scripts\\python -m uvicorn main:app --reload --port 8000 --app-dir backend",
+    "backend:start:unix": "backend/venv/bin/python -m uvicorn main:app --reload --port 8000 --app-dir backend"
   },
   "dependencies": {
     "@google/genai": "^1.35.0",
