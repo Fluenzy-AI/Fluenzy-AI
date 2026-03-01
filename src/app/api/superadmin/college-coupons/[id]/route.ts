@@ -9,7 +9,8 @@ async function checkSuperAdmin() {
   return session;
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await checkSuperAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   try {
@@ -17,7 +18,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     const { code, discountType, discountValue, maxUsage, expiryDate, applicablePlans, minSeats, status } = body;
 
     const updated = await (prisma as any).collegeCoupon.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...(code && { code: code.toUpperCase().trim() }),
         ...(discountType && { discountType }),
@@ -35,11 +36,12 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await checkSuperAdmin();
   if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
   try {
-    await (prisma as any).collegeCoupon.delete({ where: { id: params.id } });
+    await (prisma as any).collegeCoupon.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Failed to delete coupon" }, { status: 500 });

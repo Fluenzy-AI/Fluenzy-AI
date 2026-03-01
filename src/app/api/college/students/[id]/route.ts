@@ -3,12 +3,13 @@ import prisma from "@/lib/prisma";
 import { getCollegeAdminFromRequest } from "@/lib/collegeAuth";
 
 // ─── GET /api/college/students/[id] ─────────────────────────────────────────
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const admin = await getCollegeAdminFromRequest(req);
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   const student = await prisma.collegeStudent.findFirst({
-    where: { id: params.id, collegeAdminId: admin.id },
+    where: { id, collegeAdminId: admin.id },
     include: { batch: true },
   });
   if (!student) return NextResponse.json({ error: "Student not found." }, { status: 404 });
@@ -68,12 +69,13 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
 }
 
 // ─── PATCH /api/college/students/[id] ───────────────────────────────────────
-export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const admin = await getCollegeAdminFromRequest(req);
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   const existing = await prisma.collegeStudent.findFirst({
-    where: { id: params.id, collegeAdminId: admin.id },
+    where: { id, collegeAdminId: admin.id },
   });
   if (!existing) return NextResponse.json({ error: "Student not found." }, { status: 404 });
 
@@ -81,7 +83,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
   const { studentName, department, year, batchId, rollNumber, status, adminNotes, tags, warningFlags } = body;
 
   const updated = await prisma.collegeStudent.update({
-    where: { id: params.id },
+    where: { id },
     data: {
       ...(studentName !== undefined && { studentName: studentName.trim() }),
       ...(department !== undefined && { department }),
@@ -99,16 +101,17 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
 }
 
 // ─── DELETE /api/college/students/[id] ──────────────────────────────────────
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const admin = await getCollegeAdminFromRequest(req);
   if (!admin) return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
 
   const existing = await prisma.collegeStudent.findFirst({
-    where: { id: params.id, collegeAdminId: admin.id },
+    where: { id, collegeAdminId: admin.id },
   });
   if (!existing) return NextResponse.json({ error: "Student not found." }, { status: 404 });
 
-  await prisma.collegeStudent.delete({ where: { id: params.id } });
+  await prisma.collegeStudent.delete({ where: { id } });
   await prisma.collegeAdmin.update({
     where: { id: admin.id },
     data: { usedSeats: { decrement: 1 } },
