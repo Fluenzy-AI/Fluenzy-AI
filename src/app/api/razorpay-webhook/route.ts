@@ -201,7 +201,7 @@ async function processSubscriptionActivation(
 ): Promise<{ success: boolean; message: string }> {
   try {
     // Fetch subscription details from Razorpay for authoritative data
-    let razorpaySubscription = null;
+    let razorpaySubscription: any = null;
     if (subscriptionId) {
       try {
         razorpaySubscription = await razorpay.subscriptions.fetch(subscriptionId);
