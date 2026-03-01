@@ -276,6 +276,75 @@ const MobileLandingPage = () => {
         </div>
       </section>
 
+      {/* ── COLLEGE CTA ────────────────────────────────────── */}
+      <section className="px-5 py-12 bg-[#06090f]">
+        {/* Badge */}
+        <div className="flex justify-center mb-5">
+          <span className="inline-flex items-center gap-2 text-[10px] font-bold tracking-widest text-indigo-400 uppercase bg-indigo-500/10 border border-indigo-500/20 px-3 py-1.5 rounded-full">
+            <Briefcase className="w-3 h-3" /> For Colleges &amp; Universities
+          </span>
+        </div>
+
+        {/* Heading */}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-extrabold text-white leading-tight">
+            Take your campus placements{" "}
+            <span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+              to the next level
+            </span>
+          </h2>
+          <p className="text-slate-400 text-sm mt-3 leading-relaxed">
+            AI-powered mock interviews, GD practice &amp; real-time analytics — all managed from your college admin portal.
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          {[
+            { value: "200+", label: "Partner Institutions" },
+            { value: "50K+", label: "Students Trained" },
+            { value: "91%",  label: "Placement Rate" },
+            { value: "4.9★", label: "Admin Rating" },
+          ].map((s) => (
+            <div key={s.label} className="text-center bg-white/[0.03] border border-white/[0.07] rounded-2xl py-4 px-3">
+              <p className="text-2xl font-bold text-white">{s.value}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Feature list */}
+        <div className="space-y-3 mb-8">
+          {[
+            { color: "text-indigo-400", text: "Bulk student onboarding via CSV" },
+            { color: "text-purple-400", text: "Real-time performance analytics" },
+            { color: "text-cyan-400",   text: "Curated AI learning paths per domain" },
+          ].map((f) => (
+            <div key={f.text} className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3">
+              <CheckCircle className={`w-4 h-4 flex-shrink-0 ${f.color}`} />
+              <span className="text-sm text-slate-300">{f.text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/college/login"
+            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold text-sm shadow-lg shadow-indigo-500/25"
+          >
+            College Admin Sign In
+          </Link>
+          <Link
+            href="/college/signup"
+            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-white/[0.05] border border-indigo-500/30 text-slate-300 font-semibold text-sm"
+          >
+            Apply for Partnership
+          </Link>
+          <p className="text-center text-xs text-slate-600 pt-1">Free to apply · Approval within 1–2 business days</p>
+        </div>
+      </section>
+
       {/* ── HOW IT WORKS ───────────────────────────────────── */}
       <section className="bg-slate-900/60 px-5 py-12">
         <motion.h2
@@ -416,32 +485,7 @@ const MobileLandingPage = () => {
         </motion.div>
       </section>
 
-      {/* ── College CTA ── */}
-      <section className="mx-4 mb-8 rounded-3xl bg-gradient-to-br from-[#0d1330] to-[#0f1840] border border-indigo-500/20 p-6">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-            <Briefcase className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <p className="text-white font-bold text-sm">For Colleges & Universities</p>
-            <p className="text-slate-400 text-xs">Manage student training from one dashboard</p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-2 mt-4">
-          <Link
-            href="/college/login"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm"
-          >
-            College Admin Sign In
-          </Link>
-          <Link
-            href="/college/signup"
-            className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl bg-white/[0.05] border border-indigo-500/30 text-slate-300 font-semibold text-sm"
-          >
-            Apply for Partnership
-          </Link>
-        </div>
-      </section>
+
     </div>
   );
 };

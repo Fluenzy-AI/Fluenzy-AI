@@ -62,6 +62,20 @@ interface Coupon {
   usages: CouponUsage[];
 }
 
+interface CollegeCoupon {
+  id: string;
+  code: string;
+  discountType: string;
+  discountValue: number;
+  maxUsage: number | null;
+  usedCount: number;
+  expiryDate: string | null;
+  applicablePlans: string[];
+  minSeats: number | null;
+  status: string;
+  createdAt: string;
+}
+
 const toLocalInputValue = (value?: string | null) => {
   if (!value) return "";
   const date = new Date(value);
@@ -145,6 +159,18 @@ export default function SuperAdminDashboard() {
   const [approvePlan, setApprovePlan] = useState('Free');
   // ─────────────────────────────────────────────────────────────────────
 
+  // ── College Coupons state ─────────────────────────────────────────────
+  const [collegeCoupons, setCollegeCoupons] = useState<CollegeCoupon[]>([]);
+  const [collegeCouponsLoading, setCollegeCouponsLoading] = useState(false);
+  const [collegeCouponsError, setCollegeCouponsError] = useState<string | null>(null);
+  const [collegeCouponForm, setCollegeCouponForm] = useState({
+    code: '', discountType: 'PERCENTAGE', discountValue: '', maxUsage: '',
+    expiryDate: '', applicablePlans: [] as string[], minSeats: '', status: 'active',
+  });
+  const [editingCollegeCoupon, setEditingCollegeCoupon] = useState<CollegeCoupon | null>(null);
+  const [isCollegeCouponModalOpen, setIsCollegeCouponModalOpen] = useState(false);
+  // ─────────────────────────────────────────────────────────────────────
+
   const [planPricing, setPlanPricing] = useState({
     Free: { name: 'Free', price: 0, currency: 'INR', status: 'active', updatedAt: null as Date | null },
     Standard: { name: 'Standard', price: 150, currency: 'INR', status: 'active', updatedAt: null as Date | null },
@@ -219,6 +245,53 @@ export default function SuperAdminDashboard() {
     } finally {
       setCouponsLoading(false);
     }
+  };
+
+  const fetchCollegeCoupons = async () => {
+    setCollegeCouponsLoading(true); setCollegeCouponsError(null);
+    try {
+      const res = await fetch("/api/superadmin/college-coupons");
+      if (!res.ok) { setCollegeCouponsError("Failed to load"); return; }
+      setCollegeCoupons(await res.json());
+    } catch { setCollegeCouponsError("Network error"); }
+    finally { setCollegeCouponsLoading(false); }
+  };
+
+  const handleSaveCollegeCoupon = async () => {
+    const method = editingCollegeCoupon ? "PUT" : "POST";
+    const url = editingCollegeCoupon
+      ? `/api/superadmin/college-coupons/${editingCollegeCoupon.id}`
+      : "/api/superadmin/college-coupons";
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...collegeCouponForm,
+          discountValue: parseFloat(collegeCouponForm.discountValue),
+          maxUsage: collegeCouponForm.maxUsage ? parseInt(collegeCouponForm.maxUsage) : null,
+          minSeats: collegeCouponForm.minSeats ? parseInt(collegeCouponForm.minSeats) : null,
+          expiryDate: collegeCouponForm.expiryDate || null,
+        }),
+      });
+      if (res.ok) { setIsCollegeCouponModalOpen(false); fetchCollegeCoupons(); }
+      else { const d = await res.json(); alert(d.error ?? "Failed to save"); }
+    } catch { alert("Network error"); }
+  };
+
+  const handleToggleCollegeCoupon = async (id: string, currentStatus: string) => {
+    await fetch(`/api/superadmin/college-coupons/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: currentStatus === "active" ? "inactive" : "active" }),
+    });
+    fetchCollegeCoupons();
+  };
+
+  const handleDeleteCollegeCoupon = async (id: string) => {
+    if (!confirm("Delete this coupon?")) return;
+    await fetch(`/api/superadmin/college-coupons/${id}`, { method: "DELETE" });
+    fetchCollegeCoupons();
   };
 
   const fetchPaymentAnalytics = async () => {
@@ -482,6 +555,7 @@ export default function SuperAdminDashboard() {
     { key: 'latest-topics',label: 'Latest Topics',     icon: '📰' },
     { key: 'email-management', label: 'Email Management', icon: '✉️' },
     { key: 'college-partners', label: 'College Partners', icon: '🏫' },
+    { key: 'college-coupons', label: 'College Coupons', icon: '🎟️' },
   ];
 
   if (status === "loading") return <div>Loading...</div>;
@@ -1399,6 +1473,170 @@ export default function SuperAdminDashboard() {
                     <div className="flex gap-3 mt-5">
                       <button onClick={() => setRejectModal(null)} className="flex-1 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:text-white text-sm transition-all">Cancel</button>
                       <button disabled={!!collegeActionLoading} onClick={() => doCollegeAction(rejectModal.id, 'reject', { reason: rejectReason })} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm transition-all disabled:opacity-50">{collegeActionLoading ? 'Rejecting…' : '✕ Confirm Rejection'}</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {activeSection === 'college-coupons' && (() => {
+          if (!collegeCouponsLoading && collegeCoupons.length === 0 && !collegeCouponsError) fetchCollegeCoupons();
+          const openCreate = () => {
+            setEditingCollegeCoupon(null);
+            setCollegeCouponForm({ code: '', discountType: 'PERCENTAGE', discountValue: '', maxUsage: '', expiryDate: '', applicablePlans: [], minSeats: '', status: 'active' });
+            setIsCollegeCouponModalOpen(true);
+          };
+          const openEdit = (c: CollegeCoupon) => {
+            setEditingCollegeCoupon(c);
+            setCollegeCouponForm({
+              code: c.code, discountType: c.discountType,
+              discountValue: String(c.discountValue),
+              maxUsage: c.maxUsage != null ? String(c.maxUsage) : '',
+              expiryDate: c.expiryDate ? c.expiryDate.slice(0, 10) : '',
+              applicablePlans: c.applicablePlans ?? [],
+              minSeats: c.minSeats != null ? String(c.minSeats) : '',
+              status: c.status,
+            });
+            setIsCollegeCouponModalOpen(true);
+          };
+          const togglePlan = (plan: string) => setCollegeCouponForm(f => ({
+            ...f, applicablePlans: f.applicablePlans.includes(plan)
+              ? f.applicablePlans.filter(p => p !== plan)
+              : [...f.applicablePlans, plan],
+          }));
+          return (
+            <div className="space-y-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-slate-400">Manage discount coupons for College Admin portal payments</p>
+                </div>
+                <button onClick={openCreate} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-600/20 text-violet-300 border border-violet-500/30 hover:bg-violet-600/30 text-sm font-medium transition-all">
+                  + Create Coupon
+                </button>
+              </div>
+
+              {collegeCouponsError && <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">{collegeCouponsError}</div>}
+
+              <div className="rounded-xl border border-white/10 overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="border-b border-white/10 bg-slate-900/60">
+                    <tr className="text-xs text-slate-400 uppercase tracking-wide">
+                      {['Code', 'Discount', 'Plans', 'Min Seats', 'Max Usage', 'Used', 'Expiry', 'Status', 'Actions'].map(h => (
+                        <th key={h} className="text-left px-4 py-3">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {collegeCouponsLoading ? (
+                      <tr><td colSpan={9} className="text-center text-slate-500 py-8">Loading…</td></tr>
+                    ) : collegeCoupons.length === 0 ? (
+                      <tr><td colSpan={9} className="text-center text-slate-500 py-8">No college coupons yet. Create one above.</td></tr>
+                    ) : collegeCoupons.map(c => (
+                      <tr key={c.id} className="hover:bg-white/[0.03] transition-colors">
+                        <td className="px-4 py-3 font-mono font-bold text-white">{c.code}</td>
+                        <td className="px-4 py-3 text-indigo-300 font-semibold">
+                          {c.discountType === 'PERCENTAGE' ? `${c.discountValue}%` : `₹${c.discountValue}`}
+                        </td>
+                        <td className="px-4 py-3 text-slate-400 text-xs">
+                          {c.applicablePlans.length === 0 ? <span className="text-slate-600">All</span> : c.applicablePlans.join(', ')}
+                        </td>
+                        <td className="px-4 py-3 text-slate-400">{c.minSeats ?? '—'}</td>
+                        <td className="px-4 py-3 text-slate-400">{c.maxUsage ?? 'Unlimited'}</td>
+                        <td className="px-4 py-3 text-slate-300 font-medium">{c.usedCount}</td>
+                        <td className="px-4 py-3 text-slate-400 text-xs whitespace-nowrap">
+                          {c.expiryDate ? new Date(c.expiryDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${c.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-slate-700 text-slate-500'}`}>
+                            {c.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1.5">
+                            <button onClick={() => openEdit(c)} className="px-2.5 py-1.5 rounded-lg text-xs bg-slate-700/60 text-slate-300 border border-slate-600 hover:text-white transition-all">Edit</button>
+                            <button onClick={() => handleToggleCollegeCoupon(c.id, c.status)} className={`px-2.5 py-1.5 rounded-lg text-xs border transition-all ${c.status === 'active' ? 'bg-orange-500/10 text-orange-400 border-orange-500/30 hover:bg-orange-500/20' : 'bg-green-500/10 text-green-400 border-green-500/30 hover:bg-green-500/20'}`}>
+                              {c.status === 'active' ? 'Disable' : 'Enable'}
+                            </button>
+                            <button onClick={() => handleDeleteCollegeCoupon(c.id)} className="px-2.5 py-1.5 rounded-lg text-xs bg-red-500/10 text-red-400 border border-red-500/30 hover:bg-red-500/20 transition-all">Delete</button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Create / Edit Modal */}
+              {isCollegeCouponModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                  <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
+                    <h3 className="text-lg font-semibold text-white mb-4">{editingCollegeCoupon ? 'Edit' : 'Create'} College Coupon</h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Coupon Code *</label>
+                        <input value={collegeCouponForm.code} onChange={e => setCollegeCouponForm(f => ({ ...f, code: e.target.value.toUpperCase() }))}
+                          placeholder="e.g. COLLEGE20" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white uppercase font-mono focus:outline-none focus:border-violet-500" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Discount Type *</label>
+                          <select value={collegeCouponForm.discountType} onChange={e => setCollegeCouponForm(f => ({ ...f, discountType: e.target.value }))}
+                            className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500">
+                            <option value="PERCENTAGE">Percentage (%)</option>
+                            <option value="FLAT">Flat (₹)</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Discount Value *</label>
+                          <input type="number" min="0" value={collegeCouponForm.discountValue} onChange={e => setCollegeCouponForm(f => ({ ...f, discountValue: e.target.value }))}
+                            placeholder={collegeCouponForm.discountType === 'PERCENTAGE' ? '20' : '500'}
+                            className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Max Total Usage</label>
+                          <input type="number" min="0" value={collegeCouponForm.maxUsage} onChange={e => setCollegeCouponForm(f => ({ ...f, maxUsage: e.target.value }))}
+                            placeholder="Unlimited" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500" />
+                        </div>
+                        <div>
+                          <label className="text-xs text-slate-400 block mb-1">Min Seats Required</label>
+                          <input type="number" min="0" value={collegeCouponForm.minSeats} onChange={e => setCollegeCouponForm(f => ({ ...f, minSeats: e.target.value }))}
+                            placeholder="None" className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Expiry Date</label>
+                        <input type="date" value={collegeCouponForm.expiryDate} onChange={e => setCollegeCouponForm(f => ({ ...f, expiryDate: e.target.value }))}
+                          className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500" />
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-2">Applicable Plans <span className="text-slate-600">(empty = all plans)</span></label>
+                        <div className="flex gap-2 flex-wrap">
+                          {['Standard', 'Pro', 'Enterprise'].map(plan => (
+                            <button key={plan} type="button" onClick={() => togglePlan(plan)}
+                              className={`px-3 py-1.5 rounded-lg text-xs border font-medium transition-all ${collegeCouponForm.applicablePlans.includes(plan) ? 'bg-violet-600/30 text-violet-300 border-violet-500/50' : 'bg-slate-800 text-slate-400 border-slate-600'}`}>
+                              {plan}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-xs text-slate-400 block mb-1">Status</label>
+                        <select value={collegeCouponForm.status} onChange={e => setCollegeCouponForm(f => ({ ...f, status: e.target.value }))}
+                          className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500">
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                      <button onClick={() => setIsCollegeCouponModalOpen(false)} className="flex-1 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:text-white text-sm transition-all">Cancel</button>
+                      <button onClick={handleSaveCollegeCoupon} className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm transition-all">
+                        {editingCollegeCoupon ? 'Save Changes' : 'Create Coupon'}
+                      </button>
                     </div>
                   </div>
                 </div>

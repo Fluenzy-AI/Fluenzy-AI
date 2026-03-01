@@ -781,6 +781,7 @@ model CollegeAdmin {
   batches           CollegeBatch[]
   otpRecords        CollegeOtpVerification[]
   paymentHistories  CollegePaymentHistory[]
+  transactions      CollegeTransaction[]
 
   @@index([domain])
   @@index([status])
@@ -883,6 +884,64 @@ model CollegePaymentHistory {
   createdAt       DateTime  @default(now())
 
   @@index([collegeAdminId])
+}
+
+model CollegeTransaction {
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  collegeAdminId      String    @db.ObjectId
+  collegeAdmin        CollegeAdmin @relation(fields: [collegeAdminId], references: [id], onDelete: Cascade)
+
+  // Razorpay
+  razorpayOrderId     String    @unique
+  razorpayPaymentId   String?
+  razorpaySignature   String?
+
+  // Plan details
+  plan                Plan
+  seats               Int
+  pricePerSeat        Float
+  subtotal            Float
+  couponCode          String?
+  couponDiscount      Float     @default(0)
+  gstAmount           Float     @default(0)
+  finalAmount         Float
+
+  // Student emails to activate on payment
+  studentEmails       String[]
+
+  // Status: pending | paid | failed
+  status              String    @default("pending")
+
+  // Invoice
+  invoiceId           String?
+  invoiceUrl          String?
+
+  // Validity period
+  validFrom           DateTime?
+  validTill           DateTime?
+
+  notes               String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([collegeAdminId])
+  @@index([status])
+}
+
+model CollegeCoupon {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  code            String       @unique
+  discountType    DiscountType
+  discountValue   Float
+  maxUsage        Int?
+  usedCount       Int          @default(0)
+  expiryDate      DateTime?
+  applicablePlans String[]     // empty = apply to all plans
+  minSeats        Int?         // minimum seats required
+  status          String       @default("active") // active | inactive
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
 }
 
 // ─── Email Management ───────────────────────────────────────────────────────
