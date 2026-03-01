@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 import { getCollegeAdminFromRequest } from "@/lib/collegeAuth";
 
 // Seat pricing per plan per month (INR)
-export const PLAN_PRICE: Record<string, number> = {
+const PLAN_PRICE: Record<string, number> = {
   Free:       0,
   Standard:   150,
   Pro:        20,
