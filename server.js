@@ -3,6 +3,15 @@ const { parse } = require('url');
 const next = require('next');
 const { Server } = require('socket.io');
 
+// ─── Crash Guard ─────────────────────────────────────────────────────────────
+process.on('uncaughtException', (err) => {
+  console.error('[Server] Uncaught exception (server kept alive):', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[Server] Unhandled rejection (server kept alive):', reason);
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
 const dev = process.env.NODE_ENV !== 'production';
 const port = process.env.PORT || 3000;
 
@@ -49,6 +58,7 @@ app.prepare().then(() => {
 
     // Handle user joining queue
     socket.on('join-queue', (data) => {
+      try {
       console.log(`[Socket.IO] User joining queue:`, data);
 
       const queueUser = {
@@ -88,16 +98,17 @@ app.prepare().then(() => {
 
       // Try to create room
       tryCreateRoom(queueKey, io);
+      } catch(e) { console.error('[Socket join-queue]', e); }
     });
 
     socket.on('leave-queue', () => {
-      handleDisconnect(socket);
+      try { handleDisconnect(socket); } catch(e) { console.error('[Socket leave-queue]', e); }
     });
 
     socket.on('disconnect', () => {
       console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
-      handleDisconnect(socket);
-      handleInterviewDisconnect(socket);
+      try { handleDisconnect(socket, true); } catch(e) { console.error('[Socket disconnect GD]', e); }
+      try { handleInterviewDisconnect(socket); } catch(e) { console.error('[Socket disconnect Interview]', e); }
     });
 
     socket.on('join-room', (roomId) => {
@@ -124,6 +135,7 @@ app.prepare().then(() => {
 
     // 1:1 role-based interview matching
     socket.on('interview-join-queue', (data) => {
+      try {
       const { userId, userName, interviewType, role } = data;
       // interviewType: 'PI' | 'Technical'
       // role: 'HR' | 'Candidate' | 'EngineeringManager'
@@ -177,14 +189,16 @@ app.prepare().then(() => {
         }, 120_000);
         interviewTimeouts.set(userId, t);
       }
+      } catch(e) { console.error('[Socket interview-join-queue]', e); }
     });
 
     socket.on('interview-leave-queue', () => {
-      handleInterviewDisconnect(socket);
+      try { handleInterviewDisconnect(socket); } catch(e) { console.error('[Socket interview-leave-queue]', e); }
     });
 
     // Private interview room – host creates
     socket.on('interview-private-create', (data) => {
+      try {
       const { roomId, userId, userName, interviewType } = data;
       privateInterviewRooms.set(roomId, {
         roomId,
@@ -197,10 +211,12 @@ app.prepare().then(() => {
       socket.join(`private-interview-${roomId}`);
       socket.data.privateInterviewRoom = roomId;
       socket.emit('interview-private-created', { roomId });
+      } catch(e) { console.error('[Socket interview-private-create]', e); }
     });
 
     // Private interview room – participant joins
     socket.on('interview-private-join', (data) => {
+      try {
       const { roomId, userId, userName, role } = data;
       const room = privateInterviewRooms.get(roomId);
       if (!room) {
@@ -222,10 +238,12 @@ app.prepare().then(() => {
         participants: room.participants.map(p => ({ userId: p.userId, userName: p.userName, role: p.role })),
       });
       socket.emit('interview-private-joined', { roomId, interviewType: room.interviewType, participants: room.participants.map(p => ({ userId: p.userId, userName: p.userName, role: p.role })) });
+      } catch(e) { console.error('[Socket interview-private-join]', e); }
     });
 
     // Private interview room – host controls
     socket.on('interview-private-control', (data) => {
+      try {
       const { roomId, action, targetUserId } = data;
       const room = privateInterviewRooms.get(roomId);
       if (!room) return;
@@ -258,12 +276,15 @@ app.prepare().then(() => {
         room.locked = !room.locked;
         io.to(`private-interview-${roomId}`).emit('interview-private-lock-status', { locked: room.locked });
       }
+      } catch(e) { console.error('[Socket interview-private-control]', e); }
     });
 
     // Raise hand in private interview
     socket.on('interview-raise-hand', (data) => {
+      try {
       const { roomId, userId, userName } = data;
       io.to(`private-interview-${roomId}`).emit('interview-hand-raised', { userId, userName });
+      } catch(e) { console.error('[Socket interview-raise-hand]', e); }
     });
 
     // Transcript relay (broadcast to all in room)
@@ -362,13 +383,16 @@ app.prepare().then(() => {
     }
   }
 
-  function handleDisconnect(socket) {
+  function handleDisconnect(socket, fromDisconnectEvent = false) {
     const queueKey = socket.data.queueKey;
     const userInfo = socket.data.userInfo;
     if (queueKey && userInfo) {
       removeFromQueue(queueKey, userInfo.userId);
     }
-    socket.disconnect();
+    // Only call socket.disconnect() when NOT already inside the disconnect event
+    if (!fromDisconnectEvent) {
+      try { socket.disconnect(); } catch(_) {}
+    }
   }
 
   function getTopicsByMode(mode) {
