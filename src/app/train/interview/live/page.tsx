@@ -5,6 +5,8 @@ import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
+import InterviewReport from '@/components/InterviewReport';
+import type { ReportPayload } from '@/components/LiveInterviewRoom';
 import {
   ArrowLeft,
   UserCheck,
@@ -73,6 +75,7 @@ export default function LiveInterviewPage() {
   const [roomData, setRoomData] = useState<RoomData | null>(null);
   const [timeoutMsg, setTimeoutMsg] = useState<string | null>(null);
   const [elapsed, setElapsed] = useState(0);
+  const [sessionReport, setSessionReport] = useState<ReportPayload | null>(null);
 
   const socketRef = useRef<Socket | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -168,7 +171,23 @@ export default function LiveInterviewPage() {
         agoraUid={agoraUid}
         myRole={myRole}
         userName={userName}
-        onEnd={() => { setRoomData(null); setStep('select-type'); setInterviewType(null); setRole(null); }}
+        onEnd={(report) => {
+          setRoomData(null);
+          setStep('select-type');
+          setInterviewType(null);
+          setRole(null);
+          if (report) setSessionReport(report);
+        }}
+      />
+    );
+  }
+
+  // Show report AFTER LiveInterviewRoom has fully unmounted (camera/mic released)
+  if (sessionReport) {
+    return (
+      <InterviewReport
+        report={sessionReport}
+        onClose={() => setSessionReport(null)}
       />
     );
   }

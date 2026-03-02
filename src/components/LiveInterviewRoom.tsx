@@ -9,7 +9,7 @@ import AgoraRTC, {
   IRemoteAudioTrack,
   UID,
 } from 'agora-rtc-sdk-ng';
-import InterviewReport from '@/components/InterviewReport';
+// InterviewReport is rendered by the parent page after this component unmounts
 import { Socket } from 'socket.io-client';
 import {
   Mic,
@@ -48,7 +48,7 @@ interface LiveInterviewRoomProps {
   isPrivate?: boolean;
   isHost?: boolean;
   socket?: Socket | null;
-  onEnd: () => void;
+  onEnd: (report?: ReportPayload) => void;
 }
 
 interface RemoteUser {
@@ -59,7 +59,7 @@ interface RemoteUser {
   hasAudio: boolean;
 }
 
-interface ReportPayload {
+export interface ReportPayload {
   scores: Record<string, number>;
   strengths: string[];
   improvements: string[];
@@ -161,7 +161,6 @@ export default function LiveInterviewRoom({
   const [transcript, setTranscript] = useState<string[]>([]);
   const [handRaised, setHandRaised] = useState(false);
   const [raisedHands, setRaisedHands] = useState<Set<string>>(new Set());
-  const [report, setReport] = useState<ReportPayload | null>(null);
   const [loadingReport, setLoadingReport] = useState(false);
   const [participants, setParticipants] = useState(roomData.participants);
   const [transcriptInput, setTranscriptInput] = useState('');
@@ -309,6 +308,18 @@ export default function LiveInterviewRoom({
       clientRef.current = null;
     }
     isJoinedRef.current = false;
+
+    // ── Nuclear: stop every MediaStreamTrack the browser has open ──────────
+    // This guarantees camera LED goes off even if Agora cleanup partially fails
+    try {
+      document.querySelectorAll('video, audio').forEach((el) => {
+        const stream = (el as HTMLMediaElement).srcObject as MediaStream | null;
+        if (stream) {
+          stream.getTracks().forEach((t) => t.stop());
+          (el as HTMLMediaElement).srcObject = null;
+        }
+      });
+    } catch (_) { /* ignore */ }
   }, []); // no deps — reads from refs, never stale
 
   // ── Controls ──────────────────────────────────────────────────────────────
@@ -371,7 +382,6 @@ export default function LiveInterviewRoom({
       if (res.ok && data.report) {
         const raw = data.report as Record<string, unknown>;
         const META_KEYS = new Set(['strengths', 'improvements', 'aiSuggestions', 'summary']);
-        // Extract numeric scores and normalize 0-100 → 0-10
         const scores: Record<string, number> = {};
         for (const [k, v] of Object.entries(raw)) {
           if (!META_KEYS.has(k) && typeof v === 'number') {
@@ -379,7 +389,7 @@ export default function LiveInterviewRoom({
           }
         }
         const suggestions = raw.aiSuggestions;
-        setReport({
+        const reportPayload: ReportPayload = {
           scores,
           strengths: (raw.strengths as string[]) ?? [],
           improvements: (raw.improvements as string[]) ?? [],
@@ -390,25 +400,23 @@ export default function LiveInterviewRoom({
           duration: elapsed,
           role: myRole,
           interviewType: roomData.interviewType,
-        });
+        };
+        // cleanup first — fully release camera/mic BEFORE unmounting
+        await cleanup();
+        onEnd(reportPayload);
+        return;
       }
     } catch (_) {
-      // Silently fail — still show empty report
+      // Silently fail
     } finally {
       setLoadingReport(false);
-      await cleanup();
     }
-  }, [loadingReport, isPrivate, socket, roomData, elapsed, transcript, myRole, cleanup]);
+    await cleanup();
+    onEnd();
+  }, [loadingReport, isPrivate, socket, roomData, elapsed, transcript, myRole, cleanup, onEnd]);
 
-  // ── Show report ───────────────────────────────────────────────────────────
-  if (report) {
-    return (
-      <InterviewReport
-        report={report}
-        onClose={onEnd}
-      />
-    );
-  }
+  // ── Show report — REMOVED: report now lifted to parent so this component
+  // fully unmounts (camera/mic released) before report renders.
 
   if (loadingReport) {
     return (
