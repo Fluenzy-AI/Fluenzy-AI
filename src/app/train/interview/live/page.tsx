@@ -193,126 +193,212 @@ export default function LiveInterviewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-lg">
-        <Link href="/train/interview" className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
-          <ArrowLeft size={14} /> Back
-        </Link>
+    <div className="min-h-screen bg-slate-950 text-white">
+      {/* ── Hero gradient background ─────────────────────────────────────── */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(99,102,241,0.12),transparent_60%)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_80%,rgba(139,92,246,0.08),transparent_60%)] pointer-events-none" />
 
-        {/* STEP 1: Select interview type */}
-        {step === 'select-type' && (
-          <div>
-            <div className="inline-flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1.5 rounded-full text-xs font-semibold mb-4">
-              <Radio size={12} /> Live Interview
-            </div>
-            <h1 className="text-2xl font-extrabold mb-2">Select Interview Type</h1>
-            <p className="text-slate-400 text-sm mb-8">What kind of interview do you want to practice?</p>
-
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { value: 'PI' as InterviewType, label: 'Personal Interview', sub: 'HR ↔ Candidate', icon: Briefcase, gradient: 'from-purple-500 to-pink-500' },
-                { value: 'Technical' as InterviewType, label: 'Technical Interview', sub: 'Eng. Manager ↔ Candidate', icon: Code2, gradient: 'from-blue-500 to-cyan-500' },
-              ].map(({ value, label, sub, icon: Icon, gradient }) => (
-                <button
-                  key={value}
-                  onClick={() => { setInterviewType(value); setStep('select-role'); }}
-                  className="flex flex-col items-start p-5 rounded-2xl border border-slate-700 bg-slate-800/60 hover:border-indigo-500 hover:bg-slate-700/60 transition-all text-left"
-                >
-                  <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-3`}>
-                    <Icon size={18} className="text-white" />
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10">
+        {/* ── Step indicator ──────────────────────────────────────────────── */}
+        <div className="w-full max-w-xl mb-8">
+          <div className="flex items-center gap-0 justify-center">
+            {(['Type', 'Role', 'Match'] as const).map((label, idx) => {
+              const stepIdx = step === 'select-type' ? 0 : step === 'select-role' ? 1 : 2;
+              const done = idx < stepIdx;
+              const active = idx === stepIdx;
+              return (
+                <React.Fragment key={label}>
+                  <div className="flex flex-col items-center gap-1">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                      done ? 'bg-indigo-500 text-white' : active ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-slate-800 text-slate-500 border border-slate-700'
+                    }`}>
+                      {done ? '✓' : idx + 1}
+                    </div>
+                    <span className={`text-[10px] font-medium ${active ? 'text-indigo-400' : done ? 'text-slate-400' : 'text-slate-600'}`}>{label}</span>
                   </div>
-                  <p className="font-bold text-sm">{label}</p>
-                  <p className="text-slate-500 text-xs mt-0.5">{sub}</p>
-                </button>
-              ))}
-            </div>
+                  {idx < 2 && (
+                    <div className={`w-16 sm:w-24 h-px mb-5 mx-1 transition-all ${idx < stepIdx ? 'bg-indigo-500' : 'bg-slate-700'}`} />
+                  )}
+                </React.Fragment>
+              );
+            })}
           </div>
-        )}
+        </div>
 
-        {/* STEP 2: Select role */}
-        {step === 'select-role' && interviewType && (
-          <div>
-            <div className="inline-flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1.5 rounded-full text-xs font-semibold mb-4">
-              {interviewType === 'PI' ? <Briefcase size={12} /> : <Code2 size={12} />}
-              {interviewType === 'PI' ? 'Personal Interview' : 'Technical Interview'}
-            </div>
-            <h1 className="text-2xl font-extrabold mb-2">Select Your Role</h1>
-            <p className="text-slate-400 text-sm mb-2">You will be matched with the opposite role (1:1 strict).</p>
-            {timeoutMsg && (
-              <div className="mb-4 text-sm bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 px-4 py-2.5 rounded-lg">
-                ⚠️ {timeoutMsg}
+        <div className="w-full max-w-xl">
+          <Link href="/train/interview" className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-300 text-xs mb-6 transition-colors">
+            <ArrowLeft size={13} /> Back
+          </Link>
+
+          {/* ── STEP 1: Select interview type ─────────────────────────────── */}
+          {step === 'select-type' && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="inline-flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full text-xs font-semibold mb-5">
+                <Radio size={11} /> Live Interview
               </div>
-            )}
+              <h1 className="text-3xl sm:text-4xl font-extrabold mb-2 tracking-tight">Select Interview Type</h1>
+              <p className="text-slate-400 text-sm mb-8">Practice with a real person matched instantly.</p>
 
-            <div className="grid grid-cols-2 gap-4 mb-6">
-              {rolesForType[interviewType].map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  onClick={() => setRole(value)}
-                  className={`flex flex-col items-start p-5 rounded-2xl border transition-all text-left ${
-                    role === value
-                      ? 'border-indigo-500 bg-indigo-500/10'
-                      : 'border-slate-700 bg-slate-800/60 hover:border-slate-600'
-                  }`}
-                >
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${role === value ? 'bg-indigo-500' : 'bg-slate-700'}`}>
-                    <Icon size={16} className="text-white" />
-                  </div>
-                  <p className="font-bold text-sm">{label}</p>
-                </button>
-              ))}
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => { setStep('select-type'); setRole(null); }}
-                className="flex-1 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 text-sm font-medium transition-colors"
-              >
-                Back
-              </button>
-              <button
-                onClick={startQueue}
-                disabled={!role}
-                className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white font-semibold text-sm transition-colors"
-              >
-                Find Match →
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* STEP 3: Queue / waiting */}
-        {step === 'queue' && (
-          <div className="text-center">
-            <div className="relative w-24 h-24 mx-auto mb-6">
-              <div className="absolute inset-0 rounded-full border-4 border-indigo-500/20 animate-ping" />
-              <div className="absolute inset-2 rounded-full border-4 border-indigo-500/40 animate-ping" style={{ animationDelay: '0.3s' }} />
-              <div className="w-24 h-24 rounded-full bg-indigo-500/10 border-2 border-indigo-500 flex items-center justify-center">
-                <Users size={32} className="text-indigo-400" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {[
+                  {
+                    value: 'PI' as InterviewType,
+                    label: 'Personal Interview',
+                    sub: 'HR ↔ Candidate',
+                    desc: 'Behavioral, situational & cultural fit questions',
+                    icon: Briefcase,
+                    gradient: 'from-purple-500 to-pink-500',
+                    ring: 'hover:border-purple-500/60 hover:shadow-purple-500/10',
+                  },
+                  {
+                    value: 'Technical' as InterviewType,
+                    label: 'Technical Interview',
+                    sub: 'Eng. Manager ↔ Candidate',
+                    desc: 'DSA, system design & coding concepts',
+                    icon: Code2,
+                    gradient: 'from-blue-500 to-cyan-400',
+                    ring: 'hover:border-blue-500/60 hover:shadow-blue-500/10',
+                  },
+                ].map(({ value, label, sub, desc, icon: Icon, gradient, ring }) => (
+                  <button
+                    key={value}
+                    onClick={() => { setInterviewType(value); setStep('select-role'); }}
+                    className={`group relative flex flex-col items-start p-6 rounded-2xl border border-slate-800 bg-slate-900/80 hover:bg-slate-800/80 transition-all duration-200 text-left shadow-lg hover:shadow-xl ${ring}`}
+                  >
+                    <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${gradient} flex items-center justify-center mb-4 shadow-lg`}>
+                      <Icon size={22} className="text-white" />
+                    </div>
+                    <p className="font-bold text-base mb-0.5">{label}</p>
+                    <p className="text-xs text-slate-500 mb-2">{sub}</p>
+                    <p className="text-xs text-slate-400 leading-relaxed">{desc}</p>
+                    <div className="mt-4 flex items-center gap-1 text-xs text-indigo-400 font-medium group-hover:gap-2 transition-all">
+                      Start <ArrowLeft size={11} className="rotate-180" />
+                    </div>
+                  </button>
+                ))}
               </div>
             </div>
+          )}
 
-            <h2 className="text-xl font-bold mb-1">Finding your match…</h2>
-            <p className="text-slate-400 text-sm mb-1">{queueMsg}</p>
-            <p className="text-indigo-400 font-mono text-lg mb-2">{formatElapsed(elapsed)}</p>
-            <p className="text-xs text-slate-500 mb-6">
-              {interviewType} · {role === 'EngineeringManager' ? 'Eng. Manager' : role} · matching with opposite role
-            </p>
+          {/* ── STEP 2: Select role ───────────────────────────────────────── */}
+          {step === 'select-role' && interviewType && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="inline-flex items-center gap-2 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-3 py-1 rounded-full text-xs font-semibold mb-5">
+                {interviewType === 'PI' ? <Briefcase size={11} /> : <Code2 size={11} />}
+                {interviewType === 'PI' ? 'Personal Interview' : 'Technical Interview'}
+              </div>
+              <h1 className="text-3xl sm:text-4xl font-extrabold mb-2 tracking-tight">Choose Your Role</h1>
+              <p className="text-slate-400 text-sm mb-6">You'll be matched 1:1 with the opposite role.</p>
 
-            <div className="flex gap-1.5 justify-center mb-4">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="w-2 h-2 rounded-full bg-indigo-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-              ))}
+              {timeoutMsg && (
+                <div className="mb-5 flex items-start gap-3 bg-yellow-500/10 border border-yellow-500/20 text-yellow-300 px-4 py-3 rounded-xl text-sm">
+                  <span className="text-lg leading-none">⚠️</span>
+                  <span>{timeoutMsg}</span>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {rolesForType[interviewType].map(({ value, label, icon: Icon }) => {
+                  const selected = role === value;
+                  const colors: Record<string, string> = {
+                    HR: 'from-blue-500 to-indigo-500',
+                    Candidate: 'from-emerald-500 to-teal-500',
+                    EngineeringManager: 'from-purple-500 to-violet-500',
+                  };
+                  const roleDesc: Record<string, string> = {
+                    HR: 'Ask questions, evaluate the candidate',
+                    Candidate: 'Answer questions, showcase your skills',
+                    EngineeringManager: 'Conduct technical assessment',
+                  };
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setRole(value)}
+                      className={`relative flex flex-col items-start p-6 rounded-2xl border transition-all duration-200 text-left ${
+                        selected
+                          ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
+                          : 'border-slate-800 bg-slate-900/80 hover:border-slate-700 hover:bg-slate-800/60'
+                      }`}
+                    >
+                      {selected && (
+                        <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                          <span className="text-white text-[10px] font-bold">✓</span>
+                        </div>
+                      )}
+                      <div className={`w-11 h-11 rounded-xl bg-gradient-to-br ${colors[value] ?? 'from-slate-500 to-slate-600'} flex items-center justify-center mb-4 shadow-md`}>
+                        <Icon size={20} className="text-white" />
+                      </div>
+                      <p className="font-bold text-sm mb-1">{label}</p>
+                      <p className="text-xs text-slate-500 leading-relaxed">{roleDesc[value]}</p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => { setStep('select-type'); setRole(null); }}
+                  className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white hover:border-slate-600 text-sm font-medium transition-colors"
+                >
+                  <ArrowLeft size={14} /> Back
+                </button>
+                <button
+                  onClick={startQueue}
+                  disabled={!role}
+                  className="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-30 disabled:cursor-not-allowed text-white font-bold text-sm transition-all shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 flex items-center justify-center gap-2"
+                >
+                  Find Match <Radio size={14} />
+                </button>
+              </div>
             </div>
+          )}
 
-            <button
-              onClick={leaveQueue}
-              className="px-8 py-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 text-sm font-medium transition-colors"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
+          {/* ── STEP 3: Queue / waiting ──────────────────────────────────── */}
+          {step === 'queue' && (
+            <div className="text-center animate-in fade-in zoom-in-95 duration-300">
+              {/* Animated radar */}
+              <div className="relative w-32 h-32 mx-auto mb-8">
+                <div className="absolute inset-0 rounded-full border-2 border-indigo-500/10 animate-ping" style={{ animationDuration: '2s' }} />
+                <div className="absolute inset-3 rounded-full border-2 border-indigo-500/20 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.4s' }} />
+                <div className="absolute inset-6 rounded-full border-2 border-indigo-500/30 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.8s' }} />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-20 h-20 rounded-full bg-indigo-500/10 border border-indigo-500/40 flex items-center justify-center">
+                    <Users size={28} className="text-indigo-400" />
+                  </div>
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-extrabold mb-2">Finding your match…</h2>
+              <p className="text-slate-400 text-sm mb-4">{queueMsg}</p>
+
+              {/* Timer pill */}
+              <div className="inline-flex items-center gap-2 bg-slate-800 border border-slate-700 px-5 py-2 rounded-full mb-5">
+                <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse" />
+                <span className="text-indigo-300 font-mono text-xl font-bold">{formatElapsed(elapsed)}</span>
+              </div>
+
+              {/* Info tags */}
+              <div className="flex items-center justify-center gap-2 flex-wrap mb-8">
+                <span className="text-xs bg-slate-800 border border-slate-700 text-slate-400 px-3 py-1 rounded-full">
+                  {interviewType === 'PI' ? 'Personal Interview' : 'Technical Interview'}
+                </span>
+                <span className="text-xs bg-slate-800 border border-slate-700 text-slate-400 px-3 py-1 rounded-full">
+                  {role === 'EngineeringManager' ? 'Eng. Manager' : role}
+                </span>
+                <span className="text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 px-3 py-1 rounded-full">
+                  1:1 matched
+                </span>
+              </div>
+
+              <button
+                onClick={leaveQueue}
+                className="px-8 py-2.5 rounded-xl border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 text-sm font-medium transition-all"
+              >
+                Cancel Search
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
