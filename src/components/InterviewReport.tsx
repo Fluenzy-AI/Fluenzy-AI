@@ -109,12 +109,12 @@ export default function InterviewReport({ report, onClose }: InterviewReportProp
   const printRef = useRef<HTMLDivElement>(null);
 
   const { scores, strengths, improvements, aiSuggestions, summary, duration, role, interviewType } = report;
-  const overall = scores.overallRating ?? avgScore(scores);
+  const safeScores = scores ?? {};
+  const overall = safeScores.overallRating ?? avgScore(safeScores);
   const mins = Math.floor(duration / 60);
   const secs = duration % 60;
   const durationStr = `${mins}m ${secs}s`;
-
-  const mainScores = Object.entries(scores).filter(([k]) => k !== 'overallRating');
+  const mainScores = Object.entries(safeScores).filter(([k]) => k !== 'overallRating');
 
   const handlePrint = () => { if (printRef.current) window.print(); };
 

@@ -354,7 +354,30 @@ export default function LiveInterviewRoom({
         }),
       });
       const data = await res.json();
-      if (res.ok) setReport({ ...data, duration: elapsed, role: myRole, interviewType: roomData.interviewType });
+      if (res.ok && data.report) {
+        const raw = data.report as Record<string, unknown>;
+        const META_KEYS = new Set(['strengths', 'improvements', 'aiSuggestions', 'summary']);
+        // Extract numeric scores and normalize 0-100 → 0-10
+        const scores: Record<string, number> = {};
+        for (const [k, v] of Object.entries(raw)) {
+          if (!META_KEYS.has(k) && typeof v === 'number') {
+            scores[k] = v > 10 ? Math.round((v / 10) * 10) / 10 : v;
+          }
+        }
+        const suggestions = raw.aiSuggestions;
+        setReport({
+          scores,
+          strengths: (raw.strengths as string[]) ?? [],
+          improvements: (raw.improvements as string[]) ?? [],
+          aiSuggestions: Array.isArray(suggestions)
+            ? (suggestions as string[]).join('\n')
+            : (suggestions as string) ?? '',
+          summary: (raw.summary as string) ?? '',
+          duration: elapsed,
+          role: myRole,
+          interviewType: roomData.interviewType,
+        });
+      }
     } catch (_) {
       // Silently fail — still show empty report
     } finally {
