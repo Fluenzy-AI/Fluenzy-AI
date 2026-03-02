@@ -40,11 +40,12 @@ interface RoomData {
   participants: { userId: string; userName: string; role: Role }[];
 }
 
-function getStableUserId(sessionId?: string): string {
-  if (typeof window === 'undefined') return sessionId ?? `guest_${Date.now()}`;
+function getStableUserId(): string {
+  if (typeof window === 'undefined') return `tab_${Date.now()}`;
   const stored = window.sessionStorage.getItem('interview_userId');
   if (stored) return stored;
-  const id = sessionId ?? `guest_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+  // Always tab-unique: prevents self-match when same user opens two tabs
+  const id = `tab_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
   window.sessionStorage.setItem('interview_userId', id);
   return id;
 }
@@ -61,7 +62,7 @@ function getStableAgoraUid(): number {
 export default function LiveInterviewPage() {
   const { data: session } = useSession();
 
-  const [userId] = useState(() => getStableUserId(session?.user?.id));
+  const [userId] = useState(() => getStableUserId());
   const [agoraUid] = useState(() => getStableAgoraUid());
   const userName = session?.user?.name || 'Anonymous';
 
@@ -75,25 +76,43 @@ export default function LiveInterviewPage() {
 
   const socketRef = useRef<Socket | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Keep a ref of current queue params so reconnect handler can re-emit
+  const queueParamsRef = useRef<{ interviewType: InterviewType; role: Role } | null>(null);
 
   // Connect socket once
   useEffect(() => {
-    const s = io({ path: '/api/socket/io', transports: ['websocket'] });
+    const s = io({ path: '/api/socket/io' }); // default transports (polling → ws upgrade)
     socketRef.current = s;
 
     s.on('interview-queue-status', (d) => setQueueMsg(d.message));
     s.on('interview-match-found', (d: RoomData) => {
       clearTimer();
+      queueParamsRef.current = null;
       setRoomData(d);
       setStep('matched');
     });
     s.on('interview-queue-timeout', (d) => {
       clearTimer();
+      queueParamsRef.current = null;
       setTimeoutMsg(d.message);
       setStep('select-role');
     });
 
+    // On reconnect: if still in queue, re-emit so server picks us up again
+    s.on('connect', () => {
+      const params = queueParamsRef.current;
+      if (params) {
+        s.emit('interview-join-queue', {
+          userId,
+          userName,
+          interviewType: params.interviewType,
+          role: params.role,
+        });
+      }
+    });
+
     return () => { s.disconnect(); clearTimer(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const clearTimer = () => {
@@ -108,6 +127,7 @@ export default function LiveInterviewPage() {
     setQueueMsg('Searching for a match…');
     setElapsed(0);
     setStep('queue');
+    queueParamsRef.current = { interviewType, role };
 
     socketRef.current.emit('interview-join-queue', {
       userId,
@@ -120,6 +140,7 @@ export default function LiveInterviewPage() {
   }, [interviewType, role, userId, userName]);
 
   const leaveQueue = () => {
+    queueParamsRef.current = null;
     socketRef.current?.emit('interview-leave-queue');
     clearTimer();
     setStep('select-role');
