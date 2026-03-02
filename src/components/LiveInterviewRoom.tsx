@@ -151,6 +151,9 @@ export default function LiveInterviewRoom({
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [localAudio, setLocalAudio] = useState<IMicrophoneAudioTrack | null>(null);
   const [localVideo, setLocalVideo] = useState<ICameraVideoTrack | null>(null);
+  // Refs so cleanup() always has the live track even across stale closures
+  const localAudioRef = useRef<IMicrophoneAudioTrack | null>(null);
+  const localVideoRef = useRef<ICameraVideoTrack | null>(null);
   const [remoteUsers, setRemoteUsers] = useState<RemoteUser[]>([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -268,6 +271,8 @@ export default function LiveInterviewRoom({
         isJoinedRef.current = true;
 
         const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        localAudioRef.current = audioTrack;
+        localVideoRef.current = videoTrack;
         setLocalAudio(audioTrack);
         setLocalVideo(videoTrack);
         await client.publish([audioTrack, videoTrack]);
@@ -288,11 +293,15 @@ export default function LiveInterviewRoom({
     if (isCleanedRef.current) return;
     isCleanedRef.current = true;
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    // Stop + close local tracks to turn off camera/mic hardware
-    try { localVideo?.stop(); } catch (_) { /* ignore */ }
-    try { localVideo?.close(); } catch (_) { /* ignore */ }
-    try { localAudio?.stop(); } catch (_) { /* ignore */ }
-    try { localAudio?.close(); } catch (_) { /* ignore */ }
+    // Use refs — always have the live track regardless of closure staleness
+    const vid = localVideoRef.current;
+    const aud = localAudioRef.current;
+    localVideoRef.current = null;
+    localAudioRef.current = null;
+    try { vid?.stop(); } catch (_) { /* ignore */ }
+    try { vid?.close(); } catch (_) { /* ignore */ }
+    try { aud?.stop(); } catch (_) { /* ignore */ }
+    try { aud?.close(); } catch (_) { /* ignore */ }
     setLocalVideo(null);
     setLocalAudio(null);
     if (clientRef.current) {
@@ -300,7 +309,7 @@ export default function LiveInterviewRoom({
       clientRef.current = null;
     }
     isJoinedRef.current = false;
-  }, [localAudio, localVideo]);
+  }, []); // no deps — reads from refs, never stale
 
   // ── Controls ──────────────────────────────────────────────────────────────
   const toggleMute = async () => {
