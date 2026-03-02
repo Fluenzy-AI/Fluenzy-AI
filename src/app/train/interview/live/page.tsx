@@ -170,7 +170,7 @@ export default function LiveInterviewPage() {
         agoraUid={agoraUid}
         myRole={myRole}
         userName={userName}
-        onEnd={(report) => {
+        onEnd={(report?: ReportPayload) => {
           setRoomData(null);
           setStep('select-type');
           setInterviewType(null);
