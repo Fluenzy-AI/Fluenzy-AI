@@ -433,7 +433,7 @@ export default function LiveInterviewRoom({
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-4 px-4 text-center">
         <p className="text-red-400 text-lg font-semibold">Connection Error</p>
         <p className="text-slate-400 text-sm max-w-sm">{error}</p>
-        <button onClick={onEnd} className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-sm font-medium transition-colors">
+        <button onClick={() => onEnd()} className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-sm font-medium transition-colors">
           Back
         </button>
       </div>
