@@ -442,7 +442,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   return (
     <div className={`min-h-screen flex flex-col ${currentTheme.background}`}>
-      <div className="flex flex-1">
+      <div className="flex flex-1 min-w-0 overflow-x-hidden">
         {/* Desktop Sidebar */}
         <aside
           onMouseEnter={() => !sidebarOpen && setSidebarHovered(true)}
@@ -476,7 +476,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         </div>
 
         {/* Main Content */}
-        <main className={`flex-1 flex flex-col min-h-screen ${showSidebar ? 'lg:pl-0' : ''}`}>
+        <main className={`flex-1 min-w-0 overflow-x-hidden flex flex-col min-h-screen ${showSidebar ? 'lg:pl-0' : ''}`}>
           {/* Top Navbar */}
           <header className={`h-16 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-4 sticky top-0 z-30`}>
             {/* Left - Mobile Menu + Breadcrumb */}

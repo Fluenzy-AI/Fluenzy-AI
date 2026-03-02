@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -50,6 +50,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "@/contexts/ThemeContext";
+import InterviewGuideDisplay from "@/components/InterviewGuideDisplay";
+import MobileInterviewGuide from "@/components/MobileInterviewGuide";
 
 interface GuideSection {
   title: string;
@@ -332,6 +334,22 @@ const InterviewGuidePageContent = () => {
   const [compactView, setCompactView] = useState(false);
   const [lastPracticedAt, setLastPracticedAt] = useState<string>("");
   const [viewMode, setViewMode] = useState<"ui" | "pdf">("ui");
+  const [recentGuides, setRecentGuides] = useState<Array<{
+    id: string;
+    targetRole: string;
+    targetCompany: string | null;
+    experienceLevel: string;
+    communicationLevel: string;
+    createdAt: string;
+  }>>([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 641);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   const igThemeVars =
     resolvedTheme === "light"
@@ -393,6 +411,16 @@ const InterviewGuidePageContent = () => {
           }
         })
         .catch(console.error);
+    }
+  }, [session]);
+
+  // Fetch recent guides for history section on form page
+  useEffect(() => {
+    if (session?.user) {
+      fetch("/api/interview-guide/history")
+        .then((r) => r.json())
+        .then((data) => { if (data.guides) setRecentGuides(data.guides.slice(0, 3)); })
+        .catch(() => {});
     }
   }, [session]);
 
@@ -836,9 +864,57 @@ const InterviewGuidePageContent = () => {
 
     return (
       <div style={igThemeVars} className="interview-guide-page relative z-10 min-h-screen bg-[color:var(--ig-bg)] text-[color:var(--ig-text)]">
-        <div className="mx-auto max-w-6xl px-4 py-8 md:py-10">
-        <div className="space-y-6">
+        <div className="mx-auto max-w-6xl px-4 py-6 pb-24 md:py-8 md:pb-10">
+        <div className="space-y-5">
 
+          {/* === PAGE HEADER === */}
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl md:text-2xl font-black text-[color:var(--ig-heading)] tracking-tight">Interview Strategy Builder</h1>
+              <p className="text-xs md:text-sm text-[color:var(--ig-muted)] mt-0.5">AI-powered personalized interview roadmap</p>
+            </div>
+            <Link href="/interview-guide/history">
+              <Button variant="ghost" className="flex items-center gap-2 h-9 px-3 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface)] text-xs font-semibold text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)] transition-colors">
+                <History size={14} />
+                <span className="hidden sm:inline">All History</span>
+              </Button>
+            </Link>
+          </div>
+
+          {/* === RECENT GUIDES (history at top) === */}
+          {recentGuides.length > 0 && (
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.14em] text-[color:var(--ig-muted)] mb-3 font-semibold flex items-center gap-1.5">
+                <History size={12} />
+                Recent Guides
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {recentGuides.map((g) => (
+                  <Link key={g.id} href={`/interview-guide?id=${g.id}`}>
+                    <div className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface)] p-4 hover:border-blue-500/40 hover:shadow-md transition-all cursor-pointer group">
+                      <div className="flex items-start gap-3">
+                        <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
+                          <Target size={16} className="text-white" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-sm text-[color:var(--ig-heading)] truncate group-hover:text-blue-400 transition-colors">{g.targetRole}</p>
+                          {g.targetCompany && (
+                            <p className="text-xs text-[color:var(--ig-muted)] truncate flex items-center gap-1">
+                              <Building2 size={10} />{g.targetCompany}
+                            </p>
+                          )}
+                          <p className="text-[10px] text-[color:var(--ig-muted)] mt-1 flex items-center gap-1">
+                            <Calendar size={10} />{new Date(g.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                          </p>
+                        </div>
+                        <ArrowRight size={14} className="text-[color:var(--ig-muted)] flex-shrink-0 mt-1 group-hover:text-blue-400 transition-colors" />
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Card className="overflow-hidden rounded-2xl border-white/10 bg-slate-900/75 shadow-xl backdrop-blur-2xl">
             <CardHeader className="space-y-3 border-b border-white/10 p-5 md:p-6">
@@ -1178,582 +1254,59 @@ const InterviewGuidePageContent = () => {
           </footer>
         </div>
 
-        {currentStep === 3 && (
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 p-3 backdrop-blur md:hidden">
-            <div className="mx-auto flex max-w-6xl items-center gap-2">
-              <Button
-                variant="ghost"
-                onClick={goPreviousStep}
-                className="h-11 rounded-lg border border-white/10 bg-white/5 px-4 text-[color:var(--ig-text)]"
-              >
-                Back
+        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 p-3 backdrop-blur md:hidden">
+          <div className="mx-auto flex max-w-6xl items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={goPreviousStep}
+              disabled={currentStep === 1}
+              className="h-11 rounded-lg border border-white/10 bg-white/5 px-4 text-[color:var(--ig-text)] disabled:opacity-40"
+            >
+              Back
+            </Button>
+            {currentStep < 3 ? (
+              <Button onClick={goNextStep} className="h-11 flex-1 rounded-lg bg-blue-600 text-[color:var(--ig-heading)] hover:bg-blue-500">
+                Next →
               </Button>
-              {!usage?.canGenerate ? (
-                <Button onClick={() => router.push("/pricing")} className="h-11 flex-1 rounded-lg bg-amber-600 text-[color:var(--ig-heading)] hover:bg-amber-500">
-                  Upgrade Plan
-                </Button>
-              ) : (
-                <Button
-                  onClick={generateGuide}
-                  disabled={loading || !canSubmit}
-                  className="h-11 flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-[color:var(--ig-heading)] disabled:opacity-40"
-                >
-                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Generate Expert Strategy"}
-                </Button>
-              )}
-            </div>
+            ) : !usage?.canGenerate ? (
+              <Button onClick={() => router.push("/pricing")} className="h-11 flex-1 rounded-lg bg-amber-600 text-[color:var(--ig-heading)] hover:bg-amber-500">
+                Upgrade Plan
+              </Button>
+            ) : (
+              <Button
+                onClick={generateGuide}
+                disabled={loading || !canSubmit}
+                className="h-11 flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-cyan-500 text-[color:var(--ig-heading)] disabled:opacity-40"
+              >
+                {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Generate Expert Strategy"}
+              </Button>
+            )}
           </div>
-        )}
+        </div>
         </div>
       </div>
     );
   }
 
-  // Guide display view
-  const checklistItems = guide.section7_cheatSheet?.finalChecklist || [];
-  const checklistProgress = checklistItems.length
-    ? Math.round((checklistCompleted.size / checklistItems.length) * 100)
-    : 0;
-  const sectionProgress = guideNavSections.length
-    ? Math.round((completedGuideSections.size / guideNavSections.length) * 100)
-    : 0;
-  const readinessScore = Math.round(sectionProgress * 0.65 + checklistProgress * 0.35);
-
-  const introTabs = [
-    { key: "30" as const, label: "30 sec", value: guide.section2_introduction?.short30sec },
-    { key: "60" as const, label: "60 sec", value: guide.section2_introduction?.medium60sec },
-    { key: "90" as const, label: "90 sec", value: guide.section2_introduction?.long90sec },
-  ].filter((tab) => !!tab.value);
-
-  const activeIntroContent = introTabs.find((tab) => tab.key === activeIntroTab)?.value || introTabs[0]?.value || "";
-
-  const technicalQuestionsByLevel = {
-    beginner: guide.section4_technicalQuestions?.beginner || [],
-    intermediate: guide.section4_technicalQuestions?.intermediate || [],
-    advanced: guide.section4_technicalQuestions?.advanced || [],
+  // Guide display view — dispatches to responsive components
+  const sharedGuideProps = {
+    guide,
+    targetRole: userProfile?.targetRole || targetRole || "",
+    targetCompany: userProfile?.targetCompany || targetCompany || "",
+    communicationLevel,
+    pdfLoading,
+    downloadPDF,
+    onNewRoadmap: () => {
+      router.push("/interview-guide");
+      setGuide(null);
+    },
+    lastPracticedAt,
   };
 
-  const technicalItems = technicalQuestionsByLevel[technicalFilter] || [];
-  const sectionBoxClass = `scroll-mt-24 overflow-hidden rounded-2xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface)] shadow-[0_1px_3px_rgba(15,23,42,0.08)] ${compactView ? "p-3 md:p-4" : "p-4 md:p-5"}`;
-  const mainGapClass = compactView ? "space-y-3" : "space-y-4";
-  const pdfPreviewPath = "/api/interview-guide/pdf/69a12f4b109384aeddbeca57";
-
-  return (
-    <div style={igThemeVars} className="interview-guide-page min-h-screen bg-[color:var(--ig-bg)] text-[color:var(--ig-text)]">
-      <div className="w-full px-4 py-6 md:px-6 md:py-8">
-        <div className="space-y-6">
-          <section className="rounded-2xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface)] p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)] md:p-6">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-              <div className="space-y-3">
-                <div className="grid gap-2 text-sm sm:grid-cols-2 lg:grid-cols-3">
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-[color:var(--ig-muted)]">Candidate</p>
-                    <p className="font-semibold text-[color:var(--ig-heading)]">{userProfile?.name || session?.user?.name || "Candidate"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-[color:var(--ig-muted)]">Target Role</p>
-                    <p className="font-semibold text-[color:var(--ig-heading)]">{userProfile?.targetRole || targetRole || "Not specified"}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] uppercase tracking-[0.14em] text-[color:var(--ig-muted)]">Company</p>
-                    <p className="font-semibold text-[color:var(--ig-heading)]">{userProfile?.targetCompany || targetCompany || "General"}</p>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full border border-sky-200/35 bg-sky-300/10 px-3 py-1 font-medium text-[color:var(--ig-text)]">
-                    {communicationLevel} level
-                  </span>
-                  <span className="rounded-full border border-sky-200/35 bg-sky-300/10 px-3 py-1 font-medium text-[color:var(--ig-text)]">
-                    {guideNavSections.length} sections
-                  </span>
-                  <span className="rounded-full border border-emerald-200/35 bg-emerald-300/10 px-3 py-1 font-medium text-emerald-50">
-                    Readiness {readinessScore}%
-                  </span>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => setViewMode("ui")}
-                  className={`h-10 rounded-xl border px-3 text-xs font-medium ${
-                    viewMode === "ui"
-                      ? "border-[color:var(--ig-accent)] bg-[color:var(--ig-accent-soft)] text-[color:var(--ig-text)]"
-                      : "border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
-                  }`}
-                >
-                    UI Page 1
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => setViewMode("pdf")}
-                  className={`h-10 rounded-xl border px-3 text-xs font-medium ${
-                    viewMode === "pdf"
-                      ? "border-[color:var(--ig-accent)] bg-[color:var(--ig-accent-soft)] text-[color:var(--ig-text)]"
-                      : "border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
-                  }`}
-                >
-                    PDF Page 2
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setGuide(null);
-                    setCurrentGuideId(null);
-                    router.push("/interview-guide");
-                  }}
-                  className="h-10 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] px-3 text-xs font-medium text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
-                >
-                  <ArrowRight className="mr-1 h-4 w-4 rotate-180" />
-                  New Roadmap
-                </Button>
-                <Link href="/interview-guide/history">
-                  <Button variant="ghost" className="h-10 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] px-3 text-xs font-medium text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]">
-                    <History className="mr-1 h-4 w-4" />
-                    Archive
-                  </Button>
-                </Link>
-                <Button
-                  onClick={() => window.print()}
-                  variant="ghost"
-                  className="h-10 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] px-3 text-xs font-medium text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
-                >
-                  <Printer className="mr-1 h-4 w-4" />
-                  Print
-                </Button>
-                <Button
-                  onClick={() => setCompactView((prev) => !prev)}
-                  variant="ghost"
-                  className="h-10 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] px-3 text-xs font-medium text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-soft)]"
-                >
-                  {compactView ? <LayoutGrid className="mr-1 h-4 w-4" /> : <Rows3 className="mr-1 h-4 w-4" />}
-                  {compactView ? "Expanded" : "Compact"}
-                </Button>
-                <Button
-                  onClick={downloadPDF}
-                  disabled={pdfLoading}
-                  className="h-10 rounded-xl bg-[color:var(--ig-accent)] px-4 text-xs font-medium uppercase tracking-[0.12em] text-[color:var(--ig-heading)] hover:bg-[color:var(--ig-accent-hover)] disabled:opacity-50"
-                >
-                  {pdfLoading ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Download className="mr-1 h-4 w-4" />}
-                  Export PDF
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-3 md:grid-cols-3">
-              <article className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Readiness Level</p>
-                <p className="mt-2 text-2xl font-semibold text-[color:var(--ig-heading)]">{readinessScore}%</p>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--ig-surface-alt)]">
-                  <div className="h-full rounded-full bg-cyan-400 transition-all duration-700" style={{ width: `${readinessScore}%` }} />
-                </div>
-              </article>
-
-              <article className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
-                <p className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Key Focus Areas</p>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {(jdInsights.length ? jdInsights : ["Preparation", "Communication", "Role Fit"]).slice(0, 4).map((item) => (
-                    <span key={item} className="rounded-full border border-sky-300/30 bg-sky-400/10 px-2.5 py-1 text-xs text-[color:var(--ig-text)]">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </article>
-
-              <article className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Preparation Status</p>
-                  <span className="text-xs text-[color:var(--ig-muted)]">{checklistCompleted.size}/{checklistItems.length || 0}</span>
-                </div>
-                <div className="mt-3 h-2 overflow-hidden rounded-full bg-[color:var(--ig-surface-alt)]">
-                  <div className="h-full rounded-full bg-teal-400 transition-all duration-700" style={{ width: `${checklistProgress}%` }} />
-                </div>
-              </article>
-            </div>
-
-            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-[color:var(--ig-muted)]">
-              <span className="inline-flex items-center gap-1"><Calendar className="h-3.5 w-3.5" />Last practiced: {lastPracticedAt || "Just now"}</span>
-              <span>Last updated: {new Date().toLocaleDateString()}</span>
-            </div>
-          </section>
-
-          {viewMode === "ui" ? (
-          <div>
-            <main
-              className={`${mainGapClass} min-w-0 w-full [&_p]:leading-7 [&_li]:leading-7`}
-              style={{ scrollBehavior: "smooth" }}
-            >
-              <section id="preparation" className={sectionBoxClass}>
-                <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Preparation Strategy</h2>
-                <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Time-boxed actions before your interview day.</p>
-                <div className="mt-4 grid gap-3 md:grid-cols-2">
-                  {guide.section1_preparation?.oneDayBefore && (
-                    <Card className="rounded-xl border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-0">
-                      <CardHeader className="pb-2"><CardTitle className="text-base text-[color:var(--ig-heading)]">24 Hours Before</CardTitle></CardHeader>
-                      <CardContent className="space-y-2 break-words text-sm text-[color:var(--ig-text)]">
-                        {guide.section1_preparation.oneDayBefore.map((item: string, idx: number) => (
-                          <div key={idx} className="flex gap-2"><Circle className="mt-1 h-3 w-3 text-cyan-300" />{item}</div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {guide.section1_preparation?.oneHourBefore && (
-                    <Card className="rounded-xl border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-0">
-                      <CardHeader className="pb-2"><CardTitle className="text-base text-[color:var(--ig-heading)]">One Hour Before</CardTitle></CardHeader>
-                      <CardContent className="space-y-2 break-words text-sm text-[color:var(--ig-text)]">
-                        {guide.section1_preparation.oneHourBefore.map((item: string, idx: number) => (
-                          <div key={idx} className="flex gap-2"><Circle className="mt-1 h-3 w-3 text-sky-300" />{item}</div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {guide.section1_preparation?.commonMistakes && (
-                    <Card className="rounded-xl border-red-500/30 bg-red-500/10 p-0 md:col-span-2">
-                      <CardHeader className="pb-2"><CardTitle className="text-base text-red-100">Common Mistakes</CardTitle></CardHeader>
-                      <CardContent className="grid gap-2 text-sm text-red-100 md:grid-cols-2">
-                        {guide.section1_preparation.commonMistakes.map((item: string, idx: number) => (
-                          <div key={idx} className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 text-red-300" />{item}</div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  )}
-
-                  {guide.section1_preparation?.duringInterview && (
-                    <Card className="rounded-xl border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-0 md:col-span-2">
-                      <CardHeader className="pb-2"><CardTitle className="text-base text-[color:var(--ig-heading)]">Final Countdown Checklist</CardTitle></CardHeader>
-                      <CardContent className="grid gap-3 break-words text-sm text-[color:var(--ig-text)] md:grid-cols-2">
-                        {Object.entries(guide.section1_preparation.duringInterview).map(([key, value]) => (
-                          <div key={key} className="rounded-lg border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-alt)] p-3">
-                            <p className="text-[11px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">{key}</p>
-                            <p className="mt-1">{value as string}</p>
-                          </div>
-                        ))}
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </section>
-
-              {guide.section1_preparation?.starMethod && (
-                <section id="star-method" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">STAR Method</h2>
-                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Framework flow for behavior-based answers.</p>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {Object.entries(guide.section1_preparation.starMethod).map(([key, value], idx) => {
-                      const stepLabel = ["S", "T", "A", "R"][idx] || "*";
-                      return (
-                        <div key={key} className="relative rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
-                          <div className="mb-2 inline-flex h-7 w-7 items-center justify-center rounded-full bg-cyan-400/20 text-xs font-semibold text-[color:var(--ig-text)]">
-                            {stepLabel}
-                          </div>
-                          <p className="text-xs uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">{key}</p>
-                          <p className="mt-1 break-words text-sm text-[color:var(--ig-text)]">{value as string}</p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-
-              {guide.section2_introduction && (
-                <section id="introduction" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Personal Introduction</h2>
-                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Switch between concise and detailed introduction lengths.</p>
-                  <div className="mt-4 inline-flex rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-1">
-                    {introTabs.map((tab) => (
-                      <button
-                        key={tab.key}
-                        onClick={() => setActiveIntroTab(tab.key)}
-                        className={`rounded-lg px-4 py-2 text-xs font-medium transition-colors ${
-                          activeIntroTab === tab.key ? "bg-[color:var(--ig-accent)] text-[color:var(--ig-heading)]" : "text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-alt)]"
-                        }`}
-                      >
-                        {tab.label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-4 rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
-                    <p className="text-sm leading-relaxed text-[color:var(--ig-text)] whitespace-pre-wrap break-words">{activeIntroContent}</p>
-                  </div>
-                  {guide.section2_introduction?.tips?.length > 0 && (
-                    <div className="mt-4 grid gap-2 md:grid-cols-2">
-                      {guide.section2_introduction.tips.map((tip: string, idx: number) => (
-                        <div key={idx} className="rounded-lg border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-3 text-sm text-[color:var(--ig-text)]">
-                          <span className="mr-2 text-[color:var(--ig-muted)]">{idx + 1}.</span>{tip}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </section>
-              )}
-
-              {guide.section3_hrQuestions?.questions?.length > 0 && (
-                <section id="hr-questions" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">HR Questions</h2>
-                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Collapsible Q&A cards with strategy tips.</p>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {guide.section3_hrQuestions.questions.map((q: any, idx: number) => {
-                      const isOpen = expandedHrItems.has(idx);
-                      return (
-                        <div key={idx} className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)]">
-                          <button
-                            onClick={() =>
-                              setExpandedHrItems((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(idx)) next.delete(idx);
-                                else next.add(idx);
-                                return next;
-                              })
-                            }
-                            className="flex w-full items-center justify-between gap-3 p-4 text-left"
-                          >
-                            <div>
-                              <p className="font-medium text-[color:var(--ig-heading)] break-words">{q.question}</p>
-                              <span className="mt-1 inline-block rounded-full border border-sky-300/30 bg-sky-400/10 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-[color:var(--ig-text)]">
-                                Behavioral
-                              </span>
-                            </div>
-                            <ChevronDown className={`h-4 w-4 text-[color:var(--ig-muted)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                          </button>
-                          {isOpen && (
-                            <div className="border-t border-[color:var(--ig-border)] p-4 text-sm text-[color:var(--ig-text)] space-y-3">
-                              <p className="whitespace-pre-wrap break-words">{q.answer}</p>
-                              {q.tips && <p className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 p-3 text-[color:var(--ig-text)]">{q.tips}</p>}
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-
-              {guide.section4_technicalQuestions && (
-                <section id="technical-questions" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Technical Questions</h2>
-                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Filter by proficiency and expand answers.</p>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    {(["beginner", "intermediate", "advanced"] as const).map((level) => (
-                      <button
-                        key={level}
-                        onClick={() => setTechnicalFilter(level)}
-                        className={`rounded-full px-3 py-1.5 text-xs font-medium capitalize transition-colors ${
-                          technicalFilter === level
-                            ? "bg-[color:var(--ig-accent)] text-[color:var(--ig-heading)]"
-                            : "border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-alt)]"
-                        }`}
-                      >
-                        {level}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {technicalItems.map((q: any, idx: number) => {
-                      const key = `${technicalFilter}-${idx}`;
-                      const isOpen = expandedTechItems.has(key);
-                      return (
-                        <div key={key} className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)]">
-                          <button
-                            onClick={() =>
-                              setExpandedTechItems((prev) => {
-                                const next = new Set(prev);
-                                if (next.has(key)) next.delete(key);
-                                else next.add(key);
-                                return next;
-                              })
-                            }
-                            className="flex w-full items-center justify-between gap-2 p-4 text-left"
-                          >
-                            <p className="font-medium text-[color:var(--ig-heading)] break-words">{q.question}</p>
-                            <ChevronDown className={`h-4 w-4 text-[color:var(--ig-muted)] transition-transform ${isOpen ? "rotate-180" : ""}`} />
-                          </button>
-                          {isOpen && (
-                            <div className="border-t border-[color:var(--ig-border)] p-4 text-sm text-[color:var(--ig-text)] whitespace-pre-wrap break-words">{q.answer}</div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-
-              {guide.section5_companySpecific && (
-                <section id="company-fit" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Company Fit</h2>
-                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Institutional alignment narratives in modular cards.</p>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {[
-                      { title: "Why This Company", content: guide.section5_companySpecific.whyThisCompany },
-                      { title: "Culture Integration", content: guide.section5_companySpecific.cultureFit },
-                      { title: "Role Expectations", content: guide.section5_companySpecific.roleExpectations },
-                      { title: "Value Addition", content: guide.section5_companySpecific.valueAddition },
-                    ]
-                      .filter((item) => item.content)
-                      .map((item) => (
-                        <div key={item.title} className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
-                          <div className="mb-2 flex items-center justify-between">
-                            <p className="text-xs uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">{item.title}</p>
-                            <CopyButton text={item.content as string} />
-                          </div>
-                          <p className="text-sm text-[color:var(--ig-text)] break-words">{item.content as string}</p>
-                        </div>
-                      ))}
-                  </div>
-                </section>
-              )}
-
-              {guide.section6_communication && (
-                <section id="communication-upgrade" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Communication Upgrade</h2>
-                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Improve clarity, vocabulary and response control.</p>
-                  <div className="mt-4 grid gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
-                      <p className="text-xs uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Filler Replacement Grid</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {(guide.section6_communication.fillerWordsToAvoid || []).map((word: string, idx: number) => (
-                          <span key={idx} className="rounded-full border border-red-500/30 bg-red-500/10 px-2.5 py-1 text-xs text-red-100">
-                            {word}
-                          </span>
-                        ))}
-                        {(guide.section6_communication.betterReplacements || []).map((item: any, idx: number) => (
-                          <span key={idx} className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-xs text-emerald-100">
-                            {item.useInstead}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4">
-                      <p className="text-xs uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Power Phrases</p>
-                      <div className="mt-3 grid gap-2">
-                        {(guide.section6_communication.powerPhrases || []).map((phrase: string, idx: number) => (
-                          <button
-                            key={idx}
-                            onClick={() => navigator.clipboard.writeText(phrase)}
-                            className="rounded-lg border border-cyan-300/20 bg-cyan-400/10 px-3 py-2 text-left text-sm text-[color:var(--ig-text)] hover:bg-cyan-400/15"
-                          >
-                            {phrase}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-              )}
-
-              {guide.section7_cheatSheet && (
-                <section id="rapid-memorization" className={sectionBoxClass}>
-                  <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Rapid Memorization</h2>
-                  <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Flashcard style memory anchors for quick recall.</p>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                    {(guide.section7_cheatSheet.keyLinesToMemorize || []).map((line: string, idx: number) => {
-                      const flipped = flippedMemoItems.has(idx);
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() =>
-                            setFlippedMemoItems((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(idx)) next.delete(idx);
-                              else next.add(idx);
-                              return next;
-                            })
-                          }
-                          className="min-h-[140px] rounded-xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] p-4 text-left transition-colors hover:bg-[color:var(--ig-surface-alt)]"
-                        >
-                          {!flipped ? (
-                            <div>
-                              <p className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Front</p>
-                              <p className="mt-2 text-sm text-[color:var(--ig-heading)]">{line}</p>
-                            </div>
-                          ) : (
-                            <div>
-                              <p className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--ig-muted)]">Back</p>
-                              <p className="mt-2 text-sm text-[color:var(--ig-text)]">Why it matters: reinforces concise, high-confidence recall under pressure.</p>
-                            </div>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-
-              {checklistItems.length > 0 && (
-                <section id="final-checklist" className={sectionBoxClass}>
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-[22px] font-medium text-[color:var(--ig-heading)]">Final Checklist</h2>
-                      <p className="mt-1 text-sm text-[color:var(--ig-muted)]">Interactive completion tracker.</p>
-                    </div>
-                    <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-100">
-                      Progress: {checklistCompleted.size}/{checklistItems.length} Completed
-                    </span>
-                  </div>
-                  <div className="mt-4 h-2 overflow-hidden rounded-full bg-[color:var(--ig-surface-alt)]">
-                    <div className="h-full rounded-full bg-teal-400 transition-all duration-700" style={{ width: `${checklistProgress}%` }} />
-                  </div>
-                  <div className="mt-4 grid gap-2 md:grid-cols-2">
-                    {checklistItems.map((item: string, idx: number) => {
-                      const done = checklistCompleted.has(idx);
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() =>
-                            setChecklistCompleted((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(idx)) next.delete(idx);
-                              else next.add(idx);
-                              return next;
-                            })
-                          }
-                          className={`flex items-start gap-3 rounded-lg border p-3 text-left text-sm transition-colors ${
-                            done
-                              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-100"
-                              : "border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-alt)]"
-                          }`}
-                        >
-                          <span className={`mt-0.5 h-4 w-4 rounded border ${done ? "border-emerald-300 bg-emerald-400" : "border-slate-500"}`} />
-                          {item}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              )}
-            </main>
-
-          </div>
-          ) : (
-            <section className="rounded-2xl border border-[color:var(--ig-border)] bg-[color:var(--ig-surface)] p-3 md:p-4 shadow-[0_1px_3px_rgba(15,23,42,0.08)]">
-              <div className="mb-3 flex items-center justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-[color:var(--ig-heading)]">PDF Page 2 Preview</h2>
-                  <p className="text-xs text-[color:var(--ig-muted)]">Current page ke andar PDF style preview mode.</p>
-                </div>
-                <Button
-                  variant="ghost"
-                  onClick={() => window.open(pdfPreviewPath, "_blank", "noopener,noreferrer")}
-                  className="h-9 rounded-lg border border-[color:var(--ig-border)] bg-[color:var(--ig-surface-soft)] px-3 text-xs text-[color:var(--ig-text)] hover:bg-[color:var(--ig-surface-alt)]"
-                >
-                  Open Full
-                </Button>
-              </div>
-              <div className="overflow-hidden rounded-xl border border-slate-700 bg-white">
-                <iframe
-                  title="Interview Guide PDF Preview"
-                  src={pdfPreviewPath}
-                  className="h-[72vh] w-full md:h-[78vh]"
-                />
-              </div>
-            </section>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  if (isMobile) {
+    return <MobileInterviewGuide {...sharedGuideProps} />;
+  }
+  return <InterviewGuideDisplay {...sharedGuideProps} />;
 };
 const InterviewGuidePage = () => {
   return (

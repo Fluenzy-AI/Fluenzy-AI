@@ -2,8 +2,9 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import VocabularyBooster from "../../../../Learn_English/components/VocabularyBooster";
+import MobileVocabularyPage from "@/components/learn-english/MobileVocabularyPage";
 import { UserProfile } from "../../../../Learn_English/types";
 import { INITIAL_USER } from "../../../../Learn_English/constants";
 import { useTheme, themeConfig } from "@/contexts/ThemeContext";
@@ -12,7 +13,8 @@ const VocabularyPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { resolvedTheme } = useTheme();
-  
+  const [isMobile, setIsMobile] = useState(false);
+
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
 
   useEffect(() => {
@@ -20,6 +22,13 @@ const VocabularyPage = () => {
       router.push("/");
     }
   }, [status, router]);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 641);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   if (status === "loading") {
     return (
@@ -42,6 +51,10 @@ const VocabularyPage = () => {
     picture: session.user.image || undefined,
   };
 
+  if (isMobile) {
+    return <MobileVocabularyPage user={user as any} />;
+  }
+
   return (
     <div className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-6 md:p-8 lg:p-12 theme-transition`}>
       <VocabularyBooster user={user} />
@@ -50,3 +63,4 @@ const VocabularyPage = () => {
 };
 
 export default VocabularyPage;
+

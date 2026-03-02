@@ -1268,10 +1268,20 @@ const cheatSheet = {
 };
 
 // Component
-const VocabularyBooster: React.FC<{ user: UserProfile }> = ({ user }) => {
+const VocabularyBooster: React.FC<{
+  user: UserProfile;
+  isMobile?: boolean;
+  activeSection?: string;
+  onSectionChange?: (s: string) => void;
+}> = ({ user, isMobile = false, activeSection: externalSection, onSectionChange }) => {
   const router = useRouter();
   const [activeLevel, setActiveLevel] = useState<ProficiencyLevel>(ProficiencyLevel.BEGINNER);
-  const [activeSection, setActiveSection] = useState<string>('vocabulary');
+  const [internalSection, setInternalSection] = useState<string>('vocabulary');
+  const activeSection = externalSection !== undefined ? externalSection : internalSection;
+  const setActiveSection = (s: string) => {
+    if (onSectionChange) onSectionChange(s);
+    else setInternalSection(s);
+  };
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [activeRole, setActiveRole] = useState<string>('Initiator');
   const [expandedTemplates, setExpandedTemplates] = useState<Set<string>>(new Set());
@@ -1574,17 +1584,19 @@ const VocabularyBooster: React.FC<{ user: UserProfile }> = ({ user }) => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="vocab-booster-root space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => router.push('/train')}
-          className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft size={20} />
-          <span>Back to Training</span>
-        </button>
-      </div>
+      {!isMobile && (
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => router.push('/train')}
+            className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
+          >
+            <ArrowLeft size={20} />
+            <span>Back to Training</span>
+          </button>
+        </div>
+      )}
       
       {/* Title Section */}
       <div className="text-center py-6">
@@ -1598,30 +1610,32 @@ const VocabularyBooster: React.FC<{ user: UserProfile }> = ({ user }) => {
       </div>
       
       {/* Section Tabs */}
-      <div className="flex flex-wrap justify-center gap-2">
-        {[
-          { id: 'vocabulary', label: 'Vocabulary', icon: BookA },
-          { id: 'replacements', label: 'Word Upgrades', icon: ArrowRight },
-          { id: 'gd-phrases', label: 'GD Phrases', icon: Users },
-          { id: 'templates', label: 'GD Templates', icon: FileText },
-          { id: 'power-phrases', label: 'Power Phrases', icon: Sparkles },
-          { id: 'cheat-sheet', label: 'Cheat Sheet', icon: Bookmark },
-          { id: 'voice-practice', label: 'Voice Practice', icon: Mic }
-        ].map((section) => (
-          <button
-            key={section.id}
-            onClick={() => setActiveSection(section.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-semibold text-sm transition-all ${
-              activeSection === section.id
-                ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
-                : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60'
-            }`}
-          >
-            <section.icon size={16} />
-            {section.label}
-          </button>
-        ))}
-      </div>
+      {!isMobile && (
+        <div className="flex flex-wrap justify-center gap-2">
+          {[
+            { id: 'vocabulary', label: 'Vocabulary', icon: BookA },
+            { id: 'replacements', label: 'Word Upgrades', icon: ArrowRight },
+            { id: 'gd-phrases', label: 'GD Phrases', icon: Users },
+            { id: 'templates', label: 'GD Templates', icon: FileText },
+            { id: 'power-phrases', label: 'Power Phrases', icon: Sparkles },
+            { id: 'cheat-sheet', label: 'Cheat Sheet', icon: Bookmark },
+            { id: 'voice-practice', label: 'Voice Practice', icon: Mic }
+          ].map((section) => (
+            <button
+              key={section.id}
+              onClick={() => setActiveSection(section.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-2xl font-semibold text-sm transition-all ${
+                activeSection === section.id
+                  ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/30'
+                  : 'bg-slate-800/60 text-slate-300 hover:bg-slate-700/60'
+              }`}
+            >
+              <section.icon size={16} />
+              {section.label}
+            </button>
+          ))}
+        </div>
+      )}
       
       {/* Main Content */}
       {activeSection === 'vocabulary' && (

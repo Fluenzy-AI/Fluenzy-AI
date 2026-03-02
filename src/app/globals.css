@@ -1865,178 +1865,165 @@
 [data-theme="light"] .space-y-6 > * + * { margin-top: 24px !important; }
 [data-theme="light"] .space-y-8 > * + * { margin-top: 32px !important; }
 
-/* ===== VOCABULARY BOOSTER PAGE PREMIUM LIGHT THEME ===== */
-/* Hero section with gradient */
-[data-theme="light"] .text-3xl.md\:text-4xl.font-black.text-white {
-  color: #0F172A !important;
-  font-weight: 800 !important;
-}
+/* ===== VOCABULARY BOOSTER LIGHT THEME (scoped to .vocab-booster-root) ===== */
 
-[data-theme="light"] .text-white.mb-2 {
-  color: #0F172A !important;
+/* --- Card / container backgrounds --- */
+[data-theme="light"] .vocab-booster-root .bg-slate-800\/60 {
+  background-color: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
 }
-
-/* Hero gradient background */
-[data-theme="light"] .bg-gradient-to-b,
-[data-theme="light"] [class*="vocabulary"].min-h-screen {
-  background: linear-gradient(to bottom, #FFFFFF, #F1F5F9) !important;
-}
-
-/* Hero subtitle */
-[data-theme="light"] .text-slate-400.max-w-xl {
-  color: #64748B !important;
-}
-
-/* Tab navigation */
-[data-theme="light"] .flex.gap-2 button,
-[data-theme="light"] [class*="tabs"] button {
+[data-theme="light"] .vocab-booster-root .bg-slate-800\/40 {
   background-color: #F1F5F9 !important;
-  border-radius: 9999px !important;
-  padding: 8px 20px !important;
-  transition: all 200ms ease !important;
+  border-color: #CBD5E1 !important;
 }
-
-[data-theme="light"] .flex.gap-2 button:hover {
+[data-theme="light"] .vocab-booster-root .bg-slate-800\/50 {
+  background-color: #F5F7FA !important;
+}
+[data-theme="light"] .vocab-booster-root .bg-slate-800\/80 {
+  background-color: #EFF6FF !important;
+}
+[data-theme="light"] .vocab-booster-root .bg-slate-900 {
+  background-color: #F8FAFC !important;
+}
+[data-theme="light"] .vocab-booster-root .bg-slate-900\/30 {
+  background-color: rgba(241,245,249,0.6) !important;
+}
+[data-theme="light"] .vocab-booster-root .bg-slate-700 {
+  background-color: #E2E8F0 !important;
+}
+[data-theme="light"] .vocab-booster-root .hover\:bg-slate-700\/30:hover {
+  background-color: #DDE5F0 !important;
+}
+[data-theme="light"] .vocab-booster-root .hover\:bg-slate-700\/60:hover {
+  background-color: #DDE5F0 !important;
+}
+[data-theme="light"] .vocab-booster-root .hover\:bg-slate-700:hover {
+  background-color: #CBD5E1 !important;
+}
+[data-theme="light"] .vocab-booster-root .hover\:bg-slate-600:hover {
+  background-color: #CBD5E1 !important;
+}
+[data-theme="light"] .vocab-booster-root .hover\:bg-slate-800\/80:hover {
+  background-color: #E2E8F0 !important;
+}
+/* Progress bar track */
+[data-theme="light"] .vocab-booster-root .bg-slate-800\/40.rounded-full {
   background-color: #E2E8F0 !important;
 }
 
-/* Active tab */
-[data-theme="light"] .flex.gap-2 button.bg-purple-600,
-[data-theme="light"] button[aria-selected="true"] {
-  background-color: #FFFFFF !important;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05) !important;
-  border: 1px solid #E2E8F0 !important;
-  color: #2563EB !important;
-}
-
-/* Category containers */
-[data-theme="light"] .bg-slate-800\/40.rounded-3xl,
-[data-theme="light"] .bg-slate-800\/50 {
-  background-color: #FFFFFF !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 20px !important;
-}
-
-/* Word cards */
-[data-theme="light"] .bg-slate-800\/60.rounded-2xl,
-[data-theme="light"] .bg-slate-800\/50.rounded-2xl {
-  background-color: #F8FAFC !important;
-  border: 1px solid #E2E8F0 !important;
-  border-radius: 16px !important;
-  transition: all 200ms ease !important;
-}
-
-[data-theme="light"] .bg-slate-800\/60.rounded-2xl:hover {
-  transform: translateY(-4px) !important;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1) !important;
-  border-color: #2563EB !important;
-}
-
-/* Example section */
-[data-theme="light"] .bg-emerald-900\/20,
-[data-theme="light"] .bg-green-900\/20 {
-  background-color: #ECFDF5 !important;
-  border-left: 4px solid #10B981 !important;
-}
-
-/* Wrong section */
-[data-theme="light"] .bg-red-900\/20 {
-  background-color: #FEF2F2 !important;
-  border-left: 4px solid #EF4444 !important;
-}
-
-/* Better alternative */
-[data-theme="light"] .bg-blue-900\/20,
-[data-theme="light"] .bg-indigo-900\/20 {
-  background-color: #EFF6FF !important;
-  border-left: 4px solid #2563EB !important;
-}
-
-/* Word title text */
-[data-theme="light"] .text-white.font-bold,
-[data-theme="light"] .font-bold.text-white {
+/* --- Text colors (most important) --- */
+[data-theme="light"] .vocab-booster-root .text-white {
   color: #0F172A !important;
 }
-
-/* Word phonetic/meaning text */
-[data-theme="light"] .text-slate-400,
-[data-theme="light"] .text-gray-400 {
-  color: #64748B !important;
+[data-theme="light"] .vocab-booster-root .text-slate-200 {
+  color: #1E293B !important;
 }
-
-/* Category title */
-[data-theme="light"] .text-xl.font-bold.text-white,
-[data-theme="light"] .font-bold.text-white.text-xl {
-  color: #0F172A !important;
-}
-
-/* Section heading */
-[data-theme="light"] .text-2xl.font-bold.text-white {
-  color: #0F172A !important;
-  font-weight: 700 !important;
-}
-
-/* Button primary */
-[data-theme="light"] .bg-purple-600.text-white,
-[data-theme="light"] button.bg-purple-600 {
-  background: linear-gradient(135deg, #2563EB, #4F46E5) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.25) !important;
-}
-
-[data-theme="light"] .bg-purple-600.text-white:hover {
-  transform: scale(1.02) !important;
-  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3) !important;
-}
-
-/* Button secondary */
-[data-theme="light"] .bg-slate-700,
-[data-theme="light"] button.bg-slate-700 {
-  background-color: #F1F5F9 !important;
+[data-theme="light"] .vocab-booster-root .text-slate-300 {
   color: #475569 !important;
-  border: 1px solid #E2E8F0 !important;
 }
-
-/* Icon colors in cards */
-[data-theme="light"] .text-purple-400,
-[data-theme="light"] .text-blue-400,
-[data-theme="light"] .text-green-400 {
-  color: #2563EB !important;
-}
-
-/* Section backgrounds */
-[data-theme="light"] .bg-slate-900\/30 {
-  background-color: #FFFFFF !important;
-}
-
-/* Back button */
-[data-theme="light"] .text-slate-400.font-bold {
+[data-theme="light"] .vocab-booster-root .text-slate-400 {
   color: #64748B !important;
 }
-
-/* Card divider */
-[data-theme="light"] .border-t.border-slate-700\/50 {
-  border-color: #E2E8F0 !important;
+[data-theme="light"] .vocab-booster-root .text-slate-500 {
+  color: #94A3B8 !important;
 }
 
-/* Tab icon colors */
-[data-theme="light"] .text-slate-400,
-[data-theme="light"] .lucide {
-  color: #64748B !important;
+/* --- Keep white text on explicitly colored pill/button backgrounds --- */
+[data-theme="light"] .vocab-booster-root .bg-orange-500,
+[data-theme="light"] .vocab-booster-root .bg-orange-500 .text-white,
+[data-theme="light"] .vocab-booster-root .bg-emerald-500 .text-white,
+[data-theme="light"] .vocab-booster-root .bg-blue-500 .text-white,
+[data-theme="light"] .vocab-booster-root .bg-purple-500 .text-white,
+[data-theme="light"] .vocab-booster-root .bg-violet-500 .text-white,
+[data-theme="light"] .vocab-booster-root .bg-violet-500\/50 .text-white,
+[data-theme="light"] .vocab-booster-root .bg-amber-500 .text-white,
+[data-theme="light"] .vocab-booster-root .bg-red-500 .text-white,
+[data-theme="light"] .vocab-booster-root .bg-teal-500 .text-white {
+  color: #ffffff !important;
 }
 
-[data-theme="light"] .bg-purple-600 .lucide {
-  color: #FFFFFF !important;
+/* --- Amber/yellow light text → dark amber in light theme --- */
+[data-theme="light"] .vocab-booster-root .text-amber-200 {
+  color: #92400E !important;
+}
+[data-theme="light"] .vocab-booster-root .text-amber-300 {
+  color: #B45309 !important;
+}
+/* Amber word pill backgrounds - lighten bg, darken text */
+[data-theme="light"] .vocab-booster-root .from-amber-500\/20 {
+  --tw-gradient-from: #FEF3C7 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+  border-color: #F59E0B !important;
+}
+[data-theme="light"] .vocab-booster-root .to-orange-500\/20 {
+  --tw-gradient-to: #FFEDD5 !important;
 }
 
-/* Vocabulary page spacing */
-[data-theme="light"] .p-6.md\:p-12 {
-  padding: 48px !important;
+/* Golden Formula box — amber bg needs dark text even inside gradient headers */
+[data-theme="light"] .vocab-booster-root .bg-amber-500\/10 {
+  background-color: #FFFBEB !important;
+  border-color: #FCD34D !important;
+}
+[data-theme="light"] .vocab-booster-root .bg-amber-500\/10 .text-white {
+  color: #78350F !important;
+}
+[data-theme="light"] .vocab-booster-root .bg-amber-500\/10 p.text-white {
+  color: #78350F !important;
 }
 
-[data-theme="light"] .space-y-8 {
-  gap: 32px !important;
+/* --- Red light text → dark red --- */
+[data-theme="light"] .vocab-booster-root .text-red-300 {
+  color: #991B1B !important;
 }
+[data-theme="light"] .vocab-booster-root .text-red-400 {
+  color: #B91C1C !important;
+}
+
+/* --- Violet/purple light text → dark variant --- */
+[data-theme="light"] .vocab-booster-root .text-violet-300 {
+  color: #5B21B6 !important;
+}
+[data-theme="light"] .vocab-booster-root .text-violet-400 {
+  color: #6D28D9 !important;
+}
+
+/* --- Keep white text on gradient-colored role/section headers --- */
+[data-theme="light"] .vocab-booster-root .bg-gradient-to-r .text-white,
+[data-theme="light"] .vocab-booster-root .bg-gradient-to-r .text-slate-300,
+[data-theme="light"] .vocab-booster-root .bg-gradient-to-br .text-white {
+  color: #ffffff !important;
+}
+
+/* --- Border colors --- */
+[data-theme="light"] .vocab-booster-root .border-slate-700\/50 {
+  border-color: #CBD5E1 !important;
+}
+[data-theme="light"] .vocab-booster-root .border-slate-700 {
+  border-color: #CBD5E1 !important;
+}
+[data-theme="light"] .vocab-booster-root .border-slate-600\/50 {
+  border-color: #94A3B8 !important;
+}
+[data-theme="light"] .vocab-booster-root .hover\:border-slate-600\/50:hover {
+  border-color: #94A3B8 !important;
+}
+
+/* --- Back button / hover-to-white text --- */
+[data-theme="light"] .vocab-booster-root .hover\:text-white:hover {
+  color: #0F172A !important;
+}
+
+/* --- Textarea / input backgrounds --- */
+[data-theme="light"] .vocab-booster-root textarea,
+[data-theme="light"] .vocab-booster-root input {
+  background-color: #F8FAFC !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+[data-theme="light"] .vocab-booster-root textarea::placeholder {
+  color: #94A3B8 !important;
+}
+
 
 /* ===== COMPREHENSIVE INTERVIEW GUIDE & ALL PAGES LIGHT THEME ===== */
 /* Global page background */
