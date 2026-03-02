@@ -5,6 +5,7 @@ import Provider from "./providers";
 import LayoutWrapper from "../components/LayoutWrapper";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import LoginTracker from "@/components/LoginTracker";
+import PWARegister from "@/components/PWARegister";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.fluenzyai.app"),
@@ -53,7 +54,9 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: '/image/final_logo-removebg-preview.png',
+    apple: '/image/icon-192.png',
   },
+  manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
@@ -61,6 +64,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  themeColor: "#5B6CFF",
 };
 
 export default function RootLayout({
@@ -83,6 +87,13 @@ export default function RootLayout({
             `,
           }}
         />
+        {/* PWA Meta Tags */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#5B6CFF" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="FluenzyAI" />
+        <link rel="apple-touch-icon" href="/image/icon-192.png" />
         {/* Razorpay Checkout Script */}
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <script
@@ -164,6 +175,7 @@ export default function RootLayout({
             `,
           }}
         />
+        <PWARegister />
         <ThemeProvider>
           <Provider>
             <LoginTracker />

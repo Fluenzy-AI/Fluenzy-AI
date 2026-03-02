@@ -1,0 +1,42 @@
+{
+  "name": "FluenzyAI - AI Interview Coach",
+  "short_name": "FluenzyAI",
+  "description": "Master AI-powered interview preparation and English fluency training. Practice HR interviews, technical questions, and group discussions.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#090e1a",
+  "theme_color": "#5B6CFF",
+  "lang": "en-US",
+  "categories": ["education", "productivity"],
+  "icons": [
+    { "src": "/image/icon-72.png",  "sizes": "72x72",   "type": "image/png", "purpose": "any" },
+    { "src": "/image/icon-96.png",  "sizes": "96x96",   "type": "image/png", "purpose": "any" },
+    { "src": "/image/icon-128.png", "sizes": "128x128", "type": "image/png", "purpose": "any" },
+    { "src": "/image/icon-144.png", "sizes": "144x144", "type": "image/png", "purpose": "any" },
+    { "src": "/image/icon-152.png", "sizes": "152x152", "type": "image/png", "purpose": "any" },
+    { "src": "/image/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/image/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "/image/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/image/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/image/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Interview Guide",
+      "short_name": "Guide",
+      "description": "Open AI Interview Guide",
+      "url": "/interview-guide",
+      "icons": [{ "src": "/image/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Practice Now",
+      "short_name": "Practice",
+      "description": "Start a practice session",
+      "url": "/train",
+      "icons": [{ "src": "/image/icon-96.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
