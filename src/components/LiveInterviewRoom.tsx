@@ -287,9 +287,14 @@ export default function LiveInterviewRoom({
   const cleanup = useCallback(async () => {
     if (isCleanedRef.current) return;
     isCleanedRef.current = true;
-    if (timerRef.current) clearInterval(timerRef.current);
-    try { localAudio?.close(); } catch (_) { /* ignore */ }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    // Stop + close local tracks to turn off camera/mic hardware
+    try { localVideo?.stop(); } catch (_) { /* ignore */ }
     try { localVideo?.close(); } catch (_) { /* ignore */ }
+    try { localAudio?.stop(); } catch (_) { /* ignore */ }
+    try { localAudio?.close(); } catch (_) { /* ignore */ }
+    setLocalVideo(null);
+    setLocalAudio(null);
     if (clientRef.current) {
       await clientRef.current.leave().catch(() => {});
       clientRef.current = null;
@@ -382,7 +387,7 @@ export default function LiveInterviewRoom({
       // Silently fail — still show empty report
     } finally {
       setLoadingReport(false);
-      cleanup();
+      await cleanup();
     }
   }, [loadingReport, isPrivate, socket, roomData, elapsed, transcript, myRole, cleanup]);
 
