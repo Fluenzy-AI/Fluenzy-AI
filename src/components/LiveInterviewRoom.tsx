@@ -72,18 +72,27 @@ interface ReportPayload {
 
 // ─── MediaPlayer ─────────────────────────────────────────────────────────────
 
+const ROLE_COLORS: Record<string, string> = {
+  HR: 'bg-blue-600 text-white',
+  EngineeringManager: 'bg-purple-600 text-white',
+  Candidate: 'bg-emerald-600 text-white',
+  Host: 'bg-slate-600 text-white',
+};
+
 const MediaPlayer = ({
   videoTrack,
   audioTrack,
   uid,
   local = false,
   label,
+  role,
 }: {
   videoTrack: IRemoteVideoTrack | ICameraVideoTrack | null;
   audioTrack: IRemoteAudioTrack | IMicrophoneAudioTrack | null;
   uid: UID;
   local?: boolean;
   label?: string;
+  role?: string;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -108,9 +117,17 @@ const MediaPlayer = ({
           </div>
         </div>
       )}
+      {/* Name + Role badge */}
       {label && (
-        <div className="absolute bottom-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-md">
-          {label}
+        <div className="absolute bottom-2 left-2 flex items-center gap-1.5">
+          <div className="bg-black/70 text-white text-xs px-2 py-0.5 rounded-md backdrop-blur-sm">
+            {label}
+          </div>
+          {role && (
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${ROLE_COLORS[role] ?? 'bg-slate-600 text-white'}`}>
+              {role === 'EngineeringManager' ? 'Eng. Manager' : role}
+            </span>
+          )}
         </div>
       )}
     </div>
@@ -426,14 +443,17 @@ export default function LiveInterviewRoom({
               audioTrack={localAudio}
               uid={agoraUid}
               local
-              label={`${userName} (You) · ${myRole}`}
+              label={`${userName} (You)`}
+              role={myRole}
             />
           </div>
 
           {/* Remote users */}
           {allRemote.map((u) => {
-            const p = participants.find((_, i) => i === allRemote.indexOf(u));
-            const label = p ? `${p.userName} · ${p.role}` : `Participant ${u.uid}`;
+            // Match by userId — find the participant who is NOT the local user
+            const remoteParticipant = participants.find(p => p.userId !== userId);
+            const remoteLabel = remoteParticipant ? remoteParticipant.userName : `Participant ${u.uid}`;
+            const remoteRole = remoteParticipant?.role;
             const uid_str = String(u.uid);
             return (
               <div key={String(u.uid)} className="relative">
@@ -446,7 +466,8 @@ export default function LiveInterviewRoom({
                   videoTrack={u.videoTrack}
                   audioTrack={u.audioTrack}
                   uid={u.uid}
-                  label={label}
+                  label={remoteLabel}
+                  role={remoteRole}
                 />
               </div>
             );
