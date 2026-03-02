@@ -72,12 +72,12 @@ interface ReportPayload {
 
 // ─── MediaPlayer ─────────────────────────────────────────────────────────────
 
-const ROLE_COLORS: Record<string, string> = {
-  HR: 'bg-blue-600 text-white',
-  EngineeringManager: 'bg-purple-600 text-white',
-  Candidate: 'bg-emerald-600 text-white',
-  Host: 'bg-slate-600 text-white',
-};
+function getRoleBadgeClass(role: string): string {
+  if (role === 'HR') return 'bg-blue-600 text-white';
+  if (role === 'Candidate') return 'bg-emerald-600 text-white';
+  if (role === 'EngineeringManager') return 'bg-purple-600 text-white';
+  return 'bg-slate-600 text-white';
+}
 
 const MediaPlayer = ({
   videoTrack,
@@ -124,7 +124,7 @@ const MediaPlayer = ({
             {label}
           </div>
           {role && (
-            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${ROLE_COLORS[role] ?? 'bg-slate-600 text-white'}`}>
+            <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${getRoleBadgeClass(role)}`}>
               {role === 'EngineeringManager' ? 'Eng. Manager' : role}
             </span>
           )}
