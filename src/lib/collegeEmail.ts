@@ -473,19 +473,8 @@ function buildStudentsCsv(students: Array<{ name?: string; email: string; plan: 
 }
 
 async function generatePdfFromHtml(html: string): Promise<Buffer> {
-  const puppeteer = (await import("puppeteer")).default;
-  const browser = await puppeteer.launch({
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: "networkidle0" });
-  try {
-    return Buffer.from(
-      await page.pdf({ format: "A4", printBackground: true, margin: { top: "18mm", right: "18mm", bottom: "18mm", left: "18mm" } })
-    );
-  } finally {
-    await browser.close();
-  }
+  const { htmlToPdf } = await import("@/lib/pdf-browser");
+  return htmlToPdf(html);
 }
 
 /** Send an individual PDF receipt to each student who was activated by the college. */

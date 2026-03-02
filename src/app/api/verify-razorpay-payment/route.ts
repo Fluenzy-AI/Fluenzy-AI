@@ -5,6 +5,7 @@ import prisma from "@/lib/prisma";
 import crypto from "crypto";
 import Razorpay from "razorpay";
 import { getPlanConfig, handleSubscriptionRenewal } from "@/lib/billing";
+import { autoSendInvoiceEmail } from "@/lib/invoice-email";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY!,
@@ -267,6 +268,10 @@ export async function POST(request: NextRequest) {
       finalAmount: finalAmount,
       couponUsed: couponCode
     });
+
+    // Auto-send invoice email (fire-and-forget — does not affect payment response)
+    autoSendInvoiceEmail(paymentHistory.id, newRenewalDate)
+      .catch((err) => console.error("[AUTO_INVOICE_EMAIL]", err));
 
     return NextResponse.json({
       success: true,
