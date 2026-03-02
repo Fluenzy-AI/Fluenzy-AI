@@ -5,7 +5,6 @@ import { useSession } from 'next-auth/react';
 import dynamic from 'next/dynamic';
 import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import InterviewReport from '@/components/InterviewReport';
 import type { ReportPayload } from '@/components/LiveInterviewRoom';
 import {
@@ -64,7 +63,6 @@ function getStableAgoraUid(): number {
 
 export default function LiveInterviewPage() {
   const { data: session } = useSession();
-  const router = useRouter();
 
   const [userId] = useState(() => getStableUserId());
   const [agoraUid] = useState(() => getStableAgoraUid());
@@ -189,7 +187,7 @@ export default function LiveInterviewPage() {
     return (
       <InterviewReport
         report={sessionReport}
-        onClose={() => { setSessionReport(null); router.push('/train'); }}
+        onClose={() => { window.location.href = '/train'; }}
       />
     );
   }
