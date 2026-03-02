@@ -19,7 +19,6 @@ import {
 
 // Dynamically imported to avoid SSR conflicts with Agora
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-// @ts-expect-error – new file, TS server needs restart to index it
 const LiveInterviewRoom = dynamic(() => import('@/components/LiveInterviewRoom'), {
   ssr: false,
   loading: () => (
