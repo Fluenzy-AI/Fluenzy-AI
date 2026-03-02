@@ -9,9 +9,18 @@ const port = process.env.PORT || 3000;
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
-// Queue manager for real-time matchmaking
+// Queue manager for real-time matchmaking (GD)
 const queues = new Map();
 const rooms = new Map();
+
+// Interview queue manager (role-based 1:1 strict matching)
+// Key format: `${interviewType}-${role}` e.g. "PI-HR", "PI-Candidate", "Technical-EngineeringManager", "Technical-Candidate"
+const interviewQueues = new Map();
+const interviewRooms = new Map();
+const interviewTimeouts = new Map(); // userId → timeoutHandle
+
+// Private interview rooms (many-to-many)
+const privateInterviewRooms = new Map();
 
 app.prepare().then(() => {
   const server = createServer(async (req, res) => {
@@ -88,6 +97,7 @@ app.prepare().then(() => {
     socket.on('disconnect', () => {
       console.log(`[Socket.IO] Client disconnected: ${socket.id}`);
       handleDisconnect(socket);
+      handleInterviewDisconnect(socket);
     });
 
     socket.on('join-room', (roomId) => {
@@ -107,6 +117,177 @@ app.prepare().then(() => {
         });
         rooms.delete(data.roomId);
         console.log(`[Socket.IO] Room ${data.roomId} deleted`);
+      }
+    });
+
+    // ─── INTERVIEW SOCKET HANDLERS ────────────────────────────────────────────
+
+    // 1:1 role-based interview matching
+    socket.on('interview-join-queue', (data) => {
+      const { userId, userName, interviewType, role } = data;
+      // interviewType: 'PI' | 'Technical'
+      // role: 'HR' | 'Candidate' | 'EngineeringManager'
+      console.log(`[Interview] User joining queue:`, data);
+
+      const oppositeRole = interviewType === 'PI'
+        ? (role === 'HR' ? 'Candidate' : 'HR')
+        : (role === 'EngineeringManager' ? 'Candidate' : 'EngineeringManager');
+
+      const myQueueKey   = `${interviewType}-${role}`;
+      const theirQueueKey = `${interviewType}-${oppositeRole}`;
+
+      const user = { socketId: socket.id, userId, userName, interviewType, role, joinedAt: Date.now() };
+
+      // Check if there's someone in the opposite queue
+      const oppositeQueue = interviewQueues.get(theirQueueKey) || [];
+      const matchIndex = oppositeQueue.findIndex(u => u.userId !== userId);
+
+      if (matchIndex !== -1) {
+        // Match found → create room
+        const opponent = oppositeQueue.splice(matchIndex, 1)[0];
+        if (oppositeQueue.length === 0) interviewQueues.delete(theirQueueKey);
+        else interviewQueues.set(theirQueueKey, oppositeQueue);
+
+        // Clear any pending timeouts
+        clearInterviewTimeout(opponent.userId);
+        clearInterviewTimeout(userId);
+
+        createInterviewRoom([user, opponent], io);
+      } else {
+        // Add to own queue
+        const myQueue = interviewQueues.get(myQueueKey) || [];
+        const existingIdx = myQueue.findIndex(u => u.userId === userId);
+        if (existingIdx !== -1) myQueue[existingIdx] = user;
+        else myQueue.push(user);
+        interviewQueues.set(myQueueKey, myQueue);
+
+        socket.data.interviewQueueKey = myQueueKey;
+        socket.data.interviewUserInfo = user;
+
+        socket.emit('interview-queue-status', {
+          status: 'waiting',
+          message: `Waiting for an ${oppositeRole} to connect...`,
+        });
+
+        // Auto timeout after 2 minutes
+        const t = setTimeout(() => {
+          removeFromInterviewQueue(myQueueKey, userId);
+          const s = io.sockets.sockets.get(user.socketId);
+          if (s) s.emit('interview-queue-timeout', { message: 'No match found. Please try again.' });
+        }, 120_000);
+        interviewTimeouts.set(userId, t);
+      }
+    });
+
+    socket.on('interview-leave-queue', () => {
+      handleInterviewDisconnect(socket);
+    });
+
+    // Private interview room – host creates
+    socket.on('interview-private-create', (data) => {
+      const { roomId, userId, userName, interviewType } = data;
+      privateInterviewRooms.set(roomId, {
+        roomId,
+        interviewType,
+        hostId: userId,
+        participants: [],
+        phase: 'waiting',
+        createdAt: Date.now(),
+      });
+      socket.join(`private-interview-${roomId}`);
+      socket.data.privateInterviewRoom = roomId;
+      socket.emit('interview-private-created', { roomId });
+    });
+
+    // Private interview room – participant joins
+    socket.on('interview-private-join', (data) => {
+      const { roomId, userId, userName, role } = data;
+      const room = privateInterviewRooms.get(roomId);
+      if (!room) {
+        socket.emit('interview-private-error', { message: 'Room not found or has ended.' });
+        return;
+      }
+      if (room.phase === 'ended') {
+        socket.emit('interview-private-error', { message: 'This interview session has ended.' });
+        return;
+      }
+      // Remove stale entry for same user
+      room.participants = room.participants.filter(p => p.userId !== userId);
+      room.participants.push({ socketId: socket.id, userId, userName, role, joinedAt: Date.now() });
+      socket.join(`private-interview-${roomId}`);
+      socket.data.privateInterviewRoom = roomId;
+
+      // Notify all in room
+      io.to(`private-interview-${roomId}`).emit('interview-private-participant-update', {
+        participants: room.participants.map(p => ({ userId: p.userId, userName: p.userName, role: p.role })),
+      });
+      socket.emit('interview-private-joined', { roomId, interviewType: room.interviewType, participants: room.participants.map(p => ({ userId: p.userId, userName: p.userName, role: p.role })) });
+    });
+
+    // Private interview room – host controls
+    socket.on('interview-private-control', (data) => {
+      const { roomId, action, targetUserId } = data;
+      const room = privateInterviewRooms.get(roomId);
+      if (!room) return;
+
+      if (action === 'start') {
+        room.phase = 'active';
+        room.startedAt = Date.now();
+        io.to(`private-interview-${roomId}`).emit('interview-private-started', { startedAt: room.startedAt });
+      } else if (action === 'end') {
+        room.phase = 'ended';
+        io.to(`private-interview-${roomId}`).emit('interview-private-ended', { reason: 'Host ended the interview.' });
+        privateInterviewRooms.delete(roomId);
+      } else if (action === 'remove' && targetUserId) {
+        const target = room.participants.find(p => p.userId === targetUserId);
+        if (target) {
+          const s = io.sockets.sockets.get(target.socketId);
+          if (s) { s.emit('interview-private-removed', {}); s.leave(`private-interview-${roomId}`); }
+          room.participants = room.participants.filter(p => p.userId !== targetUserId);
+          io.to(`private-interview-${roomId}`).emit('interview-private-participant-update', {
+            participants: room.participants.map(p => ({ userId: p.userId, userName: p.userName, role: p.role })),
+          });
+        }
+      } else if (action === 'mute' && targetUserId) {
+        const target = room.participants.find(p => p.userId === targetUserId);
+        if (target) {
+          const s = io.sockets.sockets.get(target.socketId);
+          if (s) s.emit('interview-private-muted', {});
+        }
+      } else if (action === 'lock') {
+        room.locked = !room.locked;
+        io.to(`private-interview-${roomId}`).emit('interview-private-lock-status', { locked: room.locked });
+      }
+    });
+
+    // Raise hand in private interview
+    socket.on('interview-raise-hand', (data) => {
+      const { roomId, userId, userName } = data;
+      io.to(`private-interview-${roomId}`).emit('interview-hand-raised', { userId, userName });
+    });
+
+    // Transcript relay (broadcast to all in room)
+    socket.on('interview-transcript', (data) => {
+      const { roomId, userId, userName, text, role } = data;
+      io.to(`private-interview-${roomId}`).emit('interview-transcript-update', { userId, userName, text, role, ts: Date.now() });
+    });
+
+    // Live 1:1 transcript relay
+    socket.on('interview-live-transcript', (data) => {
+      const { roomId, userId, text, role } = data;
+      socket.to(roomId).emit('interview-live-transcript-update', { userId, text, role, ts: Date.now() });
+    });
+
+    // End 1:1 live interview
+    socket.on('interview-end', (data) => {
+      const { roomId } = data;
+      const room = interviewRooms.get(roomId);
+      if (room) {
+        room.users.forEach(u => {
+          const s = io.sockets.sockets.get(u.socketId);
+          if (s) s.emit('interview-session-ended', { reason: 'Participant ended the interview.' });
+        });
+        interviewRooms.delete(roomId);
       }
     });
   });
@@ -228,6 +409,85 @@ app.prepare().then(() => {
     };
 
     return modeMap[mode] || allTopics;
+  }
+
+  function clearInterviewTimeout(userId) {
+    const t = interviewTimeouts.get(userId);
+    if (t) { clearTimeout(t); interviewTimeouts.delete(userId); }
+  }
+
+  function removeFromInterviewQueue(queueKey, userId) {
+    const q = interviewQueues.get(queueKey);
+    if (!q) return;
+    const filtered = q.filter(u => u.userId !== userId);
+    if (filtered.length > 0) interviewQueues.set(queueKey, filtered);
+    else interviewQueues.delete(queueKey);
+  }
+
+  function handleInterviewDisconnect(socket) {
+    const queueKey = socket.data.interviewQueueKey;
+    const userInfo = socket.data.interviewUserInfo;
+    if (queueKey && userInfo) {
+      removeFromInterviewQueue(queueKey, userInfo.userId);
+      clearInterviewTimeout(userInfo.userId);
+    }
+    // Handle private room disconnect
+    const privateRoomId = socket.data.privateInterviewRoom;
+    if (privateRoomId) {
+      const room = privateInterviewRooms.get(privateRoomId);
+      if (room) {
+        const wasHost = room.hostId === userInfo?.userId;
+        room.participants = room.participants.filter(p => p.socketId !== socket.id);
+        if (!wasHost) {
+          socket.to(`private-interview-${privateRoomId}`).emit('interview-private-participant-update', {
+            participants: room.participants.map(p => ({ userId: p.userId, userName: p.userName, role: p.role })),
+          });
+        }
+      }
+    }
+  }
+
+  function createInterviewRoom(users, io) {
+    const roomId = `interview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const channelName = roomId;
+    const interviewType = users[0].interviewType;
+
+    const piQuestions = [
+      'Tell me about yourself.',
+      'What are your greatest strengths and weaknesses?',
+      'Where do you see yourself in 5 years?',
+      'Describe a challenge you faced and how you overcame it.',
+      'Why do you want to work here?',
+    ];
+    const techQuestions = [
+      'Explain the difference between a stack and a queue.',
+      'What is the time complexity of binary search?',
+      'Describe the SOLID principles.',
+      'How would you design a URL shortener?',
+      'What is the difference between SQL and NoSQL databases?',
+    ];
+    const topic = interviewType === 'Technical'
+      ? techQuestions[Math.floor(Math.random() * techQuestions.length)]
+      : piQuestions[Math.floor(Math.random() * piQuestions.length)];
+
+    const room = { id: roomId, channelName, interviewType, topic, users, createdAt: Date.now() };
+    interviewRooms.set(roomId, room);
+
+    users.forEach(user => {
+      const s = io.sockets.sockets.get(user.socketId);
+      if (s) {
+        s.join(roomId);
+        s.emit('interview-match-found', {
+          roomId,
+          channelName,
+          interviewType,
+          topic,
+          participants: users.map(u => ({ userId: u.userId, userName: u.userName, role: u.role })),
+        });
+      }
+    });
+
+    console.log(`[Interview] Room created: ${roomId} (${interviewType})`);
   }
 
   server.listen(port, '0.0.0.0', (err) => {

@@ -12,6 +12,7 @@ import {
   Sparkles,
   Radio,
   Loader2,
+  UserCheck,
 } from 'lucide-react';
 
 interface UsageData {
@@ -57,13 +58,23 @@ export default function LiveGDPage() {
     },
     {
       id: 'random',
-      title: 'Random Matching',
+      title: 'Random GD Matching',
       description: 'Get matched with random participants by topic and difficulty level.',
       icon: Shuffle,
       gradient: 'from-blue-500 to-cyan-500',
       badge: 'Live',
       href: '/train/live-gd',
       moduleKey: 'gd',
+    },
+    {
+      id: 'interview',
+      title: 'Live Interview',
+      description: 'Practice real 1:1 interviews — Personal (HR ↔ Candidate) or Technical (Eng. Manager ↔ Candidate). Private rooms also available.',
+      icon: UserCheck,
+      gradient: 'from-indigo-500 to-violet-500',
+      badge: 'New',
+      href: '/train/interview',
+      moduleKey: 'interview',
     },
   ];
 
@@ -75,10 +86,10 @@ export default function LiveGDPage() {
         <div className="mb-8">
           <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-3 border ${isLight ? 'bg-indigo-50 text-indigo-600 border-indigo-200' : 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'}`}>
             <Radio size={12} />
-            Live Group Discussion
+            Live Practice
           </div>
-          <h1 className={`text-2xl sm:text-3xl font-extrabold ${currentTheme.text}`}>Live GD Modes</h1>
-          <p className={`text-sm mt-1 ${currentTheme.textMuted}`}>Practice with real participants — choose your mode below.</p>
+          <h1 className={`text-2xl sm:text-3xl font-extrabold ${currentTheme.text}`}>Live Practice Modes</h1>
+          <p className={`text-sm mt-1 ${currentTheme.textMuted}`}>Practice with real participants — choose GD or Interview mode below.</p>
         </div>
 
         {/* Cards */}
