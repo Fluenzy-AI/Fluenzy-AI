@@ -15,7 +15,7 @@ interface SendEmailOptions {
   subject: string;
   html: string;
   text?: string;
-  attachments?: Array<{ filename: string; path?: string; content?: string; contentType?: string }>;
+  attachments?: Array<{ filename: string; path?: string; content?: string | Buffer; contentType?: string; encoding?: string }>;
   senderRole: EmailRole;
   senderEmail: string;
   staffId?: string;

@@ -7,7 +7,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPortalAuthFromRequest } from "@/lib/portal-auth";
-import { sendPortalEmail, HR_EMAIL_TEMPLATES } from "@/lib/portal-email";
+import { sendPortalEmail } from "@/lib/portal-email";
+import { generateOfferPdfBuffer, readLogoBase64Export, type OfferPdfData } from "@/lib/generate-offer-pdf";
 import { z } from "zod";
 
 const OfferLetterSchema = z.object({
@@ -17,6 +18,7 @@ const OfferLetterSchema = z.object({
   department: z.string().min(1),
   salary: z.number().min(0),
   joiningDate: z.string(),
+  acceptanceDeadline: z.string().optional(),
   content: z.string().optional(),
   sendEmail: z.boolean().optional().default(false),
   probationMonths: z.number().optional(),
@@ -55,17 +57,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { joiningDate, sendEmail, probationMonths, workingHours, workDays, content: rawContent, ...rest } = parsed.data;
+    const { joiningDate, acceptanceDeadline, sendEmail, probationMonths, workingHours, workDays, content: rawContent, ...rest } = parsed.data;
 
     const content = rawContent && rawContent.trim().length >= 10
       ? rawContent
-      : `<p>Dear Candidate,</p><p>We are pleased to offer you the position of <strong>${rest.position}</strong> in the <strong>${rest.department}</strong> department.</p><p><strong>Annual Salary:</strong> ₹${rest.salary.toLocaleString()}</p><p><strong>Joining Date:</strong> ${new Date(joiningDate).toDateString()}</p>${probationMonths ? `<p><strong>Probation Period:</strong> ${probationMonths} months</p>` : ""}${workingHours ? `<p><strong>Working Hours:</strong> ${workingHours}</p>` : ""}${workDays ? `<p><strong>Working Days:</strong> ${workDays}</p>` : ""}<p>We look forward to having you on our team.</p>`;
+      : `Offer Letter for ${rest.position}`;
 
     const offerLetter = await prisma.offerLetter.create({
       data: {
         ...rest,
         content,
         joiningDate: new Date(joiningDate),
+        acceptanceDeadline: acceptanceDeadline ? new Date(acceptanceDeadline) : null,
         issuedBy: decoded.email,
       },
       include: {
@@ -74,33 +77,76 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Optionally send via email
+    // Optionally send via email with PDF attachment
     if (sendEmail) {
       const recipientName = offerLetter.candidate?.name || offerLetter.employee?.name || "Candidate";
       const recipientEmail = offerLetter.candidate?.email || offerLetter.employee?.email;
 
       if (recipientEmail) {
-        const { subject, html } = HR_EMAIL_TEMPLATES.offerLetter(
-          recipientName,
-          rest.position,
-          `₹${rest.salary.toLocaleString()}/year`,
-          new Date(joiningDate).toDateString()
-        );
+        try {
+          // Fetch assets for PDF
+          const [hrStaff, founderSigAsset] = await Promise.all([
+            prisma.portalStaff.findFirst({ where: { email: decoded.email } }),
+            prisma.portalSecureAsset.findUnique({ where: { key: "founder_signature" } }),
+          ]);
 
-        await sendPortalEmail({
-          to: recipientEmail,
-          subject,
-          html,
-          senderRole: "HR",
-          senderEmail: process.env.HR_EMAIL_USER!,
-          staffId: decoded.staffId,
-        });
+          const pdfData: OfferPdfData = {
+            offerId: offerLetter.id,
+            candidateName: recipientName,
+            position: rest.position,
+            department: rest.department,
+            salary: rest.salary,
+            joiningDate: new Date(joiningDate),
+            acceptanceDeadline: acceptanceDeadline ? new Date(acceptanceDeadline) : null,
+            createdAt: new Date(offerLetter.createdAt),
+            issuedBy: decoded.email,
+            hrName: hrStaff?.name || decoded.name || decoded.email,
+            hrDesignation: hrStaff?.role === "ADMIN" ? "HR Manager" : "HR Executive",
+            founderSigBase64: founderSigAsset
+              ? `data:${founderSigAsset.mimeType};base64,${founderSigAsset.dataBase64}`
+              : "",
+            logoBase64: readLogoBase64Export(),
+          };
 
-        // Update status to SENT
-        await prisma.offerLetter.update({
-          where: { id: offerLetter.id },
-          data: { status: "SENT" },
-        });
+          const pdfBuffer = await generateOfferPdfBuffer(pdfData);
+          const fileName = `OfferLetter_${recipientName.replace(/\s+/g, "_")}_${offerLetter.id.slice(-6)}.pdf`;
+
+          const emailHtml = `
+<div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
+  <h2 style="color:#4f46e5;">Fluenzy AI &mdash; Offer Letter</h2>
+  <p>Dear <strong>${recipientName}</strong>,</p>
+  <p>We are delighted to offer you the position of <strong>${rest.position}</strong> at <strong>Fluenzy AI</strong>.</p>
+  <p>Please find your official offer letter attached to this email as a PDF.</p>
+  <table style="background:#f5f3ff;border-radius:8px;padding:16px 20px;margin:16px 0;border-left:4px solid #4f46e5;">
+    <tr><td style="padding:4px 0;"><strong>Position:</strong></td><td style="padding:4px 0 4px 12px;">${rest.position}</td></tr>
+    <tr><td style="padding:4px 0;"><strong>Department:</strong></td><td style="padding:4px 0 4px 12px;">${rest.department}</td></tr>
+    <tr><td style="padding:4px 0;"><strong>Annual CTC:</strong></td><td style="padding:4px 0 4px 12px;">&#8377;${rest.salary.toLocaleString()}/year</td></tr>
+    <tr><td style="padding:4px 0;"><strong>Date of Joining:</strong></td><td style="padding:4px 0 4px 12px;">${new Date(joiningDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</td></tr>
+    ${acceptanceDeadline ? `<tr><td style="padding:4px 0;"><strong>Accept By:</strong></td><td style="padding:4px 0 4px 12px;">${new Date(acceptanceDeadline).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</td></tr>` : ""}
+  </table>
+  <p>Please sign and return the attached offer letter to confirm your acceptance.</p>
+  <p style="margin-top:24px;">Warm regards,<br/><strong>${hrStaff?.name || decoded.email}</strong><br/>HR Team, Fluenzy AI</p>
+</div>`;
+
+          await sendPortalEmail({
+            to: recipientEmail,
+            subject: `Offer Letter - ${rest.position} at Fluenzy AI`,
+            html: emailHtml,
+            attachments: [{ filename: fileName, content: pdfBuffer, contentType: "application/pdf" }],
+            senderRole: "HR",
+            senderEmail: process.env.HR_EMAIL_USER!,
+            staffId: decoded.staffId,
+          });
+
+          // Update status to SENT
+          await prisma.offerLetter.update({
+            where: { id: offerLetter.id },
+            data: { status: "SENT" },
+          });
+        } catch (emailErr) {
+          console.error("[OFFER_LETTER_EMAIL]", emailErr);
+          // Email failure is non-fatal — offer letter is still created
+        }
       }
     }
 

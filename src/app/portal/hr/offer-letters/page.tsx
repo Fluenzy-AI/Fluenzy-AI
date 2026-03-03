@@ -50,7 +50,7 @@ export default function OfferLettersPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ candidateId: "", position: "", department: "Engineering", salary: 0, joiningDate: "", sendEmail: true, probationMonths: 3, workingHours: "9:00 AM - 6:00 PM", workDays: "Monday to Friday" });
+  const [form, setForm] = useState({ candidateId: "", position: "", department: "Engineering", salary: 0, joiningDate: "", acceptanceDeadline: "", sendEmail: true, probationMonths: 3, workingHours: "9:00 AM - 6:00 PM", workDays: "Monday to Friday" });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -71,7 +71,7 @@ export default function OfferLettersPage() {
   }
 
   async function createOffer() {
-    if (!form.candidateId || !form.salary || !form.joiningDate) return alert("Candidate, salary and joining date are required.");
+    if (!form.candidateId || !form.salary || !form.joiningDate || !form.acceptanceDeadline) return alert("Candidate, salary, joining date and acceptance deadline are required.");
     setCreating(true);
     const res = await fetch("/api/portal/hr/offer-letters", {
       method: "POST", credentials: "include",
@@ -197,9 +197,15 @@ export default function OfferLettersPage() {
                   <input type="number" min={0} value={form.salary} onChange={e => setForm(f => ({ ...f, salary: +e.target.value }))}
                     className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-500 block mb-1">Joining Date *</label>
                   <input type="date" value={form.joiningDate} onChange={e => setForm(f => ({ ...f, joiningDate: e.target.value }))}
+                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">Accept Offer By *</label>
+                  <input type="date" value={form.acceptanceDeadline} onChange={e => setForm(f => ({ ...f, acceptanceDeadline: e.target.value }))}
                     className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
               </div>

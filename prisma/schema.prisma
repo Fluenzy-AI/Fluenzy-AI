@@ -1231,6 +1231,7 @@ model OfferLetter {
   department      String
   salary          Float
   joiningDate     DateTime
+  acceptanceDeadline DateTime?   // HR-specified deadline for candidate to accept
   content         String      // HTML content of offer letter
   pdfUrl          String?
 
