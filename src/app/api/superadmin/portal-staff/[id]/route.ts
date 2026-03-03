@@ -18,15 +18,14 @@ const UpdateStaffSchema = z.object({
   phone: z.string().optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "SUSPENDED", "LOCKED"]).optional(),
   role: z.enum(["ADMIN", "HR"]).optional(),
-  permissions: z.record(z.boolean()).optional(),
+  permissions: z.record(z.string(), z.boolean()).optional(),
   newPassword: z.string().min(8).optional(),
 });
 
 async function requireSuperAdmin() {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
-  // @ts-expect-error role
-  if (session.user.role !== "SUPER_ADMIN") return null;
+  if ((session.user as { role?: string }).role !== "SUPER_ADMIN") return null;
   return session;
 }
 
@@ -84,8 +83,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     await prisma.portalAuditLog.create({
       data: {
-        // @ts-expect-error user
-        actorEmail: session.user.email,
+        actorEmail: (session.user as { email?: string }).email,
         actorRole: "SUPER_ADMIN",
         action: "UPDATE_PORTAL_STAFF",
         entityType: "PortalStaff",
@@ -117,8 +115,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     await prisma.portalAuditLog.create({
       data: {
-        // @ts-expect-error user
-        actorEmail: session.user.email,
+        actorEmail: (session.user as { email?: string }).email,
         actorRole: "SUPER_ADMIN",
         action: "DELETE_PORTAL_STAFF",
         entityType: "PortalStaff",

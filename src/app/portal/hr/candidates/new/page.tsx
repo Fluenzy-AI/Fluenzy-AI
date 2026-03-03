@@ -16,6 +16,7 @@ const HR_NAV = [
   { label: "Offer Letters", href: "/portal/hr/offer-letters" },
   { label: "Send Email", href: "/portal/hr/send-email" },
   { label: "Email History", href: "/portal/hr/email-logs" },
+  { label: "Job Applications", href: "/portal/hr/job-applications" },
 ];
 
 const DEPARTMENTS = ["Engineering", "Product", "Design", "Marketing", "Sales", "HR", "Finance", "Operations", "Customer Support", "Legal", "Other"];

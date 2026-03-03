@@ -15,6 +15,7 @@ const HR_NAV = [
   { label: "Offer Letters", href: "/portal/hr/offer-letters" },
   { label: "Send Email", href: "/portal/hr/send-email" },
   { label: "Email Logs", href: "/portal/hr/email-logs" },
+  { label: "Job Applications", href: "/portal/hr/job-applications" },
 ];const TEMPLATES = [
   { id: "interviewInvite", name: "Interview Invitation", subject: "Interview Invitation — {position} at Fluenzy AI", body: `Dear {name},\n\nWe are pleased to invite you for an interview for the position of {position} at Fluenzy AI.\n\nInterview Date: {date}\nInterview Time: {time}\nMode: {mode}\n{link}\n\nPlease confirm your availability by replying to this email.\n\nBest regards,\nHR Team\nFluenzy AI` },
   { id: "offerLetter", name: "Offer Letter", subject: "Job Offer — {position} at Fluenzy AI", body: `Dear {name},\n\nWe are delighted to extend an offer of employment for the position of {position} at Fluenzy AI.\n\nStart Date: {date}\nCompensation: {salary} per annum\n\nPlease review the attached offer letter and revert with your acceptance at the earliest.\n\nWelcome to the team!\n\nBest regards,\nHR Team\nFluenzy AI` },

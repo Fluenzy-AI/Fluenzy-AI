@@ -1406,3 +1406,72 @@ model PortalRefreshToken {
   @@index([staffId])
   @@index([expiresAt])
 }
+
+// ─── Careers ───────────────────────────────────────────────────────────────
+
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+enum JobLocation {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+enum AppStatus {
+  PENDING
+  REVIEWED
+  SHORTLISTED
+  REJECTED
+  HIRED
+}
+
+model Job {
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  title            String
+  slug             String       @unique
+  department       String
+  location         JobLocation  @default(REMOTE)
+  employmentType   JobType      @default(FULL_TIME)
+  description      String
+  requirements     String[]
+  responsibilities String[]
+  skills           String[]
+  experienceYears  String
+  salaryRange      String?
+  isActive         Boolean      @default(true)
+  createdBy        String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  applications     JobApplication[]
+
+  @@index([isActive])
+}
+
+model JobApplication {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  jobId       String    @db.ObjectId
+  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  name        String
+  email       String
+  phone       String
+  resumeUrl   String
+  resumeName  String?
+  portfolio   String?
+  coverLetter String?
+  experience  String
+  linkedin    String?
+  status      AppStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([jobId])
+  @@index([email])
+  @@index([status])
+}

@@ -79,7 +79,10 @@ export function setPortalCookies(
   }
 }
 
-export function clearPortalCookies(cookieStore?: ReturnType<typeof cookies>) {
+export function clearPortalCookies(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  cookieStore?: any
+) {
   if (cookieStore) {
     cookieStore.delete(PORTAL_ACCESS_COOKIE);
     cookieStore.delete(PORTAL_REFRESH_COOKIE);

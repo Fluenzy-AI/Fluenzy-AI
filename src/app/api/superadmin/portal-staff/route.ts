@@ -19,14 +19,13 @@ const CreateStaffSchema = z.object({
   role: z.enum(["ADMIN", "HR"]),
   department: z.string().optional(),
   phone: z.string().optional(),
-  permissions: z.record(z.boolean()).optional(),
+  permissions: z.record(z.string(), z.boolean()).optional(),
 });
 
 async function requireSuperAdmin(req: NextRequest) {
   const session = await getServerSession(authOptions);
   if (!session?.user) return null;
-  // @ts-expect-error role exists
-  if (session.user.role !== "SUPER_ADMIN") return null;
+  if ((session.user as { role?: string }).role !== "SUPER_ADMIN") return null;
   return session;
 }
 
@@ -100,8 +99,7 @@ export async function POST(req: NextRequest) {
         department,
         phone,
         permissions: permissions || {},
-        // @ts-expect-error session user id
-        createdBy: session.user.id,
+        createdBy: (session.user as { id?: string }).id,
       },
     });
 
@@ -136,8 +134,7 @@ export async function POST(req: NextRequest) {
     try {
     await prisma.portalAuditLog.create({
       data: {
-        // @ts-expect-error user id
-        actorEmail: session.user.email,
+        actorEmail: (session.user as { email?: string }).email,
         actorRole: "SUPER_ADMIN",
         action: "CREATE_PORTAL_STAFF",
         entityType: "PortalStaff",
