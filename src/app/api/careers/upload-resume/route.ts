@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   const formData = await req.formData().catch(() => null);
   if (!formData) return NextResponse.json({ error: "Invalid form data" }, { status: 400 });
 
-  const file = formData.get("resume") as File | null;
+  const file = (formData.get("file") || formData.get("resume")) as File | null;
   if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
   // Validate type — accept by MIME or by extension (.pdf)

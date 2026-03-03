@@ -3,6 +3,8 @@ import { signOut, useSession } from "next-auth/react";
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Sparkles, X, User, CreditCard, LogOut, Bell, Search, ChevronRight } from "lucide-react";
+
+interface CandidateSession { id: string; name: string; email: string }
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -59,9 +61,20 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [candidate, setCandidate] = useState<CandidateSession | null>(null);
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
+
+  // Check candidate session on careers / candidates pages
+  useEffect(() => {
+    if (pathname.startsWith("/careers") || pathname.startsWith("/candidates")) {
+      fetch("/api/candidates/me")
+        .then(r => r.ok ? r.json() : null)
+        .then(d => { if (d?.candidate) setCandidate(d.candidate); })
+        .catch(() => {});
+    }
+  }, [pathname]);
 
   // Use userData from props (from LayoutWrapper) or fall back to session
   const user = userData || (session?.user ? {
@@ -234,13 +247,40 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                 </DropdownMenu>
               </>
             ) : (
-              <Button
-                variant="hero"
-                className="h-9 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] sm:px-8 sm:text-xs sm:tracking-widest"
-                onClick={() => router.push("/login")}
-              >
-                Sign In
-              </Button>
+              // Not logged in via NextAuth
+              (pathname.startsWith("/careers") || pathname.startsWith("/candidates")) ? (
+                // Candidate auth buttons on careers/candidates pages
+                candidate ? (
+                  <div className="flex items-center gap-2">
+                    <Link href="/candidates/dashboard"
+                      className="flex items-center gap-2 text-[11px] font-bold px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 hover:bg-violet-500/20 transition-all uppercase tracking-wide">
+                      <span className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white text-[9px] flex items-center justify-center font-black">
+                        {candidate.name.charAt(0).toUpperCase()}
+                      </span>
+                      Dashboard
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Link href="/candidates/login"
+                      className="hidden sm:inline-flex h-9 items-center px-4 rounded-full text-[11px] font-bold uppercase tracking-widest border border-white/15 text-slate-300 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all">
+                      Login
+                    </Link>
+                    <Link href="/candidates/signup"
+                      className="inline-flex h-9 items-center px-4 rounded-full text-[11px] font-black uppercase tracking-widest bg-gradient-to-r from-violet-600 to-purple-500 text-white hover:from-violet-500 hover:to-purple-400 transition-all shadow-lg shadow-violet-500/20">
+                      Register
+                    </Link>
+                  </div>
+                )
+              ) : (
+                <Button
+                  variant="hero"
+                  className="h-9 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] sm:px-8 sm:text-xs sm:tracking-widest"
+                  onClick={() => router.push("/login")}
+                >
+                  Sign In
+                </Button>
+              )
             )}
           </div>
         </div>
