@@ -17,8 +17,7 @@ export async function GET(req: NextRequest) {
 
   if (!authorized) {
     const session = await getServerSession(authOptions);
-    // @ts-expect-error role
-    if (session?.user?.role === "SUPER_ADMIN") authorized = true;
+    if ((session?.user as any)?.role === "SUPER_ADMIN") authorized = true;
   }
 
   if (!authorized) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
