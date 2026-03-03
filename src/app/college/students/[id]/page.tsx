@@ -14,16 +14,16 @@ import {
 
 // â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const fmtDate = (d?: string | null) =>
-  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "â€”";
+  d ? new Date(d).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "-";
 const fmtTime = (d?: string | null) =>
-  d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "â€”";
+  d ? new Date(d).toLocaleString("en-IN", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
 const fmtMins = (secs?: number | null) => {
-  if (secs == null) return "â€”";
+  if (secs == null) return "-";
   const m = Math.round(secs / 60);
   return m < 60 ? `${m}m` : `${Math.floor(m / 60)}h ${m % 60}m`;
 };
 const fmtSecs = (secs?: number | null) => {
-  if (secs == null) return "â€”";
+  if (secs == null) return "-";
   return secs < 60 ? `${secs}s` : `${Math.floor(secs / 60)}m ${secs % 60}s`;
 };
 const scoreColor = (s?: number | null) =>
@@ -166,7 +166,7 @@ export default function StudentDetailPage() {
   };
 
   const allocatedPlan = student.customPlan ?? "Free";
-  const validTill     = student.customPlanExpiresAt ? fmtDate(student.customPlanExpiresAt) : "â€”";
+  const validTill     = student.customPlanExpiresAt ? fmtDate(student.customPlanExpiresAt) : "-";
 
   // â”€â”€ Overview â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const renderOverview = () => (
@@ -187,7 +187,7 @@ export default function StudentDetailPage() {
             <div className="flex flex-wrap gap-3 text-xs text-slate-400">
               <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{student.email}</span>
               {student.department && <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{student.department}</span>}
-              {student.yearOfStudy && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Year {student.yearOfStudy}</span>}
+              {student.year && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />Year {student.year}</span>}
               {student.rollNumber && <span className="flex items-center gap-1"><Shield className="w-3 h-3" />{student.rollNumber}</span>}
               {student.batch && <span className="flex items-center gap-1"><Star className="w-3 h-3" />{student.batch.batchName}</span>}
             </div>
@@ -221,7 +221,7 @@ export default function StudentDetailPage() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Allocated Plan", val: <span className={`px-2.5 py-1 text-sm font-semibold rounded-full border ${PLAN_COLORS[allocatedPlan] ?? ""}`}>{allocatedPlan}</span> },
-            { label: "Platform Plan",  val: <span className={`px-2.5 py-1 text-sm font-semibold rounded-full border ${PLAN_COLORS[u.plan] ?? "bg-slate-700 text-slate-300 border-slate-600"}`}>{u.plan ?? "â€”"}</span> },
+            { label: "Platform Plan",  val: <span className={`px-2.5 py-1 text-sm font-semibold rounded-full border ${PLAN_COLORS[u.plan] ?? "bg-slate-700 text-slate-300 border-slate-600"}`}>{u.plan ?? "-"}</span> },
             { label: "Valid Till",     val: <span className="text-sm font-semibold text-white">{validTill}</span> },
           ].map(({ label, val }) => (
             <div key={label} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/40">
@@ -237,7 +237,7 @@ export default function StudentDetailPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <StatCard label="Total Sessions"  value={u.totalSessions ?? 0} sub="All modules combined" />
             <StatCard label="Total Time"      value={fmtMins(u.totalTimeSpent)} sub="Across all modules" />
-            <StatCard label="Avg Score"       value={u.avgScore ? `${u.avgScore.toFixed(1)}%` : "â€”"} color={scoreColor(u.avgScore)} />
+            <StatCard label="Avg Score"       value={u.avgScore ? `${u.avgScore.toFixed(1)}%` : "-"} color={scoreColor(u.avgScore)} />
             <StatCard label="Last Active"     value={fmtDate(u.lastActive)} sub={u.lastActive ? "Last login" : "Never logged in"} />
           </div>
 
@@ -247,11 +247,11 @@ export default function StudentDetailPage() {
               {([
                 ["Name",          student.studentName],
                 ["Email",         student.email],
-                ["Department",    student.department || "â€”"],
-                ["Year",          student.yearOfStudy ? `Year ${student.yearOfStudy}` : "â€”"],
-                ["Roll No.",      student.rollNumber || "â€”"],
-                ["Batch",         student.batch?.batchName || "â€”"],
-                ["Platform Plan", u.plan || "â€”"],
+                ["Department",    student.department || "-"],
+                ["Year",          student.year ? `Year ${student.year}` : "-"],
+                ["Roll No.",      student.rollNumber || "-"],
+                ["Batch",         student.batch?.batchName || "-"],
+                ["Platform Plan", u.plan || "-"],
                 ["Renewal Date",  fmtDate(u.renewalDate)],
                 ["Joined",        fmtDate(u.createdAt)],
               ] as [string, any][]).map(([k, v]) => (
@@ -298,7 +298,7 @@ export default function StudentDetailPage() {
       ) : (
         <div className="bg-[#111827]/80 border border-slate-700/50 rounded-2xl p-10 text-center">
           <Activity className="w-10 h-10 text-slate-600 mx-auto mb-3" />
-          <p className="text-slate-400">No activity data yet â€” student hasn&apos;t started any sessions.</p>
+          <p className="text-slate-400">No activity data yet - student hasn&apos;t started any sessions.</p>
         </div>
       )}
     </div>
@@ -320,11 +320,11 @@ export default function StudentDetailPage() {
                     <TD>{fmtTime(l.loginTime)}</TD>
                     <TD>{fmtTime(l.logoutTime)}</TD>
                     <TD>{fmtSecs(l.sessionDuration)}</TD>
-                    <TD><div className="flex items-center gap-1">{l.deviceType==="Mobile"?<Smartphone className="w-3 h-3"/>:l.deviceType==="Tablet"?<Tablet className="w-3 h-3"/>:<Monitor className="w-3 h-3"/>}{l.deviceType||"â€”"}</div></TD>
-                    <TD>{l.os||"â€”"}</TD>
-                    <TD>{l.browser||"â€”"}</TD>
-                    <TD>{l.location||l.ip||"â€”"}</TD>
-                    <TD><span className={`px-2 py-0.5 text-xs rounded-full border ${l.status==="success"?"bg-green-500/15 text-green-400 border-green-500/30":"bg-red-500/15 text-red-400 border-red-500/30"}`}>{l.status||"â€”"}</span></TD>
+                    <TD><div className="flex items-center gap-1">{l.deviceType==="Mobile"?<Smartphone className="w-3 h-3"/>:l.deviceType==="Tablet"?<Tablet className="w-3 h-3"/>:<Monitor className="w-3 h-3"/>}{l.deviceType||"-"}</div></TD>
+                    <TD>{l.os||"-"}</TD>
+                    <TD>{l.browser||"-"}</TD>
+                    <TD>{l.location||l.ip||"-"}</TD>
+                    <TD><span className={`px-2 py-0.5 text-xs rounded-full border ${l.status==="success"?"bg-green-500/15 text-green-400 border-green-500/30":"bg-red-500/15 text-red-400 border-red-500/30"}`}>{l.status||"-"}</span></TD>
                   </TR>
                 ))}
               </tbody>
@@ -379,7 +379,7 @@ export default function StudentDetailPage() {
             {md.score !== undefined && (
               <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-3">
                 <div className="text-xs text-slate-400">Avg Score</div>
-                <div className={`font-bold text-2xl mt-0.5 ${scoreColor(md.score)}`}>{md.score?md.score.toFixed(1):"â€”"}</div>
+                <div className={`font-bold text-2xl mt-0.5 ${scoreColor(md.score)}`}>{md.score?md.score.toFixed(1):"-"}</div>
               </div>
             )}
             {md.pct !== undefined && (
@@ -397,7 +397,7 @@ export default function StudentDetailPage() {
             <ExpandSection title="HR Coach Steps Progress" count={data.hrInterview.hrProgress.length}>
               <table className="w-full text-sm"><THead cols={["Step ID","Status","Score","Completed At"]}/>
                 <tbody>{data.hrInterview.hrProgress.map((h:any)=>(
-                  <TR key={h.lessonId}><TD className="font-mono text-xs">{h.lessonId}</TD><TD><div className="flex items-center gap-1">{h.isCompleted?<CheckCircle2 className="w-3.5 h-3.5 text-green-400"/>:<XCircle className="w-3.5 h-3.5 text-slate-500"/>}<span>{h.isCompleted?"Done":"Pending"}</span></div></TD><TD className={scoreColor(h.score)}>{h.score??"â€”"}</TD><TD>{fmtDate(h.completedAt)}</TD></TR>
+                  <TR key={h.lessonId}><TD className="font-mono text-xs">{h.lessonId}</TD><TD><div className="flex items-center gap-1">{h.isCompleted?<CheckCircle2 className="w-3.5 h-3.5 text-green-400"/>:<XCircle className="w-3.5 h-3.5 text-slate-500"/>}<span>{h.isCompleted?"Done":"Pending"}</span></div></TD><TD className={scoreColor(h.score)}>{h.score??"-"}</TD><TD>{fmtDate(h.completedAt)}</TD></TR>
                 ))}</tbody>
               </table>
             </ExpandSection>
@@ -407,7 +407,7 @@ export default function StudentDetailPage() {
             <ExpandSection title="GD Coach Progress Steps" count={data.gdCoach.progress.length}>
               <table className="w-full text-sm"><THead cols={["Step ID","Status","Score","Completed At"]}/>
                 <tbody>{data.gdCoach.progress.map((h:any)=>(
-                  <TR key={h.lessonId}><TD className="font-mono text-xs">{h.lessonId}</TD><TD><div className="flex items-center gap-1">{h.isCompleted?<CheckCircle2 className="w-3.5 h-3.5 text-green-400"/>:<XCircle className="w-3.5 h-3.5 text-slate-500"/>}<span>{h.isCompleted?"Done":"Pending"}</span></div></TD><TD className={scoreColor(h.score)}>{h.score??"â€”"}</TD><TD>{fmtDate(h.completedAt)}</TD></TR>
+                  <TR key={h.lessonId}><TD className="font-mono text-xs">{h.lessonId}</TD><TD><div className="flex items-center gap-1">{h.isCompleted?<CheckCircle2 className="w-3.5 h-3.5 text-green-400"/>:<XCircle className="w-3.5 h-3.5 text-slate-500"/>}<span>{h.isCompleted?"Done":"Pending"}</span></div></TD><TD className={scoreColor(h.score)}>{h.score??"-"}</TD><TD>{fmtDate(h.completedAt)}</TD></TR>
                 ))}</tbody>
               </table>
             </ExpandSection>
@@ -417,7 +417,7 @@ export default function StudentDetailPage() {
             <ExpandSection title="Lesson Progress" count={data.englishLearning.lessons.length}>
               <table className="w-full text-sm"><THead cols={["Lesson ID","Status","Score","Completed At"]}/>
                 <tbody>{data.englishLearning.lessons.map((l:any)=>(
-                  <TR key={l.lessonId}><TD className="font-mono text-xs">{l.lessonId}</TD><TD><div className="flex items-center gap-1">{l.isCompleted?<CheckCircle2 className="w-3.5 h-3.5 text-green-400"/>:<XCircle className="w-3.5 h-3.5 text-slate-500"/>}<span>{l.isCompleted?"Done":"Pending"}</span></div></TD><TD className={scoreColor(l.score)}>{l.score??"â€”"}</TD><TD>{fmtDate(l.completedAt)}</TD></TR>
+                  <TR key={l.lessonId}><TD className="font-mono text-xs">{l.lessonId}</TD><TD><div className="flex items-center gap-1">{l.isCompleted?<CheckCircle2 className="w-3.5 h-3.5 text-green-400"/>:<XCircle className="w-3.5 h-3.5 text-slate-500"/>}<span>{l.isCompleted?"Done":"Pending"}</span></div></TD><TD className={scoreColor(l.score)}>{l.score??"-"}</TD><TD>{fmtDate(l.completedAt)}</TD></TR>
                 ))}</tbody>
               </table>
             </ExpandSection>
@@ -431,10 +431,10 @@ export default function StudentDetailPage() {
                   {sessions.map((s:any)=>(
                     <TR key={s.id}>
                       <TD>{fmtDate(s.startTime)}</TD>
-                      {["hr","company"].includes(activeModule)&&<TD>{s.targetCompany||"â€”"}</TD>}
-                      {["hr","technical","company"].includes(activeModule)&&<TD>{s.role||"â€”"}</TD>}
+                      {["hr","company"].includes(activeModule)&&<TD>{s.targetCompany||"-"}</TD>}
+                      {["hr","technical","company"].includes(activeModule)&&<TD>{s.role||"-"}</TD>}
                       <TD>{fmtMins(s.duration)}</TD>
-                      {!["vocabulary","voice","latestTopics"].includes(activeModule)&&<TD className={scoreColor(s.aggregateScore)}>{s.aggregateScore?.toFixed(1)??"â€”"}</TD>}
+                      {!["vocabulary","voice","latestTopics"].includes(activeModule)&&<TD className={scoreColor(s.aggregateScore)}>{s.aggregateScore?.toFixed(1)??"-"}</TD>}
                       <TD><span className={`px-2 py-0.5 text-xs rounded-full border ${s.status==="PASS"||s.status==="COMPLETED"?"bg-green-500/15 text-green-400 border-green-500/30":s.status==="FAIL"?"bg-red-500/15 text-red-400 border-red-500/30":"bg-slate-700 text-slate-400 border-slate-600"}`}>{s.status||"Completed"}</span></TD>
                     </TR>
                   ))}
@@ -493,14 +493,14 @@ export default function StudentDetailPage() {
                 {ghList.map((h:any)=>(
                   <TR key={h.id}>
                     <TD className="max-w-[160px]"><div className="truncate" title={h.topic}>{h.topic}</div></TD>
-                    <TD><span className="px-2 py-0.5 text-xs rounded-full border border-slate-600 text-slate-300">{h.topicCategory||"â€”"}</span></TD>
-                    <TD><span className="px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-300">{h.role||"â€”"}</span></TD>
+                    <TD><span className="px-2 py-0.5 text-xs rounded-full border border-slate-600 text-slate-300">{h.topicCategory||"-"}</span></TD>
+                    <TD><span className="px-2 py-0.5 text-xs rounded-full bg-slate-700 text-slate-300">{h.role||"-"}</span></TD>
                     <TD>{fmtSecs(h.duration)}</TD>
-                    <TD className={`font-semibold ${scoreColor(h.overallScore)}`}>{h.overallScore?.toFixed(1)??"â€”"}</TD>
-                    <TD className={scoreColor(h.communicationScore)}>{h.communicationScore?.toFixed(1)??"â€”"}</TD>
-                    <TD className={scoreColor(h.confidenceScore)}>{h.confidenceScore?.toFixed(1)??"â€”"}</TD>
-                    <TD className={scoreColor(h.grammarScore)}>{h.grammarScore?.toFixed(1)??"â€”"}</TD>
-                    <TD className={scoreColor(h.leadershipScore)}>{h.leadershipScore?.toFixed(1)??"â€”"}</TD>
+                    <TD className={`font-semibold ${scoreColor(h.overallScore)}`}>{h.overallScore?.toFixed(1)??"-"}</TD>
+                    <TD className={scoreColor(h.communicationScore)}>{h.communicationScore?.toFixed(1)??"-"}</TD>
+                    <TD className={scoreColor(h.confidenceScore)}>{h.confidenceScore?.toFixed(1)??"-"}</TD>
+                    <TD className={scoreColor(h.grammarScore)}>{h.grammarScore?.toFixed(1)??"-"}</TD>
+                    <TD className={scoreColor(h.leadershipScore)}>{h.leadershipScore?.toFixed(1)??"-"}</TD>
                     <TD>{fmtDate(h.createdAt)}</TD>
                   </TR>
                 ))}
@@ -526,15 +526,15 @@ export default function StudentDetailPage() {
                 {payments.map((p:any)=>(
                   <TR key={p.id}>
                     <TD>{fmtDate(p.date)}</TD>
-                    <TD><span className="px-2 py-0.5 text-xs rounded-full border border-slate-600 text-slate-300">{p.plan||"â€”"}</span></TD>
-                    <TD className="capitalize">{p.billingCycle||"â€”"}</TD>
-                    <TD>â‚¹{p.originalAmount??"â€”"}</TD>
-                    <TD className="text-green-400">{p.discountAmount?`-â‚¹${p.discountAmount}`:"â€”"}</TD>
-                    <TD className="font-semibold text-white">â‚¹{p.finalAmount}</TD>
-                    <TD className="capitalize">{p.paymentMethod||"â€”"}</TD>
-                    <TD>{p.couponUsed?<span className="font-mono text-xs bg-slate-700 px-2 py-0.5 rounded">{p.couponUsed}</span>:"â€”"}</TD>
+                    <TD><span className="px-2 py-0.5 text-xs rounded-full border border-slate-600 text-slate-300">{p.plan||"-"}</span></TD>
+                    <TD className="capitalize">{p.billingCycle||"-"}</TD>
+                    <TD>Rs.{p.originalAmount??"-"}</TD>
+                    <TD className="text-green-400">{p.discountAmount?`-Rs.${p.discountAmount}`:"-"}</TD>
+                    <TD className="font-semibold text-white">Rs.{p.finalAmount}</TD>
+                    <TD className="capitalize">{p.paymentMethod||"-"}</TD>
+                    <TD>{p.couponUsed?<span className="font-mono text-xs bg-slate-700 px-2 py-0.5 rounded">{p.couponUsed}</span>:"-"}</TD>
                     <TD><span className={`px-2 py-0.5 text-xs rounded-full border capitalize ${p.status==="paid"?"bg-green-500/15 text-green-400 border-green-500/30":p.status==="failed"?"bg-red-500/15 text-red-400 border-red-500/30":"bg-slate-700 text-slate-400 border-slate-600"}`}>{p.status}</span></TD>
-                    <TD>{p.receiptUrl?<a href={p.receiptUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300"><Eye className="w-3 h-3"/>{p.invoiceNumber||"View"}</a>:<span className="text-slate-500 text-xs">{p.invoiceNumber||"â€”"}</span>}</TD>
+                    <TD>{p.receiptUrl?<a href={p.receiptUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300"><Eye className="w-3 h-3"/>{p.invoiceNumber||"View"}</a>:<span className="text-slate-500 text-xs">{p.invoiceNumber||"-"}</span>}</TD>
                   </TR>
                 ))}
               </tbody>

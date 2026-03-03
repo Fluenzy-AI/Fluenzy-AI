@@ -9,7 +9,7 @@ interface BatchOption { id: string; batchName: string }
 interface FormState {
   studentName: string;
   department: string;
-  yearOfStudy: string;
+  year: string;
   rollNumber: string;
   batchId: string;
   status: string;
@@ -23,7 +23,7 @@ export default function StudentEditPage() {
   const router = useRouter();
 
   const [form, setForm] = useState<FormState>({
-    studentName: "", department: "", yearOfStudy: "", rollNumber: "",
+    studentName: "", department: "", year: "", rollNumber: "",
     batchId: "", status: "ACTIVE", tags: [], warningFlags: [], adminNotes: "",
   });
   const [batches, setBatches] = useState<BatchOption[]>([]);
@@ -46,7 +46,7 @@ export default function StudentEditPage() {
         setForm({
           studentName: s.studentName ?? "",
           department: s.department ?? "",
-          yearOfStudy: s.yearOfStudy ?? "",
+          year: String(s.year ?? ""),
           rollNumber: s.rollNumber ?? "",
           batchId: s.batch?.id ?? "",
           status: s.status ?? "ACTIVE",
@@ -143,7 +143,7 @@ export default function StudentEditPage() {
             {field("studentName", "Full Name", "Student's full name")}
             {field("department", "Department / Branch", "e.g. Computer Science")}
             <div className="grid grid-cols-2 gap-4">
-              {field("yearOfStudy", "Year of Study", "e.g. 3")}
+              {field("year", "Year of Study", "e.g. 3")}
               {field("rollNumber", "Roll Number / Student ID", "e.g. CS2021001")}
             </div>
           </div>

@@ -16,9 +16,31 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   let activity: Record<string, unknown> | null = null;
 
-  if (student.userId) {
+  // Resolve the linked users record — first try the stored userId, then fall
+  // back to email (covers students who signed up on the platform directly
+  // without using the college invite link, so their userId was never saved).
+  let resolvedUserId: string | null = student.userId ?? null;
+  if (!resolvedUserId) {
+    const userByEmail = await (prisma as any).users.findUnique({
+      where: { email: student.email },
+      select: { id: true },
+    });
+    if (userByEmail) {
+      resolvedUserId = userByEmail.id;
+      // Back-fill the userId so future requests don't need the email lookup
+      await prisma.collegeStudent.update({
+        where: { id },
+        data: {
+          userId: resolvedUserId,
+          ...(student.onboardedAt ? {} : { onboardedAt: new Date() }),
+        },
+      });
+    }
+  }
+
+  if (resolvedUserId) {
     const user = await (prisma as any).users.findUnique({
-      where: { id: student.userId },
+      where: { id: resolvedUserId },
       include: {
         sessions: { orderBy: { startTime: "desc" } },
         lessonProgress: { orderBy: { completedAt: "desc" } },
@@ -34,7 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     });
 
     const interviewGuides = await (prisma as any).interviewGuide
-      .findMany({ where: { userId: student.userId }, orderBy: { createdAt: "desc" } })
+      .findMany({ where: { userId: resolvedUserId }, orderBy: { createdAt: "desc" } })
       .catch(() => []);
 
     if (user) {
@@ -150,7 +172,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           sessions: latestTopicSessions.map((s: any) => ({ id: s.id, startTime: s.startTime, duration: s.duration, status: s.status })),
         },
         payments: user.paymentHistories.map((p: any) => ({
-          id: p.id, plan: p.plan, billingCycle: p.billingCycle, originalAmount: p.originalAmount,
+          id: p.id,
+          plan: p.plan || user.plan || null,
+          billingCycle: p.billingCycle || user.billingCycle || null,
+          originalAmount: p.originalAmount,
           discountAmount: p.discountAmount, finalAmount: p.finalAmount, paymentMethod: p.paymentMethod,
           couponUsed: p.couponUsed, status: p.status, date: p.date,
           invoiceNumber: p.receipt?.invoiceNumber || null, receiptUrl: p.receipt?.receiptUrl || null,
