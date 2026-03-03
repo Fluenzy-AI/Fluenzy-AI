@@ -11,6 +11,7 @@ import Link from "next/link";
 import { Crown, Star, Zap } from "lucide-react";
 import React from "react";
 import { motion } from "framer-motion";
+import MobileBillingPage from "@/components/MobileBillingPage";
 
 interface PlanInfo {
   plan: string;
@@ -49,6 +50,14 @@ export default function BillingPage() {
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const [animatedPrice, setAnimatedPrice] = useState<{ [key: string]: number }>({});
   const [priceBreakdown, setPriceBreakdown] = useState<{ [key: string]: any }>({});
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -324,6 +333,30 @@ export default function BillingPage() {
   }
 
   const upgradeOptions = getUpgradeOptions();
+
+  if (isMobile) {
+    return (
+      <MobileBillingPage
+        planInfo={planInfo}
+        plans={plans}
+        upgradeOptions={upgradeOptions}
+        billingCycle={billingCycle}
+        setBillingCycle={setBillingCycle}
+        animatedPrice={animatedPrice}
+        priceBreakdown={priceBreakdown}
+        couponCode={couponCode}
+        setCouponCode={setCouponCode}
+        couponLoading={couponLoading}
+        couponApplied={couponApplied}
+        couponError={couponError}
+        couponSuccessMessage={couponSuccessMessage}
+        appliedCoupon={appliedCoupon}
+        applyCoupon={applyCoupon}
+        removeCoupon={removeCoupon}
+        handleUpgrade={handleUpgrade}
+      />
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
