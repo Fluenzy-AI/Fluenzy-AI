@@ -152,34 +152,6 @@ export default function CareersClient() {
   return (
     <div className="min-h-screen bg-background text-foreground">
 
-      {/* ── Candidate Auth Banner ── */}
-      {candidate !== undefined && (
-        <div className="w-full bg-gradient-to-r from-violet-900/80 to-purple-900/80 backdrop-blur-md border-b border-violet-500/20 px-4 py-2.5">
-          <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
-            {candidate ? (
-              <>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white text-[11px] font-black shrink-0">
-                    {candidate.name.charAt(0).toUpperCase()}
-                  </div>
-                  <p className="text-xs text-violet-100">
-                    Welcome back, <strong className="text-white">{candidate.name.split(" ")[0]}</strong>! Track your applications and auto-fill forms.
-                  </p>
-                </div>
-                <Link href="/candidates/dashboard"
-                  className="shrink-0 text-xs font-bold px-4 py-1.5 rounded-full bg-violet-500 text-white hover:bg-violet-400 transition-all shadow-lg shadow-violet-500/30 whitespace-nowrap">
-                  My Dashboard →
-                </Link>
-              </>
-            ) : (
-              <p className="text-xs text-violet-200">
-                <span className="text-white font-semibold">Candidate Portal:</span> Login or register to track applications, auto-fill forms and manage your profile.
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* ── Open Positions ── */}
       <section ref={positionsRef} className="py-20 px-4">
         <div className="max-w-5xl mx-auto">
