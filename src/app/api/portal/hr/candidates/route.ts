@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
 
   const where = {
     ...(decoded.role === "HR" ? { hrId: decoded.staffId } : {}),
-    ...(status ? { status: status as "APPLIED" | "SCREENING" | "INTERVIEW_SCHEDULED" | "INTERVIEWED" | "OFFERED" | "JOINED" | "REJECTED" | "WITHDRAWN" } : {}),
+    ...(status ? { status: status as "APPLIED" | "SCREENING" | "INTERVIEW_SCHEDULED" | "INTERVIEWED" | "SELECTED" | "OFFER_SENT" | "ONBOARDED" | "REJECTED" | "WITHDRAWN" } : {}),
     ...(search ? {
       OR: [
         { name: { contains: search, mode: "insensitive" as const } },

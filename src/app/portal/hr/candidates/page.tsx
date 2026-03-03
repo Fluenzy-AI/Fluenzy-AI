@@ -27,7 +27,7 @@ interface Candidate {
   source?: string;
   resumeUrl?: string;
   notes?: string;
-  appliedAt: string;
+  createdAt?: string;
   interviewDate?: string;
 }
 
@@ -147,7 +147,7 @@ export default function CandidatesPage() {
                         <td className="px-4 py-3 text-xs text-slate-400">{c.department}</td>
                         <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[c.status]}`}>{c.status.replace(/_/g, " ")}</span></td>
                         <td className="px-4 py-3 text-xs text-slate-500">{c.source || "—"}</td>
-                        <td className="px-4 py-3 text-xs text-slate-500">{new Date(c.appliedAt).toLocaleDateString("en-IN")}</td>
+                        <td className="px-4 py-3 text-xs text-slate-500">{c.createdAt ? new Date(c.createdAt).toLocaleDateString("en-IN") : "—"}</td>
                         <td className="px-4 py-3">
                           <button onClick={() => setSelected(c)} className="text-xs text-indigo-400 hover:text-indigo-300">Manage</button>
                         </td>
