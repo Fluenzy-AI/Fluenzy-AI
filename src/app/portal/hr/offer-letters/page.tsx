@@ -50,7 +50,7 @@ export default function OfferLettersPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ candidateId: "", position: "", department: "Engineering", salary: 0, joiningDate: "", acceptanceDeadline: "", sendEmail: true, probationMonths: 3, workingHours: "9:00 AM - 6:00 PM", workDays: "Monday to Friday", employmentType: "Full-Time, Permanent", workLocation: "India (Remote / Hybrid)" });
+  const [form, setForm] = useState({ candidateId: "", position: "", department: "Engineering", salary: 0, salaryType: "per annum", joiningDate: "", acceptanceDeadline: "", sendEmail: true, probationMonths: 3, workingHours: "9:00 AM - 6:00 PM", workDays: "Monday to Friday", employmentType: "Full-Time, Permanent", workLocation: "India (Remote / Hybrid)" });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -193,9 +193,16 @@ export default function OfferLettersPage() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs text-slate-500 block mb-1">Annual Salary (₹) *</label>
-                  <input type="number" min={0} value={form.salary} onChange={e => setForm(f => ({ ...f, salary: +e.target.value }))}
-                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="text-xs text-slate-500 block mb-1">Salary (₹) *</label>
+                  <div className="flex gap-2">
+                    <input type="number" min={0} value={form.salary} onChange={e => setForm(f => ({ ...f, salary: +e.target.value }))}
+                      className="flex-1 bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white min-w-0" />
+                    <select value={form.salaryType} onChange={e => setForm(f => ({ ...f, salaryType: e.target.value }))}
+                      className="bg-slate-800 border border-white/10 rounded-xl px-2 py-2 text-xs text-slate-300 shrink-0">
+                      <option value="per annum">/ yr</option>
+                      <option value="per month">/ mo</option>
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs text-slate-500 block mb-1">Joining Date *</label>

@@ -41,6 +41,7 @@ export async function GET(
     issuedBy: offer.issuedBy,
     hrName: hrStaff?.name || offer.issuedBy,
     hrDesignation: hrStaff?.role === "ADMIN" ? "HR Manager" : "HR Executive",
+    salaryType: offer.salaryType || "per annum",
     employmentType: offer.employmentType || "Full-Time, Permanent",
     workLocation: offer.workLocation || "India (Remote / Hybrid)",
     founderSigBase64: founderSigAsset

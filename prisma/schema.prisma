@@ -1232,6 +1232,7 @@ model OfferLetter {
   salary          Float
   joiningDate     DateTime
   acceptanceDeadline DateTime?   // HR-specified deadline for candidate to accept
+  salaryType      String?     @default("per annum")  // "per annum" | "per month"
   employmentType  String?     @default("Full-Time, Permanent")
   workLocation    String?     @default("India (Remote / Hybrid)")
   content         String      // HTML content of offer letter

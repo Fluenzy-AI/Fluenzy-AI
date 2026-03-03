@@ -21,6 +21,7 @@ export interface OfferPdfData {
   // HR info
   hrName: string;
   hrDesignation: string;
+  salaryType?: string;      // "per annum" | "per month"
   employmentType?: string;
   workLocation?: string;
   // Signatures
@@ -148,7 +149,7 @@ export function buildOfferHtml(d: OfferPdfData): string {
     <table>
       <tr><td>Position / Designation</td><td>${d.position}</td></tr>
       <tr><td>Department</td><td>${d.department}</td></tr>
-      <tr><td>Annual CTC (Cost to Company)</td><td>₹${d.salary.toLocaleString("en-IN")} per annum</td></tr>
+      <tr><td>${d.salaryType === "per month" ? "Monthly Stipend / Salary" : "Annual CTC (Cost to Company)"}</td><td>₹${d.salary.toLocaleString("en-IN")} ${d.salaryType || "per annum"}</td></tr>
       <tr><td>Date of Joining</td><td>${joiningDateStr}</td></tr>
       <tr><td>Accept Offer By</td><td><strong>${acceptanceDeadlineStr}</strong></td></tr>
       <tr><td>Employment Type</td><td>${d.employmentType || "Full-Time, Permanent"}</td></tr>
