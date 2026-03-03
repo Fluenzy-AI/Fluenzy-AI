@@ -127,7 +127,7 @@ const formatDur = (min: number) => {
 };
 
 /* ─── Radar custom tick wraps two-word labels to two lines ─── */
-function RadarTick({ x, y, payload, textAnchor }: { x?: number; y?: number; payload?: { value: string }; textAnchor?: string }) {
+function RadarTick({ x, y, payload, textAnchor }: { x?: number; y?: number; payload?: { value: string }; textAnchor?: "middle" | "start" | "end" | "inherit" }) {
   const words = (payload?.value ?? "").split(" ");
   return (
     <text x={x} y={y} textAnchor={(textAnchor ?? "middle") as "middle" | "start" | "end"} fill="#cbd5e1" fontSize={11} fontWeight={600}>

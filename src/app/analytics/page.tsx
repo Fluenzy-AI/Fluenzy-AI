@@ -282,7 +282,7 @@ const Heatmap = ({ activity }: { activity: Array<{ date: string; count: number }
 };
 
 // Custom tick for PolarAngleAxis — wraps multi-word labels onto two lines so they never clip
-function RadarCustomTick({ x, y, payload, textAnchor }: { x?: number; y?: number; payload?: { value: string }; textAnchor?: string }) {
+function RadarCustomTick({ x, y, payload, textAnchor }: { x?: number; y?: number; payload?: { value: string }; textAnchor?: "middle" | "start" | "end" | "inherit" }) {
   const words = (payload?.value ?? "").split(" ");
   return (
     <text x={x} y={y} textAnchor={textAnchor ?? "middle"} fill="#e2e8f0" fontSize={13} fontWeight={600}>
