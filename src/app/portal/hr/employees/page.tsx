@@ -11,6 +11,7 @@ const HR_NAV = [
   { label: "Employees", href: "/portal/hr/employees", icon: <UsersIcon /> },
   { label: "Candidates", href: "/portal/hr/candidates", icon: <UserPlusIcon /> },
   { label: "Interviews", href: "/portal/hr/interviews", icon: <CalendarIcon /> },
+  { label: "Manage Jobs", href: "/portal/hr/jobs" },
   { label: "Leave Management", href: "/portal/hr/leaves", icon: <ClockIcon /> },
   { label: "Attendance", href: "/portal/hr/attendance", icon: <CheckSquareIcon /> },
   { label: "Payroll", href: "/portal/hr/payroll", icon: <BanknotesIcon /> },

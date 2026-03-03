@@ -9,6 +9,7 @@ const HR_NAV = [
   { label: "Employees", href: "/portal/hr/employees" },
   { label: "Candidates", href: "/portal/hr/candidates" },
   { label: "Interviews", href: "/portal/hr/interviews" },
+  { label: "Manage Jobs", href: "/portal/hr/jobs" },
   { label: "Job Applications", href: "/portal/hr/job-applications" },
   { label: "Leave Requests", href: "/portal/hr/leaves" },
   { label: "Attendance", href: "/portal/hr/attendance" },
