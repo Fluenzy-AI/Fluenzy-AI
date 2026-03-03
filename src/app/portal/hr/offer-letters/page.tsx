@@ -113,6 +113,7 @@ export default function OfferLettersPage() {
                       <th className="px-4 py-3">Joining Date</th>
                       <th className="px-4 py-3">Status</th>
                       <th className="px-4 py-3">Created</th>
+                      <th className="px-4 py-3">PDF</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
@@ -128,6 +129,16 @@ export default function OfferLettersPage() {
                         <td className="px-4 py-3 text-xs text-slate-400">{new Date(o.joiningDate).toLocaleDateString("en-IN")}</td>
                         <td className="px-4 py-3"><span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[o.status]}`}>{o.status}</span></td>
                         <td className="px-4 py-3 text-xs text-slate-600">{new Date(o.createdAt).toLocaleDateString("en-IN")}</td>
+                        <td className="px-4 py-3">
+                          <a
+                            href={`/api/portal/hr/offer-letters/${o.id}/pdf`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-400 hover:text-indigo-300 rounded-lg transition font-medium"
+                          >
+                            ⬇ PDF
+                          </a>
+                        </td>
                       </tr>
                     ))}
                   </tbody>

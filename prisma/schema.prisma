@@ -1347,6 +1347,17 @@ model FeatureToggle {
   updatedAt   DateTime @updatedAt
 }
 
+// Secure binary assets stored in DB (e.g. founder signature)
+model PortalSecureAsset {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique   // e.g. "founder_signature"
+  mimeType  String              // e.g. "image/jpeg"
+  dataBase64 String            // base64-encoded file contents
+  label     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // Portal Session / Refresh Token store
 model PortalRefreshToken {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
