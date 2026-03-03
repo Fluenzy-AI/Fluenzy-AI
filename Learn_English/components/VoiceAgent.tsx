@@ -208,14 +208,19 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
             })
           }).then(r => r.json());
 
+          // If evaluation returned an error or missing scores, use fallback
+          const hasScores = evaluation.scores && typeof evaluation.scores === 'object' && !evaluation.error;
           evaluatedTranscripts.push({
             aiPrompt: qa.question,
             userAnswer: qa.answer,
             aiFeedback: evaluation.aiFeedback || 'Good response',
             idealAnswer: evaluation.idealAnswer || qa.answer,
-            scores: evaluation.scores,
-            perQuestionScore: evaluation.perQuestionScore
+            scores: hasScores ? evaluation.scores : { clarity: 7, relevance: 7, grammar: 7, confidence: 7, technicalAccuracy: 7 },
+            perQuestionScore: evaluation.perQuestionScore ?? 7
           });
+          if (evaluation.error) {
+            console.warn('[EVALUATE] API returned error, using fallback scores:', evaluation.error);
+          }
         } catch (error) {
           console.error('Evaluation error:', error);
           evaluatedTranscripts.push({

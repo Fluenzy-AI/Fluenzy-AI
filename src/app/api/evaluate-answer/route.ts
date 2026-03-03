@@ -9,8 +9,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Question and answer are required' }, { status: 400 });
     }
 
-    // 1. Environment Variable Check
-    const apiKey = process.env.GEMINI_API_KEY; 
+    // 1. Environment Variable Check (support both GEMINI_API_KEY and NEXT_PUBLIC_GEMINI_API_KEY)
+    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     if (!apiKey) {
       console.error('CRITICAL: GEMINI_API_KEY is missing in .env');
       return NextResponse.json({ error: 'API key configuration error' }, { status: 500 });
