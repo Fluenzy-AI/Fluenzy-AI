@@ -421,65 +421,82 @@ const buildProfessionalAnswerV2 = (
   const eduInst = eduMatch?.[2] || null;
 
   if (questionType === "Greeting") {
-    return `I am doing well, thank you. I am ${userName}${firstExpRole ? `, currently a ${firstExpRole}` : ""}. I am very excited about this opportunity for the ${r} role at ${c} and look forward to our conversation.`;
+    return `I am doing well, thank you. I am ${userName}${firstExpRole ? `, currently working as a ${firstExpRole}` : ""}. I really appreciate the opportunity to interview for this position today.`;
   }
 
   if (questionType === "Introduction" || questionType === "Background summary") {
-    const exp = firstExpRole && firstExpCompany ? `I have experience as a ${firstExpRole} at ${firstExpCompany}${firstExpDesc ? `, where I ${firstExpDesc.charAt(0).toLowerCase() + firstExpDesc.slice(1)}` : ""}.` : "";
-    const edu = eduDegree && eduInst ? ` I hold a ${eduDegree} from ${eduInst}.` : "";
-    const skills = topSkills ? ` My core strengths include ${topSkills}.` : "";
-    return `I am ${userName}.${exp ? " " + exp : ""}${edu}${skills} I am excited to bring this background to the ${r} position at ${c} and contribute to impactful data-driven work.`;
+    const expPart = firstExpRole && firstExpCompany
+      ? `Most recently I worked as a ${firstExpRole} at ${firstExpCompany}${firstExpDesc ? `, where I ${firstExpDesc.charAt(0).toLowerCase() + firstExpDesc.slice(1).replace(/\.$/, "")}` : ""}.`
+      : "";
+    const eduPart = eduDegree && eduInst ? ` I hold a ${eduDegree} from ${eduInst}.` : "";
+    const skillPart = topSkills ? ` My strongest areas are ${topSkills}.` : "";
+    return `I am ${userName}. ${expPart}${eduPart}${skillPart} I am really excited to bring all of this to ${c}.`.trim();
   }
 
   if (questionType === "Technical project" || questionType === "Metrics/performance question") {
     if (projTitle) {
-      const tech = projTech ? ` using ${projTech.split(",").slice(0, 4).map(t => t.trim()).join(", ")}` : "";
-      const desc = projDesc ? ` The goal was to ${projDesc.charAt(0).toLowerCase() + projDesc.slice(1)}.` : "";
-      return `One project I worked on was ${projTitle}${tech}.${desc} I evaluated the solution using accuracy, precision, recall, and F1-score, iterating on feature engineering and model tuning until I achieved measurable improvements over the baseline. This experience directly strengthens my candidacy for the ${r} role at ${c}.`;
+      const tech = projTech ? `, built with ${projTech.split(",").slice(0, 4).map(t => t.trim()).join(", ")}` : "";
+      const desc = projDesc ? ` The core goal was to ${projDesc.charAt(0).toLowerCase() + projDesc.slice(1).replace(/\.$/, "")}.` : "";
+      return `One project I am really proud of is ${projTitle}${tech}.${desc} I measured impact using accuracy, precision, recall, and F1-score, and iterated on the model until I saw consistent improvement. It taught me a lot about building end-to-end ML systems under real constraints.`;
     }
     if (firstExpRole && firstExpCompany) {
-      return `During my time as ${firstExpRole} at ${firstExpCompany}, I worked on machine learning solutions where I defined the problem, built preprocessing pipelines, and evaluated models using accuracy, precision, recall, and F1-score. I iterated on hyperparameter tuning and feature selection to achieve measurable improvements over the baseline. This experience prepared me well for the ${r} role at ${c}.`;
+      return `During my time at ${firstExpCompany} as a ${firstExpRole}, I worked on an ML pipeline where I handled data preprocessing, model selection, and evaluation using accuracy, precision, recall, and F1-score. Each iteration helped me understand what was really driving performance, and I kept refining until the results were solid and production-ready.`;
     }
-    return `In my most impactful project I identified a real-world problem, implemented a machine learning solution, and measured results using accuracy, precision, recall, and F1-score. I improved performance through systematic tuning and delivered a reliable, production-ready model that demonstrated clear business value.`;
+    return `I identified a real-world problem, built a machine learning solution, and evaluated it rigorously using accuracy, precision, recall, and F1-score. I kept iterating on feature engineering and tuning until the model was reliable. Seeing it perform well after all those iterations was genuinely satisfying.`;
   }
 
   if (requiresStarMethodV2(questionType)) {
-    const expContext = firstExpRole && firstExpCompany ? `${firstExpRole} at ${firstExpCompany}` : (projTitle || "my project");
-    return `Situation: While working as ${expContext}, I received feedback that a key feature was underperforming. Task: My goal was to improve it while maintaining the overall system stability. Action: I prioritized the issues, reworked the implementation with additional testing, and incorporated the feedback iteratively. Result: The feature improved significantly, received positive validation, and was merged into the main release.`;
+    const ctx = firstExpRole && firstExpCompany ? `${firstExpRole} at ${firstExpCompany}` : (projTitle || "one of my projects");
+    return `Sure. Situation: While working as ${ctx}, I got feedback that a key feature was underperforming. Task: I needed to fix it without disrupting the rest of the system. Action: I broke it into smaller pieces, tested each fix independently, and incorporated feedback at every stage. Result: It not only fixed the problem but made the whole feature more stable and reliable.`;
   }
 
   if (questionType === "One-word incomplete answer") {
-    const context = topSkills ? `my skills in ${topSkills}` : `my background in ${r}`;
-    return `To elaborate properly: based on ${context}, the approach I would take is to clearly define the task, apply a structured methodology, and measure outcomes against defined success criteria. I believe in delivering results that are both technically sound and aligned with business goals.`;
+    const ctx = topSkills ? `my background in ${topSkills}` : "my experience";
+    return `Let me give a fuller answer. Based on ${ctx}, I would approach this by first understanding the precise requirement, then applying a clear plan with checkpoints to validate the output at each stage. I always make sure results are measurable and tied to a defined goal.`;
   }
 
-  // Follow-up clarification — answer the actual question using profile context
+  // Follow-up — answer the specific question asked
   const q = String(question || "").toLowerCase();
-  if (/why.*interest|reason.*apply|why.*company|why.*google|why.*microsoft|why.*amazon/i.test(q)) {
-    const skillContext = topSkills ? `skills in ${topSkills}` : "technical skills";
-    return `I am genuinely interested in ${c} because of its impact on real-world problems and its engineering culture. My ${skillContext}${firstExpRole ? `, combined with my experience as ${firstExpRole}` : ""}, align well with the ${r} role. I want to contribute to large-scale, meaningful projects that challenge me to grow.`;
+
+  if (/why.*interest|reason.*apply|why.*${c.toLowerCase()}|why.*google|why.*microsoft|why.*amazon/i.test(q) || /why.*this.*company|why.*this.*role/i.test(q)) {
+    const skillCtx = topSkills ? `skills in ${topSkills}` : "technical background";
+    return `Honestly, ${c} is a place where I believe my ${skillCtx} can have real impact at scale. ${firstExpRole ? `As a ${firstExpRole}, I have already worked on systems that serve real users, and I want to take that further.` : ""} I admire how ${c} approaches engineering problems and I want to grow in that environment.`;
   }
+
   if (/strength|best quality|what.*bring|what.*offer/i.test(q)) {
-    const s = topSkills || "problem solving and technical execution";
-    return `My key strengths are ${s}. ${firstExpRole ? `In my role as ${firstExpRole} at ${firstExpCompany}, I applied these consistently to deliver results.` : ""} I combine analytical thinking with strong communication, which allows me to translate complex findings into actionable insights for the team.`;
+    const s = topSkills || "problem-solving and technical execution";
+    return `My strongest areas are ${s}. ${firstExpRole && firstExpCompany ? `At ${firstExpCompany}, I regularly used these to ship features and solve hard problems under tight timelines.` : ""} I also think clearly under pressure and communicate technical ideas well to non-technical stakeholders.`;
   }
+
   if (/weakness|improve|challenge|struggle/i.test(q)) {
-    return `One area I have actively worked on is concise verbal communication under pressure. I identified this gap during mock interview sessions, started practicing structured responses using the STAR method, and have seen measurable improvement in my confidence and clarity during presentations and interviews.`;
+    return `Honestly, I used to rush through explanations when I got excited about a topic. I realized this made it harder for others to follow. So I started practicing the habit of pausing, checking for understanding, and structuring what I say before I say it. It has made a noticeable difference in how I present ideas.`;
   }
-  if (/project|built|developed|created|work/i.test(q)) {
+
+  if (/project|built|developed|created/i.test(q)) {
     if (projTitle) {
-      const tech = projTech ? ` (${projTech.split(",").slice(0, 3).map(t => t.trim()).join(", ")})` : "";
-      return `I built ${projTitle}${tech}, which involved designing the architecture, implementing core features, and testing across different user scenarios. The main challenge was scaling the system reliably while keeping latency low. I solved this by optimizing the backend pipeline and implementing intelligent fallbacks.`;
+      const tech = projTech ? ` using ${projTech.split(",").slice(0, 3).map(t => t.trim()).join(", ")}` : "";
+      return `I built ${projTitle}${tech}. The biggest challenge was making it scale while keeping response times fast. I tackled it by optimizing the backend pipeline and adding fallback logic so users always got a response. Watching it handle real traffic reliably was a great moment.`;
     }
   }
-  if (/experience|background|work|intern|job/i.test(q)) {
+
+  if (/experience|background|intern|job/i.test(q)) {
     if (firstExpRole && firstExpCompany) {
-      return `${firstExpDesc ? `As ${firstExpRole} at ${firstExpCompany}, I ${firstExpDesc.charAt(0).toLowerCase() + firstExpDesc.slice(1)}.` : `I worked as ${firstExpRole} at ${firstExpCompany}.`} This hands-on experience gave me strong exposure to production-level challenges and prepared me well for the ${r} role.`;
+      return `At ${firstExpCompany}, I worked as a ${firstExpRole}. ${firstExpDesc ? `Day to day, I ${firstExpDesc.charAt(0).toLowerCase() + firstExpDesc.slice(1).replace(/\.$/, "")}.` : ""} That environment pushed me to write production-quality code and think about edge cases I never would have caught otherwise.`;
     }
   }
-  // Generic fallback for truly ambiguous follow-ups
-  const base = firstExpRole ? `In my experience as ${firstExpRole}${firstExpCompany ? " at " + firstExpCompany : ""}` : (projTitle ? `While building ${projTitle}` : "In my work");
-  return `${base}, I approached this by clearly defining the goal, applying a structured execution plan, and validating results against measurable criteria. I believe this kind of disciplined approach is exactly what the ${r} role at ${c} requires.`;
+
+  if (/accuracy|model|train|data|ml|machine learn|deep learn|algorithm/i.test(q)) {
+    if (projTitle) {
+      return `For ${projTitle}, I started by training an initial model and checking the accuracy. It was not good enough at first, so I dug into the data, cleaned it more carefully, added better features, and tuned the hyperparameters. After a few rounds of that, the model performance improved significantly and gave consistent results.`;
+    }
+    return `I always start by understanding the data thoroughly before touching the model. Then I build a baseline, evaluate it honestly, and iterate. Each iteration I focus on one thing — whether that is the features, the regularization, or the architecture — so I can understand what is actually helping.`;
+  }
+
+  // Natural follow-up fallback — never mention role + company
+  const base = firstExpRole && firstExpCompany
+    ? `In my work at ${firstExpCompany} as a ${firstExpRole}`
+    : projTitle ? `While building ${projTitle}` : "In my experience";
+  return `${base}, I learned that the best approach is to break the problem down, tackle the highest-impact parts first, and validate as you go. I keep the end goal in mind but stay flexible about the path to get there.`;
 };
 
 const buildHrResponseV2 = (questionType: string, question: string, rawRoman: string, role?: string | null, company?: string | null) => {
@@ -714,18 +731,17 @@ GRAMMAR ERROR RULES (check ALL of these):
 
 BEST PROFESSIONAL ANSWER RULES:
 - Must DIRECTLY answer the EXACT question asked: "${question}"
-- Must be from ${userName}'s perspective applying for ${role || "the role"} at ${company || "the company"}.
-- CRITICAL: Use the CANDIDATE PROFILE data above to make the answer real and specific:
-  * For introductions: use their actual job titles, companies, and years from Experience section.
-  * For technical: mention their actual skills, tools, and real projects by name with tech stack.
-  * For behavioral: use a real situation from their experience or projects.
-  * For certifications/education: reference their actual degree or certificates.
-  * For "why this company": connect their actual background to ${company || "the company"}'s domain.
-- Must NOT be generic. Never say "I am preparing for..." or "I use a structured approach...".
-- Must be 3-5 sentences, confident, professional, ready to impress a real interviewer.
-- If greeting question: reply professionally with name and excitement for the role.
-- If behavioral: use concise STAR format with real project/experience details from profile.
-- This answer should be good enough that memorizing it would help the candidate get the job.
+- Must sound like a REAL human speaking in an interview — natural, confident, not robotic.
+- Use the CANDIDATE PROFILE above to make the answer specific and grounded:
+  * Greeting: confirm you are doing well, say your name, mention current role if available.
+  * Introduction/background: mention actual job title, company, skills, education from profile.
+  * Technical/project: name the actual project, tech stack, what you built and measured.
+  * Behavioral (STAR): use a real experience from the profile as the Situation.
+  * Follow-up: directly continue the conversation thread, answer what was asked.
+- CRITICAL: Do NOT end every answer with "for the [role] role at [company]" — only use role+company where it sounds natural (greeting, intro). Other answers must NOT append this.
+- NEVER say "I use a structured approach", "define the problem, explain the method", "I am preparing for", "aligned with X expectations at Y".
+- Must be 3-5 natural conversational sentences.
+- This is the best possible answer the candidate could give — memorizing it should help them pass the actual interview.
 
 OTHER RULES:
 - Output must be in English only using A-Z letters.
