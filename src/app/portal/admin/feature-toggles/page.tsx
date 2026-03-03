@@ -38,7 +38,7 @@ export default function FeatureTogglesPage() {
   const fetchToggles = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/portal/admin/feature-toggles", { credentials: "include" });
-    if (res.ok) { const d = await res.json(); setToggles(d.featureToggles || d); }
+    if (res.ok) { const d = await res.json(); setToggles(Array.isArray(d.toggles) ? d.toggles : d.featureToggles ?? []); }
     setLoading(false);
   }, []);
 
