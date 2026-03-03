@@ -245,6 +245,9 @@ const heuristicEvaluateAnswer = (question: string, rawAnswer: string, userName: 
   } satisfies ArchiveEvaluation;
 };
 
+// Module-level flag: once quota is hit, skip AI for entire session
+let geminiQuotaExhausted = false;
+
 const evaluateAnswerWithAI = async (
   question: string,
   rawAnswer: string,
@@ -260,7 +263,7 @@ const evaluateAnswerWithAI = async (
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       generationConfig: { responseMimeType: "application/json", temperature: 0.3 },
     });
 
@@ -681,12 +684,12 @@ const evaluateAnswerWithAIV2 = async (
   const rawRoman = toRomanRaw(rawAnswer);
   const fallback = () => heuristicEvaluateAnswerV2(question, rawAnswer, userName, role, company, profileContext);
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return fallback();
+  if (!apiKey || geminiQuotaExhausted) return fallback();
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.0-flash",
       generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
     });
 
@@ -802,8 +805,14 @@ OTHER RULES:
     if (!output.improvementCategory) output.improvementCategory = "Grammar + Structure + Confidence";
     if (!output.performanceTag) output.performanceTag = "Communication Improvement Required";
     return output;
-  } catch (error) {
-    console.error("Per-answer AI evaluation V2 failed, using heuristic fallback:", error);
+  } catch (error: unknown) {
+    const errAny = error as { status?: number };
+    if (errAny?.status === 429) {
+      geminiQuotaExhausted = true;
+      console.warn("Gemini quota exhausted — switching all remaining answers to heuristic fallback.");
+    } else {
+      console.error("Per-answer AI evaluation V2 failed, using heuristic fallback:", error);
+    }
     return fallback();
   }
 };
