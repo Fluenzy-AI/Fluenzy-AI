@@ -1272,6 +1272,12 @@ export async function POST(request: NextRequest) {
             .snapshot-sugg-box { background: #f0fdf4; border-left: 3px solid #16a34a; border-radius: 4px; padding: 8px 10px; }
             .snapshot-sugg-title { font-size: 7pt; font-weight: 800; text-transform: uppercase; color: #15803d; letter-spacing: 0.05em; margin-bottom: 2px; }
             .snapshot-sugg-text { font-size: 8.5pt; color: #14532d; line-height: 1.4; }
+            .posture-guide { margin-top: 10px; border: 2px solid #16a34a; border-radius: 8px; overflow: hidden; }
+            .posture-guide-title { background: #16a34a; color: #fff; font-size: 7.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; padding: 5px 10px; }
+            .posture-guide-body { background: #f0fdf4; padding: 8px; text-align: center; }
+            .posture-guide-body svg { display: block; margin: 0 auto; }
+            .posture-labels { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; justify-content: center; }
+            .posture-label-item { font-size: 7pt; background: #dcfce7; color: #14532d; border: 1px solid #86efac; border-radius: 999px; padding: 2px 7px; font-weight: 700; }
             .recommendations { padding-left: 18px; margin: 8px 0 0; }
             .recommendations li { margin: 6px 0; }
             .page-break { page-break-before: always; }
@@ -1462,6 +1468,77 @@ export async function POST(request: NextRequest) {
                                 <div class="snapshot-sugg-title">Suggested Correction</div>
                                 <div class="snapshot-sugg-text">${suggestion}</div>
                               </div>
+                              ${code === "POOR_POSTURE" ? `
+                              <div class="posture-guide">
+                                <div class="posture-guide-title">✓ Correct Interview Posture Guide</div>
+                                <div class="posture-guide-body">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="260" height="210" viewBox="0 0 260 210">
+                                    <!-- Chair -->
+                                    <rect x="60" y="150" width="110" height="8" rx="3" fill="#6b7280"/>
+                                    <rect x="65" y="158" width="8" height="40" rx="3" fill="#6b7280"/>
+                                    <rect x="157" y="158" width="8" height="40" rx="3" fill="#6b7280"/>
+                                    <rect x="155" y="110" width="10" height="48" rx="3" fill="#9ca3af"/>
+                                    <!-- Desk -->
+                                    <rect x="100" y="118" width="140" height="7" rx="3" fill="#92400e"/>
+                                    <rect x="220" y="125" width="8" height="70" rx="3" fill="#92400e"/>
+                                    <!-- Body - torso straight -->
+                                    <rect x="90" y="95" width="36" height="55" rx="8" fill="#3b82f6"/>
+                                    <!-- Head -->
+                                    <circle cx="108" cy="72" r="22" fill="#fbbf24"/>
+                                    <!-- Eyes forward -->
+                                    <circle cx="101" cy="70" r="3" fill="#1e293b"/>
+                                    <circle cx="115" cy="70" r="3" fill="#1e293b"/>
+                                    <circle cx="102" cy="70" r="1.2" fill="#fff"/>
+                                    <circle cx="116" cy="70" r="1.2" fill="#fff"/>
+                                    <!-- Smile -->
+                                    <path d="M101 79 Q108 85 115 79" stroke="#1e293b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                                    <!-- Neck -->
+                                    <rect x="103" y="92" width="10" height="10" rx="2" fill="#fbbf24"/>
+                                    <!-- Arms on desk -->
+                                    <path d="M90 110 Q75 118 100 122" stroke="#3b82f6" stroke-width="9" fill="none" stroke-linecap="round"/>
+                                    <path d="M126 110 Q150 115 200 120" stroke="#3b82f6" stroke-width="9" fill="none" stroke-linecap="round"/>
+                                    <!-- Legs -->
+                                    <rect x="88" y="148" width="16" height="38" rx="6" fill="#1e293b"/>
+                                    <rect x="112" y="148" width="16" height="38" rx="6" fill="#1e293b"/>
+                                    <!-- Feet flat -->
+                                    <rect x="82" y="183" width="28" height="10" rx="4" fill="#374151"/>
+                                    <rect x="106" y="183" width="28" height="10" rx="4" fill="#374151"/>
+                                    <!-- Spine straight indicator -->
+                                    <line x1="55" y1="95" x2="55" y2="155" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="5,3"/>
+                                    <circle cx="55" cy="93" r="4" fill="#16a34a"/>
+                                    <circle cx="55" cy="157" r="4" fill="#16a34a"/>
+                                    <!-- Label arrows -->
+                                    <line x1="58" y1="70" x2="82" y2="70" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
+                                    <text x="10" y="73" font-size="7" fill="#15803d" font-weight="bold">Head</text>
+                                    <text x="5" y="81" font-size="7" fill="#15803d" font-weight="bold">Level</text>
+                                    <line x1="58" y1="120" x2="86" y2="120" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
+                                    <text x="3" y="118" font-size="7" fill="#15803d" font-weight="bold">Back</text>
+                                    <text x="0" y="126" font-size="7" fill="#15803d" font-weight="bold">Straight</text>
+                                    <line x1="170" y1="130" x2="175" y2="122" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
+                                    <text x="158" y="140" font-size="7" fill="#15803d" font-weight="bold">Arms</text>
+                                    <text x="153" y="148" font-size="7" fill="#15803d" font-weight="bold">On Desk</text>
+                                    <line x1="116" y1="197" x2="116" y2="187" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
+                                    <text x="92" y="208" font-size="7" fill="#15803d" font-weight="bold">Feet Flat</text>
+                                    <!-- Arrow marker -->
+                                    <defs>
+                                      <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                                        <path d="M0,0 L0,6 L6,3 z" fill="#16a34a"/>
+                                      </marker>
+                                    </defs>
+                                    <!-- Green checkmark top right -->
+                                    <circle cx="242" cy="18" r="14" fill="#16a34a"/>
+                                    <path d="M234 18 L240 24 L250 12" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                  </svg>
+                                  <div class="posture-labels">
+                                    <span class="posture-label-item">✓ Spine Straight</span>
+                                    <span class="posture-label-item">✓ Head Level</span>
+                                    <span class="posture-label-item">✓ Eyes Forward</span>
+                                    <span class="posture-label-item">✓ Arms on Desk</span>
+                                    <span class="posture-label-item">✓ Feet Flat</span>
+                                    <span class="posture-label-item">✓ Shoulders Back</span>
+                                  </div>
+                                </div>
+                              </div>` : ''}
                             </div>
                           </div>
                         </div>
