@@ -172,26 +172,130 @@ export default function CareersClient() {
                 </Link>
               </>
             ) : (
-              <>
-                <p className="text-xs text-violet-200 hidden sm:block">
-                  <span className="text-white font-semibold">Candidate Portal:</span> Login or register to track applications, auto-fill forms and manage your profile.
-                </p>
-                <p className="text-xs text-violet-200 sm:hidden font-medium">Track applications &amp; auto-fill forms</p>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Link href="/candidates/login"
-                    className="text-xs font-bold px-4 py-1.5 rounded-full border border-violet-400/50 text-violet-200 hover:text-white hover:border-violet-300 transition-all whitespace-nowrap">
-                    Login
-                  </Link>
-                  <Link href="/candidates/signup"
-                    className="text-xs font-bold px-4 py-1.5 rounded-full bg-white text-violet-900 hover:bg-violet-100 transition-all shadow-md whitespace-nowrap">
-                    Register Free
-                  </Link>
-                </div>
-              </>
+              <p className="text-xs text-violet-200">
+                <span className="text-white font-semibold">Candidate Portal:</span> Login or register to track applications, auto-fill forms and manage your profile.
+              </p>
             )}
           </div>
         </div>
       )}
+
+      {/* ── Open Positions ── */}
+      <section ref={positionsRef} className="py-20 px-4">
+        <div className="max-w-5xl mx-auto">
+          <FadeIn className="text-center mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Open Positions</h2>
+            <p className="text-muted-foreground text-lg">Find your next opportunity and make an impact.</p>
+          </FadeIn>
+
+          {/* Filters */}
+          <FadeIn delay={0.05} className="mb-8">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="relative flex-1">
+                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" /></svg>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search roles..."
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                />
+              </div>
+              <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)} className="bg-white/5 border border-white/10 text-foreground rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+                <option value="All">All Departments</option>
+                {departments.map((d) => <option key={d}>{d}</option>)}
+              </select>
+              <select value={locFilter} onChange={(e) => setLocFilter(e.target.value)} className="bg-white/5 border border-white/10 text-foreground rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+                <option value="All">All Locations</option>
+                <option value="REMOTE">Remote</option>
+                <option value="HYBRID">Hybrid</option>
+                <option value="ONSITE">On-site</option>
+              </select>
+              <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="bg-white/5 border border-white/10 text-foreground rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
+                <option value="All">All Types</option>
+                <option value="FULL_TIME">Full-time</option>
+                <option value="PART_TIME">Part-time</option>
+                <option value="CONTRACT">Contract</option>
+                <option value="INTERNSHIP">Internship</option>
+              </select>
+            </div>
+          </FadeIn>
+
+          {/* Position Count */}
+          {!loading && (
+            <p className="text-sm text-muted-foreground mb-5">
+              {filtered.length === 0 ? "No positions match your filters" : `${filtered.length} open position${filtered.length !== 1 ? "s" : ""}`}
+            </p>
+          )}
+
+          {/* Jobs Grid */}
+          {loading ? (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[...Array(4)].map((_, i) => <JobSkeleton key={i} />)}
+            </div>
+          ) : filtered.length === 0 ? (
+            <FadeIn>
+              <div className="rounded-2xl border border-dashed border-white/10 py-20 text-center">
+                <div className="text-5xl mb-4">🔭</div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">No openings right now</h3>
+                <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
+                  We don't have any open positions matching your filters. Try adjusting your search or check back soon.
+                </p>
+                <button
+                  onClick={() => { setSearch(""); setDeptFilter("All"); setLocFilter("All"); setTypeFilter("All"); }}
+                  className="text-sm text-primary hover:underline"
+                >
+                  Clear filters
+                </button>
+              </div>
+            </FadeIn>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {filtered.map((job, i) => (
+                <FadeIn key={job.id} delay={i * 0.05}>
+                  <div className="group h-full rounded-2xl border border-white/8 bg-card/40 hover:bg-card hover:border-primary/30 p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 flex flex-col">
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div>
+                        <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors leading-tight">{job.title}</h3>
+                        <p className="text-sm text-muted-foreground mt-0.5">{job.department}</p>
+                      </div>
+                      <span className={`shrink-0 text-xs px-2.5 py-1 rounded-full border font-medium ${LOC_COLORS[job.location]}`}>
+                        {LOC_LABELS[job.location]}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      <span className="text-xs bg-white/5 text-muted-foreground border border-white/8 px-2 py-0.5 rounded-full">{TYPE_LABELS[job.employmentType]}</span>
+                      <span className="text-xs bg-white/5 text-muted-foreground border border-white/8 px-2 py-0.5 rounded-full">{job.experienceYears}</span>
+                      {job.salaryRange && <span className="text-xs bg-emerald-500/5 text-emerald-400 border border-emerald-500/15 px-2 py-0.5 rounded-full">{job.salaryRange}</span>}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mb-5">
+                      {job.skills.slice(0, 4).map((s) => (
+                        <span key={s} className="text-xs bg-primary/5 text-primary/80 px-2 py-0.5 rounded-md">{s}</span>
+                      ))}
+                      {job.skills.length > 4 && <span className="text-xs text-muted-foreground">+{job.skills.length - 4}</span>}
+                    </div>
+                    <div className="mt-auto flex items-center gap-3">
+                      <Link
+                        href={`/careers/${job.slug}`}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
+                      >
+                        Apply Now
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+                      </Link>
+                      <button
+                        onClick={() => { if (navigator.share) navigator.share({ title: job.title, url: `${window.location.origin}/careers/${job.slug}` }); else navigator.clipboard.writeText(`${window.location.origin}/careers/${job.slug}`); }}
+                        className="p-2 rounded-xl border border-white/10 bg-white/5 text-muted-foreground hover:text-foreground hover:border-white/20 transition-all"
+                        title="Share"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" /></svg>
+                      </button>
+                    </div>
+                  </div>
+                </FadeIn>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* ── Hero ── */}
       <section className="relative overflow-hidden pt-24 pb-20 px-4">
@@ -339,123 +443,6 @@ export default function CareersClient() {
               <p className="mt-4 text-sm font-semibold text-primary">— Fluenzy AI Leadership</p>
             </div>
           </FadeIn>
-        </div>
-      </section>
-
-      {/* ── Open Positions ── */}
-      <section ref={positionsRef} className="py-20 px-4">
-        <div className="max-w-5xl mx-auto">
-          <FadeIn className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Open Positions</h2>
-            <p className="text-muted-foreground text-lg">Find your next opportunity and make an impact.</p>
-          </FadeIn>
-
-          {/* Filters */}
-          <FadeIn delay={0.05} className="mb-8">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative flex-1">
-                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><circle cx="11" cy="11" r="8" /><path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35" /></svg>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search roles..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                />
-              </div>
-              <select value={deptFilter} onChange={(e) => setDeptFilter(e.target.value)} className="bg-white/5 border border-white/10 text-foreground rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
-                <option value="All">All Departments</option>
-                {departments.map((d) => <option key={d}>{d}</option>)}
-              </select>
-              <select value={locFilter} onChange={(e) => setLocFilter(e.target.value)} className="bg-white/5 border border-white/10 text-foreground rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
-                <option value="All">All Locations</option>
-                <option value="REMOTE">Remote</option>
-                <option value="HYBRID">Hybrid</option>
-                <option value="ONSITE">On-site</option>
-              </select>
-              <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="bg-white/5 border border-white/10 text-foreground rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40">
-                <option value="All">All Types</option>
-                <option value="FULL_TIME">Full-time</option>
-                <option value="PART_TIME">Part-time</option>
-                <option value="CONTRACT">Contract</option>
-                <option value="INTERNSHIP">Internship</option>
-              </select>
-            </div>
-          </FadeIn>
-
-          {/* Position Count */}
-          {!loading && (
-            <p className="text-sm text-muted-foreground mb-5">
-              {filtered.length === 0 ? "No positions match your filters" : `${filtered.length} open position${filtered.length !== 1 ? "s" : ""}`}
-            </p>
-          )}
-
-          {/* Jobs Grid */}
-          {loading ? (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[...Array(4)].map((_, i) => <JobSkeleton key={i} />)}
-            </div>
-          ) : filtered.length === 0 ? (
-            <FadeIn>
-              <div className="rounded-2xl border border-dashed border-white/10 py-20 text-center">
-                <div className="text-5xl mb-4">🔭</div>
-                <h3 className="text-lg font-semibold text-foreground mb-2">No openings right now</h3>
-                <p className="text-muted-foreground text-sm max-w-sm mx-auto mb-6">
-                  We don't have any open positions matching your filters. Try adjusting your search or check back soon.
-                </p>
-                <button
-                  onClick={() => { setSearch(""); setDeptFilter("All"); setLocFilter("All"); setTypeFilter("All"); }}
-                  className="text-sm text-primary hover:underline"
-                >
-                  Clear filters
-                </button>
-              </div>
-            </FadeIn>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {filtered.map((job, i) => (
-                <FadeIn key={job.id} delay={i * 0.05}>
-                  <div className="group h-full rounded-2xl border border-white/8 bg-card/40 hover:bg-card hover:border-primary/30 p-6 transition-all duration-300 hover:shadow-xl hover:shadow-primary/5 hover:-translate-y-0.5 flex flex-col">
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div>
-                        <h3 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors leading-tight">{job.title}</h3>
-                        <p className="text-sm text-muted-foreground mt-0.5">{job.department}</p>
-                      </div>
-                      <span className={`shrink-0 text-xs px-2.5 py-1 rounded-full border font-medium ${LOC_COLORS[job.location]}`}>
-                        {LOC_LABELS[job.location]}
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                      <span className="text-xs bg-white/5 text-muted-foreground border border-white/8 px-2 py-0.5 rounded-full">{TYPE_LABELS[job.employmentType]}</span>
-                      <span className="text-xs bg-white/5 text-muted-foreground border border-white/8 px-2 py-0.5 rounded-full">{job.experienceYears}</span>
-                      {job.salaryRange && <span className="text-xs bg-emerald-500/5 text-emerald-400 border border-emerald-500/15 px-2 py-0.5 rounded-full">{job.salaryRange}</span>}
-                    </div>
-                    <div className="flex flex-wrap gap-1 mb-5">
-                      {job.skills.slice(0, 4).map((s) => (
-                        <span key={s} className="text-xs bg-primary/5 text-primary/80 px-2 py-0.5 rounded-md">{s}</span>
-                      ))}
-                      {job.skills.length > 4 && <span className="text-xs text-muted-foreground">+{job.skills.length - 4}</span>}
-                    </div>
-                    <div className="mt-auto flex items-center gap-3">
-                      <Link
-                        href={`/careers/${job.slug}`}
-                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-all hover:scale-[1.02] active:scale-[0.98]"
-                      >
-                        Apply Now
-                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
-                      </Link>
-                      <button
-                        onClick={() => { if (navigator.share) navigator.share({ title: job.title, url: `${window.location.origin}/careers/${job.slug}` }); else navigator.clipboard.writeText(`${window.location.origin}/careers/${job.slug}`); }}
-                        className="p-2 rounded-xl border border-white/10 bg-white/5 text-muted-foreground hover:text-foreground hover:border-white/20 transition-all"
-                        title="Share"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                </FadeIn>
-              ))}
-            </div>
-          )}
         </div>
       </section>
 
