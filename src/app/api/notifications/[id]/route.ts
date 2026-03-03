@@ -6,8 +6,9 @@ import prisma from "@/lib/prisma";
 // ─── DELETE /api/notifications/[id]  (Superadmin – deletes entire batch) ─────
 export async function DELETE(
   _req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session || (session.user.role as string) !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -15,7 +16,7 @@ export async function DELETE(
 
   // Find the representative notification to get its title + message
   const notif = await prisma.notification.findFirst({
-    where: { id: params.id, sentByRole: "SUPER_ADMIN" },
+    where: { id, sentByRole: "SUPER_ADMIN" },
     select: { title: true, message: true },
   });
 
@@ -34,8 +35,9 @@ export async function DELETE(
 // ─── PATCH /api/notifications/[id]  (Superadmin – edits entire batch) ────────
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const session = await getServerSession(authOptions);
   if (!session || (session.user.role as string) !== "SUPER_ADMIN") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
@@ -50,7 +52,7 @@ export async function PATCH(
 
   // Find original to match the batch
   const notif = await prisma.notification.findFirst({
-    where: { id: params.id, sentByRole: "SUPER_ADMIN" },
+    where: { id, sentByRole: "SUPER_ADMIN" },
     select: { title: true, message: true },
   });
 

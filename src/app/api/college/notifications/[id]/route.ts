@@ -5,13 +5,14 @@ import { getCollegeAdminFromRequest } from "@/lib/collegeAuth";
 // ─── DELETE /api/college/notifications/[id]  (College Admin – deletes batch) ─
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const admin = await getCollegeAdminFromRequest(req);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const notif = await prisma.notification.findFirst({
-    where: { id: params.id, sentBy: admin.id, sentByRole: "COLLEGE_ADMIN" },
+    where: { id, sentBy: admin.id, sentByRole: "COLLEGE_ADMIN" },
     select: { title: true, message: true },
   });
 
@@ -29,8 +30,9 @@ export async function DELETE(
 // ─── PATCH /api/college/notifications/[id]  (College Admin – edits batch) ────
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const admin = await getCollegeAdminFromRequest(req);
   if (!admin) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -42,7 +44,7 @@ export async function PATCH(
   }
 
   const notif = await prisma.notification.findFirst({
-    where: { id: params.id, sentBy: admin.id, sentByRole: "COLLEGE_ADMIN" },
+    where: { id, sentBy: admin.id, sentByRole: "COLLEGE_ADMIN" },
     select: { title: true, message: true },
   });
 
