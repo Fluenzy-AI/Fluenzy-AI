@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
 
         // ── Access guard: AI_Agents is LIMITED; Random/Private are UNLIMITED ──
         const isAiAgentsMode =
-          gdMode === 'AI_Agents' ||
+          (gdMode as string) === 'AI_Agents' ||
           (gdMode as string).toLowerCase().replace(/_/g, '') === 'aiagents';
         if (isAiAgentsMode) {
           const denied = await enforceModuleAccess(user.id, 'gd');
