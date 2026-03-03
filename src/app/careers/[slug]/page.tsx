@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import JobDetailClient from "./JobDetailClient";
+import { prisma } from "@/lib/prisma";
 
 type Props = { params: Promise<{ slug: string }> };
 
 async function getJob(slug: string) {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/careers/jobs/${slug}`, { next: { revalidate: 300 } });
-    if (!res.ok) return null;
-    return (await res.json()).job;
+    const job = await prisma.job.findUnique({
+      where: { slug, isActive: true },
+      include: { _count: { select: { applications: true } } },
+    });
+    return job ?? null;
   } catch {
     return null;
   }
