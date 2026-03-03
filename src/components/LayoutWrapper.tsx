@@ -140,6 +140,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isEmbedded = searchParams.get("embed") === "1" || isEmbeddedFromLocation;
   const isReportPrintMode = pathname.startsWith('/analytics/report') && searchParams.get("print") === "1";
   const hideFooter =
+    !!session?.user ||
     ['/train', '/history', '/features', '/pricing', '/analytics', '/interview-guide'].some(path => pathname.startsWith(path)) ||
     pathname.startsWith('/analytics/report') ||
     isEmbedded;
