@@ -1023,15 +1023,19 @@ export async function POST(request: NextRequest) {
             .section { margin-bottom: 40px; page-break-inside: avoid; }
             .section-title { font-size: 14pt; font-weight: 900; background: #f8fafc; padding: 10px 15px; border-left: 6px solid #0f172a; margin-bottom: 20px; text-transform: uppercase; }
             .subsection-title { font-size: 10.5pt; font-weight: 800; margin: 18px 0 10px 0; text-transform: uppercase; color: #1e293b; }
-            .turn { margin-bottom: 20px; padding: 15px; border-radius: 8px; border: 1px solid #f1f5f9; }
+            .turn { margin-bottom: 24px; padding: 16px; border-radius: 8px; border: 1px solid #e2e8f0; }
             .label { font-size: 7pt; font-weight: 900; text-transform: uppercase; margin-bottom: 5px; display: block; }
             .label.ai { color: #2563eb; }
             .label.user { color: #64748b; }
-            .bubble { padding: 10px; border-radius: 6px; }
+            .person-block { margin-bottom: 12px; }
+            .person-name { font-size: 11pt; font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
+            .person-name.user-name { color: #1e293b; border-left: 4px solid #64748b; padding-left: 8px; }
+            .person-name.hr-name { color: #1d4ed8; border-left: 4px solid #2563eb; padding-left: 8px; }
+            .bubble { padding: 10px 14px; border-radius: 6px; font-size: 10pt; }
             .bubble.ai { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; font-weight: 600; }
-            .bubble.user { background: #f8fafc; color: #334155; }
+            .bubble.user { background: #f8fafc; color: #334155; border: 1px solid #e2e8f0; }
             .bubble.correction { background: #f8fafc; color: #0f172a; border: 1px solid #e2e8f0; }
-            .bubble.best { background: #f0fdf4; color: #14532d; border: 1px solid #86efac; }
+            .bubble.best { background: #f0fdf4; color: #14532d; border: 1px solid #86efac; font-weight: 600; }
             .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 7pt; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 10px; }
             .scores { display: flex; justify-content: space-between; margin-bottom: 20px; }
             .score-item { text-align: center; }
@@ -1083,15 +1087,30 @@ export async function POST(request: NextRequest) {
             ${orderedTranscripts
               .map((t: any, idx: number) => {
                 const evaluation = archiveEvaluations[idx];
+                const candidateName = escapeHtml((user.name || "CANDIDATE").toUpperCase());
+                const hrLabel = escapeHtml("HR " + (sessionData.targetCompany || "INTERVIEWER").toUpperCase());
+                const rawUserAnswer = escapeHtml(String(evaluation.userRawRoman || toRomanRaw(String(t.userAnswer || ""))));
+                const hrText = escapeHtml(String(t.aiPrompt || "(no prompt)"));
+                // If HR aiPrompt is a "come in" welcome response, user knocked/spoke first
+                const userSpokeFirst = /^(please come in|come in|yes come in|do come in|yes please)/i.test(String(t.aiPrompt || "").trim());
+
+                const userBlock = `
+                  <div class="person-block">
+                    <div class="person-name user-name">${candidateName}:</div>
+                    <div class="bubble user">${rawUserAnswer}</div>
+                  </div>`;
+
+                const hrBlock = `
+                  <div class="person-block">
+                    <div class="person-name hr-name">${hrLabel}:</div>
+                    <div class="bubble ai">${hrText}</div>
+                  </div>`;
+
                 return `
               <div class="turn">
-                <div class="tag"><strong>Timestamp:</strong> ${escapeHtml(formatArchiveTimestamp(t.createdAt))}</div>
+                <div class="tag" style="margin-bottom:10px;color:#64748b;font-size:8pt;"><strong>Timestamp:</strong> ${escapeHtml(formatArchiveTimestamp(t.createdAt))}</div>
 
-                <span class="label ai">HR INTERVIEWER QUESTION:</span>
-                <div class="bubble ai">${escapeHtml(String(t.aiPrompt || "—"))}</div>
-
-                <span class="label user" style="margin-top:10px;">USER CAPTURED ANSWER (RAW):</span>
-                <div class="bubble user">"${escapeHtml(String(evaluation.userRawRoman || toRomanRaw(String(t.userAnswer || ""))))}"</div>
+                ${userSpokeFirst ? userBlock + hrBlock : hrBlock + userBlock}
 
                 <div class="analysis-block">
                   <div class="analysis-title">ERROR ANALYSIS</div>
@@ -1103,7 +1122,7 @@ export async function POST(request: NextRequest) {
                 <div class="analysis-block">
                   <div class="analysis-title">AI SUGGESTED BEST PROFESSIONAL ANSWER (Personalized)</div>
                   <div class="bubble best">${escapeHtml(evaluation.bestProfessionalAnswer)}</div>
-                  <div class="tag"><strong>Question Type:</strong> ${escapeHtml(classifyQuestionTypeV2(String(t.aiPrompt || ""), String(t.userAnswer || "")))}</div>
+                  <div class="tag" style="margin-top:8px;"><strong>Question Type:</strong> ${escapeHtml(classifyQuestionTypeV2(String(t.aiPrompt || ""), String(t.userAnswer || "")))}</div>
                   <div class="analysis-title" style="margin-top: 8px;">IMPROVEMENT TAGS</div>
                   <div class="chip-wrap">
                     ${evaluation.issueTypes.map((issue: string) => `<span class="chip">${escapeHtml(issue)}</span>`).join("")}
