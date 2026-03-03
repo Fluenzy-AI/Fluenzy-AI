@@ -1,50 +1,22 @@
-"use client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import { validateModuleAccess } from "@/lib/billing";
+import GDCoachClient from "./GDCoachClient";
 
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import GDCoachDashboard from "../../../../Learn_English/components/GDCoachDashboard";
-import { UserProfile } from "../../../../Learn_English/types";
-import { INITIAL_USER } from "../../../../Learn_English/constants";
-import { useTheme, themeConfig } from "@/contexts/ThemeContext";
-import { useModuleAccess } from "@/hooks/useModuleAccess";
+export default async function GDCoachPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) redirect("/login");
 
-const GDCoachPage = () => {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const { resolvedTheme } = useTheme();
-  const { checking } = useModuleAccess("gdCoach");
-  
-  const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+  const user = await prisma.users.findUnique({
+    where: { email: session!.user!.email! },
+    select: { id: true },
+  });
+  if (!user) redirect("/login");
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/");
-    }
-  }, [status, router]);
+  const access = await validateModuleAccess(user.id, "gdCoach");
+  if (!access.allowed) redirect("/pricing?locked=gdCoach");
 
-  if (status === "loading" || checking) {
-    return <div>Loading...</div>;
-  }
-
-  if (!session?.user) {
-    return null;
-  }
-
-  // Convert NextAuth session to UserProfile
-  const user: UserProfile = {
-    ...INITIAL_USER,
-    id: session.user.email || "u1",
-    name: session.user.name || "User",
-    email: session.user.email || "user@example.com",
-    picture: session.user.image || undefined,
-  };
-
-  return (
-    <div className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-6 md:p-8 lg:p-12 theme-transition`}>
-      <GDCoachDashboard user={user} />
-    </div>
-  );
-};
-
-export default GDCoachPage;
+  return <GDCoachClient />;
+}

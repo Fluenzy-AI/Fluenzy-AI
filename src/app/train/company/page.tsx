@@ -1,30 +1,22 @@
-"use client";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import { validateModuleAccess } from "@/lib/billing";
+import CompanyPageClient from "./CompanyPageClient";
 
-import LearnEnglishWrapper from "@/modules/train/LearnEnglishWrapper";
-import { useTheme, themeConfig } from "@/contexts/ThemeContext";
-import { useEffect, useState } from "react";
-import { useModuleAccess } from "@/hooks/useModuleAccess";
+export default async function CompanyPage() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) redirect("/login");
 
-export default function CompanyPage() {
-  const { resolvedTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-  const { checking } = useModuleAccess("company");
-  
-  const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+  const user = await prisma.users.findUnique({
+    where: { email: session!.user!.email! },
+    select: { id: true },
+  });
+  if (!user) redirect("/login");
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const access = await validateModuleAccess(user.id, "company");
+  if (!access.allowed) redirect("/pricing?locked=company");
 
-  if (!mounted || checking) {
-    return <div className="min-h-screen bg-slate-900" />;
-  }
-
-  return (
-    <div className={`min-h-screen flex flex-col ${currentTheme.background} ${currentTheme.text} theme-transition`}>
-      <div className="flex-1 overflow-auto">
-        <LearnEnglishWrapper mode="company" />
-      </div>
-    </div>
-  );
+  return <CompanyPageClient />;
 }
