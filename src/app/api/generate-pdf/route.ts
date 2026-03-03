@@ -751,7 +751,21 @@ OTHER RULES:
 - Do not force STAR for Greeting/Introduction.
 - Corrected version must be grammar-only correction of the raw answer, nothing else.`;
 
-    const result = await model.generateContent(prompt);
+    let result;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        result = await model.generateContent(prompt);
+        break;
+      } catch (retryErr: unknown) {
+        const errAny = retryErr as { status?: number };
+        if (attempt === 0 && errAny?.status === 429) {
+          await new Promise((res) => setTimeout(res, 16000));
+          continue;
+        }
+        throw retryErr;
+      }
+    }
+    if (!result) throw new Error("No result from Gemini after retry");
     const parsed = JSON.parse(result.response.text().replace(/```json\n?|\n?```/g, "").trim());
     const output: ArchiveEvaluation = {
       userRawRoman: normalizeToEnglishSafe(String(parsed.userRawRoman || rawRoman)),
@@ -1249,14 +1263,14 @@ export async function POST(request: NextRequest) {
             .metric-header { display: flex; justify-content: space-between; gap: 10px; font-weight: 800; }
             .metric-status { font-size: 8pt; letter-spacing: 0.03em; text-transform: uppercase; color: #334155; }
             .metric-note { margin-top: 4px; color: #475569; font-size: 9pt; }
-            .snapshot-card { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 18px; background: #ffffff; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
-            .snapshot-header { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+            .snapshot-card { border: 2px solid #3b82f6; border-radius: 12px; overflow: hidden; margin-bottom: 24px; background: #ffffff; box-shadow: 0 2px 10px rgba(59,130,246,0.15); }
+            .snapshot-header { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 2px solid #3b82f6; background: #eff6ff; }
             .snapshot-badge { border-radius: 999px; padding: 3px 10px; font-size: 8pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
             .snapshot-ts { font-size: 7.5pt; color: #64748b; font-weight: 600; margin-left: auto; }
-            .snapshot-body { display: flex; }
-            .snapshot-img-wrap { flex: 0 0 42%; background: #0f172a; display: flex; align-items: center; justify-content: center; min-height: 160px; }
-            .snapshot-img-wrap img { width: 100%; height: 200px; object-fit: cover; display: block; }
-            .snapshot-analysis { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
+            .snapshot-body { display: flex; flex-direction: column; }
+            .snapshot-img-wrap { width: 100%; border-bottom: 2px solid #3b82f6; background: #000; line-height: 0; }
+            .snapshot-img-wrap img { width: 100%; height: auto; max-height: 320px; object-fit: contain; display: block; }
+            .snapshot-analysis { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
             .snapshot-obs-title { font-size: 7.5pt; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; margin-bottom: 3px; }
             .snapshot-obs-text { font-size: 9pt; color: #1e293b; line-height: 1.55; }
             .snapshot-sugg-box { background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 4px; padding: 8px 10px; }
