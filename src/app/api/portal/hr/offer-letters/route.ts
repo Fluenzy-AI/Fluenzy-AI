@@ -17,8 +17,11 @@ const OfferLetterSchema = z.object({
   department: z.string().min(1),
   salary: z.number().min(0),
   joiningDate: z.string(),
-  content: z.string().min(10),
+  content: z.string().optional(),
   sendEmail: z.boolean().optional().default(false),
+  probationMonths: z.number().optional(),
+  workingHours: z.string().optional(),
+  workDays: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -52,11 +55,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { joiningDate, sendEmail, ...rest } = parsed.data;
+    const { joiningDate, sendEmail, probationMonths, workingHours, workDays, content: rawContent, ...rest } = parsed.data;
+
+    const content = rawContent && rawContent.trim().length >= 10
+      ? rawContent
+      : `<p>Dear Candidate,</p><p>We are pleased to offer you the position of <strong>${rest.position}</strong> in the <strong>${rest.department}</strong> department.</p><p><strong>Annual Salary:</strong> ₹${rest.salary.toLocaleString()}</p><p><strong>Joining Date:</strong> ${new Date(joiningDate).toDateString()}</p>${probationMonths ? `<p><strong>Probation Period:</strong> ${probationMonths} months</p>` : ""}${workingHours ? `<p><strong>Working Hours:</strong> ${workingHours}</p>` : ""}${workDays ? `<p><strong>Working Days:</strong> ${workDays}</p>` : ""}<p>We look forward to having you on our team.</p>`;
 
     const offerLetter = await prisma.offerLetter.create({
       data: {
         ...rest,
+        content,
         joiningDate: new Date(joiningDate),
         issuedBy: decoded.email,
       },
