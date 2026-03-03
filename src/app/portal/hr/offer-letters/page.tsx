@@ -50,7 +50,7 @@ export default function OfferLettersPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState({ candidateId: "", position: "", department: "Engineering", salary: 0, joiningDate: "", acceptanceDeadline: "", sendEmail: true, probationMonths: 3, workingHours: "9:00 AM - 6:00 PM", workDays: "Monday to Friday" });
+  const [form, setForm] = useState({ candidateId: "", position: "", department: "Engineering", salary: 0, joiningDate: "", acceptanceDeadline: "", sendEmail: true, probationMonths: 3, workingHours: "9:00 AM - 6:00 PM", workDays: "Monday to Friday", employmentType: "Full-Time, Permanent", workLocation: "India (Remote / Hybrid)" });
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -219,6 +219,30 @@ export default function OfferLettersPage() {
                 <label className="text-xs text-slate-500 block mb-1">Work Hours</label>
                 <input value={form.workingHours} onChange={e => setForm(f => ({ ...f, workingHours: e.target.value }))}
                   className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">Employment Type</label>
+                  <select value={form.employmentType} onChange={e => setForm(f => ({ ...f, employmentType: e.target.value }))}
+                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
+                    <option>Full-Time, Permanent</option>
+                    <option>Full-Time, Contract</option>
+                    <option>Part-Time</option>
+                    <option>Internship</option>
+                    <option>Freelance</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs text-slate-500 block mb-1">Work Location</label>
+                  <select value={form.workLocation} onChange={e => setForm(f => ({ ...f, workLocation: e.target.value }))}
+                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white">
+                    <option>India (Remote / Hybrid)</option>
+                    <option>India (On-site)</option>
+                    <option>Remote (India)</option>
+                    <option>Remote (Worldwide)</option>
+                    <option>Hybrid</option>
+                  </select>
+                </div>
               </div>
               <div className="flex items-center gap-3 py-1">
                 <input type="checkbox" id="sendEmail" checked={form.sendEmail} onChange={e => setForm(f => ({ ...f, sendEmail: e.target.checked }))} className="rounded" />

@@ -24,6 +24,8 @@ const OfferLetterSchema = z.object({
   probationMonths: z.number().optional(),
   workingHours: z.string().optional(),
   workDays: z.string().optional(),
+  employmentType: z.string().optional(),
+  workLocation: z.string().optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -57,7 +59,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 400 });
     }
 
-    const { joiningDate, acceptanceDeadline, sendEmail, probationMonths, workingHours, workDays, content: rawContent, ...rest } = parsed.data;
+    const { joiningDate, acceptanceDeadline, sendEmail, probationMonths, workingHours, workDays, employmentType, workLocation, content: rawContent, ...rest } = parsed.data;
 
     const content = rawContent && rawContent.trim().length >= 10
       ? rawContent
@@ -69,6 +71,8 @@ export async function POST(req: NextRequest) {
         content,
         joiningDate: new Date(joiningDate),
         acceptanceDeadline: acceptanceDeadline ? new Date(acceptanceDeadline) : null,
+        employmentType: employmentType || "Full-Time, Permanent",
+        workLocation: workLocation || "India (Remote / Hybrid)",
         issuedBy: decoded.email,
       },
       include: {
@@ -100,6 +104,8 @@ export async function POST(req: NextRequest) {
             acceptanceDeadline: acceptanceDeadline ? new Date(acceptanceDeadline) : null,
             createdAt: new Date(offerLetter.createdAt),
             issuedBy: decoded.email,
+            employmentType: employmentType || "Full-Time, Permanent",
+            workLocation: workLocation || "India (Remote / Hybrid)",
             hrName: hrStaff?.name || decoded.name || decoded.email,
             hrDesignation: hrStaff?.role === "ADMIN" ? "HR Manager" : "HR Executive",
             founderSigBase64: founderSigAsset

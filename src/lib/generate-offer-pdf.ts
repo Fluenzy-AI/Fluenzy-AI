@@ -21,6 +21,8 @@ export interface OfferPdfData {
   // HR info
   hrName: string;
   hrDesignation: string;
+  employmentType?: string;
+  workLocation?: string;
   // Signatures
   founderSigBase64: string;  // data:image/... URI fetched from MongoDB
   logoBase64: string;        // data:image/... URI from filesystem
@@ -148,8 +150,9 @@ export function buildOfferHtml(d: OfferPdfData): string {
       <tr><td>Department</td><td>${d.department}</td></tr>
       <tr><td>Annual CTC (Cost to Company)</td><td>₹${d.salary.toLocaleString("en-IN")} per annum</td></tr>
       <tr><td>Date of Joining</td><td>${joiningDateStr}</td></tr>
-      <tr><td>Employment Type</td><td>Full-Time, Permanent</td></tr>
-      <tr><td>Work Location</td><td>India (Remote / Hybrid)</td></tr>
+      <tr><td>Accept Offer By</td><td><strong>${acceptanceDeadlineStr}</strong></td></tr>
+      <tr><td>Employment Type</td><td>${d.employmentType || "Full-Time, Permanent"}</td></tr>
+      <tr><td>Work Location</td><td>${d.workLocation || "India (Remote / Hybrid)"}</td></tr>
     </table>
   </div>
 
