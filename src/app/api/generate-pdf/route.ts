@@ -892,6 +892,162 @@ const normalizeIssueLabel = (code?: string) => {
   return key.replace(/_/g, " ").trim() || "Behavioral Alert";
 };
 
+const getBehaviorGuide = (code: string): string => {
+  const defs = `<defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L0,6 L6,3 z" fill="#16a34a"/></marker></defs>`;
+  const check = `<circle cx="188" cy="16" r="13" fill="#16a34a"/><path d="M181 16 L186 22 L196 10" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+  const guides: Record<string, { title: string; svg: string; labels: string[] }> = {
+    HIGH_STRESS: {
+      title: "✓ Calm & Composed Technique",
+      labels: ["✓ Breathe Deeply", "✓ Slow Exhale", "✓ Relax Jaw", "✓ Drop Shoulders", "✓ Pause 2s Before Answer"],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="170" viewBox="0 0 200 170">${defs}${check}
+        <!-- calm face -->
+        <circle cx="80" cy="80" r="48" fill="#fef9c3" stroke="#16a34a" stroke-width="2"/>
+        <circle cx="65" cy="72" r="6" fill="#1e293b"/><circle cx="95" cy="72" r="6" fill="#1e293b"/>
+        <circle cx="66" cy="71" r="2" fill="#fff"/><circle cx="96" cy="71" r="2" fill="#fff"/>
+        <path d="M65 92 Q80 106 95 92" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <!-- eyebrows relaxed -->
+        <path d="M58 62 Q65 57 72 62" stroke="#92400e" stroke-width="2" fill="none"/>
+        <path d="M88 62 Q95 57 102 62" stroke="#92400e" stroke-width="2" fill="none"/>
+        <!-- breath arrows -->
+        <path d="M138 50 Q160 50 160 80 Q160 110 138 110" stroke="#3b82f6" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+        <text x="162" y="64" font-size="8" fill="#1d4ed8" font-weight="bold">Inhale</text>
+        <text x="161" y="76" font-size="8" fill="#1d4ed8" font-weight="bold">4 sec</text>
+        <text x="162" y="96" font-size="8" fill="#dc2626" font-weight="bold">Exhale</text>
+        <text x="162" y="108" font-size="8" fill="#dc2626" font-weight="bold">6 sec</text>
+        <text x="30" y="148" font-size="9" fill="#15803d" font-weight="bold">Stay Calm. Pause. Then Speak.</text>
+      </svg>`,
+    },
+    LOW_EYE_CONTACT: {
+      title: "✓ Eye Contact Guide",
+      labels: ["✓ Look at Camera", "✓ Not at Screen", "✓ Steady Gaze", "✓ Blink Naturally", "✓ Every 5-7s Glance Away"],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="170" viewBox="0 0 200 170">${defs}${check}
+        <!-- monitor -->
+        <rect x="10" y="30" width="120" height="90" rx="6" fill="#1e293b" stroke="#16a34a" stroke-width="2"/>
+        <rect x="18" y="38" width="104" height="74" rx="3" fill="#0f172a"/>
+        <!-- camera dot -->
+        <circle cx="70" cy="34" r="4" fill="#16a34a"/>
+        <circle cx="70" cy="34" r="2" fill="#fff"/>
+        <!-- arrow from eyes to camera -->
+        <line x1="70" y1="145" x2="70" y2="42" stroke="#16a34a" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr)"/>
+        <!-- face -->
+        <circle cx="70" cy="155" r="14" fill="#fbbf24"/>
+        <circle cx="65" cy="153" r="2.5" fill="#1e293b"/><circle cx="75" cy="153" r="2.5" fill="#1e293b"/>
+        <!-- camera label -->
+        <text x="78" y="37" font-size="8" fill="#16a34a" font-weight="bold">← Camera Here</text>
+        <!-- screen label -->
+        <text x="20" y="80" font-size="9" fill="#94a3b8">Video Call Screen</text>
+        <text x="144" y="70" font-size="8" fill="#dc2626" font-weight="bold">✗ Look</text>
+        <text x="144" y="80" font-size="8" fill="#dc2626" font-weight="bold">here =</text>
+        <text x="144" y="90" font-size="8" fill="#dc2626" font-weight="bold">Bad</text>
+        <text x="144" y="115" font-size="8" fill="#16a34a" font-weight="bold">✓ Dot =</text>
+        <text x="144" y="125" font-size="8" fill="#16a34a" font-weight="bold">Good</text>
+      </svg>`,
+    },
+    POOR_POSTURE: {
+      title: "✓ Correct Interview Posture Guide",
+      labels: ["✓ Spine Straight", "✓ Head Level", "✓ Eyes Forward", "✓ Arms on Desk", "✓ Feet Flat", "✓ Shoulders Back"],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="170" viewBox="0 0 200 170">${defs}${check}
+        <rect x="50" y="118" width="120" height="6" rx="3" fill="#92400e"/><rect x="160" y="124" width="6" height="45" rx="2" fill="#92400e"/>
+        <rect x="48" y="118" width="86" height="6" rx="3" fill="#6b7280"/><rect x="52" y="124" width="6" height="32" rx="2" fill="#6b7280"/><rect x="122" y="124" width="6" height="32" rx="2" fill="#6b7280"/><rect x="120" y="88" width="8" height="38" rx="2" fill="#9ca3af"/>
+        <rect x="70" y="78" width="28" height="42" rx="7" fill="#3b82f6"/>
+        <circle cx="84" cy="60" r="18" fill="#fbbf24"/>
+        <circle cx="78" cy="58" r="2.5" fill="#1e293b"/><circle cx="90" cy="58" r="2.5" fill="#1e293b"/>
+        <circle cx="79" cy="58" r="1" fill="#fff"/><circle cx="91" cy="58" r="1" fill="#fff"/>
+        <path d="M79 67 Q84 72 89 67" stroke="#1e293b" stroke-width="1.5" fill="none"/>
+        <rect x="80" y="76" width="8" height="8" rx="2" fill="#fbbf24"/>
+        <path d="M70 94 Q58 100 78 104" stroke="#3b82f6" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <path d="M98 94 Q118 98 158 102" stroke="#3b82f6" stroke-width="7" fill="none" stroke-linecap="round"/>
+        <rect x="68" y="118" width="12" height="28" rx="5" fill="#1e293b"/><rect x="88" y="118" width="12" height="28" rx="5" fill="#1e293b"/>
+        <rect x="62" y="144" width="22" height="8" rx="3" fill="#374151"/><rect x="84" y="144" width="22" height="8" rx="3" fill="#374151"/>
+        <line x1="42" y1="78" x2="42" y2="124" stroke="#16a34a" stroke-width="2" stroke-dasharray="4,3"/>
+        <circle cx="42" cy="76" r="3" fill="#16a34a"/><circle cx="42" cy="126" r="3" fill="#16a34a"/>
+        <text x="2" y="58" font-size="7" fill="#15803d" font-weight="bold">Head</text><text x="1" y="66" font-size="7" fill="#15803d" font-weight="bold">Level</text>
+        <text x="1" y="100" font-size="7" fill="#15803d" font-weight="bold">Back</text><text x="0" y="108" font-size="7" fill="#15803d" font-weight="bold">Straight</text>
+      </svg>`,
+    },
+    NEGATIVE_EXPRESSION: {
+      title: "✓ Positive Expression Guide",
+      labels: ["✓ Soft Smile", "✓ Relax Forehead", "✓ Open Eyes", "✓ Breathe Calmly", "✓ Nod Gently"],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="170" viewBox="0 0 200 170">${defs}${check}
+        <!-- bad face left -->
+        <circle cx="50" cy="75" r="38" fill="#fee2e2" stroke="#dc2626" stroke-width="2"/>
+        <circle cx="38" cy="68" r="5" fill="#1e293b"/><circle cx="62" cy="68" r="5" fill="#1e293b"/>
+        <path d="M36 60 Q38 55 42 60" stroke="#7f1d1d" stroke-width="1.5" fill="none"/>
+        <path d="M58 60 Q62 55 66 60" stroke="#7f1d1d" stroke-width="1.5" fill="none"/>
+        <path d="M36 86 Q50 78 64 86" stroke="#dc2626" stroke-width="2" fill="none"/>
+        <text x="32" y="122" font-size="9" fill="#dc2626" font-weight="bold">✗ Tense</text>
+        <!-- vs arrow -->
+        <text x="88" y="80" font-size="13" fill="#64748b" font-weight="bold">→</text>
+        <!-- good face right -->
+        <circle cx="148" cy="75" r="38" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+        <circle cx="136" cy="68" r="5" fill="#1e293b"/><circle cx="160" cy="68" r="5" fill="#1e293b"/>
+        <circle cx="137" cy="67" r="2" fill="#fff"/><circle cx="161" cy="67" r="2" fill="#fff"/>
+        <path d="M134 62 Q136 59 140 62" stroke="#92400e" stroke-width="1.5" fill="none"/>
+        <path d="M156 62 Q160 59 164 62" stroke="#92400e" stroke-width="1.5" fill="none"/>
+        <path d="M134 84 Q148 96 162 84" stroke="#16a34a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <text x="128" y="122" font-size="9" fill="#16a34a" font-weight="bold">✓ Calm</text>
+        <text x="30" y="150" font-size="8.5" fill="#15803d" font-weight="bold">Relax your face. A soft smile builds confidence.</text>
+      </svg>`,
+    },
+    LOW_ENGAGEMENT: {
+      title: "✓ Active Engagement Guide",
+      labels: ["✓ Lean Slightly Forward", "✓ Nod Visibly", "✓ Open Expression", "✓ Respond Actively", "✓ Avoid Slouching"],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="170" viewBox="0 0 200 170">${defs}${check}
+        <!-- desk -->
+        <rect x="30" y="108" width="140" height="6" rx="3" fill="#92400e"/>
+        <!-- body leaning forward slightly -->
+        <rect x="76" y="82" width="30" height="30" rx="7" fill="#3b82f6" transform="rotate(-8 90 97)"/>
+        <!-- head nodding slightly -->
+        <circle cx="94" cy="62" r="20" fill="#fbbf24"/>
+        <circle cx="87" cy="60" r="3" fill="#1e293b"/><circle cx="101" cy="60" r="3" fill="#1e293b"/>
+        <circle cx="88" cy="59" r="1.2" fill="#fff"/><circle cx="102" cy="59" r="1.2" fill="#fff"/>
+        <path d="M87 72 Q94 79 101 72" stroke="#16a34a" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- nod arrow -->
+        <path d="M116 48 Q124 56 116 64" stroke="#16a34a" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+        <text x="126" y="54" font-size="8" fill="#15803d" font-weight="bold">Nod</text>
+        <!-- speech bubble -->
+        <rect x="120" y="72" width="68" height="32" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5"/>
+        <polygon points="120,84 108,88 120,92" fill="#eff6ff" stroke="#3b82f6" stroke-width="1"/>
+        <text x="128" y="85" font-size="7.5" fill="#1d4ed8" font-weight="bold">"That's a</text>
+        <text x="128" y="95" font-size="7.5" fill="#1d4ed8" font-weight="bold">great point!"</text>
+        <text x="28" y="148" font-size="8.5" fill="#15803d" font-weight="bold">Show interest. React visibly. Engage fully.</text>
+      </svg>`,
+    },
+    NO_FACE: {
+      title: "✓ Camera Framing Guide",
+      labels: ["✓ Center Your Face", "✓ Full Face Visible", "✓ Good Lighting", "✓ Arm's Length Distance", "✓ Eyes at Camera Level"],
+      svg: `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="170" viewBox="0 0 200 170">${defs}${check}
+        <!-- camera frame -->
+        <rect x="20" y="20" width="160" height="120" rx="8" fill="#0f172a" stroke="#16a34a" stroke-width="3"/>
+        <!-- center crosshair -->
+        <line x1="100" y1="30" x2="100" y2="130" stroke="#16a34a" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>
+        <line x1="30" y1="80" x2="170" y2="80" stroke="#16a34a" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>
+        <!-- face in frame -->
+        <circle cx="100" cy="72" r="34" fill="#fbbf24" stroke="#16a34a" stroke-width="2"/>
+        <circle cx="88" cy="66" r="4.5" fill="#1e293b"/><circle cx="112" cy="66" r="4.5" fill="#1e293b"/>
+        <circle cx="89" cy="65" r="1.5" fill="#fff"/><circle cx="113" cy="65" r="1.5" fill="#fff"/>
+        <path d="M88 82 Q100 92 112 82" stroke="#1e293b" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <!-- corner bracket guides -->
+        <path d="M32 32 L32 44 M32 32 L44 32" stroke="#16a34a" stroke-width="2.5" fill="none"/>
+        <path d="M168 32 L168 44 M168 32 L156 32" stroke="#16a34a" stroke-width="2.5" fill="none"/>
+        <path d="M32 128 L32 116 M32 128 L44 128" stroke="#16a34a" stroke-width="2.5" fill="none"/>
+        <path d="M168 128 L168 116 M168 128 L156 128" stroke="#16a34a" stroke-width="2.5" fill="none"/>
+        <text x="28" y="158" font-size="8.5" fill="#15803d" font-weight="bold">Keep face centered. Ensure good lighting.</text>
+      </svg>`,
+    },
+  };
+
+  const g = guides[code] || guides["NO_FACE"];
+  return `<div class="posture-guide">
+    <div class="posture-guide-title">${g.title}</div>
+    <div class="posture-guide-body">
+      ${g.svg}
+      <div class="posture-labels">${g.labels.map((l) => `<span class="posture-label-item">${l}</span>`).join("")}</div>
+    </div>
+  </div>`;
+};
+
 const analyzeSnapshotWithVision = async (
   imageData: string,
   issueCode: string | undefined,
@@ -1265,13 +1421,13 @@ export async function POST(request: NextRequest) {
             .snapshot-ts { font-size: 7.5pt; color: #64748b; font-weight: 600; margin-left: auto; }
             .snapshot-body { display: flex; flex-direction: column; flex: 1; }
             .snapshot-img-wrap { width: 100%; border-bottom: 3px solid #16a34a; background: #000; line-height: 0; }
-            .snapshot-img-wrap img { width: 100%; height: auto; object-fit: contain; display: block; }
+            .snapshot-img-wrap img { width: 100%; height: auto; max-height: 200px; object-fit: contain; display: block; }
             .snapshot-analysis { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; background: #f8fafc; flex: 1; }
-            .snapshot-obs-title { font-size: 7.5pt; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; margin-bottom: 3px; }
-            .snapshot-obs-text { font-size: 9pt; color: #1e293b; line-height: 1.55; }
+            .snapshot-obs-title { font-size: 9pt; font-weight: 800; text-transform: uppercase; color: #334155; letter-spacing: 0.05em; margin-bottom: 3px; }
+            .snapshot-obs-text { font-size: 10.5pt; color: #1e293b; line-height: 1.6; }
             .snapshot-sugg-box { background: #f0fdf4; border-left: 3px solid #16a34a; border-radius: 4px; padding: 8px 10px; }
-            .snapshot-sugg-title { font-size: 7pt; font-weight: 800; text-transform: uppercase; color: #15803d; letter-spacing: 0.05em; margin-bottom: 2px; }
-            .snapshot-sugg-text { font-size: 8.5pt; color: #14532d; line-height: 1.4; }
+            .snapshot-sugg-title { font-size: 8pt; font-weight: 800; text-transform: uppercase; color: #15803d; letter-spacing: 0.05em; margin-bottom: 2px; }
+            .snapshot-sugg-text { font-size: 10pt; color: #14532d; line-height: 1.5; }
             .posture-guide { margin-top: 10px; border: 2px solid #16a34a; border-radius: 8px; overflow: hidden; }
             .posture-guide-title { background: #16a34a; color: #fff; font-size: 7.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; padding: 5px 10px; }
             .posture-guide-body { background: #f0fdf4; padding: 8px; text-align: center; }
@@ -1468,77 +1624,7 @@ export async function POST(request: NextRequest) {
                                 <div class="snapshot-sugg-title">Suggested Correction</div>
                                 <div class="snapshot-sugg-text">${suggestion}</div>
                               </div>
-                              ${code === "POOR_POSTURE" ? `
-                              <div class="posture-guide">
-                                <div class="posture-guide-title">✓ Correct Interview Posture Guide</div>
-                                <div class="posture-guide-body">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="260" height="210" viewBox="0 0 260 210">
-                                    <!-- Chair -->
-                                    <rect x="60" y="150" width="110" height="8" rx="3" fill="#6b7280"/>
-                                    <rect x="65" y="158" width="8" height="40" rx="3" fill="#6b7280"/>
-                                    <rect x="157" y="158" width="8" height="40" rx="3" fill="#6b7280"/>
-                                    <rect x="155" y="110" width="10" height="48" rx="3" fill="#9ca3af"/>
-                                    <!-- Desk -->
-                                    <rect x="100" y="118" width="140" height="7" rx="3" fill="#92400e"/>
-                                    <rect x="220" y="125" width="8" height="70" rx="3" fill="#92400e"/>
-                                    <!-- Body - torso straight -->
-                                    <rect x="90" y="95" width="36" height="55" rx="8" fill="#3b82f6"/>
-                                    <!-- Head -->
-                                    <circle cx="108" cy="72" r="22" fill="#fbbf24"/>
-                                    <!-- Eyes forward -->
-                                    <circle cx="101" cy="70" r="3" fill="#1e293b"/>
-                                    <circle cx="115" cy="70" r="3" fill="#1e293b"/>
-                                    <circle cx="102" cy="70" r="1.2" fill="#fff"/>
-                                    <circle cx="116" cy="70" r="1.2" fill="#fff"/>
-                                    <!-- Smile -->
-                                    <path d="M101 79 Q108 85 115 79" stroke="#1e293b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-                                    <!-- Neck -->
-                                    <rect x="103" y="92" width="10" height="10" rx="2" fill="#fbbf24"/>
-                                    <!-- Arms on desk -->
-                                    <path d="M90 110 Q75 118 100 122" stroke="#3b82f6" stroke-width="9" fill="none" stroke-linecap="round"/>
-                                    <path d="M126 110 Q150 115 200 120" stroke="#3b82f6" stroke-width="9" fill="none" stroke-linecap="round"/>
-                                    <!-- Legs -->
-                                    <rect x="88" y="148" width="16" height="38" rx="6" fill="#1e293b"/>
-                                    <rect x="112" y="148" width="16" height="38" rx="6" fill="#1e293b"/>
-                                    <!-- Feet flat -->
-                                    <rect x="82" y="183" width="28" height="10" rx="4" fill="#374151"/>
-                                    <rect x="106" y="183" width="28" height="10" rx="4" fill="#374151"/>
-                                    <!-- Spine straight indicator -->
-                                    <line x1="55" y1="95" x2="55" y2="155" stroke="#16a34a" stroke-width="2.5" stroke-dasharray="5,3"/>
-                                    <circle cx="55" cy="93" r="4" fill="#16a34a"/>
-                                    <circle cx="55" cy="157" r="4" fill="#16a34a"/>
-                                    <!-- Label arrows -->
-                                    <line x1="58" y1="70" x2="82" y2="70" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
-                                    <text x="10" y="73" font-size="7" fill="#15803d" font-weight="bold">Head</text>
-                                    <text x="5" y="81" font-size="7" fill="#15803d" font-weight="bold">Level</text>
-                                    <line x1="58" y1="120" x2="86" y2="120" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
-                                    <text x="3" y="118" font-size="7" fill="#15803d" font-weight="bold">Back</text>
-                                    <text x="0" y="126" font-size="7" fill="#15803d" font-weight="bold">Straight</text>
-                                    <line x1="170" y1="130" x2="175" y2="122" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
-                                    <text x="158" y="140" font-size="7" fill="#15803d" font-weight="bold">Arms</text>
-                                    <text x="153" y="148" font-size="7" fill="#15803d" font-weight="bold">On Desk</text>
-                                    <line x1="116" y1="197" x2="116" y2="187" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arr)"/>
-                                    <text x="92" y="208" font-size="7" fill="#15803d" font-weight="bold">Feet Flat</text>
-                                    <!-- Arrow marker -->
-                                    <defs>
-                                      <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-                                        <path d="M0,0 L0,6 L6,3 z" fill="#16a34a"/>
-                                      </marker>
-                                    </defs>
-                                    <!-- Green checkmark top right -->
-                                    <circle cx="242" cy="18" r="14" fill="#16a34a"/>
-                                    <path d="M234 18 L240 24 L250 12" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                                  </svg>
-                                  <div class="posture-labels">
-                                    <span class="posture-label-item">✓ Spine Straight</span>
-                                    <span class="posture-label-item">✓ Head Level</span>
-                                    <span class="posture-label-item">✓ Eyes Forward</span>
-                                    <span class="posture-label-item">✓ Arms on Desk</span>
-                                    <span class="posture-label-item">✓ Feet Flat</span>
-                                    <span class="posture-label-item">✓ Shoulders Back</span>
-                                  </div>
-                                </div>
-                              </div>` : ''}
+                              ${getBehaviorGuide(code)}
                             </div>
                           </div>
                         </div>
