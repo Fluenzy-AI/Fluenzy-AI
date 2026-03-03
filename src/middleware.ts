@@ -28,5 +28,22 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: ["/pro/:path*", "/api/pro/:path*", "/superadmin/:path*", "/api/admin/:path*"],
+  matcher: [
+    "/pro/:path*",
+    "/api/pro/:path*",
+    "/superadmin/:path*",
+    "/api/admin/:path*",
+    // Protect all training/module pages — unauthenticated users are redirected to sign-in
+    "/train/:path*",
+    "/history/:path*",
+    "/profile/:path*",
+    "/billing/:path*",
+    // Protect module API endpoints so they always require a valid session
+    "/api/evaluate-answer/:path*",
+    "/api/gd/:path*",
+    "/api/interview-guide/:path*",
+    "/api/lesson-complete/:path*",
+    "/api/daily-complete/:path*",
+    "/api/check-module-access/:path*",
+  ],
 };

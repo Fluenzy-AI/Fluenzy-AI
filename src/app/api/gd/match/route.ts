@@ -15,6 +15,7 @@ import {
   createPrivateGDSession
 } from '@/lib/gdMatchmaking';
 import { GDDifficulty, GDMode, GDPhase } from '@prisma/client';
+import { enforceModuleAccess } from '@/lib/serverAccessCheck';
 
 export async function POST(request: NextRequest) {
   try {
@@ -81,20 +82,8 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Check GD usage limits
-    const planSettings = await prisma.globalPlanSettings.findFirst({
-      where: { plan: user.plan }
-    });
-
-    const isUnlimited = planSettings?.isUnlimited || false;
-    const monthlyLimit = planSettings?.monthlyLimit || 3;
-    
-    if (!isUnlimited && user.gdUsage >= monthlyLimit) {
-      return NextResponse.json(
-        { error: 'GD usage limit reached. Please upgrade your plan.' },
-        { status: 403 }
-      );
-    }
+    // Check GD usage limits (only for AI_Agents mode – Random/Private are unlimited)
+    // Access validation happens inside each relevant action case below.
 
     switch (action) {
       case 'cleanup': {
@@ -134,6 +123,15 @@ export async function POST(request: NextRequest) {
         const count = Math.min(Math.max(parseInt(participantCount) || 4, 3), 8);
         const diff = (difficulty as GDDifficulty) || 'Medium';
         const gdMode = (mode as GDMode) || 'Random';
+
+        // ── Access guard: AI_Agents is LIMITED; Random/Private are UNLIMITED ──
+        const isAiAgentsMode =
+          gdMode === 'AI_Agents' ||
+          (gdMode as string).toLowerCase().replace(/_/g, '') === 'aiagents';
+        if (isAiAgentsMode) {
+          const denied = await enforceModuleAccess(user.id, 'gd');
+          if (denied) return denied;
+        }
 
         // Check if user already has an active session
         let existingSession = await getUserActiveSession(user.id);

@@ -1,9 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import prisma from '@/lib/prisma';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { enforceModuleAccess } from '@/lib/serverAccessCheck';
 
 export async function POST(request: NextRequest) {
   try {
+    // ── Auth guard ────────────────────────────────────────────────────────
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { email: session.user.email },
+      select: { id: true, disabled: true },
+    });
+
+    if (!user || user.disabled) {
+      return NextResponse.json({ error: 'Account not found or disabled' }, { status: 403 });
+    }
+
     const { question, answer, module, context } = await request.json();
+
+    // ── Session-limit guard ───────────────────────────────────────────────
+    // Only check for modules that consume sessions (free-tier limited modules).
+    // Unlimited modules (vocabulary, latestTopics, corporateVoice) bypass this.
+    if (module) {
+      const denied = await enforceModuleAccess(user.id, module);
+      if (denied) return denied;
+    }
 
     if (!question || !answer) {
       return NextResponse.json({ error: 'Question and answer are required' }, { status: 400 });
