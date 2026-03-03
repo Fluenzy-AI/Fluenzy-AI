@@ -110,7 +110,7 @@ const modules: Module[] = [
     icon: Target,
     color: 'text-purple-400',
     gradient: 'from-purple-500 to-indigo-500',
-    href: '/train/gd',
+    href: '/train/gd-agent',
     badge: 'AI',
     isLocked: false,
     sessions: '-', // Will be updated from API (AI Agents is LIMITED)
