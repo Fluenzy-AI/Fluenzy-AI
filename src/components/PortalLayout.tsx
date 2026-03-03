@@ -8,7 +8,7 @@ import { usePortalAuth } from "@/contexts/PortalAuthContext";
 interface NavItem {
   label: string;
   href: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   badge?: number;
 }
 

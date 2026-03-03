@@ -134,7 +134,7 @@ export async function POST(req: NextRequest) {
     try {
     await prisma.portalAuditLog.create({
       data: {
-        actorEmail: (session.user as { email?: string }).email,
+        actorEmail: (session.user as { email?: string }).email ?? "",
         actorRole: "SUPER_ADMIN",
         action: "CREATE_PORTAL_STAFF",
         entityType: "PortalStaff",

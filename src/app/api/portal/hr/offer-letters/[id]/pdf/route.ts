@@ -53,7 +53,7 @@ export async function GET(
   try {
     const pdfBuffer = await generateOfferPdfBuffer(pdfData);
     const fileName = `OfferLetter_${pdfData.candidateName.replace(/\s+/g, "_")}_${id.slice(-6)}.pdf`;
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

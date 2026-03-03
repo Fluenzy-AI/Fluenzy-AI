@@ -51,7 +51,7 @@ export async function GET(req: NextRequest) {
       prisma.candidate.count({
         where: {
           ...(decoded.role === "HR" ? { hrId: decoded.staffId } : {}),
-          status: "JOINED",
+          status: "ONBOARDED",
           createdAt: thisMonth,
         },
       }),

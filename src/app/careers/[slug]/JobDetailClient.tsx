@@ -527,7 +527,7 @@ export default function JobDetailClient({ job }: { job: Job }) {
                 </div>
                 <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-lg bg-white/5 text-muted-foreground hover:text-foreground hover:bg-white/10 flex items-center justify-center transition-all text-lg leading-none">×</button>
               </div>
-              <ApplicationForm job={job} onClose={() => setShowForm(false)} candidate={candidate} />
+              <ApplicationForm job={job} onClose={() => setShowForm(false)} candidate={candidate ?? null} />
             </motion.div>
           </motion.div>
         )}

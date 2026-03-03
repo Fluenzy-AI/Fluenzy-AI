@@ -83,7 +83,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     await prisma.portalAuditLog.create({
       data: {
-        actorEmail: (session.user as { email?: string }).email,
+        actorEmail: (session.user as { email?: string }).email ?? "",
         actorRole: "SUPER_ADMIN",
         action: "UPDATE_PORTAL_STAFF",
         entityType: "PortalStaff",
@@ -115,7 +115,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     await prisma.portalAuditLog.create({
       data: {
-        actorEmail: (session.user as { email?: string }).email,
+        actorEmail: (session.user as { email?: string }).email ?? "",
         actorRole: "SUPER_ADMIN",
         action: "DELETE_PORTAL_STAFF",
         entityType: "PortalStaff",
