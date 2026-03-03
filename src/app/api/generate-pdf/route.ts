@@ -459,7 +459,8 @@ const heuristicEvaluateAnswerV2 = (
   rawAnswer: string,
   userName: string,
   role?: string | null,
-  company?: string | null
+  company?: string | null,
+  profileContext?: string | null
 ): ArchiveEvaluation => {
   const questionType = classifyQuestionTypeV2(question, rawAnswer);
   const normalized = toRomanRaw(rawAnswer);
@@ -543,14 +544,33 @@ const heuristicEvaluateAnswerV2 = (
   const correctedVersion = isEnglishOnlyText(correctedVersionRaw)
     ? correctedVersionRaw
     : normalizeToEnglishSafe(correctedVersionRaw) || "I would like to answer this clearly.";
-  const bestProfessionalAnswerRaw = buildProfessionalAnswerV2(
-    questionType,
-    question,
-    rawAnswer,
-    userName,
-    role,
-    company
-  );
+  const bestProfessionalAnswerRaw = (() => {
+    const rRole = role || "target role";
+    const rCompany = company || "the company";
+    // If we have profile context, try to extract a relevant snippet
+    if (profileContext) {
+      const pc = profileContext;
+      if (questionType === "Greeting") {
+        return `I am doing well, thank you. I am ${userName} and I am excited about this opportunity for the ${rRole} position at ${rCompany}.`;
+      }
+      if (questionType === "Introduction" || questionType === "Background summary") {
+        // Extract first experience line from profile context
+        const expMatch = pc.match(/Experience:\n(  - .+)/m);
+        const skillsMatch = pc.match(/Skills: (.+)/m);
+        const expLine = expMatch ? expMatch[1].replace(/^  - /, "") : null;
+        const skillLine = skillsMatch ? skillsMatch[1].split(",").slice(0, 3).join(", ") : null;
+        return `I am ${userName}. ${expLine ? `Most recently I served as ${expLine}.` : ""} ${skillLine ? `My core skills include ${skillLine}.` : ""} I am keen to bring this expertise to the ${rRole} role at ${rCompany} and make a measurable impact.`.trim();
+      }
+      if (questionType === "Technical project" || questionType === "Metrics/performance question") {
+        const projMatch = pc.match(/Projects:\n(  - .+)/m);
+        const projLine = projMatch ? projMatch[1].replace(/^  - /, "") : null;
+        if (projLine) {
+          return `One of my key projects was ${projLine}. I defined the problem, built and evaluated the solution using accuracy, precision, recall, and F1-score, and iterated to improve performance. This directly aligns with the responsibilities of the ${rRole} role at ${rCompany}.`;
+        }
+      }
+    }
+    return buildProfessionalAnswerV2(questionType, question, rawAnswer, userName, role, company);
+  })();
   const bestProfessionalAnswer = isEnglishOnlyText(bestProfessionalAnswerRaw)
     ? bestProfessionalAnswerRaw
     : normalizeToEnglishSafe(bestProfessionalAnswerRaw) || "I would like to provide a clear and professional response.";
@@ -603,11 +623,12 @@ const evaluateAnswerWithAIV2 = async (
   rawAnswer: string,
   userName: string,
   role?: string | null,
-  company?: string | null
+  company?: string | null,
+  profileContext?: string | null
 ) => {
   const questionType = classifyQuestionTypeV2(question, rawAnswer);
   const rawRoman = toRomanRaw(rawAnswer);
-  const fallback = () => heuristicEvaluateAnswerV2(question, rawAnswer, userName, role, company);
+  const fallback = () => heuristicEvaluateAnswerV2(question, rawAnswer, userName, role, company, profileContext);
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return fallback();
 
@@ -625,6 +646,7 @@ Candidate: ${userName}
 Target role: ${role || "General Role"}
 Target company: ${company || "General"}
 
+${profileContext ? `=== CANDIDATE PROFILE (USE THIS TO PERSONALIZE THE ANSWER) ===\n${profileContext}\n=== END PROFILE ===\n` : ""}
 INTERVIEWER QUESTION: ${question}
 CANDIDATE RAW ANSWER (Roman script): ${rawRoman}
 
@@ -659,11 +681,17 @@ GRAMMAR ERROR RULES (check ALL of these):
 BEST PROFESSIONAL ANSWER RULES:
 - Must DIRECTLY answer the EXACT question asked: "${question}"
 - Must be from ${userName}'s perspective applying for ${role || "the role"} at ${company || "the company"}.
-- Must NOT be generic. Must NOT say "I am preparing for..." or "I use a structured approach..." generically.
-- Must be 2-4 sentences, confident, professional, interview-ready.
-- If the answer is a greeting, reply warmly and professionally.
-- If the answer is about a project, mention a relevant technical project.
-- If behavioral, use STAR format briefly.
+- CRITICAL: Use the CANDIDATE PROFILE data above to make the answer real and specific:
+  * For introductions: use their actual job titles, companies, and years from Experience section.
+  * For technical: mention their actual skills, tools, and real projects by name with tech stack.
+  * For behavioral: use a real situation from their experience or projects.
+  * For certifications/education: reference their actual degree or certificates.
+  * For "why this company": connect their actual background to ${company || "the company"}'s domain.
+- Must NOT be generic. Never say "I am preparing for..." or "I use a structured approach...".
+- Must be 3-5 sentences, confident, professional, ready to impress a real interviewer.
+- If greeting question: reply professionally with name and excitement for the role.
+- If behavioral: use concise STAR format with real project/experience details from profile.
+- This answer should be good enough that memorizing it would help the candidate get the job.
 
 OTHER RULES:
 - Output must be in English only using A-Z letters.
@@ -997,6 +1025,77 @@ export async function POST(request: NextRequest) {
       (a: any, b: any) =>
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() || (a.turnNumber || 0) - (b.turnNumber || 0)
     );
+    // ── Fetch user profile with all sections ──────────────────────────────
+    const userProfile = await (prisma as any).userProfile.findUnique({
+      where: { userId: user.id },
+      include: {
+        skills: true,
+        experiences: true,
+        educations: true,
+        certifications: true,
+        projects: true,
+        courses: true,
+        languages: true,
+      },
+    });
+
+    // ── Fetch last 5 session scores for history context ─────────────────────
+    const recentSessions = await (prisma as any).session.findMany({
+      where: { userId: user.id, aggregateScore: { not: null } },
+      orderBy: { startTime: "desc" },
+      take: 5,
+      select: { targetCompany: true, role: true, aggregateScore: true, startTime: true },
+    });
+
+    // ── Build compact profile context string ────────────────────────────────
+    const buildProfileContext = () => {
+      const lines: string[] = [];
+      if (user.name) lines.push(`Name: ${user.name}`);
+      if (userProfile?.headline) lines.push(`Headline: ${userProfile.headline}`);
+      if (userProfile?.bio) lines.push(`Bio: ${userProfile.bio}`);
+
+      if (userProfile?.skills?.length) {
+        lines.push(`Skills: ${userProfile.skills.map((s: any) => `${s.name} (${s.level})`).join(", ")}`);
+      }
+      if (userProfile?.languages?.length) {
+        lines.push(`Languages: ${userProfile.languages.map((l: any) => `${l.name} (${l.proficiency})`).join(", ")}`);
+      }
+      if (userProfile?.experiences?.length) {
+        lines.push(`Experience:`);
+        userProfile.experiences.slice(0, 4).forEach((e: any) => {
+          const period = `${new Date(e.startDate).getFullYear()} – ${e.endDate ? new Date(e.endDate).getFullYear() : "Present"}`;
+          lines.push(`  - ${e.role} at ${e.company} (${period})${e.description ? ": " + String(e.description).slice(0, 120) : ""}`);
+        });
+      }
+      if (userProfile?.educations?.length) {
+        lines.push(`Education:`);
+        userProfile.educations.slice(0, 3).forEach((ed: any) => {
+          lines.push(`  - ${ed.degree} at ${ed.institution} (${ed.startYear} – ${ed.endYear || "Present"})${ed.grade ? ", Grade: " + ed.grade : ""}`);
+        });
+      }
+      if (userProfile?.projects?.length) {
+        lines.push(`Projects:`);
+        userProfile.projects.slice(0, 4).forEach((p: any) => {
+          lines.push(`  - ${p.title}${p.techStack ? " [Tech: " + p.techStack + "]" : ""}${p.description ? ": " + String(p.description).slice(0, 100) : ""}`);
+        });
+      }
+      if (userProfile?.certifications?.length) {
+        lines.push(`Certifications: ${userProfile.certifications.map((c: any) => `${c.name} by ${c.issuer}`).join("; ")}`);
+      }
+      if (userProfile?.courses?.length) {
+        lines.push(`Courses: ${userProfile.courses.map((c: any) => `${c.name} (${c.platform})`).join("; ")}`);
+      }
+      if (recentSessions?.length) {
+        lines.push(`Recent interview history (last ${recentSessions.length} sessions):`);
+        recentSessions.forEach((s: any) => {
+          const sc = Math.round((s.aggregateScore || 0) * 100);
+          lines.push(`  - ${s.role || "Role"} at ${s.targetCompany || "General"}: ${sc}% (${new Date(s.startTime).toLocaleDateString()})`);
+        });
+      }
+      return lines.join("\n");
+    };
+    const profileContext = buildProfileContext();
+
     const archiveEvaluations = await Promise.all(
       orderedTranscripts.map((turn: any) =>
         evaluateAnswerWithAIV2(
@@ -1004,7 +1103,8 @@ export async function POST(request: NextRequest) {
           turn.userAnswer,
           user.name || "Candidate",
           sessionData.role,
-          sessionData.targetCompany
+          sessionData.targetCompany,
+          profileContext
         )
       )
     );
