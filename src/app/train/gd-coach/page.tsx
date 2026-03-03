@@ -16,7 +16,7 @@ export default async function GDCoachPage() {
   if (!user) redirect("/login");
 
   const access = await validateModuleAccess(user.id, "gdCoach");
-  if (!access.allowed) redirect("/pricing?locked=gdCoach");
+  if (!access.allowed) redirect("/billing?locked=gdCoach");
 
   return <GDCoachClient />;
 }

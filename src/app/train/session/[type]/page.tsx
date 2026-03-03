@@ -48,7 +48,7 @@ export default async function SessionPage({
         : undefined;
 
     const access = await validateModuleAccess(user.id, moduleKey as any, subFeature);
-    if (!access.allowed) redirect(`/pricing?locked=${moduleKey}`);
+    if (!access.allowed) redirect(`/billing?locked=${moduleKey}`);
   }
 
   return (

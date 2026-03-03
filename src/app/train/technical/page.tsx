@@ -16,7 +16,7 @@ export default async function TechnicalPage() {
   if (!user) redirect("/login");
 
   const access = await validateModuleAccess(user.id, "technical");
-  if (!access.allowed) redirect("/pricing?locked=technical");
+  if (!access.allowed) redirect("/billing?locked=technical");
 
   return <TechnicalPageClient />;
 }

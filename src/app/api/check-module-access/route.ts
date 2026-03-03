@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       allowed: access.allowed,
       remaining: access.remaining ?? null,
       plan: access.plan,
-      upgradeUrl: "/pricing",
+      upgradeUrl: "/billing",
     });
   } catch (err) {
     console.error("[check-module-access] Error:", err);

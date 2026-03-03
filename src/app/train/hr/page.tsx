@@ -16,7 +16,7 @@ export default async function HRPage() {
   if (!user) redirect("/login");
 
   const access = await validateModuleAccess(user.id, "hr");
-  if (!access.allowed) redirect("/pricing?locked=hr");
+  if (!access.allowed) redirect("/billing?locked=hr");
 
   return <HRPageClient />;
 }

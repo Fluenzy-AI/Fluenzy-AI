@@ -16,7 +16,7 @@ export default async function EnglishPage() {
   if (!user) redirect("/login");
 
   const access = await validateModuleAccess(user.id, "english");
-  if (!access.allowed) redirect("/pricing?locked=english");
+  if (!access.allowed) redirect("/billing?locked=english");
 
   return <EnglishPageClient />;
 }

@@ -85,7 +85,7 @@ export async function enforceModuleAccess(
             : `You have used all your ${billingKey} sessions for this billing cycle. Please upgrade your plan.`,
         remaining: 0,
         plan: access.plan,
-        upgradeUrl: "/pricing",
+        upgradeUrl: "/billing",
       },
       { status: 403 }
     );

@@ -16,7 +16,7 @@ export default async function CompanyPage() {
   if (!user) redirect("/login");
 
   const access = await validateModuleAccess(user.id, "company");
-  if (!access.allowed) redirect("/pricing?locked=company");
+  if (!access.allowed) redirect("/billing?locked=company");
 
   return <CompanyPageClient />;
 }

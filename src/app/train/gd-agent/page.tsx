@@ -16,7 +16,7 @@ export default async function GDAgentPage() {
   if (!user) redirect("/login");
 
   const access = await validateModuleAccess(user.id, "gd", "gd_ai_agents");
-  if (!access.allowed) redirect("/pricing?locked=gd");
+  if (!access.allowed) redirect("/billing?locked=gd");
 
   return <GDAgentClient />;
 }

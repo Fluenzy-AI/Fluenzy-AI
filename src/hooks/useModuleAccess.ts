@@ -41,7 +41,7 @@ export function useModuleAccess(module: string, subFeature?: string) {
         const data = await res.json();
 
         if (!data.allowed) {
-          router.replace(`/pricing?locked=${encodeURIComponent(module)}`);
+          router.replace(`/billing?locked=${encodeURIComponent(module)}`);
           return;
         }
       } catch (err) {
