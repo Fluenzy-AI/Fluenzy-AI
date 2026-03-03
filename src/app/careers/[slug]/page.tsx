@@ -37,5 +37,23 @@ export default async function JobDetailPage({ params }: Props) {
   const { slug } = await params;
   const job = await getJob(slug);
   if (!job) notFound();
-  return <JobDetailClient job={{ ...job, salaryRange: job.salaryRange ?? undefined }} />;
+  return (
+    <JobDetailClient
+      job={{
+        id: job.id,
+        title: job.title,
+        slug: job.slug,
+        department: job.department,
+        location: job.location as string,
+        employmentType: job.employmentType as string,
+        description: job.description,
+        requirements: job.requirements,
+        responsibilities: job.responsibilities,
+        skills: job.skills,
+        experienceYears: job.experienceYears,
+        salaryRange: job.salaryRange ?? undefined,
+        createdAt: job.createdAt.toISOString(),
+      }}
+    />
+  );
 }
