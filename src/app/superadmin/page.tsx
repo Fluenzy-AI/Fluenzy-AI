@@ -366,7 +366,7 @@ export default function SuperAdminDashboard() {
       if (res.ok) {
         setShowCreatePortalStaff(false);
         setEditingPortalStaff(null);
-        setPortalStaffForm({ name: '', email: '', password: '', role: 'HR', department: '', designation: '' });
+        setPortalStaffForm({ name: '', email: '', password: '', role: 'HR', department: '', phone: '' });
         fetchPortalStaff();
       } else {
         const d = await res.json();
