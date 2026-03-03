@@ -149,6 +149,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
   const isSuperAdminPage = pathname.startsWith('/superadmin');
   const isCollegePage = pathname.startsWith('/college');
+  const isPortalPage = pathname.startsWith('/portal');
 
   // ── Super Admin: completely separate clean layout ──────────────────────────
   if (isSuperAdminPage) {
@@ -268,6 +269,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   // ── College Portal: completely separate layout (no main-site nav) ──────────
   if (isCollegePage) {
+    return <>{children}</>;
+  }
+  // ────────────────────────────────────────────────────────────────────────────
+
+  // ── HR / Admin Portal: completely separate layout (no main-site nav) ───────
+  if (isPortalPage) {
     return <>{children}</>;
   }
   // ────────────────────────────────────────────────────────────────────────────

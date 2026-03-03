@@ -13,6 +13,76 @@ enum Role {
   Modaretor
   SUPER_ADMIN
   COLLEGE_ADMIN
+  PORTAL_ADMIN
+  PORTAL_HR
+}
+
+// ─── Portal Staff Role ────────────────────────────────────────────────────
+enum PortalRole {
+  ADMIN
+  HR
+}
+
+enum PortalStaffStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  LOCKED
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+enum CandidateStatus {
+  APPLIED
+  SCREENING
+  INTERVIEW_SCHEDULED
+  INTERVIEWED
+  OFFERED
+  JOINED
+  REJECTED
+  WITHDRAWN
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum LeaveType {
+  CASUAL
+  SICK
+  EARNED
+  MATERNITY
+  PATERNITY
+  UNPAID
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum PortalEmailStatus {
+  PENDING
+  SENT
+  FAILED
+  RETRYING
 }
 
 enum CollegeAdminStatus {
@@ -977,4 +1047,315 @@ model EmailLog {
 
   @@index([createdAt])
   @@index([sentBy])
+}
+
+// ==================== HR & ADMIN PORTAL SYSTEM ====================
+
+// Portal Staff: Admin & HR users managed by Super Admin
+model PortalStaff {
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  email             String            @unique
+  password          String            // bcrypt hashed
+  role              PortalRole
+  status            PortalStaffStatus @default(ACTIVE)
+  department        String?
+  phone             String?
+  avatar            String?
+
+  // Login security
+  loginAttempts     Int               @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  lastLoginIp       String?
+
+  // Permissions (granular overrides)
+  permissions       Json?             // e.g. {"canDeleteEmployee":true,"canApproveLeave":true}
+
+  // Tokens
+  refreshToken      String?
+  passwordResetToken  String?
+  passwordResetExpiry DateTime?
+
+  // Created by Super Admin
+  createdBy         String?           @db.ObjectId
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  // Relations
+  employees         Employee[]        @relation("HRAssigned")
+  auditLogs         PortalAuditLog[]
+  portalEmails      PortalEmailLog[]
+
+  @@index([role, status])
+}
+
+// Audit Log for every action in portal
+model PortalAuditLog {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  staffId     String?  @db.ObjectId
+  staff       PortalStaff? @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  actorEmail  String
+  actorRole   String
+  action      String   // e.g. "CREATE_EMPLOYEE", "APPROVE_LEAVE", "DELETE_HR"
+  entityType  String?  // e.g. "Employee", "Candidate", "PortalStaff"
+  entityId    String?
+  metadata    Json?    // before/after snapshot or extra info
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([actorEmail])
+  @@index([action])
+  @@index([createdAt])
+}
+
+// Email templates
+model EmailTemplate {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  subject     String
+  htmlBody    String
+  textBody    String?
+  variables   String[] // list of template variable names e.g. ["{{name}}","{{date}}"]
+  type        String   // "HR" | "ADMIN" | "SYSTEM"
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Portal-specific email log (separate from main EmailLog)
+model PortalEmailLog {
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  staffId      String?           @db.ObjectId
+  staff        PortalStaff?      @relation(fields: [staffId], references: [id], onDelete: SetNull)
+  senderEmail  String
+  senderRole   String            // "ADMIN" | "HR" | "SUPER_ADMIN"
+  recipientEmail String
+  subject      String
+  body         String
+  templateId   String?           @db.ObjectId
+  attachments  Json?             // array of {name, url}
+  status       PortalEmailStatus @default(PENDING)
+  errorMsg     String?
+  retryCount   Int               @default(0)
+  sentAt       DateTime?
+  createdAt    DateTime          @default(now())
+
+  @@index([senderEmail])
+  @@index([recipientEmail])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Employee (managed by HR)
+model Employee {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  employeeCode    String          @unique
+  name            String
+  email           String          @unique
+  phone           String?
+  department      String
+  designation     String
+  joinDate        DateTime
+  salary          Float?
+  status          EmployeeStatus  @default(ACTIVE)
+
+  // Linked HR
+  hrId            String?         @db.ObjectId
+  hr              PortalStaff?    @relation("HRAssigned", fields: [hrId], references: [id], onDelete: SetNull)
+
+  address         String?
+  emergencyContact String?
+  avatar          String?
+  resumeUrl       String?
+  documents       Json?           // array of {name, url, type}
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  leaveRequests   LeaveRequest[]
+  attendances     Attendance[]
+  payrollRecords  PayrollRecord[]
+  offerLetters    OfferLetter[]
+
+  @@index([hrId, status])
+  @@index([department])
+}
+
+// Candidate (job applicants managed by HR)
+model Candidate {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String
+  phone           String?
+  position        String
+  department      String?
+  status          CandidateStatus @default(APPLIED)
+
+  // Resume & documents
+  resumeUrl       String?
+  documents       Json?
+
+  // Interview details
+  interviewDate   DateTime?
+  interviewNotes  String?
+  interviewerName String?
+
+  // HR assigned
+  hrId            String?         @db.ObjectId
+  source          String?         // LinkedIn, Referral, Job Portal, etc.
+  expectedSalary  Float?
+  currentSalary   Float?
+  experience      Int?            // years
+  skills          String[]
+
+  offerLetters    OfferLetter[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([status])
+  @@index([hrId])
+}
+
+// Offer Letter generated for candidates or employees
+model OfferLetter {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  candidateId     String?     @db.ObjectId
+  candidate       Candidate?  @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  employeeId      String?     @db.ObjectId
+  employee        Employee?   @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  position        String
+  department      String
+  salary          Float
+  joiningDate     DateTime
+  content         String      // HTML content of offer letter
+  pdfUrl          String?
+
+  issuedBy        String      // HR email
+  acceptedAt      DateTime?
+  status          String      @default("DRAFT") // DRAFT | SENT | ACCEPTED | REJECTED
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+}
+
+// Leave Request
+model LeaveRequest {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId      String      @db.ObjectId
+  employee        Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  type            LeaveType
+  startDate       DateTime
+  endDate         DateTime
+  days            Int
+  reason          String
+  status          LeaveStatus @default(PENDING)
+
+  approvedBy      String?     // HR/Admin email
+  approvedAt      DateTime?
+  rejectionReason String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@index([employeeId, status])
+  @@index([startDate, endDate])
+}
+
+// Attendance
+model Attendance {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId      String      @db.ObjectId
+  employee        Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  date            DateTime
+  checkIn         DateTime?
+  checkOut        DateTime?
+  hoursWorked     Float?
+  status          String      @default("PRESENT") // PRESENT | ABSENT | HALF_DAY | ON_LEAVE
+  notes           String?
+
+  markedBy        String?     // HR email
+
+  createdAt       DateTime    @default(now())
+
+  @@unique([employeeId, date])
+  @@index([employeeId])
+  @@index([date])
+}
+
+// Payroll
+model PayrollRecord {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  employeeId      String      @db.ObjectId
+  employee        Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  month           Int         // 1-12
+  year            Int
+  basicSalary     Float
+  allowances      Float       @default(0)
+  deductions      Float       @default(0)
+  netSalary       Float
+  status          String      @default("PENDING") // PENDING | PROCESSED | PAID
+  paymentDate     DateTime?
+  notes           String?
+
+  processedBy     String?     // HR email
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([employeeId, month, year])
+  @@index([employeeId])
+}
+
+// Support Ticket (managed by Admin)
+model SupportTicket {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  ticketNumber    String          @unique
+  title           String
+  description     String
+  submittedBy     String          // user email or staff email
+  submittedByRole String          // user, hr, admin
+  assignedTo      String?         // admin email
+  status          TicketStatus    @default(OPEN)
+  priority        TicketPriority  @default(MEDIUM)
+  category        String?         // billing, technical, general, hr
+  resolution      String?
+  attachments     Json?
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([status, priority])
+  @@index([submittedBy])
+}
+
+// Feature Toggle (managed by Admin)
+model FeatureToggle {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  key         String   @unique
+  label       String
+  description String?
+  enabled     Boolean  @default(false)
+  updatedBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Portal Session / Refresh Token store
+model PortalRefreshToken {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  staffId     String   @db.ObjectId
+  token       String   @unique
+  expiresAt   DateTime
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([staffId])
+  @@index([expiresAt])
 }
