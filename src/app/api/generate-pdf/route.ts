@@ -751,21 +751,7 @@ OTHER RULES:
 - Do not force STAR for Greeting/Introduction.
 - Corrected version must be grammar-only correction of the raw answer, nothing else.`;
 
-    let result;
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        result = await model.generateContent(prompt);
-        break;
-      } catch (retryErr: unknown) {
-        const errAny = retryErr as { status?: number };
-        if (attempt === 0 && errAny?.status === 429) {
-          await new Promise((res) => setTimeout(res, 16000));
-          continue;
-        }
-        throw retryErr;
-      }
-    }
-    if (!result) throw new Error("No result from Gemini after retry");
+    const result = await model.generateContent(prompt);
     const parsed = JSON.parse(result.response.text().replace(/```json\n?|\n?```/g, "").trim());
     const output: ArchiveEvaluation = {
       userRawRoman: normalizeToEnglishSafe(String(parsed.userRawRoman || rawRoman)),
@@ -1263,19 +1249,20 @@ export async function POST(request: NextRequest) {
             .metric-header { display: flex; justify-content: space-between; gap: 10px; font-weight: 800; }
             .metric-status { font-size: 8pt; letter-spacing: 0.03em; text-transform: uppercase; color: #334155; }
             .metric-note { margin-top: 4px; color: #475569; font-size: 9pt; }
-            .snapshot-card { border: 2px solid #3b82f6; border-radius: 12px; overflow: hidden; margin-bottom: 24px; background: #ffffff; box-shadow: 0 2px 10px rgba(59,130,246,0.15); }
-            .snapshot-header { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 2px solid #3b82f6; background: #eff6ff; }
+            .snapshot-grid { display: flex; flex-wrap: wrap; gap: 18px; }
+            .snapshot-card { border: 3px solid #16a34a; border-radius: 12px; overflow: hidden; background: #ffffff; box-shadow: 0 3px 14px rgba(22,163,74,0.18); width: calc(50% - 9px); box-sizing: border-box; display: flex; flex-direction: column; }
+            .snapshot-header { display: flex; align-items: center; gap: 10px; padding: 9px 14px; border-bottom: 3px solid #16a34a; background: #f0fdf4; }
             .snapshot-badge { border-radius: 999px; padding: 3px 10px; font-size: 8pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
             .snapshot-ts { font-size: 7.5pt; color: #64748b; font-weight: 600; margin-left: auto; }
-            .snapshot-body { display: flex; flex-direction: column; }
-            .snapshot-img-wrap { width: 100%; border-bottom: 2px solid #3b82f6; background: #000; line-height: 0; }
-            .snapshot-img-wrap img { width: 100%; height: auto; max-height: 320px; object-fit: contain; display: block; }
-            .snapshot-analysis { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
+            .snapshot-body { display: flex; flex-direction: column; flex: 1; }
+            .snapshot-img-wrap { width: 100%; border-bottom: 3px solid #16a34a; background: #000; line-height: 0; }
+            .snapshot-img-wrap img { width: 100%; height: auto; object-fit: contain; display: block; }
+            .snapshot-analysis { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; background: #f8fafc; flex: 1; }
             .snapshot-obs-title { font-size: 7.5pt; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; margin-bottom: 3px; }
             .snapshot-obs-text { font-size: 9pt; color: #1e293b; line-height: 1.55; }
-            .snapshot-sugg-box { background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 4px; padding: 8px 10px; }
-            .snapshot-sugg-title { font-size: 7pt; font-weight: 800; text-transform: uppercase; color: #1d4ed8; letter-spacing: 0.05em; margin-bottom: 2px; }
-            .snapshot-sugg-text { font-size: 8.5pt; color: #1e3a8a; line-height: 1.4; }
+            .snapshot-sugg-box { background: #f0fdf4; border-left: 3px solid #16a34a; border-radius: 4px; padding: 8px 10px; }
+            .snapshot-sugg-title { font-size: 7pt; font-weight: 800; text-transform: uppercase; color: #15803d; letter-spacing: 0.05em; margin-bottom: 2px; }
+            .snapshot-sugg-text { font-size: 8.5pt; color: #14532d; line-height: 1.4; }
             .recommendations { padding-left: 18px; margin: 8px 0 0; }
             .recommendations li { margin: 6px 0; }
             .page-break { page-break-before: always; }
@@ -1419,6 +1406,7 @@ export async function POST(request: NextRequest) {
               snapshots.length
                 ? `
                   <div class="subsection-title">Behavioral Alert Snapshot</div>
+                  <div class="snapshot-grid">
                   ${snapshots
                     .map((snapshot) => {
                       const issue = snapshot.issueDetected || normalizeIssueLabel(snapshot.issueCode);
@@ -1471,6 +1459,7 @@ export async function POST(request: NextRequest) {
                       `;
                     })
                     .join("")}
+                  </div>
                 `
                 : ""
             }
