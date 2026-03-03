@@ -3,6 +3,15 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
+  ResponsiveContainer,
+  Tooltip as ChartTooltip,
+} from "recharts";
+import {
   TrendingUp,
   Brain,
   Mic,
@@ -49,6 +58,7 @@ interface MobileAnalyticsProps {
     communication: { speakingWpm: number; fillerRate: number; sentenceStructureScore: number; toneConsistency: number };
     grammar: { beforeAfter: { before: number; after: number }; errorFrequency: number };
     coach: { strengths: string[]; weaknesses: string[]; plan7Day: string[]; nextSessionFocus: string; readinessSummary: string };
+    behavioral?: { compositeRadar: Array<{ metric: string; score: number }>; hasData: boolean };
   };
   onRangeChange?: (range: string) => void;
   range?: string;
@@ -116,10 +126,36 @@ const formatDur = (min: number) => {
   return h > 0 ? `${h}h ${m}m` : `${m}m`;
 };
 
+/* ─── Radar custom tick wraps two-word labels to two lines ─── */
+function RadarTick({ x, y, payload, textAnchor }: { x?: number; y?: number; payload?: { value: string }; textAnchor?: string }) {
+  const words = (payload?.value ?? "").split(" ");
+  return (
+    <text x={x} y={y} textAnchor={(textAnchor ?? "middle") as "middle" | "start" | "end"} fill="#cbd5e1" fontSize={11} fontWeight={600}>
+      {words.length === 1 ? (
+        <tspan x={x} dy="0">{words[0]}</tspan>
+      ) : (
+        <>
+          <tspan x={x} dy="-5">{words[0]}</tspan>
+          <tspan x={x} dy="13">{words[1]}</tspan>
+        </>
+      )}
+    </text>
+  );
+}
+
 /* ═══════════════════════════════════════════════════════════ */
 const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onRangeChange, range = "all" }: MobileAnalyticsProps) => {
   const recentSessions = history.sessions.slice(0, 5);
   const latestTrend = trends.slice(-5);
+
+  const communicationRadar = [
+    { metric: "Communication", score: Number(summary.communicationScore.toFixed(1)) },
+    { metric: "Confidence", score: Number(summary.confidenceScore.toFixed(1)) },
+    { metric: "Grammar", score: Number(summary.grammarScore.toFixed(1)) },
+    { metric: "Speaking Pace", score: Number(advanced.communication.speakingWpm.toFixed(1)) },
+    { metric: "Sentence", score: Number(advanced.communication.sentenceStructureScore.toFixed(1)) },
+    { metric: "Tone", score: Number(advanced.communication.toneConsistency.toFixed(1)) },
+  ];
 
   const overallColor =
     summary.overallScore >= 80 ? "#22c55e" :
@@ -152,7 +188,17 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
             Dashboard
           </span>
         </motion.h1>
-        <p className="text-xs text-slate-400 mb-5">Your communication-first performance report</p>
+        <p className="text-xs text-slate-400 mb-4">Your communication-first performance report</p>
+
+        {/* Full Desktop View button — always visible at top */}
+        <Link
+          href="/analytics?view=full"
+          className="flex items-center justify-center gap-2 w-full rounded-2xl border border-cyan-500/40 bg-cyan-500/10 px-4 py-3 text-sm font-bold text-cyan-300 mb-5 active:scale-[0.97] transition-transform"
+        >
+          <BarChart2 className="h-4 w-4" />
+          View Full Analytics Dashboard
+          <ChevronRight className="h-4 w-4 ml-auto" />
+        </Link>
 
         {/* Range selector */}
         {onRangeChange && (
@@ -408,6 +454,42 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
             </div>
           </Accordion>
         )}
+      </section>
+
+      {/* ── RADAR CHARTS ──────────────────────────────────── */}
+      <section className="px-4 pb-4 space-y-4">
+        {/* Body Language Composite Radar */}
+        {advanced.behavioral?.hasData && advanced.behavioral.compositeRadar.length > 0 && (
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+            <p className="text-sm font-bold text-white mb-2">Body Language Composite Radar</p>
+            <div style={{ width: '100%', height: '260px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={advanced.behavioral.compositeRadar} outerRadius="65%" margin={{ top: 25, right: 40, bottom: 25, left: 40 }}>
+                  <PolarGrid stroke="#334155" />
+                  <PolarAngleAxis dataKey="metric" tick={<RadarTick />} />
+                  <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                  <Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.4} strokeWidth={2} />
+                  <ChartTooltip />
+                </RadarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+        {/* Communication Composite Radar */}
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <p className="text-sm font-bold text-white mb-2">Communication Composite Radar</p>
+          <div style={{ width: '100%', height: '260px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <RadarChart data={communicationRadar} outerRadius="65%" margin={{ top: 25, right: 40, bottom: 25, left: 40 }}>
+                <PolarGrid stroke="#334155" />
+                <PolarAngleAxis dataKey="metric" tick={<RadarTick />} />
+                <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+                <Radar dataKey="score" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.4} strokeWidth={2} />
+                <ChartTooltip />
+              </RadarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </section>
 
       {/* ── CTA FOOTER ──────────────────────────────────────── */}
