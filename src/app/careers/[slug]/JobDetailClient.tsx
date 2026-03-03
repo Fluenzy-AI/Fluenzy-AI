@@ -309,6 +309,17 @@ export default function JobDetailClient({ job }: { job: Job }) {
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">{job.title}</h1>
               <p className="text-muted-foreground">{job.experienceYears} experience required{job.salaryRange ? ` · ${job.salaryRange}` : ""}</p>
+
+              {/* Mobile-only Apply Now button */}
+              <button
+                onClick={handleApplyClick}
+                disabled={candidate === undefined}
+                className="lg:hidden mt-5 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2"
+              >
+                {candidate === undefined ? (
+                  <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Loading...</>
+                ) : "Apply Now →"}
+              </button>
             </motion.div>
 
             {/* Description */}
