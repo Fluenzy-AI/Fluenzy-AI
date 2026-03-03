@@ -129,7 +129,9 @@ export async function POST(req: NextRequest) {
   <table style="background:#f5f3ff;border-radius:8px;padding:16px 20px;margin:16px 0;border-left:4px solid #4f46e5;">
     <tr><td style="padding:4px 0;"><strong>Position:</strong></td><td style="padding:4px 0 4px 12px;">${rest.position}</td></tr>
     <tr><td style="padding:4px 0;"><strong>Department:</strong></td><td style="padding:4px 0 4px 12px;">${rest.department}</td></tr>
-    <tr><td style="padding:4px 0;"><strong>Annual CTC:</strong></td><td style="padding:4px 0 4px 12px;">&#8377;${rest.salary.toLocaleString()}/year</td></tr>
+    <tr><td style="padding:4px 0;"><strong>${salaryType === "per month" ? "Monthly Stipend / Salary" : "Annual CTC"}:</strong></td><td style="padding:4px 0 4px 12px;">&#8377;${rest.salary.toLocaleString()} ${salaryType === "per month" ? "/ month" : "/ year"}</td></tr>
+    <tr><td style="padding:4px 0;"><strong>Employment Type:</strong></td><td style="padding:4px 0 4px 12px;">${employmentType || "Full-Time, Permanent"}</td></tr>
+    <tr><td style="padding:4px 0;"><strong>Work Location:</strong></td><td style="padding:4px 0 4px 12px;">${workLocation || "India (Remote / Hybrid)"}</td></tr>
     <tr><td style="padding:4px 0;"><strong>Date of Joining:</strong></td><td style="padding:4px 0 4px 12px;">${new Date(joiningDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</td></tr>
     ${acceptanceDeadline ? `<tr><td style="padding:4px 0;"><strong>Accept By:</strong></td><td style="padding:4px 0 4px 12px;">${new Date(acceptanceDeadline).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</td></tr>` : ""}
   </table>
