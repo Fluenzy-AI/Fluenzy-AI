@@ -11,16 +11,18 @@ import {
   Building2,
   ChevronRight,
   GraduationCap,
+  Bell,
 } from "lucide-react";
 import { useCollegeAdmin } from "@/contexts/CollegeAdminContext";
 
 const NAV_ITEMS = [
-  { href: "/college/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/college/students", label: "Students", icon: Users },
-  { href: "/college/batches", label: "Batches", icon: GraduationCap },
-  { href: "/college/analytics", label: "Analytics", icon: BarChart2 },
-  { href: "/college/billing", label: "Billing & Plan", icon: CreditCard },
-  { href: "/college/settings", label: "Settings", icon: Settings },
+  { href: "/college/dashboard",      label: "Dashboard",    icon: LayoutDashboard },
+  { href: "/college/students",       label: "Students",     icon: Users },
+  { href: "/college/batches",        label: "Batches",      icon: GraduationCap },
+  { href: "/college/analytics",      label: "Analytics",    icon: BarChart2 },
+  { href: "/college/notifications",  label: "Notifications", icon: Bell },
+  { href: "/college/billing",        label: "Billing & Plan", icon: CreditCard },
+  { href: "/college/settings",       label: "Settings",     icon: Settings },
 ];
 
 export default function CollegeSidebar() {

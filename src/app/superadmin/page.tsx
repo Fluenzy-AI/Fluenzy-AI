@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Role } from "@prisma/client";
 import LatestTopicTab from "@/components/LatestTopicTab";
 import EmailManagement from "@/components/EmailManagement";
+import SuperAdminNotifications from "@/components/SuperAdminNotifications";
 
 interface Analytics {
   totalUsers: number;
@@ -559,6 +560,7 @@ export default function SuperAdminDashboard() {
     { key: 'logs',         label: 'System Logs',       icon: '📋' },
     { key: 'latest-topics',label: 'Latest Topics',     icon: '📰' },
     { key: 'email-management', label: 'Email Management', icon: '✉️' },
+    { key: 'notifications',    label: 'Notifications',    icon: '🔔' },
     { key: 'college-partners', label: 'College Partners', icon: '🏫' },
     { key: 'college-coupons', label: 'College Coupons', icon: '🎟️' },
   ];
@@ -1297,6 +1299,9 @@ export default function SuperAdminDashboard() {
 
         {activeSection === 'email-management' && (<>
           <EmailManagement />
+        </>)}
+        {activeSection === 'notifications' && (<>
+          <SuperAdminNotifications />
         </>)}
 
         {activeSection === 'college-partners' && (() => {

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
+import NotificationBell from '@/components/NotificationBell';
 import { 
   Menu, 
   X, 
@@ -592,10 +593,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               </div>
 
               {/* Notifications */}
-              <button className={`p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} relative`}>
-                <Bell size={20} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
+              <NotificationBell isDark={!isLight} />
 
               {/* Profile Menu - Advanced SaaS Panel */}
               {session?.user && (

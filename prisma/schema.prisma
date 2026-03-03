@@ -101,6 +101,7 @@ model users {
   gdQueue          GDQueue[]
   gdParticipants   GDParticipant[]
   gdHistory        GDHistory[]
+  notifications    Notification[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -942,6 +943,24 @@ model CollegeCoupon {
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
+}
+
+// ─── Notifications ─────────────────────────────────────────────────────────
+model Notification {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  user        users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  type        String   @default("info") // "info" | "warning" | "success" | "announcement"
+  isRead      Boolean  @default(false)
+  sentBy      String   // superadmin email or collegeAdminId
+  sentByRole  String   // "SUPER_ADMIN" | "COLLEGE_ADMIN"
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
 }
 
 // ─── Email Management ───────────────────────────────────────────────────────
