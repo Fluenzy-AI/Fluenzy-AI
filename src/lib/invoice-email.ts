@@ -46,16 +46,7 @@ export async function autoSendInvoiceEmail(
     renewalDate: effectiveRenewalDate,
   });
 
-  // 3. Generate PDF (uses @sparticuz/chromium on production)
-  let pdfBuffer: Buffer;
-  try {
-    pdfBuffer = await htmlToPdf(html);
-  } catch (err) {
-    console.error("[AUTO_INVOICE_EMAIL] PDF generation failed:", err);
-    return; // don't fail payment flow if PDF fails
-  }
-
-  // 4. Derive invoice number + filename
+  // 3. Derive invoice number + filename
   const status = (payment.status as string) || "paid";
   const receipt = payment.receipt as { invoiceNumber?: string } | null;
   const invoiceNumber =
@@ -63,6 +54,15 @@ export async function autoSendInvoiceEmail(
     payment.invoiceId ||
     `FLZ-${status.toUpperCase().slice(0, 3)}-${payment.id.slice(-6).toUpperCase()}`;
   const filename = `FluenzyAI_Invoice_${invoiceNumber}.pdf`;
+
+  // 4. Generate PDF (uses @sparticuz/chromium on production)
+  //    If PDF fails we still send the email — just without the attachment.
+  let pdfBuffer: Buffer | null = null;
+  try {
+    pdfBuffer = await htmlToPdf(html);
+  } catch (err) {
+    console.error("[AUTO_INVOICE_EMAIL] PDF generation failed (email will be sent without attachment):", err);
+  }
 
   // 5. Send email
   const transporter = nodemailer.createTransport({
@@ -75,7 +75,7 @@ export async function autoSendInvoiceEmail(
     },
   });
 
-  await transporter.sendMail({
+  const mailOptions: nodemailer.SendMailOptions = {
     from: `"Fluenzy AI" <${process.env.Payment_EMAIL_USER}>`,
     to: user.email,
     subject: `Your Fluenzy AI Invoice – ${invoiceNumber}`,
@@ -85,14 +85,22 @@ export async function autoSendInvoiceEmail(
       plan: payment.plan,
       status,
     }),
-    attachments: [
+  };
+
+  if (pdfBuffer) {
+    mailOptions.attachments = [
       {
         filename,
         content: pdfBuffer,
         contentType: "application/pdf",
       },
-    ],
-  });
+    ];
+  }
 
-  console.log(`[AUTO_INVOICE_EMAIL] Sent invoice ${invoiceNumber} to ${user.email}`);
+  await transporter.sendMail(mailOptions);
+
+  console.log(
+    `[AUTO_INVOICE_EMAIL] Sent invoice ${invoiceNumber} to ${user.email}` +
+    (pdfBuffer ? " (with PDF)" : " (without PDF — generation failed)")
+  );
 }
