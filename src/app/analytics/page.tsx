@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import MobileAnalyticsPage from "@/components/MobileAnalyticsPage";
 import { useTheme } from "@/contexts/ThemeContext";
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -280,6 +281,23 @@ const Heatmap = ({ activity }: { activity: Array<{ date: string; count: number }
   );
 };
 
+// Custom tick for PolarAngleAxis — wraps multi-word labels onto two lines so they never clip
+function RadarCustomTick({ x, y, payload, textAnchor }: { x?: number; y?: number; payload?: { value: string }; textAnchor?: string }) {
+  const words = (payload?.value ?? "").split(" ");
+  return (
+    <text x={x} y={y} textAnchor={textAnchor ?? "middle"} fill="#e2e8f0" fontSize={13} fontWeight={600}>
+      {words.length === 1 ? (
+        <tspan x={x} dy="0">{words[0]}</tspan>
+      ) : (
+        <>
+          <tspan x={x} dy="-6">{words[0]}</tspan>
+          <tspan x={x} dy="16">{words[1]}</tspan>
+        </>
+      )}
+    </text>
+  );
+}
+
 function AnalyticsDashboardPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -296,8 +314,8 @@ function AnalyticsDashboardPageContent() {
   }, [isPublicView, status, router]);
 
   useEffect(() => {
-    const load = async () => {
-      setLoading(true);
+    const fetchData = async (silent = false) => {
+      if (!silent) setLoading(true);
       try {
         const params = new URLSearchParams();
         params.set("range", range);
@@ -306,12 +324,17 @@ function AnalyticsDashboardPageContent() {
           params.set("username", publicUsername);
         }
         const res = await fetch(`/api/analytics?${params.toString()}`);
-        if (res.ok) setData(await res.json());
+        if (res.ok) { setData(await res.json()); setLastUpdated(new Date()); }
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
     };
-    if ((isPublicView && publicUsername) || status === "authenticated") load();
+    if ((isPublicView && publicUsername) || status === "authenticated") {
+      fetchData(false);
+      // Auto-refresh every 30 seconds so radar charts always show latest data
+      const interval = setInterval(() => fetchData(true), 30000);
+      return () => clearInterval(interval);
+    }
   }, [status, range, isPublicView, publicUsername]);
 
   useEffect(() => {
@@ -380,8 +403,41 @@ function AnalyticsDashboardPageContent() {
   const { resolvedTheme } = useTheme();
   const isLight = resolvedTheme === 'light';
 
-  if (loading) return <div className="container mx-auto px-4 py-12">Loading analytics...</div>;
-  if ((!session?.user && !isPublicView) || !data) return <div className="container mx-auto px-4 py-12">No analytics data available yet.</div>;
+  // ── Real-time refresh tracking ────────────────────────────────
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+
+  // ── Mobile detection ──────────────────────────────────────────
+  const [isMobile, setIsMobile] = useState(false);
+  const [forceFullView, setForceFullView] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+  // Allow "View Full Report" link to bypass mobile layout
+  const searchParamsObj = searchParams;
+  useEffect(() => {
+    if (searchParamsObj.get("view") === "full") setForceFullView(true);
+  }, [searchParamsObj]);
+
+  if (loading) return <div className="max-w-screen-2xl mx-auto px-4 py-12 text-white">Loading analytics...</div>;
+  if ((!session?.user && !isPublicView) || !data) return <div className="max-w-screen-2xl mx-auto px-4 py-12 text-white">No analytics data available yet.</div>;
+
+  // ── Render mobile page on small screens ──────────────────────
+  if (isMobile && !forceFullView) {
+    return (
+      <MobileAnalyticsPage
+        summary={data.summary}
+        insights={data.insights}
+        trends={data.trends}
+        history={data.history}
+        advanced={data.advanced}
+        range={range}
+        onRangeChange={setRange}
+      />
+    );
+  }
 
   const { summary, distributions, trends, activity, insights, charts, textReport, advanced, history } = data;
   const handleOpenPrintableReport = () => {
@@ -399,10 +455,10 @@ function AnalyticsDashboardPageContent() {
   const wpmLow = advanced.communication.idealWpmRange[0];
   const wpmHigh = advanced.communication.idealWpmRange[1];
   const communicationCompositeRadar = [
-    { metric: "Comm.", score: Number(summary.communicationScore.toFixed(1)) },
-    { metric: "Confid.", score: Number(summary.confidenceScore.toFixed(1)) },
+    { metric: "Communication", score: Number(summary.communicationScore.toFixed(1)) },
+    { metric: "Confidence", score: Number(summary.confidenceScore.toFixed(1)) },
     { metric: "Grammar", score: Number(summary.grammarScore.toFixed(1)) },
-    { metric: "Sp.Pace", score: Number(advanced.communication.speakingWpm.toFixed(1)) },
+    { metric: "Speaking Pace", score: Number(advanced.communication.speakingWpm.toFixed(1)) },
     { metric: "Sentence", score: Number(advanced.communication.sentenceStructureScore.toFixed(1)) },
     { metric: "Tone", score: Number(advanced.communication.toneConsistency.toFixed(1)) },
   ];
@@ -418,7 +474,7 @@ function AnalyticsDashboardPageContent() {
   return (
     <div className={`overflow-x-hidden w-full max-w-full${isLight ? ' analytics-light' : ''}`}>
       {!isEmbeddedView && <HeaderOffset />}
-      <div className="container mx-auto px-3 sm:px-4 pb-12 flex flex-col gap-6 md:gap-8">
+      <div className="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 pb-12 flex flex-col gap-6 md:gap-8">
         <div className={`rounded-2xl border p-4 sm:p-6 ${isLight ? 'bg-gradient-to-br from-slate-50 to-white border-gray-200' : 'bg-gradient-to-br from-slate-900/40 to-slate-900/70 border-white/10'}`}>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
@@ -528,35 +584,65 @@ function AnalyticsDashboardPageContent() {
         <section className="order-2 space-y-6">
   <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Priority Chart Order</h2>
 
-  <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
-    <Card className="border-white/10 bg-slate-900/60">
-      <CardHeader><CardTitle className="text-sm text-slate-300">Body Language Composite Radar</CardTitle></CardHeader>
-      <CardContent className="h-[260px] sm:h-[300px] px-0">
+  {/* Radar charts — desktop/laptop only (hidden on mobile < 640px) */}
+  <div className="hidden sm:block">
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(34,211,238,0.15)', border: '1px solid rgba(34,211,238,0.4)', borderRadius: '999px', padding: '2px 10px', fontSize: '12px', fontWeight: 600, color: '#22d3ee' }}>
+          <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: '#22d3ee', display: 'inline-block', animation: 'pulse 1.5s infinite' }} />
+          LIVE
+        </span>
+        {lastUpdated && (
+          <span style={{ fontSize: '11px', color: '#64748b' }}>Updated {lastUpdated.toLocaleTimeString()}</span>
+        )}
+      </div>
+      <button
+        onClick={() => {
+          const params = new URLSearchParams();
+          params.set("range", range);
+          fetch(`/api/analytics?${params.toString()}`).then(r => r.ok ? r.json() : null).then(d => { if (d) { setData(d); setLastUpdated(new Date()); } });
+        }}
+        style={{ fontSize: '12px', color: '#94a3b8', background: 'transparent', border: '1px solid rgba(148,163,184,0.3)', borderRadius: '6px', padding: '3px 10px', cursor: 'pointer' }}
+      >
+        ↻ Refresh
+      </button>
+    </div>
+    <div className="grid grid-cols-2 gap-4">
+    {/* Body Language Composite Radar */}
+    <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', background: 'rgba(15,23,42,0.6)', height: '520px', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '18px 20px 10px 20px', flexShrink: 0 }}>
+        <span style={{ fontSize: '15px', fontWeight: 600, color: '#e2e8f0' }}>Body Language Composite Radar</span>
+      </div>
+      <div style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={advanced.behavioral.compositeRadar} outerRadius="55%">
+          <RadarChart data={advanced.behavioral.compositeRadar} outerRadius="78%" margin={{ top: 40, right: 60, bottom: 40, left: 70 }}>
             <PolarGrid stroke="#334155" />
-            <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-            <PolarRadiusAxis domain={[0, 100]} tick={{ fontSize: 8, fill: '#64748b' }} />
-            <Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.35} />
+            <PolarAngleAxis dataKey="metric" tick={<RadarCustomTick />} />
+            <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} tickCount={5} />
+            <Radar dataKey="score" stroke="#22d3ee" fill="#22d3ee" fillOpacity={0.45} strokeWidth={2.5} />
             <ChartTooltip />
           </RadarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
-    <Card className="border-white/10 bg-slate-900/60">
-      <CardHeader><CardTitle className="text-sm text-slate-300">Communication Composite Radar</CardTitle></CardHeader>
-      <CardContent className="h-[260px] sm:h-[300px] px-0">
+      </div>
+    </div>
+    {/* Communication Composite Radar */}
+    <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', background: 'rgba(15,23,42,0.6)', height: '520px', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ padding: '18px 20px 10px 20px', flexShrink: 0 }}>
+        <span style={{ fontSize: '15px', fontWeight: 600, color: '#e2e8f0' }}>Communication Composite Radar</span>
+      </div>
+      <div style={{ flex: 1, minHeight: 0 }}>
         <ResponsiveContainer width="100%" height="100%">
-          <RadarChart data={communicationCompositeRadar} outerRadius="55%">
+          <RadarChart data={communicationCompositeRadar} outerRadius="78%" margin={{ top: 40, right: 60, bottom: 40, left: 70 }}>
             <PolarGrid stroke="#334155" />
-            <PolarAngleAxis dataKey="metric" tick={{ fontSize: 10, fill: '#94a3b8' }} />
-            <PolarRadiusAxis domain={[0, 100]} tickCount={4} tick={{ fontSize: 8, fill: '#64748b' }} />
-            <Radar dataKey="score" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.35} />
+            <PolarAngleAxis dataKey="metric" tick={<RadarCustomTick />} />
+            <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} tickCount={5} />
+            <Radar dataKey="score" stroke="#a78bfa" fill="#a78bfa" fillOpacity={0.45} strokeWidth={2.5} />
             <ChartTooltip />
           </RadarChart>
         </ResponsiveContainer>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
+  </div>
   </div>
 
   <div className="grid gap-6 lg:grid-cols-2">
