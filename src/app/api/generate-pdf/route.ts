@@ -883,6 +883,37 @@ const normalizeIssueLabel = (code?: string) => {
   return key.replace(/_/g, " ").trim() || "Behavioral Alert";
 };
 
+const analyzeSnapshotWithVision = async (
+  imageData: string,
+  issueCode: string | undefined,
+  fallbackObs: string,
+  fallbackSugg: string
+): Promise<{ observation: string; suggestion: string }> => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey || !imageData.startsWith("data:image/jpeg;base64,")) {
+      return { observation: fallbackObs, suggestion: fallbackSugg };
+    }
+    const base64Only = imageData.replace(/^data:image\/jpeg;base64,/, "");
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const prompt = `You are a professional interview coach analyzing a single video frame captured during a mock job interview.\n\nLook carefully at this specific image and describe what you actually see:\n1. OBSERVATION: What behavioral issue is visible in THIS frame? Be specific about posture, gaze direction, head angle, shoulder position, facial tension, or expression. Do NOT give a generic description — describe only what is visually present.\n2. SUGGESTION: Give ONE clear, actionable correction the candidate can apply immediately.\n\nSystem flagged issue: ${normalizeIssueLabel(issueCode)}\n\nRespond in this exact format (two lines only):\nOBSERVATION: <specific visual observation>\nSUGGESTION: <one actionable correction>`;
+    const result = await model.generateContent([
+      { text: prompt },
+      { inlineData: { mimeType: "image/jpeg", data: base64Only } },
+    ]);
+    const text = result.response.text().trim();
+    const obsMatch = text.match(/OBSERVATION:\s*(.+)/i);
+    const suggMatch = text.match(/SUGGESTION:\s*(.+)/i);
+    return {
+      observation: obsMatch?.[1]?.trim() || fallbackObs,
+      suggestion: suggMatch?.[1]?.trim() || fallbackSugg,
+    };
+  } catch {
+    return { observation: fallbackObs, suggestion: fallbackSugg };
+  }
+};
+
 const buildRecommendationList = (metrics: MetricRow[]) => {
   const needsWork = new Set(
     metrics.filter((m) => m.status === "Needs Improvement" || m.status === "Critical").map((m) => m.name)
@@ -1022,10 +1053,26 @@ export async function POST(request: NextRequest) {
         : new Date(sessionStart.getTime() + 60 * 60 * 1000);
     const behavioralDoc = await findBestBehavioralDoc(user.id, sessionStart, sessionEnd);
     const summary = (behavioralDoc?.summary || {}) as Record<string, unknown>;
-    const snapshots =
+    const rawSnapshots =
       Array.isArray(behavioralDoc?.alertSnapshots) && behavioralDoc?.alertSnapshots.length
         ? behavioralDoc.alertSnapshots.slice(0, 4)
         : [];
+    const snapshots = await Promise.all(
+      rawSnapshots.map(async (s) => {
+        const fallbackObs = s.observation || "Behavioral deviation detected during the interview.";
+        const fallbackSugg = s.suggestion || "Apply posture, gaze, and composure corrections in the next response.";
+        if (s.imageData && s.imageData.startsWith("data:image/jpeg;base64,")) {
+          const { observation, suggestion } = await analyzeSnapshotWithVision(
+            s.imageData,
+            s.issueCode,
+            fallbackObs,
+            fallbackSugg
+          );
+          return { ...s, observation, suggestion };
+        }
+        return { ...s, observation: fallbackObs, suggestion: fallbackSugg };
+      })
+    );
 
     const confidence = clampPercent(summary.confidence);
     const eyeContact = clampPercent(summary.eye_contact);
@@ -1202,9 +1249,19 @@ export async function POST(request: NextRequest) {
             .metric-header { display: flex; justify-content: space-between; gap: 10px; font-weight: 800; }
             .metric-status { font-size: 8pt; letter-spacing: 0.03em; text-transform: uppercase; color: #334155; }
             .metric-note { margin-top: 4px; color: #475569; font-size: 9pt; }
-            .snapshot { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 14px; }
-            .snapshot img { width: 100%; max-height: 280px; object-fit: contain; border-radius: 8px; border: 1px solid #cbd5e1; background: #0f172a; }
-            .snapshot-meta { margin-top: 8px; font-size: 9pt; color: #334155; }
+            .snapshot-card { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-bottom: 18px; background: #ffffff; box-shadow: 0 1px 6px rgba(0,0,0,0.07); }
+            .snapshot-header { display: flex; align-items: center; gap: 10px; padding: 8px 14px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+            .snapshot-badge { border-radius: 999px; padding: 3px 10px; font-size: 8pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+            .snapshot-ts { font-size: 7.5pt; color: #64748b; font-weight: 600; margin-left: auto; }
+            .snapshot-body { display: flex; }
+            .snapshot-img-wrap { flex: 0 0 42%; background: #0f172a; display: flex; align-items: center; justify-content: center; min-height: 160px; }
+            .snapshot-img-wrap img { width: 100%; height: 200px; object-fit: cover; display: block; }
+            .snapshot-analysis { flex: 1; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: #f8fafc; }
+            .snapshot-obs-title { font-size: 7.5pt; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.05em; margin-bottom: 3px; }
+            .snapshot-obs-text { font-size: 9pt; color: #1e293b; line-height: 1.55; }
+            .snapshot-sugg-box { background: #eff6ff; border-left: 3px solid #3b82f6; border-radius: 4px; padding: 8px 10px; }
+            .snapshot-sugg-title { font-size: 7pt; font-weight: 800; text-transform: uppercase; color: #1d4ed8; letter-spacing: 0.05em; margin-bottom: 2px; }
+            .snapshot-sugg-text { font-size: 8.5pt; color: #1e3a8a; line-height: 1.4; }
             .recommendations { padding-left: 18px; margin: 8px 0 0; }
             .recommendations li { margin: 6px 0; }
             .page-break { page-break-before: always; }
@@ -1354,24 +1411,48 @@ export async function POST(request: NextRequest) {
                       const timestamp = snapshot.timestamp
                         ? new Date(snapshot.timestamp).toLocaleString()
                         : "N/A";
-                      const observation =
-                        snapshot.observation || "Behavioral deviation detected during the interview.";
-                      const suggestion =
-                        snapshot.suggestion || "Apply posture, gaze, and composure corrections in the next response.";
+                      const observation = snapshot.observation || "Behavioral deviation detected during the interview.";
+                      const suggestion = snapshot.suggestion || "Apply posture, gaze, and composure corrections in the next response.";
                       const safeImage = (snapshot.imageData || "").startsWith("data:image/jpeg;base64,")
                         ? snapshot.imageData
                         : "";
+                      const code = String(snapshot.issueCode || "").toUpperCase();
+                      const badgeStyle = code === "HIGH_STRESS"
+                        ? "background:#fef2f2;color:#dc2626;"
+                        : code === "LOW_EYE_CONTACT"
+                        ? "background:#fffbeb;color:#d97706;"
+                        : code === "POOR_POSTURE"
+                        ? "background:#fff7ed;color:#ea580c;"
+                        : code === "NEGATIVE_EXPRESSION"
+                        ? "background:#fdf4ff;color:#9333ea;"
+                        : code === "LOW_ENGAGEMENT"
+                        ? "background:#eff6ff;color:#2563eb;"
+                        : code === "NO_FACE"
+                        ? "background:#f1f5f9;color:#475569;"
+                        : "background:#eef2ff;color:#4f46e5;";
                       return `
-                        <div class="snapshot">
-                          ${
-                            safeImage
-                              ? `<img src="${safeImage}" alt="Behavioral Alert Snapshot" />`
-                              : `<div style="padding: 10px; border: 1px dashed #94a3b8; border-radius: 8px; color: #64748b;">Snapshot unavailable.</div>`
-                          }
-                          <div class="snapshot-meta"><strong>Issue Detected:</strong> ${issue}</div>
-                          <div class="snapshot-meta"><strong>Timestamp:</strong> ${timestamp}</div>
-                          <div class="snapshot-meta"><strong>AI Observation:</strong> ${observation}</div>
-                          <div class="snapshot-meta"><strong>Suggested Correction:</strong> ${suggestion}</div>
+                        <div class="snapshot-card">
+                          <div class="snapshot-header">
+                            <span class="snapshot-badge" style="${badgeStyle}">${issue}</span>
+                            <span class="snapshot-ts">${timestamp}</span>
+                          </div>
+                          <div class="snapshot-body">
+                            ${
+                              safeImage
+                                ? `<div class="snapshot-img-wrap"><img src="${safeImage}" alt="Behavioral Snapshot" /></div>`
+                                : `<div class="snapshot-img-wrap" style="color:#94a3b8;font-size:9pt;">No image</div>`
+                            }
+                            <div class="snapshot-analysis">
+                              <div>
+                                <div class="snapshot-obs-title">AI Observation</div>
+                                <div class="snapshot-obs-text">${observation}</div>
+                              </div>
+                              <div class="snapshot-sugg-box">
+                                <div class="snapshot-sugg-title">Suggested Correction</div>
+                                <div class="snapshot-sugg-text">${suggestion}</div>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       `;
                     })
