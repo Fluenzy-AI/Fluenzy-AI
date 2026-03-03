@@ -3,10 +3,12 @@
 import LearnEnglishWrapper from "@/modules/train/LearnEnglishWrapper";
 import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 import { useEffect, useState } from "react";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 
 export default function CompanyPage() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const { checking } = useModuleAccess("company");
   
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
 
@@ -14,7 +16,7 @@ export default function CompanyPage() {
     setMounted(true);
   }, []);
 
-  if (!mounted) {
+  if (!mounted || checking) {
     return <div className="min-h-screen bg-slate-900" />;
   }
 

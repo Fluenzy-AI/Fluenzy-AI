@@ -7,11 +7,13 @@ import GDCoachDashboard from "../../../../Learn_English/components/GDCoachDashbo
 import { UserProfile } from "../../../../Learn_English/types";
 import { INITIAL_USER } from "../../../../Learn_English/constants";
 import { useTheme, themeConfig } from "@/contexts/ThemeContext";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 
 const GDCoachPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { resolvedTheme } = useTheme();
+  const { checking } = useModuleAccess("gdCoach");
   
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
 
@@ -21,7 +23,7 @@ const GDCoachPage = () => {
     }
   }, [status, router]);
 
-  if (status === "loading") {
+  if (status === "loading" || checking) {
     return <div>Loading...</div>;
   }
 

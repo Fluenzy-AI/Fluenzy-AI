@@ -7,11 +7,13 @@ import HRDashboard from "../../../../Learn_English/components/HRDashboard";
 import { UserProfile } from "../../../../Learn_English/types";
 import { INITIAL_USER } from "../../../../Learn_English/constants";
 import { useTheme, themeConfig } from "@/contexts/ThemeContext";
+import { useModuleAccess } from "@/hooks/useModuleAccess";
 
 const HRPage = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { resolvedTheme } = useTheme();
+  const { checking } = useModuleAccess("hr");
   
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
 
@@ -21,7 +23,7 @@ const HRPage = () => {
     }
   }, [status, router]);
 
-  if (status === "loading") {
+  if (status === "loading" || checking) {
     return <div>Loading...</div>;
   }
 
