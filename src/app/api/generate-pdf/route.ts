@@ -624,8 +624,9 @@ Question type: ${questionType}
 Candidate: ${userName}
 Target role: ${role || "General Role"}
 Target company: ${company || "General"}
-Question: ${question}
-Raw answer (Roman script): ${rawRoman}
+
+INTERVIEWER QUESTION: ${question}
+CANDIDATE RAW ANSWER (Roman script): ${rawRoman}
 
 Return strict JSON:
 {
@@ -642,16 +643,35 @@ Return strict JSON:
   "structuredAnswer": true
 }
 
-Rules:
+GRAMMAR ERROR RULES (check ALL of these):
+- Lowercase "i" should be "I" — flag it.
+- Missing sentence-ending punctuation (. ! ?) — flag it.
+- Subject-verb disagreement (e.g. "I are", "he have") — flag it.
+- Wrong tense (e.g. "I done" instead of "I did") — flag it.
+- Missing articles (a/an/the) where required — flag it.
+- Double words or repeated phrases — flag as Repetition.
+- Very short/incomplete answer (under 5 words for non-greeting) — flag as Incomplete Thought.
+- Missing ownership language (no I/my/we) — flag as Confidence Issue.
+- Wrong prepositions (e.g. "good in English" vs "good at English") — flag it.
+- Comma splices or run-on sentences — flag it.
+- If no grammar errors at all, identifiedErrors must say ["No grammar or structure errors detected."].
+
+BEST PROFESSIONAL ANSWER RULES:
+- Must DIRECTLY answer the EXACT question asked: "${question}"
+- Must be from ${userName}'s perspective applying for ${role || "the role"} at ${company || "the company"}.
+- Must NOT be generic. Must NOT say "I am preparing for..." or "I use a structured approach..." generically.
+- Must be 2-4 sentences, confident, professional, interview-ready.
+- If the answer is a greeting, reply warmly and professionally.
+- If the answer is about a project, mention a relevant technical project.
+- If behavioral, use STAR format briefly.
+
+OTHER RULES:
 - Output must be in English only using A-Z letters.
 - Do not output Devanagari, Urdu, or transliterated Hindi.
 - userRawRoman must be Roman script only.
-- hrResponse must be a natural next interviewer line based on current answer.
+- hrResponse must be a natural follow-up interviewer line after the candidate's answer.
 - Do not force STAR for Greeting/Introduction.
-- For Greeting, do not mention technical depth.
-- Corrected version must be grammar-only.
-- Best professional answer must directly answer the current question.
-- Never use generic repeated text like "I am preparing for...".`;
+- Corrected version must be grammar-only correction of the raw answer, nothing else.`;
 
     const result = await model.generateContent(prompt);
     const parsed = JSON.parse(result.response.text().replace(/```json\n?|\n?```/g, "").trim());
@@ -1066,20 +1086,23 @@ export async function POST(request: NextRequest) {
                 return `
               <div class="turn">
                 <div class="tag"><strong>Timestamp:</strong> ${escapeHtml(formatArchiveTimestamp(t.createdAt))}</div>
-                <span class="label user">USER CAPTURED ANSWER (RAW):</span>
+
+                <span class="label ai">HR INTERVIEWER QUESTION:</span>
+                <div class="bubble ai">${escapeHtml(String(t.aiPrompt || "—"))}</div>
+
+                <span class="label user" style="margin-top:10px;">USER CAPTURED ANSWER (RAW):</span>
                 <div class="bubble user">"${escapeHtml(String(evaluation.userRawRoman || toRomanRaw(String(t.userAnswer || ""))))}"</div>
 
                 <div class="analysis-block">
                   <div class="analysis-title">ERROR ANALYSIS</div>
                   <ul class="analysis-list">
-                    ${evaluation.identifiedErrors.map((err: string) => `<li>- ${escapeHtml(err)}</li>`).join("")}
+                    ${evaluation.identifiedErrors.map((err: string) => `<li>${escapeHtml(err)}</li>`).join("")}
                   </ul>
                 </div>
 
                 <div class="analysis-block">
                   <div class="analysis-title">AI SUGGESTED BEST PROFESSIONAL ANSWER (Personalized)</div>
                   <div class="bubble best">${escapeHtml(evaluation.bestProfessionalAnswer)}</div>
-                  <div class="tag"><strong>HR RESPONSE / AI PROMPT:</strong> ${escapeHtml(String(evaluation.hrResponse || t.aiPrompt || ""))}</div>
                   <div class="tag"><strong>Question Type:</strong> ${escapeHtml(classifyQuestionTypeV2(String(t.aiPrompt || ""), String(t.userAnswer || "")))}</div>
                   <div class="analysis-title" style="margin-top: 8px;">IMPROVEMENT TAGS</div>
                   <div class="chip-wrap">
