@@ -395,31 +395,91 @@ const buildProfessionalAnswerV2 = (
   rawAnswer: string,
   userName: string,
   role?: string | null,
-  company?: string | null
+  company?: string | null,
+  profileContext?: string | null
 ) => {
-  const normalizedRole = role || "target role";
-  const normalizedCompany = company || "the company";
-  const merged = `${question} ${rawAnswer}`;
+  const r = role || "target role";
+  const c = company || "the company";
+  const pc = profileContext || "";
+
+  // Extract key profile fields once
+  const firstExpMatch = pc.match(/Experience:\n  - (.+?) at (.+?) \(([^)]+)\)(?:: (.+?))?\n/);
+  const firstExpRole = firstExpMatch?.[1] || null;
+  const firstExpCompany = firstExpMatch?.[2] || null;
+  const firstExpDesc = firstExpMatch?.[4]?.trim().slice(0, 120) || null;
+
+  const skillsMatch = pc.match(/Skills: (.+)/m);
+  const topSkills = skillsMatch ? skillsMatch[1].split(",").slice(0, 3).map(s => s.split("(")[0].trim()).join(", ") : null;
+
+  const projMatch = pc.match(/Projects:\n  - ([^[\n]+?)(?:\[Tech: ([^\]]+)\])?(?:: (.+?))?\n/);
+  const projTitle = projMatch?.[1]?.trim() || null;
+  const projTech = projMatch?.[2]?.trim() || null;
+  const projDesc = projMatch?.[3]?.trim().slice(0, 100) || null;
+
+  const eduMatch = pc.match(/Education:\n  - (.+?) at (.+?) \(([^)]+)\)/);
+  const eduDegree = eduMatch?.[1] || null;
+  const eduInst = eduMatch?.[2] || null;
 
   if (questionType === "Greeting") {
-    return `I am doing well, thank you. I appreciate this opportunity and I am excited to discuss how my experience aligns with the ${normalizedRole} role at ${normalizedCompany}.`;
+    return `I am doing well, thank you. I am ${userName}${firstExpRole ? `, currently a ${firstExpRole}` : ""}. I am very excited about this opportunity for the ${r} role at ${c} and look forward to our conversation.`;
   }
+
   if (questionType === "Introduction" || questionType === "Background summary") {
-    return `My name is ${userName}. I have worked on data-driven projects involving machine learning model development, evaluation, and deployment workflows. I am interested in applying these skills in the ${normalizedRole} role at ${normalizedCompany} to deliver measurable business impact.`;
+    const exp = firstExpRole && firstExpCompany ? `I have experience as a ${firstExpRole} at ${firstExpCompany}${firstExpDesc ? `, where I ${firstExpDesc.charAt(0).toLowerCase() + firstExpDesc.slice(1)}` : ""}.` : "";
+    const edu = eduDegree && eduInst ? ` I hold a ${eduDegree} from ${eduInst}.` : "";
+    const skills = topSkills ? ` My core strengths include ${topSkills}.` : "";
+    return `I am ${userName}.${exp ? " " + exp : ""}${edu}${skills} I am excited to bring this background to the ${r} position at ${c} and contribute to impactful data-driven work.`;
   }
+
   if (questionType === "Technical project" || questionType === "Metrics/performance question") {
-    if (/\bfire|detection|index\b/i.test(merged)) {
-      return `I worked on a fire risk detection project where the objective was to improve early warning reliability. I built and evaluated a Random Forest based pipeline using accuracy, precision, recall, and F1-score, and then improved performance through hyperparameter tuning. The optimized model delivered stronger predictive reliability compared to the initial baseline.`;
+    if (projTitle) {
+      const tech = projTech ? ` using ${projTech.split(",").slice(0, 4).map(t => t.trim()).join(", ")}` : "";
+      const desc = projDesc ? ` The goal was to ${projDesc.charAt(0).toLowerCase() + projDesc.slice(1)}.` : "";
+      return `One project I worked on was ${projTitle}${tech}.${desc} I evaluated the solution using accuracy, precision, recall, and F1-score, iterating on feature engineering and model tuning until I achieved measurable improvements over the baseline. This experience directly strengthens my candidacy for the ${r} role at ${c}.`;
     }
-    return `In that project, I defined the business problem first, then implemented a machine learning solution using structured preprocessing and model selection. I evaluated model quality using accuracy, precision, recall, and F1-score, and improved results through iterative tuning. This produced measurable improvement over the baseline approach.`;
+    if (firstExpRole && firstExpCompany) {
+      return `During my time as ${firstExpRole} at ${firstExpCompany}, I worked on machine learning solutions where I defined the problem, built preprocessing pipelines, and evaluated models using accuracy, precision, recall, and F1-score. I iterated on hyperparameter tuning and feature selection to achieve measurable improvements over the baseline. This experience prepared me well for the ${r} role at ${c}.`;
+    }
+    return `In my most impactful project I identified a real-world problem, implemented a machine learning solution, and measured results using accuracy, precision, recall, and F1-score. I improved performance through systematic tuning and delivered a reliable, production-ready model that demonstrated clear business value.`;
   }
+
   if (requiresStarMethodV2(questionType)) {
-    return `Situation: I was working on a project where the initial model output was below expectations. Task: I needed to improve performance while keeping the approach scalable. Action: I improved feature quality, validated data, and tuned hyperparameters through controlled experiments. Result: Performance improved significantly and the solution became reliable for practical use.`;
+    const expContext = firstExpRole && firstExpCompany ? `${firstExpRole} at ${firstExpCompany}` : (projTitle || "my project");
+    return `Situation: While working as ${expContext}, I received feedback that a key feature was underperforming. Task: My goal was to improve it while maintaining the overall system stability. Action: I prioritized the issues, reworked the implementation with additional testing, and incorporated the feedback iteratively. Result: The feature improved significantly, received positive validation, and was merged into the main release.`;
   }
+
   if (questionType === "One-word incomplete answer") {
-    return `To answer clearly, I would explain the context, the approach I used, and the measurable outcome. I focus on structured communication and impact-oriented results for this ${normalizedRole} role.`;
+    const context = topSkills ? `my skills in ${topSkills}` : `my background in ${r}`;
+    return `To elaborate properly: based on ${context}, the approach I would take is to clearly define the task, apply a structured methodology, and measure outcomes against defined success criteria. I believe in delivering results that are both technically sound and aligned with business goals.`;
   }
-  return `To clarify, I use a structured approach: define the problem, explain the method, and present measurable results aligned with ${normalizedRole} expectations at ${normalizedCompany}.`;
+
+  // Follow-up clarification — answer the actual question using profile context
+  const q = String(question || "").toLowerCase();
+  if (/why.*interest|reason.*apply|why.*company|why.*google|why.*microsoft|why.*amazon/i.test(q)) {
+    const skillContext = topSkills ? `skills in ${topSkills}` : "technical skills";
+    return `I am genuinely interested in ${c} because of its impact on real-world problems and its engineering culture. My ${skillContext}${firstExpRole ? `, combined with my experience as ${firstExpRole}` : ""}, align well with the ${r} role. I want to contribute to large-scale, meaningful projects that challenge me to grow.`;
+  }
+  if (/strength|best quality|what.*bring|what.*offer/i.test(q)) {
+    const s = topSkills || "problem solving and technical execution";
+    return `My key strengths are ${s}. ${firstExpRole ? `In my role as ${firstExpRole} at ${firstExpCompany}, I applied these consistently to deliver results.` : ""} I combine analytical thinking with strong communication, which allows me to translate complex findings into actionable insights for the team.`;
+  }
+  if (/weakness|improve|challenge|struggle/i.test(q)) {
+    return `One area I have actively worked on is concise verbal communication under pressure. I identified this gap during mock interview sessions, started practicing structured responses using the STAR method, and have seen measurable improvement in my confidence and clarity during presentations and interviews.`;
+  }
+  if (/project|built|developed|created|work/i.test(q)) {
+    if (projTitle) {
+      const tech = projTech ? ` (${projTech.split(",").slice(0, 3).map(t => t.trim()).join(", ")})` : "";
+      return `I built ${projTitle}${tech}, which involved designing the architecture, implementing core features, and testing across different user scenarios. The main challenge was scaling the system reliably while keeping latency low. I solved this by optimizing the backend pipeline and implementing intelligent fallbacks.`;
+    }
+  }
+  if (/experience|background|work|intern|job/i.test(q)) {
+    if (firstExpRole && firstExpCompany) {
+      return `${firstExpDesc ? `As ${firstExpRole} at ${firstExpCompany}, I ${firstExpDesc.charAt(0).toLowerCase() + firstExpDesc.slice(1)}.` : `I worked as ${firstExpRole} at ${firstExpCompany}.`} This hands-on experience gave me strong exposure to production-level challenges and prepared me well for the ${r} role.`;
+    }
+  }
+  // Generic fallback for truly ambiguous follow-ups
+  const base = firstExpRole ? `In my experience as ${firstExpRole}${firstExpCompany ? " at " + firstExpCompany : ""}` : (projTitle ? `While building ${projTitle}` : "In my work");
+  return `${base}, I approached this by clearly defining the goal, applying a structured execution plan, and validating results against measurable criteria. I believe this kind of disciplined approach is exactly what the ${r} role at ${c} requires.`;
 };
 
 const buildHrResponseV2 = (questionType: string, question: string, rawRoman: string, role?: string | null, company?: string | null) => {
@@ -544,33 +604,7 @@ const heuristicEvaluateAnswerV2 = (
   const correctedVersion = isEnglishOnlyText(correctedVersionRaw)
     ? correctedVersionRaw
     : normalizeToEnglishSafe(correctedVersionRaw) || "I would like to answer this clearly.";
-  const bestProfessionalAnswerRaw = (() => {
-    const rRole = role || "target role";
-    const rCompany = company || "the company";
-    // If we have profile context, try to extract a relevant snippet
-    if (profileContext) {
-      const pc = profileContext;
-      if (questionType === "Greeting") {
-        return `I am doing well, thank you. I am ${userName} and I am excited about this opportunity for the ${rRole} position at ${rCompany}.`;
-      }
-      if (questionType === "Introduction" || questionType === "Background summary") {
-        // Extract first experience line from profile context
-        const expMatch = pc.match(/Experience:\n(  - .+)/m);
-        const skillsMatch = pc.match(/Skills: (.+)/m);
-        const expLine = expMatch ? expMatch[1].replace(/^  - /, "") : null;
-        const skillLine = skillsMatch ? skillsMatch[1].split(",").slice(0, 3).join(", ") : null;
-        return `I am ${userName}. ${expLine ? `Most recently I served as ${expLine}.` : ""} ${skillLine ? `My core skills include ${skillLine}.` : ""} I am keen to bring this expertise to the ${rRole} role at ${rCompany} and make a measurable impact.`.trim();
-      }
-      if (questionType === "Technical project" || questionType === "Metrics/performance question") {
-        const projMatch = pc.match(/Projects:\n(  - .+)/m);
-        const projLine = projMatch ? projMatch[1].replace(/^  - /, "") : null;
-        if (projLine) {
-          return `One of my key projects was ${projLine}. I defined the problem, built and evaluated the solution using accuracy, precision, recall, and F1-score, and iterated to improve performance. This directly aligns with the responsibilities of the ${rRole} role at ${rCompany}.`;
-        }
-      }
-    }
-    return buildProfessionalAnswerV2(questionType, question, rawAnswer, userName, role, company);
-  })();
+  const bestProfessionalAnswerRaw = buildProfessionalAnswerV2(questionType, question, rawAnswer, userName, role, company, profileContext);
   const bestProfessionalAnswer = isEnglishOnlyText(bestProfessionalAnswerRaw)
     ? bestProfessionalAnswerRaw
     : normalizeToEnglishSafe(bestProfessionalAnswerRaw) || "I would like to provide a clear and professional response.";
@@ -723,7 +757,7 @@ OTHER RULES:
       structuredAnswer: Boolean(parsed.structuredAnswer),
     };
 
-    const genericPattern = /i am .*preparing for|interview simulations and feedback|continuously improving/i;
+    const genericPattern = /i am .*preparing for|interview simulations and feedback|continuously improving through|to clarify, i use a structured approach|define the problem, explain the method|present measurable results aligned with|i would like to answer this|i focus on structured communication/i;
     if (!output.correctedVersion || !output.bestProfessionalAnswer || genericPattern.test(output.bestProfessionalAnswer)) {
       return fallback();
     }
