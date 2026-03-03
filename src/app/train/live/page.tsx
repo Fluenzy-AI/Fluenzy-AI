@@ -109,7 +109,10 @@ export default function LiveGDPage() {
       .finally(() => setLoading(false));
   }, [session]);
 
+  const ALWAYS_UNLIMITED = new Set(['gdPrivate', 'gdRandom', 'interview']);
+
   const sessionLabel = (key: string) => {
+    if (ALWAYS_UNLIMITED.has(key)) return 'Unlimited';
     if (loading) return 'Loading...';
     if (usageData?.isUnlimited?.[key]) return 'Unlimited';
     const rem = usageData?.remaining?.[key];
@@ -126,7 +129,7 @@ export default function LiveGDPage() {
       gradient: 'from-purple-500 to-pink-500',
       badge: 'Invite-Only',
       href: '/train/gd/private',
-      moduleKey: 'gd',
+      moduleKey: 'gdPrivate',
     },
     {
       id: 'random-gd',
@@ -136,7 +139,7 @@ export default function LiveGDPage() {
       gradient: 'from-blue-500 to-cyan-500',
       badge: 'Live',
       href: '/train/live-gd',
-      moduleKey: 'gd',
+      moduleKey: 'gdRandom',
     },
   ];
 
