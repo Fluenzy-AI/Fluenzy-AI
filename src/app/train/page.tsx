@@ -30,7 +30,6 @@ const UNLIMITED_MODULES = new Set([
   'vocabulary',
   'latestTopics',
   'latest_topics',
-  'gd',         // GD Agent parent - unlimited
   'gdPrivate',  // GD Private - unlimited
   'gdRandom',   // GD Random - unlimited
 ]);
@@ -114,7 +113,7 @@ const modules: Module[] = [
     href: '/train/gd',
     badge: 'AI',
     isLocked: false,
-    sessions: 'Unlimited', // GD Agent parent is unlimited
+    sessions: '-', // Will be updated from API (AI Agents is LIMITED)
   },
   {
     type: 'technical',

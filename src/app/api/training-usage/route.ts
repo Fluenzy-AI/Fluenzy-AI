@@ -70,11 +70,12 @@ export async function GET(request: NextRequest) {
         isUnlimited[key] = usageData.isUnlimited?.[key] || false;
         console.log(`[MODULE_LIMITED] ${key}: canUse=${canUse[key]}, remaining=${remaining}`);
       } else if (accessType === 'partial') {
-        // Partial modules (like GD) - parent is unlimited, sub-features have limits
-        // GD parent module should be unlimited (no direct limit)
-        canUse[key] = true;
-        isUnlimited[key] = true;
-        console.log(`[MODULE_PARTIAL] ${key} parent is unlimited`);
+        // Partial modules (like GD) - AI Agents sub-feature is LIMITED
+        // Use the actual remaining count from usage breakdown (gd = AI Agents limit)
+        const remaining = usageData.remaining[key as keyof typeof usageData.remaining];
+        canUse[key] = (remaining || 0) > 0;
+        isUnlimited[key] = false;
+        console.log(`[MODULE_PARTIAL] ${key} AI Agents: canUse=${canUse[key]}, remaining=${remaining}`);
       }
     }
 
