@@ -197,29 +197,28 @@ export default function OfferLettersPage() {
                   <input type="number" min={0} value={form.salary} onChange={e => setForm(f => ({ ...f, salary: +e.target.value }))}
                     className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-500 block mb-1">Joining Date *</label>
                   <input type="date" value={form.joiningDate} onChange={e => setForm(f => ({ ...f, joiningDate: e.target.value }))}
                     className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-500 block mb-1">Accept Offer By *</label>
                   <input type="date" value={form.acceptanceDeadline} onChange={e => setForm(f => ({ ...f, acceptanceDeadline: e.target.value }))}
                     className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="text-xs text-slate-500 block mb-1">Probation (months)</label>
                   <input type="number" min={0} max={12} value={form.probationMonths} onChange={e => setForm(f => ({ ...f, probationMonths: +e.target.value }))}
                     className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
-                <div>
-                  <label className="text-xs text-slate-500 block mb-1">Work Hours</label>
-                  <input value={form.workingHours} onChange={e => setForm(f => ({ ...f, workingHours: e.target.value }))}
-                    className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
-                </div>
+              </div>
+              <div>
+                <label className="text-xs text-slate-500 block mb-1">Work Hours</label>
+                <input value={form.workingHours} onChange={e => setForm(f => ({ ...f, workingHours: e.target.value }))}
+                  className="w-full bg-slate-800 border border-white/10 rounded-xl px-3 py-2 text-sm text-white" />
               </div>
               <div className="flex items-center gap-3 py-1">
                 <input type="checkbox" id="sendEmail" checked={form.sendEmail} onChange={e => setForm(f => ({ ...f, sendEmail: e.target.checked }))} className="rounded" />
