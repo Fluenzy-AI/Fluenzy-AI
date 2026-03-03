@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
-export default function CandidateSignupPage() {
+function SignupForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [redirect, setRedirect] = useState("/candidates/dashboard");
+
+  useEffect(() => {
+    const r = searchParams.get("redirect");
+    if (r) setRedirect(r);
+  }, [searchParams]);
 
   function set(k: string, v: string) { setForm(p => ({ ...p, [k]: v })); }
 
@@ -24,7 +31,7 @@ export default function CandidateSignupPage() {
     });
     const data = await res.json();
     if (!res.ok) { setError(data.error || "Sign up failed"); setLoading(false); return; }
-    router.push("/candidates/dashboard");
+    router.push(redirect);
   }
 
   return (
@@ -86,5 +93,13 @@ export default function CandidateSignupPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function CandidateSignupPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignupForm />
+    </Suspense>
   );
 }

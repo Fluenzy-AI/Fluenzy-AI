@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface CandidateSession {
@@ -254,16 +255,27 @@ function ApplicationForm({ job, onClose, candidate }: { job: Job; onClose: () =>
 
 // ── Main Component ─────────────────────────────────────────────────────────
 export default function JobDetailClient({ job }: { job: Job }) {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
+  const [showLoginGate, setShowLoginGate] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [candidate, setCandidate] = useState<CandidateSession | null>(null);
+  const [candidate, setCandidate] = useState<CandidateSession | null | undefined>(undefined);
 
   useEffect(() => {
     fetch("/api/candidates/me")
       .then(r => r.ok ? r.json() : null)
-      .then(d => { if (d?.candidate) setCandidate({ ...d.candidate, profile: d.candidate.profile }); })
-      .catch(() => {});
+      .then(d => setCandidate(d?.candidate ? { ...d.candidate, profile: d.candidate.profile } : null))
+      .catch(() => setCandidate(null));
   }, []);
+
+  const handleApplyClick = useCallback(() => {
+    if (candidate === undefined) return; // still loading
+    if (!candidate) {
+      setShowLoginGate(true);
+    } else {
+      setShowForm(true);
+    }
+  }, [candidate]);
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href);
@@ -387,10 +399,13 @@ export default function JobDetailClient({ job }: { job: Job }) {
 
               <div className="border-t border-white/8 pt-4 space-y-2.5">
                 <button
-                  onClick={() => setShowForm(true)}
-                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-primary/20"
+                  onClick={handleApplyClick}
+                  disabled={candidate === undefined}
+                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2"
                 >
-                  Apply Now →
+                  {candidate === undefined ? (
+                    <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Loading...</>
+                  ) : "Apply Now →"}
                 </button>
                 <button
                   onClick={copyLink}
@@ -409,6 +424,67 @@ export default function JobDetailClient({ job }: { job: Job }) {
           </div>
         </div>
       </div>
+
+      {/* ── Login Gate Modal ── */}
+      <AnimatePresence>
+        {showLoginGate && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={(e) => { if (e.target === e.currentTarget) setShowLoginGate(false); }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.94, y: 12 }}
+              transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+              className="bg-card border border-white/10 rounded-2xl w-full max-w-md shadow-2xl overflow-hidden"
+            >
+              {/* Top gradient strip */}
+              <div className="h-1.5 w-full bg-gradient-to-r from-violet-500 to-purple-500" />
+
+              <div className="p-8 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-violet-500/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-5">
+                  <svg className="w-8 h-8 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+
+                <h2 className="text-xl font-bold text-foreground mb-2">Login Required</h2>
+                <p className="text-muted-foreground text-sm mb-1">
+                  You need a <strong className="text-foreground">Candidate Account</strong> to apply for this role.
+                </p>
+                <p className="text-muted-foreground text-xs mb-7">
+                  Login or register free — takes less than a minute. Your profile will auto-fill the application form.
+                </p>
+
+                <div className="flex flex-col gap-3">
+                  <Link
+                    href={`/candidates/login?redirect=/careers/${job.slug}`}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 text-white font-bold text-sm hover:from-violet-500 hover:to-purple-400 transition-all shadow-lg shadow-violet-500/25 text-center"
+                  >
+                    Login to Apply
+                  </Link>
+                  <Link
+                    href={`/candidates/signup?redirect=/careers/${job.slug}`}
+                    className="w-full py-3 rounded-xl border border-violet-500/30 bg-violet-500/5 text-violet-300 font-semibold text-sm hover:bg-violet-500/10 hover:border-violet-500/50 transition-all text-center"
+                  >
+                    Create Free Account
+                  </Link>
+                  <button
+                    onClick={() => setShowLoginGate(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors pt-1"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ── Apply Modal ── */}
       <AnimatePresence>
