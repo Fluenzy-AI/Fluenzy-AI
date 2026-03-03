@@ -1,8 +1,22 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+
+interface CandidateSession {
+  id: string;
+  name: string;
+  email: string;
+  profile?: {
+    phone?: string;
+    linkedin?: string;
+    portfolio?: string;
+    experience?: string;
+    resumeUrl?: string;
+    resumeName?: string;
+  };
+}
 
 const LOC_LABELS: Record<string, string> = { REMOTE: "Remote", HYBRID: "Hybrid", ONSITE: "On-site" };
 const LOC_COLORS: Record<string, string> = {
@@ -29,17 +43,35 @@ interface Job {
 }
 
 // ── Application Form ──────────────────────────────────────────────────────
-function ApplicationForm({ job, onClose }: { job: Job; onClose: () => void }) {
+function ApplicationForm({ job, onClose, candidate }: { job: Job; onClose: () => void; candidate: CandidateSession | null }) {
   const [form, setForm] = useState({
     name: "", email: "", phone: "", portfolio: "",
     coverLetter: "", experience: "", linkedin: "",
   });
   const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumePreFilled, setResumePreFilled] = useState<{ url: string; name: string } | null>(null);
   const [resumeError, setResumeError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (candidate) {
+      setForm({
+        name: candidate.name || "",
+        email: candidate.email || "",
+        phone: candidate.profile?.phone || "",
+        portfolio: candidate.profile?.portfolio || "",
+        linkedin: candidate.profile?.linkedin || "",
+        experience: candidate.profile?.experience || "",
+        coverLetter: "",
+      });
+      if (candidate.profile?.resumeUrl) {
+        setResumePreFilled({ url: candidate.profile.resumeUrl, name: candidate.profile.resumeName || "resume.pdf" });
+      }
+    }
+  }, [candidate]);
 
   function set(field: string, val: string) { setForm((p) => ({ ...p, [field]: val })); }
 
@@ -54,27 +86,40 @@ function ApplicationForm({ job, onClose }: { job: Job; onClose: () => void }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!resumeFile) { setResumeError("Please upload your resume (PDF)"); return; }
     setSubmitting(true);
     setError("");
 
-    // 1. Upload resume
-    const fd = new FormData();
-    fd.append("resume", resumeFile);
-    const uploadRes = await fetch("/api/careers/upload-resume", { method: "POST", body: fd });
-    if (!uploadRes.ok) {
-      const u = await uploadRes.json();
-      setError(u.error || "Resume upload failed");
+    let resumeUrl = "";
+    let resumeName = "";
+
+    if (resumeFile) {
+      // Upload new file
+      const fd = new FormData();
+      fd.append("file", resumeFile);
+      const uploadRes = await fetch("/api/careers/upload-resume", { method: "POST", body: fd });
+      if (!uploadRes.ok) {
+        const u = await uploadRes.json();
+        setError(u.error || "Resume upload failed");
+        setSubmitting(false);
+        return;
+      }
+      const up = await uploadRes.json();
+      resumeUrl = up.url;
+      resumeName = up.name;
+    } else if (resumePreFilled) {
+      resumeUrl = resumePreFilled.url;
+      resumeName = resumePreFilled.name;
+    } else {
+      setResumeError("Please upload your resume (PDF)");
       setSubmitting(false);
       return;
     }
-    const { url: resumeUrl, name: resumeName } = await uploadRes.json();
 
     // 2. Submit application
     const applyRes = await fetch("/api/careers/apply", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ jobId: job.id, ...form, resumeUrl, resumeName }),
+      body: JSON.stringify({ jobId: job.id, ...form, resumeUrl, resumeName, candidateId: candidate?.id || undefined }),
     });
     const applyData = await applyRes.json();
     if (!applyRes.ok) {
@@ -103,6 +148,19 @@ function ApplicationForm({ job, onClose }: { job: Job; onClose: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      {candidate ? (
+        <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5 text-xs text-emerald-400">
+          <span>✓</span>
+          <span>Logged in as <strong>{candidate.name}</strong> — form auto-filled from your profile.</span>
+          <Link href="/candidates/dashboard" className="ml-auto underline hover:no-underline">Dashboard</Link>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-muted-foreground">
+          <span>💡</span>
+          <span>Have a candidate account?</span>
+          <Link href={`/candidates/login?redirect=/careers/${job.slug}`} className="text-primary hover:underline ml-1">Login to auto-fill</Link>
+        </div>
+      )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* Name */}
         <div>
@@ -141,11 +199,11 @@ function ApplicationForm({ job, onClose }: { job: Job; onClose: () => void }) {
         <label className="block text-xs font-medium text-muted-foreground mb-1.5">Resume (PDF, max 5 MB) *</label>
         <div
           onClick={() => fileRef.current?.click()}
-          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${resumeFile ? "border-primary/40 bg-primary/5" : "border-white/10 bg-white/3 hover:border-white/20"}`}
+          className={`flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-dashed cursor-pointer transition-colors ${(resumeFile || resumePreFilled) ? "border-primary/40 bg-primary/5" : "border-white/10 bg-white/3 hover:border-white/20"}`}
         >
           <svg className="w-5 h-5 text-muted-foreground flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-          <span className="text-sm text-muted-foreground">{resumeFile ? resumeFile.name : "Click to upload PDF resume"}</span>
-          {resumeFile && <span className="ml-auto text-xs text-emerald-400">✓ Ready</span>}
+          <span className="text-sm text-muted-foreground">{resumeFile ? resumeFile.name : resumePreFilled ? resumePreFilled.name : "Click to upload PDF resume"}</span>
+          {(resumeFile || resumePreFilled) && <span className="ml-auto text-xs text-emerald-400">✓ Ready</span>}
         </div>
         <input ref={fileRef} type="file" accept=".pdf,application/pdf" onChange={handleFile} className="hidden" />
         {resumeError && <p className="text-xs text-red-400 mt-1">{resumeError}</p>}
@@ -198,6 +256,14 @@ function ApplicationForm({ job, onClose }: { job: Job; onClose: () => void }) {
 export default function JobDetailClient({ job }: { job: Job }) {
   const [showForm, setShowForm] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [candidate, setCandidate] = useState<CandidateSession | null>(null);
+
+  useEffect(() => {
+    fetch("/api/candidates/me")
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.candidate) setCandidate({ ...d.candidate, profile: d.candidate.profile }); })
+      .catch(() => {});
+  }, []);
 
   function copyLink() {
     navigator.clipboard.writeText(window.location.href);
@@ -368,7 +434,7 @@ export default function JobDetailClient({ job }: { job: Job }) {
                 </div>
                 <button onClick={() => setShowForm(false)} className="w-8 h-8 rounded-lg bg-white/5 text-muted-foreground hover:text-foreground hover:bg-white/10 flex items-center justify-center transition-all text-lg leading-none">×</button>
               </div>
-              <ApplicationForm job={job} onClose={() => setShowForm(false)} />
+              <ApplicationForm job={job} onClose={() => setShowForm(false)} candidate={candidate} />
             </motion.div>
           </motion.div>
         )}

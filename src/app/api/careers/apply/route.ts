@@ -30,16 +30,17 @@ function checkRateLimit(ip: string): boolean {
 
 // ── Validation Schema ──────────────────────────────────────────────────────
 const ApplySchema = z.object({
-  jobId: z.string().min(1),
-  name: z.string().min(2).max(100),
-  email: z.string().email(),
-  phone: z.string().min(7).max(20),
-  resumeUrl: z.string().url(),
+  jobId: z.string().min(1, "Job ID is required"),
+  name: z.string().min(2, "Name must be at least 2 characters").max(100),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().min(7, "Phone number required").max(30),
+  resumeUrl: z.string().min(1, "Resume upload is required"), // relative path from upload API
   resumeName: z.string().optional(),
-  portfolio: z.string().url().optional().or(z.literal("")),
+  portfolio: z.string().optional().transform(v => v?.trim() || undefined),
   coverLetter: z.string().max(3000).optional(),
-  experience: z.string().min(1),
-  linkedin: z.string().url().optional().or(z.literal("")),
+  experience: z.string().min(1, "Please select experience level"),
+  linkedin: z.string().optional().transform(v => v?.trim() || undefined),
+  candidateId: z.string().optional(), // linked candidate account (if logged in)
 });
 
 // ── Email Sender ───────────────────────────────────────────────────────────
@@ -114,8 +115,12 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const parsed = ApplySchema.safeParse(body);
-  if (!parsed.success)
-    return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 400 });
+  if (!parsed.success) {
+    // Return first field-level error message for clarity
+    const fieldErrors = parsed.error.flatten().fieldErrors;
+    const firstError = Object.values(fieldErrors).flat()[0] || "Validation failed";
+    return NextResponse.json({ error: firstError, details: parsed.error.flatten() }, { status: 400 });
+  }
 
   const d = parsed.data;
 
@@ -143,6 +148,7 @@ export async function POST(req: NextRequest) {
       coverLetter: d.coverLetter || null,
       experience: d.experience,
       linkedin: d.linkedin || null,
+      candidateId: d.candidateId || null,
     },
   });
 

@@ -38,7 +38,7 @@ export default function FeatureTogglesPage() {
   const fetchToggles = useCallback(async () => {
     setLoading(true);
     const res = await fetch("/api/portal/admin/feature-toggles", { credentials: "include" });
-    if (res.ok) { const d = await res.json(); setToggles(Array.isArray(d.toggles) ? d.toggles : d.featureToggles ?? []); }
+    if (res.ok) { const d = await res.json(); setToggles(Array.isArray(d.toggles) ? d.toggles : Array.isArray(d.featureToggles) ? d.featureToggles : []); }
     setLoading(false);
   }, []);
 
@@ -90,7 +90,7 @@ export default function FeatureTogglesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {toggles.map(ft => (
+            {(Array.isArray(toggles) ? toggles : []).map(ft => (
               <div key={ft.key} className={`bg-slate-900 rounded-2xl border ${ft.enabled ? "border-green-500/20" : "border-white/5"} p-5 transition`}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0 mr-3">

@@ -23,11 +23,12 @@ const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
   REVIEWED: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   SHORTLISTED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  INTERVIEW_SCHEDULED: "bg-violet-500/10 text-violet-400 border-violet-500/20",
   REJECTED: "bg-red-500/10 text-red-400 border-red-500/20",
   HIRED: "bg-purple-500/10 text-purple-400 border-purple-500/20",
 };
 
-const STATUS_OPTIONS = ["PENDING", "REVIEWED", "SHORTLISTED", "REJECTED", "HIRED"];
+const STATUS_OPTIONS = ["PENDING", "REVIEWED", "SHORTLISTED", "INTERVIEW_SCHEDULED", "REJECTED", "HIRED"];
 
 interface Application {
   id: string;
@@ -42,6 +43,7 @@ interface Application {
   coverLetter?: string;
   notes?: string;
   status: string;
+  interviewDate?: string | null;
   createdAt: string;
   job: { title: string; slug: string; department: string };
 }
@@ -63,6 +65,7 @@ export default function JobApplicationsPage() {
   const [selected, setSelected] = useState<Application | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [notes, setNotes] = useState("");
+  const [interviewDate, setInterviewDate] = useState("");
 
   const fetchApps = useCallback(async () => {
     setLoading(true);
@@ -83,7 +86,7 @@ export default function JobApplicationsPage() {
 
   useEffect(() => { if (user) fetchApps(); }, [user, fetchApps]);
 
-  async function updateApplication(id: string, data: { status?: string; notes?: string }) {
+  async function updateApplication(id: string, data: { status?: string; notes?: string; interviewDate?: string | null }) {
     setActionLoading(true);
     const res = await fetch(`/api/portal/hr/job-applications/${id}`, {
       method: "PATCH", credentials: "include",
@@ -271,12 +274,32 @@ export default function JobApplicationsPage() {
                 <p className="text-sm font-medium text-white">Update Status</p>
                 <div className="flex flex-wrap gap-2">
                   {STATUS_OPTIONS.map(s => (
-                    <button key={s} onClick={() => updateApplication(selected.id, { status: s })}
-                      disabled={actionLoading || selected.status === s}
-                      className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all disabled:cursor-default ${selected.status === s ? STATUS_COLORS[s] + " opacity-100" : "border-white/10 text-slate-400 hover:border-white/20 hover:text-white"}`}>
-                      {s[0] + s.slice(1).toLowerCase()}
+                    <button key={s} onClick={() => {
+                      if (s === "INTERVIEW_SCHEDULED") return; // handled below
+                      updateApplication(selected.id, { status: s });
+                    }}
+                      disabled={actionLoading || selected.status === s || s === "INTERVIEW_SCHEDULED"}
+                      className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all disabled:cursor-default ${selected.status === s ? STATUS_COLORS[s] + " opacity-100" : s === "INTERVIEW_SCHEDULED" ? "hidden" : "border-white/10 text-slate-400 hover:border-white/20 hover:text-white"}`}>
+                      {s.replace(/_/g, " ")[0] + s.replace(/_/g, " ").slice(1).toLowerCase()}
                     </button>
                   ))}
+                </div>
+
+                {/* Interview Date Scheduler */}
+                <div className="border border-violet-500/20 bg-violet-500/5 rounded-xl p-3 space-y-2">
+                  <p className="text-xs font-medium text-violet-300">📅 Schedule Interview</p>
+                  <div className="flex gap-2">
+                    <input type="datetime-local" value={interviewDate} onChange={e => setInterviewDate(e.target.value)}
+                      className="flex-1 bg-white/5 border border-white/10 text-white rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                    <button disabled={actionLoading || !interviewDate}
+                      onClick={() => updateApplication(selected.id, { status: "INTERVIEW_SCHEDULED", interviewDate })}
+                      className="text-xs px-4 py-2 bg-violet-500 text-white rounded-lg font-medium hover:bg-violet-600 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                      Schedule
+                    </button>
+                  </div>
+                  {selected.interviewDate && (
+                    <p className="text-xs text-violet-300">Current: {new Date(selected.interviewDate).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</p>
+                  )}
                 </div>
               </div>
 

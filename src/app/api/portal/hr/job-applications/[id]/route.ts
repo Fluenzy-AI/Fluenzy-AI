@@ -9,8 +9,9 @@ import { getPortalAuthFromRequest } from "@/lib/portal-auth";
 import { z } from "zod";
 
 const UpdateSchema = z.object({
-  status: z.enum(["PENDING", "REVIEWED", "SHORTLISTED", "REJECTED", "HIRED"]).optional(),
+  status: z.enum(["PENDING", "REVIEWED", "SHORTLISTED", "INTERVIEW_SCHEDULED", "REJECTED", "HIRED"]).optional(),
   notes: z.string().max(2000).optional(),
+  interviewDate: z.string().optional().nullable(), // ISO date string or null
 });
 
 type Params = { params: Promise<{ id: string }> };
@@ -40,7 +41,15 @@ export async function PATCH(req: NextRequest, { params }: Params) {
 
   const updated = await prisma.jobApplication.update({
     where: { id },
-    data: { ...parsed.data, updatedAt: new Date() },
+    data: {
+      ...(parsed.data.status && { status: parsed.data.status }),
+      ...(parsed.data.notes !== undefined && { notes: parsed.data.notes }),
+      ...(parsed.data.interviewDate !== undefined && {
+        interviewDate: parsed.data.interviewDate ? new Date(parsed.data.interviewDate) : null,
+        status: parsed.data.status || (parsed.data.interviewDate ? "INTERVIEW_SCHEDULED" : undefined),
+      }),
+      updatedAt: new Date(),
+    },
     include: { job: { select: { title: true } } },
   });
 

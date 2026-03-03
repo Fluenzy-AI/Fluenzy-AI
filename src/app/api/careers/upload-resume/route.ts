@@ -22,8 +22,10 @@ export async function POST(req: NextRequest) {
   const file = formData.get("resume") as File | null;
   if (!file) return NextResponse.json({ error: "No file provided" }, { status: 400 });
 
-  // Validate type
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  // Validate type — accept by MIME or by extension (.pdf)
+  const isPdfMime = ALLOWED_TYPES.includes(file.type);
+  const isPdfExt = file.name.toLowerCase().endsWith(".pdf");
+  if (!isPdfMime && !isPdfExt) {
     return NextResponse.json({ error: "Only PDF files are allowed" }, { status: 415 });
   }
 

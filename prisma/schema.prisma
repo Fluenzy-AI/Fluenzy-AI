@@ -1426,6 +1426,7 @@ enum AppStatus {
   PENDING
   REVIEWED
   SHORTLISTED
+  INTERVIEW_SCHEDULED
   REJECTED
   HIRED
 }
@@ -1454,24 +1455,60 @@ model Job {
 }
 
 model JobApplication {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  jobId       String    @db.ObjectId
-  job         Job       @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  name        String
-  email       String
-  phone       String
-  resumeUrl   String
-  resumeName  String?
-  portfolio   String?
-  coverLetter String?
-  experience  String
-  linkedin    String?
-  status      AppStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  jobId         String     @db.ObjectId
+  job           Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  candidateId   String?    @db.ObjectId
+  candidate     CandidateUser? @relation(fields: [candidateId], references: [id])
+  name          String
+  email         String
+  phone         String
+  resumeUrl     String
+  resumeName    String?
+  portfolio     String?
+  coverLetter   String?
+  experience    String
+  linkedin      String?
+  status        AppStatus  @default(PENDING)
+  notes         String?
+  interviewDate DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   @@index([jobId])
   @@index([email])
   @@index([status])
+  @@index([candidateId])
+}
+
+// ─── Candidate Auth ────────────────────────────────────────────────────────
+
+model CandidateUser {
+  id           String            @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  email        String            @unique
+  password     String
+  isVerified   Boolean           @default(false)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  profile      CandidateProfile?
+  applications JobApplication[]
+}
+
+model CandidateProfile {
+  id                String        @id @default(auto()) @map("_id") @db.ObjectId
+  candidateId       String        @unique @db.ObjectId
+  candidate         CandidateUser @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  phone             String?
+  education         String?
+  experience        String?
+  skills            String[]
+  resumeUrl         String?
+  resumeName        String?
+  linkedin          String?
+  portfolio         String?
+  address           String?
+  profileCompletion Int           @default(0)
+  updatedAt         DateTime      @updatedAt
 }
