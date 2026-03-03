@@ -512,6 +512,11 @@ function AnalyticsDashboardPageContent() {
               Focus: {advanced.coach.nextSessionFocus}
             </Button>
           )}
+          {forceFullView && (
+            <Button asChild variant="outline" className="border-cyan-500/40 text-cyan-300 hover:bg-cyan-500/10">
+              <Link href="/analytics">← Mobile View</Link>
+            </Button>
+          )}
         </div>
 
         {/* 1 OVERALL PERFORMANCE SUMMARY */}
@@ -584,8 +589,8 @@ function AnalyticsDashboardPageContent() {
         <section className="order-2 space-y-6">
   <h2 className={`text-lg font-bold ${isLight ? 'text-gray-900' : 'text-white'}`}>Priority Chart Order</h2>
 
-  {/* Radar charts — desktop/laptop only (hidden on mobile < 640px) */}
-  <div className="hidden sm:block">
+  {/* Radar charts — visible in full view and on desktop */}
+  <div>
     <div className="flex items-center justify-between mb-3">
       <div className="flex items-center gap-2">
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(34,211,238,0.15)', border: '1px solid rgba(34,211,238,0.4)', borderRadius: '999px', padding: '2px 10px', fontSize: '12px', fontWeight: 600, color: '#22d3ee' }}>
@@ -607,7 +612,7 @@ function AnalyticsDashboardPageContent() {
         ↻ Refresh
       </button>
     </div>
-    <div className="grid grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
     {/* Body Language Composite Radar */}
     <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', background: 'rgba(15,23,42,0.6)', height: '520px', display: 'flex', flexDirection: 'column' }}>
       <div style={{ padding: '18px 20px 10px 20px', flexShrink: 0 }}>
