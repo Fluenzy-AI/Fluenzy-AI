@@ -8,15 +8,14 @@ const HR_NAV = [
   { label: "Dashboard", href: "/portal/hr" },
   { label: "Employees", href: "/portal/hr/employees" },
   { label: "Candidates", href: "/portal/hr/candidates" },
+  { label: "Interviews", href: "/portal/hr/interviews" },
   { label: "Leave Requests", href: "/portal/hr/leaves" },
   { label: "Attendance", href: "/portal/hr/attendance" },
   { label: "Payroll", href: "/portal/hr/payroll" },
   { label: "Offer Letters", href: "/portal/hr/offer-letters" },
   { label: "Send Email", href: "/portal/hr/send-email" },
   { label: "Email Logs", href: "/portal/hr/email-logs" },
-];
-
-interface AttendanceRecord {
+];interface AttendanceRecord {
   id: string;
   employeeId: string;
   employeeName: string;

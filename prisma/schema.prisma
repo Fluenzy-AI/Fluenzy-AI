@@ -1211,12 +1211,43 @@ model Candidate {
   skills          String[]
 
   offerLetters    OfferLetter[]
+  interviews      Interview[]
 
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
   @@index([status])
   @@index([hrId])
+}
+
+// Interview scheduled for a candidate
+model Interview {
+  id               String     @id @default(auto()) @map("_id") @db.ObjectId
+  candidateId      String?    @db.ObjectId
+  candidate        Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+
+  position         String
+  department       String?
+  scheduledAt      DateTime
+  durationMinutes  Int?       @default(60)
+  type             String     @default("VIDEO")   // VIDEO | PHONE | IN_PERSON
+  meetingLink      String?
+
+  interviewerName  String?
+  interviewerEmail String?
+
+  status           String     @default("SCHEDULED")  // SCHEDULED | COMPLETED | CANCELLED | NO_SHOW
+  notes            String?
+  feedback         String?
+  result           String?    // PASS | FAIL | HOLD
+
+  scheduledBy      String     // HR email
+
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  @@index([scheduledAt])
+  @@index([candidateId])
 }
 
 // Offer Letter generated for candidates or employees

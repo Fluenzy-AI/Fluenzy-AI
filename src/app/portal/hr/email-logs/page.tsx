@@ -8,6 +8,7 @@ const HR_NAV = [
   { label: "Dashboard", href: "/portal/hr" },
   { label: "Employees", href: "/portal/hr/employees" },
   { label: "Candidates", href: "/portal/hr/candidates" },
+  { label: "Interviews", href: "/portal/hr/interviews" },
   { label: "Leave Requests", href: "/portal/hr/leaves" },
   { label: "Attendance", href: "/portal/hr/attendance" },
   { label: "Payroll", href: "/portal/hr/payroll" },
@@ -77,7 +78,7 @@ export default function EmailLogsPage() {
                       <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 mt-0.5 ${statusColor[log.status] || "text-slate-400 bg-slate-400/10"}`}>{log.status}</span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm text-white font-medium truncate">{log.subject}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">To: {log.to.slice(0, 3).join(", ")}{log.to.length > 3 ? ` +${log.to.length - 3} more` : ""}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">To: {(log.to || []).slice(0, 3).join(", ")}{(log.to || []).length > 3 ? ` +${(log.to || []).length - 3} more` : ""}</p>
                         {log.failReason && <p className="text-xs text-red-400 mt-0.5">{log.failReason}</p>}
                       </div>
                       <div className="text-right flex-shrink-0">
@@ -87,7 +88,7 @@ export default function EmailLogsPage() {
                     </div>
                     {expanded === log.id && (
                       <div className="px-4 pb-3 ml-12 space-y-1">
-                        <p className="text-xs text-slate-500"><span className="text-slate-400">All recipients:</span> {log.to.join(", ")}</p>
+                        <p className="text-xs text-slate-500"><span className="text-slate-400">All recipients:</span> {(log.to || []).join(", ")}</p>
                         {log.cc && log.cc.length > 0 && <p className="text-xs text-slate-500"><span className="text-slate-400">CC:</span> {log.cc.join(", ")}</p>}
                         {log.templateId && <p className="text-xs text-slate-500"><span className="text-slate-400">Template:</span> {log.templateId}</p>}
                         {log.sentAt && <p className="text-xs text-slate-500"><span className="text-slate-400">Sent at:</span> {new Date(log.sentAt).toLocaleString("en-IN")}</p>}

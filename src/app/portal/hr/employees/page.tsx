@@ -10,6 +10,7 @@ const HR_NAV = [
   { label: "Dashboard", href: "/portal/hr", icon: <HomeIcon /> },
   { label: "Employees", href: "/portal/hr/employees", icon: <UsersIcon /> },
   { label: "Candidates", href: "/portal/hr/candidates", icon: <UserPlusIcon /> },
+  { label: "Interviews", href: "/portal/hr/interviews", icon: <CalendarIcon /> },
   { label: "Leave Management", href: "/portal/hr/leaves", icon: <ClockIcon /> },
   { label: "Attendance", href: "/portal/hr/attendance", icon: <CheckSquareIcon /> },
   { label: "Payroll", href: "/portal/hr/payroll", icon: <BanknotesIcon /> },
@@ -280,3 +281,4 @@ function BanknotesIcon() { return <svg fill="none" stroke="currentColor" viewBox
 function DocumentIcon() { return <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>; }
 function MailIcon() { return <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>; }
 function MailOpenIcon() { return <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 19v-8.93a2 2 0 01.89-1.664l7-4.666a2 2 0 012.22 0l7 4.666A2 2 0 0121 10.07V19M3 19a2 2 0 002 2h14a2 2 0 002-2M3 19l6.75-4.5M21 19l-6.75-4.5M3 10l6.75 4.5M21 10l-6.75 4.5m0 0l-1.14.76a2 2 0 01-2.22 0L9.75 14.5" /></svg>; }
+function CalendarIcon() { return <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" className="w-full h-full"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>; }
