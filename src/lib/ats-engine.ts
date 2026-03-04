@@ -222,7 +222,12 @@ const WEIGHTS = { skills: 35, experience: 20, projects: 15, education: 10, keywo
 function clamp(v: number): number { return Math.max(0, Math.min(100, Math.round(v))); }
 
 function norm(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9\s.+#/-]/g, " ").replace(/\s+/g, " ").trim();
+  return text
+    .toLowerCase()
+    .replace(/[._]/g, " ")              // react.js → react js, snake_case → snake case
+    .replace(/[^a-z0-9\s+#\-\/]/g, " ") // remove other special chars (keep + # - / for c++ c# ci/cd)
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
@@ -236,18 +241,22 @@ function hasSkill(rawLower: string, normText: string, entry: SkillEntry): boolea
     const a = alias.toLowerCase().trim();
     // Skip empty or dangerously short aliases that would cause false positives
     if (!a || a.length < 3) continue;
-    // Fast substring pre-check: eliminates regex work and false positives
-    if (!normText.includes(a)) continue;
+    // Normalize alias the SAME way as resume text (dots/underscores → spaces, etc.)
+    const aN = norm(a);
+    if (!aN || aN.length < 2) continue;
+    // Pre-check: every word of normalized alias must appear in normText
+    const aNWords = aN.split(/\s+/).filter(Boolean);
+    if (aNWords.length === 0) continue;
+    if (!aNWords.every(w => normText.includes(w))) continue;
     try {
-      const esc = a.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const esc = aN.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       let re: RegExp;
-      if (/^[a-z0-9 ]+$/i.test(a)) {
+      if (/^[a-z0-9 ]+$/i.test(aN)) {
         // Pure alphanumeric / multi-word alias → strict word-boundary on both ends
-        const parts = esc.split(/\s+/).join("[\\s_.-]+");
+        const parts = esc.split(/\s+/).join("[\\s]+");
         re = new RegExp(`\\b${parts}\\b`, "i");
       } else {
-        // Contains special chars (c++, c#, .net, react.js …)
-        // Anchor on whitespace / punctuation so we don't match mid-word
+        // Contains special chars — after norm() most dots become spaces, but handle remainder
         re = new RegExp(`(?:^|[\\s,;/|(\\[\\{])${esc}(?=[\\s,;/|)\\]\\}\\.:]|$)`, "i");
       }
       if (re.test(normText)) return true;
@@ -407,11 +416,34 @@ function scoreExperience(rawText: string, tq: string): { score: number; years: n
   let years = 0;
   const now = new Date().getFullYear();
 
-  // Strategy 1: "2020 - 2022" / "2020 to 2022" / "2020 – 2022"
+  // Strategy 1a: "2020 - 2022" / "2020 to 2022" / "2020 – 2022" (year-only ranges)
   for (const m of t.matchAll(/\b(20\d{2}|19\d{2})\s*[-\u2013\u2014to]+\s*(20\d{2}|present|current|now)\b/gi)) {
     const s2 = parseInt(m[1]);
     const e2 = /present|current|now/i.test(m[2]) ? now : parseInt(m[2]);
     if (e2 >= s2 && e2 - s2 <= 35) years += e2 - s2;
+  }
+
+  // Strategy 1b: "Dec 2024 - Jan 2025" / "Apr 2025 – Present" (month-year ranges)
+  const MONTH_IDX: Record<string, number> = {
+    jan:0, feb:1, mar:2, apr:3, may:4, jun:5, jul:6, aug:7, sep:8, oct:9, nov:10, dec:11
+  };
+  const MO = 'jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec';
+  const monthRangeRe = new RegExp(
+    `(${MO})\\s+(\\d{4})\\s*[-\u2013\u2014to]+\\s*(?:(${MO})\\s+(\\d{4})|(present|current|now))`,
+    'gi'
+  );
+  for (const m of t.matchAll(monthRangeRe)) {
+    const y1 = parseInt(m[2]);
+    const mo1 = MONTH_IDX[m[1].toLowerCase().slice(0, 3)] ?? 0;
+    let y2: number, mo2: number;
+    if (/present|current|now/i.test(m[5] ?? '')) {
+      y2 = now; mo2 = new Date().getMonth();
+    } else {
+      y2 = parseInt(m[4]);
+      mo2 = MONTH_IDX[m[3]?.toLowerCase().slice(0, 3) ?? ''] ?? mo1;
+    }
+    const monthsExp = (y2 - y1) * 12 + (mo2 - mo1);
+    if (monthsExp > 0 && monthsExp <= 480) years += monthsExp / 12;
   }
 
   // Strategy 2: "3+ years of experience"
@@ -492,7 +524,7 @@ function scoreSections(rawText: string): {
 } {
   const t = rawText.toLowerCase();
   const sections = [
-    { key: "skills",     re: /(skill|technolog|proficien|tech\s*stack|programming|tools)/,                              points: 15 },
+    { key: "skills",     re: /(skills?|technical\s*skills?|technologies?|tech\s*stack|programming|languages?|tools)/i, points: 15 },
     { key: "experience", re: /(experience|employment|work\s+history|internship|intern|worked\s+at|work\s+at)/,         points: 15 },
     { key: "education",  re: /(education|degree|university|college|school|b\.?tech|b\.?e\.?|m\.?tech|mca|bca|bsc)/,  points: 10 },
     { key: "projects",   re: /(project|work\s+sample|portfolio|github|personal\s+project|academic\s+project)/,        points: 10 },
