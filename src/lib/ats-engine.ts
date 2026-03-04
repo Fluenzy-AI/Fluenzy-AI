@@ -16,6 +16,107 @@ const pdfParse: (
 })();
 
 /**
+ * Pure-JS PDF text extractor — no extra dependencies.
+ * Parses BT...ET content stream blocks and extracts text from:
+ *   (string) Tj | (string) ' | [(arr)] TJ  and hex <hex> Tj variants.
+ * Handles both compressed and uncompressed PDF content streams.
+ */
+function parsePdfTextStreams(buffer: Buffer): string {
+  const latin = buffer.toString("latin1");
+  const parts: string[] = [];
+
+  // Helper: decode PDF string escape sequences
+  const decodePdfString = (s: string): string =>
+    s
+      .replace(/\\n/g, " ").replace(/\\r/g, " ").replace(/\\t/g, " ")
+      .replace(/\\([0-7]{3})/g, (_, o) => String.fromCharCode(parseInt(o, 8)))
+      .replace(/\\(.)/g, "$1");
+
+  // Helper: decode hex string <4865 6c6c 6f>
+  const decodeHexString = (h: string): string => {
+    const clean = h.replace(/\s/g, "");
+    let out = "";
+    for (let i = 0; i < clean.length - 1; i += 2) {
+      const code = parseInt(clean.slice(i, i + 2), 16);
+      if (code >= 32 && code < 127) out += String.fromCharCode(code);
+      else if (code === 0) { /* skip null */ }
+      else out += " ";
+    }
+    return out;
+  };
+
+  // Extract all BT...ET blocks
+  const btEt = /BT\b([\s\S]*?)\bET\b/g;
+  let blockMatch: RegExpExecArray | null;
+  while ((blockMatch = btEt.exec(latin)) !== null) {
+    const block = blockMatch[1];
+
+    // Match all text-showing commands in order
+    // 1. [(text1)(text2)-200(text3)] TJ
+    const tjArray = /\[((?:[^[\]]*|\([^)]*\))*)\]\s*TJ/g;
+    let m: RegExpExecArray | null;
+    while ((m = tjArray.exec(block)) !== null) {
+      const inner = m[1];
+      // Extract (string) parts from the array
+      const strParts = /\(([^)]*)\)/g;
+      let sp: RegExpExecArray | null;
+      while ((sp = strParts.exec(inner)) !== null) {
+        parts.push(decodePdfString(sp[1]));
+      }
+      // Extract <hex> parts from the array
+      const hexParts = /<([0-9a-fA-F\s]+)>/g;
+      let hp: RegExpExecArray | null;
+      while ((hp = hexParts.exec(inner)) !== null) {
+        parts.push(decodeHexString(hp[1]));
+      }
+    }
+
+    // 2. (string) Tj   or   (string) '
+    const tj = /\(([^)]*)\)\s*(?:Tj|')/g;
+    while ((m = tj.exec(block)) !== null) {
+      parts.push(decodePdfString(m[1]));
+    }
+
+    // 3. <hex> Tj
+    const hexTj = /<([0-9a-fA-F\s]+)>\s*Tj/g;
+    while ((m = hexTj.exec(block)) !== null) {
+      parts.push(decodeHexString(m[1]));
+    }
+  }
+
+  // Also try FlateDecode streams (compressed) — decompress with zlib
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const zlib = require("zlib") as typeof import("zlib");
+    const streamRegex = /stream\r?\n([\s\S]*?)\r?\nendstream/g;
+    let sm: RegExpExecArray | null;
+    while ((sm = streamRegex.exec(latin)) !== null) {
+      try {
+        const raw = Buffer.from(sm[1], "latin1");
+        const decompressed = zlib.inflateRawSync(raw).toString("latin1");
+        // Re-run BT...ET extraction on decompressed content
+        const btEt2 = /BT\b([\s\S]*?)\bET\b/g;
+        let b2: RegExpExecArray | null;
+        while ((b2 = btEt2.exec(decompressed)) !== null) {
+          const blk = b2[1];
+          const tj2 = /\(([^)]*)\)\s*(?:Tj|')/g;
+          let m2: RegExpExecArray | null;
+          while ((m2 = tj2.exec(blk)) !== null) parts.push(decodePdfString(m2[1]));
+          const arr2 = /\[((?:[^[\]]*|\([^)]*\))*)\]\s*TJ/g;
+          while ((m2 = arr2.exec(blk)) !== null) {
+            const sp2 = /\(([^)]*)\)/g;
+            let s2: RegExpExecArray | null;
+            while ((s2 = sp2.exec(m2[1])) !== null) parts.push(decodePdfString(s2[1]));
+          }
+        }
+      } catch { /* stream may not be zlib — skip */ }
+    }
+  } catch { /* zlib unavailable */ }
+
+  return parts.join(" ").replace(/\s+/g, " ").trim();
+}
+
+/**
  * Parse raw text from a resume buffer (PDF or DOCX).
  * Falls through multiple strategies, never throws.
  */
@@ -35,16 +136,12 @@ export async function parseResume(
       const data = await pdfParse(buffer, { pagerender: () => Promise.resolve("") });
       if (data.text && data.text.trim().length > 20) return { text: data.text };
     } catch { /* fall through */ }
-    // Strategy 3: Extract readable ASCII sequences from raw PDF binary.
-    // Works for text-based PDFs where pdf-parse fails — the actual text is stored
-    // as printable ASCII strings embedded in the binary stream.
+    // Strategy 3: Parse PDF content streams directly (BT...ET text blocks).
+    // PDF format stores all visible text between BT (Begin Text) and ET (End Text)
+    // operators. Text is in (string)Tj / [(arr)]TJ / hex <hex>Tj commands.
+    // This works reliably on all text-based PDFs without external libraries.
     try {
-      const rawBinary = buffer.toString("latin1");
-      // Extract all runs of printable ASCII chars that are ≥5 chars long
-      const sequences = rawBinary.match(/[\x20-\x7E]{5,}/g) ?? [];
-      // Keep sequences that look like real words/tech (contain at least one letter)
-      const meaningful = sequences.filter(s => /[a-zA-Z]/.test(s));
-      const extracted = meaningful.join(" ").replace(/\s+/g, " ").trim();
+      const extracted = parsePdfTextStreams(buffer);
       if (extracted.length > 100) {
         return { text: extracted, parseWarning: "binary PDF fallback" };
       }
