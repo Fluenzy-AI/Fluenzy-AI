@@ -55,6 +55,12 @@ const PAGE_TITLES: Record<string, { label: string; color: string }> = {
   '/pricing': { label: 'Pricing', color: 'text-pink-400' },
   '/profile': { label: 'My Profile', color: 'text-purple-400' },
   '/billing': { label: 'Subscription', color: 'text-blue-400' },
+  '/ats': { label: 'Advanced ATS System', color: 'text-violet-400' },
+  '/ats/upload-resume': { label: 'Upload Resume', color: 'text-violet-400' },
+  '/ats/analysis': { label: 'ATS Analysis', color: 'text-violet-400' },
+  '/ats/ranking': { label: 'ATS Leaderboard', color: 'text-amber-400' },
+  '/ats/history': { label: 'ATS History', color: 'text-emerald-400' },
+  '/ats/admin': { label: 'ATS Admin Dashboard', color: 'text-violet-400' },
 };
 
 const Navbar = ({ showSidebar, userData }: NavbarProps) => {

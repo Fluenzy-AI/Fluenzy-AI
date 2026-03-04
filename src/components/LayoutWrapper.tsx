@@ -37,7 +37,8 @@ import {
   Radio,
   Lock,
   Shuffle,
-  Crown
+  Crown,
+  ShieldCheck
 } from 'lucide-react';
 import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
 
@@ -58,6 +59,7 @@ const navItems = [
 
 const secondaryNavItems = [
   { href: '/interview-guide', label: 'Interview Guide', icon: GraduationCap },
+  { href: '/ats', label: 'Advanced ATS System', icon: ShieldCheck },
   { href: '/history', label: 'History', icon: History },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/profile', label: 'Profile', icon: User },

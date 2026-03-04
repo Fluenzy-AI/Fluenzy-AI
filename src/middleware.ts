@@ -38,6 +38,8 @@ export const config = {
     "/history/:path*",
     "/profile/:path*",
     "/billing/:path*",
+    "/ats/:path*",
+    "/api/ats/:path*",
     // Protect module API endpoints so they always require a valid session
     "/api/evaluate-answer/:path*",
     "/api/gd/:path*",

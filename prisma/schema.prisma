@@ -173,6 +173,9 @@ model users {
   gdParticipants   GDParticipant[]
   gdHistory        GDHistory[]
   notifications    Notification[]
+  atsResumes       ATSResume[]
+  atsAnalyses      ATSAnalysis[]
+  atsRankings      ATSRanking[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -1511,4 +1514,72 @@ model CandidateProfile {
   address           String?
   profileCompletion Int           @default(0)
   updatedAt         DateTime      @updatedAt
+}
+
+// ─── Advanced ATS System ────────────────────────────────────────────────────
+
+model ATSResume {
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String        @db.ObjectId
+  user             users         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName         String
+  fileUrl          String
+  fileType         String        // "pdf" | "docx"
+  fileSize         Int           // bytes
+  rawText          String        // parsed resume text
+  parsedData       Json?         // structured extracted data
+  uploadedAt       DateTime      @default(now())
+  analyses         ATSAnalysis[]
+
+  @@index([userId])
+}
+
+model ATSAnalysis {
+  id                 String      @id @default(auto()) @map("_id") @db.ObjectId
+  resumeId           String      @db.ObjectId
+  resume             ATSResume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  userId             String      @db.ObjectId
+  user               users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Overall
+  atsScore           Float       // 0–100 composite
+  // Sub-scores
+  keywordScore       Float       @default(0)
+  skillsScore        Float       @default(0)
+  formatScore        Float       @default(0)
+  experienceScore    Float       @default(0)
+  educationScore     Float       @default(0)
+  readabilityScore   Float       @default(0)
+  sectionScore       Float       @default(0)
+  // Analysis data
+  matchedKeywords    String[]
+  missingKeywords    String[]
+  extractedSkills    String[]
+  suggestions        String[]
+  strengths          String[]
+  jobTitleMatch      String?
+  experienceYears    Float       @default(0)
+  createdAt          DateTime    @default(now())
+  ranking            ATSRanking?
+
+  @@index([userId])
+  @@index([atsScore])
+  @@index([createdAt])
+}
+
+model ATSRanking {
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String      @db.ObjectId
+  user         users       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analysisId   String      @unique @db.ObjectId
+  analysis     ATSAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  rank         Int
+  totalScore   Float
+  college      String?
+  jobRole      String?     @default("general")
+  updatedAt    DateTime    @default(now()) @updatedAt
+
+  @@index([rank])
+  @@index([totalScore])
+  @@index([userId])
+  @@index([jobRole])
 }

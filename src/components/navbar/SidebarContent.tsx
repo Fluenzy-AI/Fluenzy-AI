@@ -9,7 +9,8 @@ import {
   Zap,
   ChevronRight,
   Target,
-  GraduationCap
+  GraduationCap,
+  ShieldCheck,
 } from "lucide-react";
 
 interface SidebarContentProps {
@@ -81,6 +82,10 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ session, pathname }) =>
               <Link href="/interview-guide" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname.startsWith('/interview-guide') ? 'bg-purple-500/10 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
                 <GraduationCap className={`mr-3 h-4 w-4 ${pathname.startsWith('/interview-guide') ? 'text-blue-400' : 'text-slate-500'}`} />
                 Interview Guide
+              </Link>
+              <Link href="/ats" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname.startsWith('/ats') ? 'bg-purple-500/10 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
+                <ShieldCheck className={`mr-3 h-4 w-4 ${pathname.startsWith('/ats') ? 'text-violet-400' : 'text-slate-500'}`} />
+                Advanced ATS System
               </Link>
               <Link href="/history" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname === '/history' ? 'bg-purple-500/10 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
                 <HistoryIcon className={`mr-3 h-4 w-4 ${pathname === '/history' ? 'text-amber-400' : 'text-slate-500'}`} />
