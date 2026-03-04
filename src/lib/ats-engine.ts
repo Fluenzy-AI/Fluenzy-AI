@@ -1,9 +1,19 @@
 import mammoth from "mammoth";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse") as (
+// Use the inner module path to bypass the pdf-parse test-file loader bug in Next.js
+// (pdf-parse/index.js tries to `fs.readFileSync` a test PDF on require, which throws)
+const pdfParse: (
   buffer: Buffer,
   options?: { pagerender?: unknown },
-) => Promise<{ text: string }>;
+) => Promise<{ text: string }> = (() => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("pdf-parse/lib/pdf-parse.js");
+  } catch {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("pdf-parse");
+  }
+})();
 
 /**
  * Parse raw text from a resume buffer (PDF or DOCX).
@@ -24,6 +34,20 @@ export async function parseResume(
     try {
       const data = await pdfParse(buffer, { pagerender: () => Promise.resolve("") });
       if (data.text && data.text.trim().length > 20) return { text: data.text };
+    } catch { /* fall through */ }
+    // Strategy 3: Extract readable ASCII sequences from raw PDF binary.
+    // Works for text-based PDFs where pdf-parse fails — the actual text is stored
+    // as printable ASCII strings embedded in the binary stream.
+    try {
+      const rawBinary = buffer.toString("latin1");
+      // Extract all runs of printable ASCII chars that are ≥5 chars long
+      const sequences = rawBinary.match(/[\x20-\x7E]{5,}/g) ?? [];
+      // Keep sequences that look like real words/tech (contain at least one letter)
+      const meaningful = sequences.filter(s => /[a-zA-Z]/.test(s));
+      const extracted = meaningful.join(" ").replace(/\s+/g, " ").trim();
+      if (extracted.length > 100) {
+        return { text: extracted, parseWarning: "binary PDF fallback" };
+      }
     } catch { /* fall through */ }
     return { text: buffer.toString("latin1"), parseWarning: "binary PDF fallback" };
   }
