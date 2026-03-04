@@ -13,6 +13,7 @@ import {
   ArrowLeft,
   Info,
   ShieldCheck,
+  ClipboardPaste,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,7 +50,9 @@ export default function UploadResumePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const [inputMode, setInputMode] = useState<"file" | "text">("file");
   const [file, setFile] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState("");
   const [dragging, setDragging] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -90,14 +93,19 @@ export default function UploadResumePage() {
   };
 
   const handleAnalyze = async () => {
-    if (!file) return;
+    if (inputMode === "file" && !file) return;
+    if (inputMode === "text" && !resumeText.trim()) return;
     setUploading(true);
     setError(null);
     setResult(null);
     setParseWarning(null);
 
     const formData = new FormData();
-    formData.append("resume", file);
+    if (inputMode === "file" && file) {
+      formData.append("resume", file);
+    } else {
+      formData.append("resumeText", resumeText.trim());
+    }
     if (jobDescription.trim()) formData.append("jobDescription", jobDescription);
 
     try {
@@ -159,23 +167,75 @@ export default function UploadResumePage() {
           <ArrowLeft className="h-4 w-4" /> Back to ATS Dashboard
         </Link>
 
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center gap-2 mb-1">
             <ShieldCheck className="h-6 w-6 text-purple-400" />
-            <h1 className="text-2xl font-black">Upload Resume</h1>
+            <h1 className="text-2xl font-black">Resume ATS Checker</h1>
           </div>
           <p className="text-slate-400 text-sm">
-            Upload your PDF or DOCX resume. Our AI engine will parse and score it in real-time.
+            Upload your PDF/DOCX <span className="text-slate-500">or</span> paste resume text directly, then optionally add a Job Description for JD-based scoring.
           </p>
         </div>
+
+        {/* Input mode tab switcher */}
+        {!result && (
+          <div className="flex gap-1 bg-slate-900/80 border border-white/5 rounded-xl p-1 mb-4">
+            <button
+              className={`flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-lg transition-all ${
+                inputMode === "file"
+                  ? "bg-purple-600 text-white shadow"
+                  : "text-slate-400 hover:text-white"
+              }`}
+              onClick={() => { setInputMode("file"); setError(null); }}
+            >
+              <Upload className="h-4 w-4" />
+              Upload PDF / DOCX
+            </button>
+            <button
+              className={`flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-lg transition-all ${
+                inputMode === "text"
+                  ? "bg-purple-600 text-white shadow"
+                  : "text-slate-400 hover:text-white"
+              }`}
+              onClick={() => { setInputMode("text"); setError(null); }}
+            >
+              <ClipboardPaste className="h-4 w-4" />
+              Paste Resume Text
+            </button>
+          </div>
+        )}
 
         {/* Upload Zone */}
         {!result && (
           <Card className="bg-slate-900/80 border-white/5 mb-6">
             <CardContent className="pt-6">
-              {/* Drop zone */}
-              <div
-                className={`rounded-xl border-2 border-dashed p-12 flex flex-col items-center text-center cursor-pointer transition-all ${
+
+              {inputMode === "text" ? (
+                /* ── Paste mode ─────────────────────────────────────── */
+                <div>
+                  <label className="block text-xs font-semibold text-slate-400 uppercase tracking-widest mb-2">
+                    Resume Text{" "}
+                    <span className="text-slate-600 font-normal normal-case">
+                      (copy-paste your full resume below)
+                    </span>
+                  </label>
+                  <textarea
+                    className="w-full bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 resize-y focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                    rows={16}
+                    placeholder={`Paste your full resume text here…\n\nACHHUTA NAND JHA\ntheanjha@gmail.com | +91-8439131459\n\nTECHNICAL SKILLS\nLanguages: Java, Python, JavaScript, TypeScript\nWeb: React.js, Next.js, Node.js, Express.js, MongoDB\nTools: Git, GitHub, Docker, AWS\n\nEXPERIENCE\nFull Stack Developer Intern | EY  (Dec 2024 – Jan 2025)\n…`}
+                    value={resumeText}
+                    onChange={(e) => setResumeText(e.target.value)}
+                  />
+                  {resumeText.trim().length > 0 && (
+                    <p className="text-xs text-slate-500 mt-1">
+                      {resumeText.trim().split(/\s+/).length} words pasted
+                    </p>
+                  )}
+                </div>
+              ) : (
+                /* ── File upload mode ────────────────────────────────── */
+                <div
+                  className={`rounded-xl border-2 border-dashed p-12 flex flex-col items-center text-center cursor-pointer transition-all ${
                   dragging
                     ? "border-purple-500 bg-purple-500/10"
                     : file
@@ -231,6 +291,7 @@ export default function UploadResumePage() {
                   </>
                 )}
               </div>
+              )} {/* end file/text mode conditional */}
 
               {/* Job Description */}
               <div className="mt-5">
@@ -258,7 +319,7 @@ export default function UploadResumePage() {
               <div className="mt-5 flex justify-end">
                 <Button
                   className="bg-purple-600 hover:bg-purple-700 text-white font-bold gap-2 min-w-[160px]"
-                  disabled={!file || uploading}
+                  disabled={(inputMode === "file" ? !file : !resumeText.trim()) || uploading}
                   onClick={handleAnalyze}
                 >
                   {uploading ? (

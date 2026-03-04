@@ -43,10 +43,91 @@ export async function POST(request: NextRequest) {
     // Parse multipart form
     const formData = await request.formData();
     const file = formData.get("resume") as File | null;
+    const pastedText = (formData.get("resumeText") as string | null)?.trim() ?? "";
     const jobDescription = (formData.get("jobDescription") as string | null) ?? "";
 
+    // ── Text-paste mode (no file needed) ──────────────────────────────────────
+    if (!file && pastedText.length > 0) {
+      const sanitizedText = pastedText
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, " ")
+        .slice(0, 50000);
+
+      const scores = scoreResume(sanitizedText, jobDescription);
+
+      let collegeName: string | null = null;
+      try {
+        const profile = await (prisma as any).userProfile.findUnique({
+          where: { userId: user.id },
+          select: { educations: true },
+        });
+        if (profile?.educations?.length > 0) {
+          collegeName = profile.educations[0]?.institution ?? null;
+        }
+      } catch { /* non-critical */ }
+
+      const resumeRecord = await (prisma as any).aTSResume.create({
+        data: {
+          userId: user.id,
+          fileName: "pasted-resume.txt",
+          fileUrl: "",
+          fileType: "txt",
+          fileSize: pastedText.length,
+          rawText: sanitizedText,
+          parsedData: {
+            wordCount: sanitizedText.split(/\s+/).length,
+            extractedSkills: scores.extractedSkills,
+            jobTitleMatch: scores.jobTitleMatch,
+            parseWarning: null,
+            parsedName: scores.parsedData.name,
+            parsedEmail: scores.parsedData.email,
+            parsedPhone: scores.parsedData.phone,
+            missingSections: scores.parsedData.missingSections,
+          },
+        },
+      });
+
+      const analysis = await (prisma as any).aTSAnalysis.create({
+        data: {
+          resumeId: resumeRecord.id,
+          userId: user.id,
+          atsScore: scores.atsScore,
+          keywordScore: scores.keywordScore,
+          skillsScore: scores.skillsScore,
+          formatScore: scores.formatScore,
+          experienceScore: scores.experienceScore,
+          educationScore: scores.educationScore,
+          readabilityScore: scores.readabilityScore,
+          sectionScore: scores.sectionScore,
+          matchedKeywords: scores.matchedKeywords,
+          missingKeywords: scores.missingKeywords,
+          extractedSkills: scores.extractedSkills,
+          suggestions: scores.suggestions,
+          strengths: scores.strengths,
+          jobTitleMatch: scores.jobTitleMatch,
+          experienceYears: scores.experienceYears,
+        },
+      });
+
+      const allAnalyses = await (prisma as any).aTSAnalysis.findMany({
+        orderBy: { atsScore: "desc" },
+        select: { id: true, userId: true, atsScore: true },
+      });
+      for (let i = 0; i < allAnalyses.length; i++) {
+        const a = allAnalyses[i];
+        const existingRanking = await (prisma as any).aTSRanking.findFirst({ where: { analysisId: a.id } });
+        if (existingRanking) {
+          await (prisma as any).aTSRanking.update({ where: { id: existingRanking.id }, data: { rank: i + 1, totalScore: a.atsScore } });
+        } else {
+          await (prisma as any).aTSRanking.create({ data: { userId: a.userId, analysisId: a.id, rank: i + 1, totalScore: a.atsScore, college: collegeName, jobRole: scores.jobRole ?? "general" } });
+        }
+      }
+
+      return NextResponse.json({ success: true, analysisId: analysis.id, scores, parseWarning: null, message: "Resume analyzed successfully!" });
+    }
+
+    // ── File upload mode ───────────────────────────────────────────────────────
     if (!file) {
-      return NextResponse.json({ error: "No resume file provided." }, { status: 400 });
+      return NextResponse.json({ error: "No resume file or text provided." }, { status: 400 });
     }
 
     // Validate type
