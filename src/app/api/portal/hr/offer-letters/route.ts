@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
   <p style="margin-top:24px;">Warm regards,<br/><strong>${hrStaff?.name || decoded.email}</strong><br/>HR Team, Fluenzy AI</p>
 </div>`;
 
-          await sendPortalEmail({
+          const emailResult = await sendPortalEmail({
             to: recipientEmail,
             subject: `Offer Letter - ${rest.position} at Fluenzy AI`,
             html: emailHtml,
@@ -149,14 +149,27 @@ export async function POST(req: NextRequest) {
             staffId: decoded.staffId,
           });
 
-          // Update status to SENT
-          await prisma.offerLetter.update({
-            where: { id: offerLetter.id },
-            data: { status: "SENT" },
-          });
+          // Update status based on email result
+          if (emailResult.success) {
+            await prisma.offerLetter.update({
+              where: { id: offerLetter.id },
+              data: { status: "SENT" },
+            });
+          } else {
+            console.error("[OFFER_LETTER_EMAIL] Failed:", emailResult.error);
+            // Mark as PENDING so HR knows email failed
+            await prisma.offerLetter.update({
+              where: { id: offerLetter.id },
+              data: { status: "PENDING" },
+            });
+          }
         } catch (emailErr) {
           console.error("[OFFER_LETTER_EMAIL]", emailErr);
-          // Email failure is non-fatal — offer letter is still created
+          // Mark as PENDING on exception
+          await prisma.offerLetter.update({
+            where: { id: offerLetter.id },
+            data: { status: "PENDING" },
+          });
         }
       }
     }

@@ -61,7 +61,7 @@ export interface CertificateData {
 function readLogoBase64(): string {
   try {
     const buf = fs.readFileSync(
-      path.join(process.cwd(), "public", "image", "final_logo-removebg-preview.png")
+      path.join(process.cwd(), "public", "favicon", "white-removebg-preview1.png")
     );
     return `data:image/png;base64,${buf.toString("base64")}`;
   } catch {
@@ -133,6 +133,10 @@ function buildInternshipCertificateHtml(d: CertificateData): string {
   .company-tagline { font-size:10px; color:#6b7280; margin-top:3px; }
   .header-right { text-align:right; font-size:10px; color:#6b7280; line-height:1.8; }
   
+  .qr-top-left { position:absolute; top:20mm; left:25mm; text-align:center; }
+  .qr-top-left .qr-code { width:80px; height:80px; border:2px solid #e5e7eb; border-radius:8px; padding:3px; background:#fff; }
+  .qr-top-left .verify-text { font-size:8px; color:#6b7280; margin-top:4px; }
+  
   .cert-title { background:linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color:#fff; text-align:center; padding:15px 0; border-radius:8px; margin-bottom:30px; box-shadow:0 4px 12px rgba(79,70,229,0.2); }
   .cert-title h1 { font-size:24px; letter-spacing:4px; font-weight:700; text-transform:uppercase; margin-bottom:5px; }
   .cert-title p { font-size:11px; opacity:0.9; letter-spacing:1px; }
@@ -159,7 +163,7 @@ function buildInternshipCertificateHtml(d: CertificateData): string {
   .sig-name { font-size:13px; font-weight:700; color:#111827; }
   .sig-designation { font-size:11px; color:#6b7280; margin-top:2px; }
   
-  .qr-section { text-align:center; margin-top:40px; padding-top:30px; border-top:1px dashed #d1d5db; }
+  .qr-section { text-align:center; margin-top:40px; padding-top:30px; border-top:1px dashed #d1d5db; display:none; }
   .qr-code { width:120px; height:120px; margin:10px auto 15px; border:2px solid #e5e7eb; border-radius:8px; padding:5px; background:#fff; }
   .verify-text { font-size:11px; color:#6b7280; }
   .verify-url { font-size:10px; color:#4f46e5; word-break:break-all; margin-top:5px; }
@@ -172,6 +176,11 @@ function buildInternshipCertificateHtml(d: CertificateData): string {
 <body>
 <div class="watermark">${d.companyName || 'FLUENZY AI'}</div>
 <div class="page">
+  
+  <div class="qr-top-left">
+    <img src="${d.qrCodeDataUrl}" class="qr-code" alt="Verification QR"/>
+    <div class="verify-text">Scan to verify</div>
+  </div>
   
   <div class="header">
     <div class="header-left">
@@ -298,6 +307,10 @@ function buildExperienceLetterHtml(d: CertificateData): string {
   .company-tagline { font-size:10px; color:#6b7280; margin-top:3px; }
   .header-right { text-align:right; font-size:10px; color:#6b7280; line-height:1.8; }
   
+  .qr-top-left { position:absolute; top:20mm; left:25mm; text-align:center; }
+  .qr-top-left .qr-code { width:80px; height:80px; border:2px solid #e5e7eb; border-radius:8px; padding:3px; background:#fff; }
+  .qr-top-left .verify-text { font-size:8px; color:#6b7280; margin-top:4px; }
+  
   .doc-title { background:linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color:#fff; text-align:center; padding:12px 0; border-radius:8px; margin-bottom:25px; }
   .doc-title h1 { font-size:22px; letter-spacing:3px; font-weight:700; text-transform:uppercase; }
   
@@ -320,7 +333,7 @@ function buildExperienceLetterHtml(d: CertificateData): string {
   .sig-name { font-size:13px; font-weight:700; color:#111827; }
   .sig-designation { font-size:11px; color:#6b7280; margin-top:2px; }
   
-  .qr-section { text-align:center; margin-top:40px; padding-top:30px; border-top:1px dashed #d1d5db; }
+  .qr-section { text-align:center; margin-top:40px; padding-top:30px; border-top:1px dashed #d1d5db; display:none; }
   .qr-code { width:100px; height:100px; margin:10px auto; border:2px solid #e5e7eb; border-radius:8px; padding:5px; }
   .verify-text { font-size:10px; color:#6b7280; }
   
@@ -332,6 +345,11 @@ function buildExperienceLetterHtml(d: CertificateData): string {
 <body>
 <div class="watermark">${d.companyName || 'FLUENZY AI'}</div>
 <div class="page">
+  
+  <div class="qr-top-left">
+    <img src="${d.qrCodeDataUrl}" class="qr-code" alt="Verification QR"/>
+    <div class="verify-text">Scan to verify</div>
+  </div>
   
   <div class="header">
     <div class="header-left">

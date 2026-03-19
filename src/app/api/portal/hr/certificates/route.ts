@@ -156,17 +156,15 @@ export async function POST(req: NextRequest) {
       try {
         const nodemailer = require("nodemailer");
         const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST,
-          port: parseInt(process.env.SMTP_PORT || "587"),
-          secure: false,
+          service: "gmail",
           auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
+            user: process.env.HR_EMAIL_USER,
+            pass: process.env.HR_EMAIL_PASS,
           },
         });
 
         await transporter.sendMail({
-          from: `"Fluenzy AI HR" <${process.env.SMTP_FROM}>`,
+          from: `"Fluenzy AI HR" <${process.env.HR_EMAIL_USER}>`,
           to: candidateEmail,
           subject: `Your ${type.toLowerCase()} certificate from Fluenzy AI`,
           html: `
@@ -188,9 +186,19 @@ export async function POST(req: NextRequest) {
             },
           ],
         });
+        
+        // Update certificate email sent status
+        await prisma.certificate.update({
+          where: { id: certificate.id },
+          data: { sentViaEmail: true, emailSentAt: new Date() },
+        });
       } catch (emailErr) {
-        console.error("[Email send error]", emailErr);
-        // Don't fail the request if email fails
+        console.error("[Certificate Email send error]", emailErr);
+        // Update to reflect email was not sent
+        await prisma.certificate.update({
+          where: { id: certificate.id },
+          data: { sentViaEmail: false },
+        });
       }
     }
 

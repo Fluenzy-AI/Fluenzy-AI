@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const clientId = process.env.GOOGLE_CLIENT_ID!;
-  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  let baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  // Remove trailing slash to prevent double slashes
+  baseUrl = baseUrl.replace(/\/+$/, "");
   const redirectUri = `${baseUrl}/api/college/google-callback`;
 
   const params = new URLSearchParams({

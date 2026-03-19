@@ -6,7 +6,9 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
   const error = searchParams.get("error");
-  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  let baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  // Remove trailing slash to prevent double slashes
+  baseUrl = baseUrl.replace(/\/+$/, "");
   const redirectUri = `${baseUrl}/api/college/google-callback`;
 
   if (error || !code) {

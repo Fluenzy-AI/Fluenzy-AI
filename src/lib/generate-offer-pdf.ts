@@ -41,7 +41,7 @@ export interface OfferPdfData {
 function readLogoBase64(): string {
   try {
     const buf = fs.readFileSync(
-      path.join(process.cwd(), "public", "image", "final_logo-removebg-preview.png")
+      path.join(process.cwd(), "public", "favicon", "white-removebg-preview1.png")
     );
     return `data:image/png;base64,${buf.toString("base64")}`;
   } catch {

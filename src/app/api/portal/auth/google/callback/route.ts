@@ -19,10 +19,13 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state");
   const errorParam = searchParams.get("error");
 
-  const baseUrl =
+  let baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ||
     process.env.NEXTAUTH_URL ||
     `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+
+  // Remove trailing slash to prevent double slashes
+  baseUrl = baseUrl.replace(/\/+$/, "");
 
   const loginUrl = `${baseUrl}/portal/login`;
 

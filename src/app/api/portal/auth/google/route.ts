@@ -12,10 +12,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Google OAuth not configured" }, { status: 500 });
   }
 
-  const baseUrl =
+  let baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ||
     process.env.NEXTAUTH_URL ||
     `${req.nextUrl.protocol}//${req.nextUrl.host}`;
+
+  // Remove trailing slash to prevent double slashes
+  baseUrl = baseUrl.replace(/\/+$/, "");
 
   const callbackUrl = `${baseUrl}/api/portal/auth/google/callback`;
 
