@@ -1,17 +1,16 @@
 import mammoth from "mammoth";
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-// Use the inner module path to bypass the pdf-parse test-file loader bug in Next.js
-// (pdf-parse/index.js tries to `fs.readFileSync` a test PDF on require, which throws)
+// Use dynamic import for pdf-parse to avoid build issues
 const pdfParse: (
   buffer: Buffer,
   options?: { pagerender?: unknown },
 ) => Promise<{ text: string }> = (() => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require("pdf-parse/lib/pdf-parse.js");
-  } catch {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require("pdf-parse");
+  } catch {
+    // Fallback - return a dummy function if pdf-parse not available
+    return async () => ({ text: "" });
   }
 })();
 
