@@ -103,6 +103,7 @@ function calculateDuration(startDate: Date, endDate: Date): string {
 
 /**
  * Build Internship Certificate HTML
+ * Premium enterprise-grade A4 certificate (794×1123px)
  */
 function buildInternshipCertificateHtml(d: CertificateData): string {
   const issueDateStr = d.issueDate.toLocaleDateString("en-IN", {
@@ -121,162 +122,442 @@ function buildInternshipCertificateHtml(d: CertificateData): string {
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: 'Times New Roman', Times, serif; font-size:13px; color:#1a1a1a; background:#fff; }
-  .page { width:210mm; min-height:297mm; padding:20mm 25mm; position:relative; background:#fff; }
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   
-  .header { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #4f46e5; padding-bottom:15px; margin-bottom:25px; }
-  .header-left { display:flex; align-items:center; gap:15px; }
-  .logo { width:60px; height:60px; object-fit:contain; }
-  .company-name { font-size:26px; font-weight:800; color:#4f46e5; letter-spacing:0.6px; }
-  .company-tagline { font-size:10px; color:#6b7280; margin-top:3px; }
-  .header-right { text-align:right; font-size:10px; color:#6b7280; line-height:1.8; }
+  body {
+    font-family: 'Inter', 'Helvetica Neue', sans-serif;
+    font-size: 12px;
+    color: #333;
+    background: #FFFFFF;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   
-  .qr-top-left { position:absolute; top:20mm; left:25mm; text-align:center; }
-  .qr-top-left .qr-code { width:80px; height:80px; border:2px solid #e5e7eb; border-radius:8px; padding:3px; background:#fff; }
-  .qr-top-left .verify-text { font-size:8px; color:#6b7280; margin-top:4px; }
+  .page {
+    width: 794px;
+    min-height: 1123px;
+    padding: 40px 52px;
+    position: relative;
+    background: #FFFFFF;
+  }
   
-  .cert-title { background:linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color:#fff; text-align:center; padding:15px 0; border-radius:8px; margin-bottom:30px; box-shadow:0 4px 12px rgba(79,70,229,0.2); }
-  .cert-title h1 { font-size:24px; letter-spacing:4px; font-weight:700; text-transform:uppercase; margin-bottom:5px; }
-  .cert-title p { font-size:11px; opacity:0.9; letter-spacing:1px; }
+  /* Decorative side borders */
+  .page::before,
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(46, 58, 140, 0.15);
+  }
+  .page::before { left: 0; }
+  .page::after { right: 0; }
   
-  .cert-number { text-align:center; font-size:11px; color:#6b7280; margin-bottom:25px; font-weight:600; letter-spacing:1px; }
+  /* Watermark */
+  .watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 72px;
+    font-weight: 900;
+    color: rgba(46, 58, 140, 0.03);
+    letter-spacing: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: -1;
+  }
   
-  .intro { text-align:center; font-size:14px; line-height:2; margin-bottom:35px; }
-  .intro p { margin-bottom:15px; }
-  .intro .name { font-size:32px; font-weight:700; color:#4f46e5; text-decoration:underline; text-decoration-style:wavy; text-decoration-color:#818cf8; margin:20px 0; }
+  /* Header Zone */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #2E3A8C;
+    margin-bottom: 12px;
+  }
   
-  .details-box { border:2px solid #4f46e5; border-radius:10px; padding:20px 25px; margin:30px 0; background:linear-gradient(to bottom, #f5f3ff 0%, #fefeff 100%); }
-  .details-box table { width:100%; border-collapse:collapse; }
-  .details-box td { padding:8px 5px; font-size:13px; vertical-align:top; }
-  .details-box td:first-child { font-weight:700; color:#374151; width:40%; }
-  .details-box td:last-child { color:#111827; }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
   
-  .body-text { font-size:13px; line-height:1.9; color:#374151; margin-bottom:15px; text-align:justify; }
+  .logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
   
-  .sig-section { display:flex; justify-content:space-between; margin-top:60px; margin-bottom:40px; }
-  .sig-block { width:42%; text-align:center; }
-  .sig-img { height:70px; object-fit:contain; display:block; margin:0 auto 8px; max-width:180px; }
-  .sig-cursive { font-family: 'Brush Script MT', 'Segoe Script', cursive; font-size:32px; color:#1a1a1a; height:70px; display:flex; align-items:center; justify-content:center; }
-  .sig-line { border-top:2px solid #4b5563; width:100%; margin-bottom:8px; }
-  .sig-name { font-size:13px; font-weight:700; color:#111827; }
-  .sig-designation { font-size:11px; color:#6b7280; margin-top:2px; }
+  .company-info .company-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1A1A2E;
+    letter-spacing: 0.02em;
+  }
   
-  .qr-section { text-align:center; margin-top:40px; padding-top:30px; border-top:1px dashed #d1d5db; display:none; }
-  .qr-code { width:120px; height:120px; margin:10px auto 15px; border:2px solid #e5e7eb; border-radius:8px; padding:5px; background:#fff; }
-  .verify-text { font-size:11px; color:#6b7280; }
-  .verify-url { font-size:10px; color:#4f46e5; word-break:break-all; margin-top:5px; }
+  .company-info .tagline {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
   
-  .watermark { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-35deg); font-size:80px; color:rgba(79,70,229,0.04); font-weight:900; letter-spacing:8px; white-space:nowrap; pointer-events:none; z-index:0; }
+  .header-right {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
   
-  .footer { position:fixed; bottom:10mm; left:25mm; right:25mm; text-align:center; font-size:9px; color:#9ca3af; border-top:1px solid #e5e7eb; padding-top:8px; }
+  .contact-info {
+    text-align: right;
+    font-size: 11px;
+    color: #374151;
+    line-height: 1.6;
+  }
+  
+  .qr-box {
+    width: 64px;
+    height: 64px;
+    padding: 6px;
+    background: #FFFFFF;
+    border: 1px solid #E5E8F0;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  
+  .qr-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  /* Title Banner */
+  .title-banner {
+    background: #2E3A8C;
+    text-align: center;
+    padding: 12px 20px;
+    margin: 0 -52px 10px -52px;
+  }
+  
+  .title-banner h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #FFFFFF;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  
+  .title-banner .subtitle {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.75);
+    margin-top: 3px;
+  }
+  
+  /* Certificate Number */
+  .cert-number {
+    text-align: center;
+    font-size: 10px;
+    color: #666;
+    letter-spacing: 0.05em;
+    font-style: italic;
+    margin: 6px 0;
+  }
+  
+  /* Candidate Name Block */
+  .candidate-name-block {
+    text-align: center;
+    margin: 8px 0;
+  }
+  
+  .candidate-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 700;
+    color: #2E3A8C;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  
+  .name-underline {
+    width: 50px;
+    height: 2px;
+    background: #2E3A8C;
+    margin: 6px auto 0;
+  }
+  
+  /* Description Text */
+  .description {
+    text-align: center;
+    margin: 8px auto;
+    max-width: 520px;
+  }
+  
+  .description p {
+    font-size: 12px;
+    line-height: 1.7;
+    color: #333;
+  }
+  
+  .description strong {
+    color: #2E3A8C;
+    font-weight: 600;
+  }
+  
+  /* Details Box - using divs instead of table */
+  .details-box {
+    border: 1px solid #D0D4E8;
+    border-radius: 8px;
+    margin: 12px 0;
+  }
+  
+  .detail-row {
+    display: flex;
+    border-bottom: 1px solid #E5E8F0;
+    font-size: 11px;
+  }
+  
+  .detail-row:last-child {
+    border-bottom: none;
+  }
+  
+  .detail-row:nth-child(even) {
+    background: #F7F8FC;
+  }
+  
+  .detail-row:nth-child(odd) {
+    background: #FFFFFF;
+  }
+  
+  .detail-row:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .detail-row:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+  
+  .detail-label {
+    width: 30%;
+    padding: 8px 12px;
+    font-weight: 600;
+    color: #2E3A8C;
+    flex-shrink: 0;
+  }
+  
+  .detail-value {
+    width: 70%;
+    padding: 8px 12px;
+    color: #333;
+    line-height: 1.5;
+  }
+  
+  /* Performance Block - MUST come after details box */
+  .performance-block {
+    margin-top: 14px;
+    margin-bottom: 10px;
+    padding: 10px 14px;
+    background: #F8F9FC;
+    border: 1px solid #E5E8F0;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.6;
+    color: #444;
+    text-align: justify;
+  }
+  
+  .performance-block strong {
+    font-weight: 700;
+    color: #1A1A2E;
+  }
+  
+  /* Closing Line */
+  .closing-line {
+    margin: 12px 0;
+    font-size: 11px;
+    font-style: italic;
+    color: #555;
+    text-align: center;
+    line-height: 1.5;
+  }
+  
+  /* Signature Zone */
+  .signature-zone {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid #E5E8F0;
+    margin-top: 16px;
+  }
+  
+  .sig-block {
+    width: 45%;
+    text-align: center;
+  }
+  
+  .sig-placeholder {
+    height: 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  
+  .sig-img {
+    max-height: 36px;
+    max-width: 100px;
+    object-fit: contain;
+  }
+  
+  .sig-cursive {
+    font-family: 'Brush Script MT', 'Segoe Script', cursive;
+    font-size: 20px;
+    color: #1A1A2E;
+  }
+  
+  .sig-line {
+    width: 100px;
+    height: 1px;
+    background: #333;
+    margin: 6px auto;
+  }
+  
+  .sig-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1A1A2E;
+  }
+  
+  .sig-title {
+    font-size: 9px;
+    color: #666;
+    margin-top: 2px;
+  }
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding-top: 10px;
+    border-top: 1px solid #E0E3EF;
+    margin-top: 12px;
+  }
+  
+  .footer p {
+    font-size: 8px;
+    color: #999;
+    letter-spacing: 0.04em;
+  }
 </style>
 </head>
 <body>
-<div class="watermark">${d.companyName || 'FLUENZY AI'}</div>
 <div class="page">
+  <!-- Watermark -->
+  <div class="watermark">FLUENZY AI</div>
   
-  <div class="qr-top-left">
-    <img src="${d.qrCodeDataUrl}" class="qr-code" alt="Verification QR"/>
-    <div class="verify-text">Scan to verify</div>
-  </div>
-  
+  <!-- Header Zone -->
   <div class="header">
     <div class="header-left">
-      ${d.logoBase64 ? `<img src="${d.logoBase64}" class="logo" alt="Company Logo"/>` : ""}
-      <div>
+      ${d.logoBase64 ? `<img src="${d.logoBase64}" class="logo" alt="Company Logo"/>` : '<div class="logo"></div>'}
+      <div class="company-info">
         <div class="company-name">${d.companyName || 'Fluenzy AI'}</div>
-        <div class="company-tagline">AI-Powered Communication & Interview Training Platform</div>
+        <div class="tagline">AI-Powered Communication Training</div>
       </div>
     </div>
     <div class="header-right">
-      <div><strong>Website:</strong> fluenzyai.com</div>
-      <div><strong>Email:</strong> hr@fluenzyai.com</div>
-      <div><strong>Country:</strong> India</div>
+      <div class="contact-info">
+        <div>https://www.fluenzyai.app/</div>
+      </div>
+      <div class="qr-box">
+        <img src="${d.qrCodeDataUrl}" alt="QR Code"/>
+      </div>
     </div>
   </div>
   
-  <div class="cert-title">
+  <!-- Title Banner -->
+  <div class="title-banner">
     <h1>Certificate of Internship</h1>
-    <p>This is to certify that</p>
+    <div class="subtitle">This is to certify that</div>
   </div>
   
+  <!-- Certificate Number -->
   <div class="cert-number">Certificate No: ${d.certificateNumber}</div>
   
-  <div class="intro">
-    <div class="name">${d.candidateName}</div>
-    <p style="font-size:14px; color:#374151; max-width:700px; margin:0 auto;">
+  <!-- Candidate Name Block -->
+  <div class="candidate-name-block">
+    <div class="candidate-name">${d.candidateName}</div>
+    <div class="name-underline"></div>
+  </div>
+  
+  <!-- Description Text -->
+  <div class="description">
+    <p>
       has successfully completed the internship program at <strong>${d.companyName || 'Fluenzy AI'}</strong>
-      ${d.position ? `as <strong>${d.position}</strong>` : ''}
+      ${d.position ? ` as <strong>${d.position}</strong>` : ''}
       ${d.department ? ` in the <strong>${d.department}</strong> department` : ''}.
     </p>
   </div>
   
+  <!-- Details Box (div-based, not table) -->
   <div class="details-box">
-    <table>
-      ${d.position ? `<tr><td>Position / Role</td><td>${d.position}</td></tr>` : ''}
-      ${d.department ? `<tr><td>Department</td><td>${d.department}</td></tr>` : ''}
-      ${startDateStr ? `<tr><td>Internship Start Date</td><td>${startDateStr}</td></tr>` : ''}
-      ${endDateStr ? `<tr><td>Internship End Date</td><td>${endDateStr}</td></tr>` : ''}
-      ${duration ? `<tr><td>Duration</td><td>${duration}</td></tr>` : ''}
-      ${d.projectDescription ? `<tr><td>Project / Work</td><td>${d.projectDescription}</td></tr>` : ''}
-    </table>
+    ${d.position ? `<div class="detail-row"><div class="detail-label">Position / Role</div><div class="detail-value">${d.position}</div></div>` : ''}
+    ${d.department ? `<div class="detail-row"><div class="detail-label">Department</div><div class="detail-value">${d.department}</div></div>` : ''}
+    ${startDateStr ? `<div class="detail-row"><div class="detail-label">Start Date</div><div class="detail-value">${startDateStr}</div></div>` : ''}
+    ${endDateStr ? `<div class="detail-row"><div class="detail-label">End Date</div><div class="detail-value">${endDateStr}</div></div>` : ''}
+    ${duration ? `<div class="detail-row"><div class="detail-label">Duration</div><div class="detail-value">${duration}</div></div>` : ''}
+    ${d.projectDescription ? `<div class="detail-row"><div class="detail-label">Project / Work</div><div class="detail-value">${d.projectDescription}</div></div>` : ''}
   </div>
   
+  <!-- Performance Block - comes AFTER details box -->
   ${d.performanceNotes ? `
-  <p class="body-text">
+  <div class="performance-block">
     <strong>Performance:</strong> ${d.performanceNotes}
-  </p>
+  </div>
   ` : ''}
   
-  <p class="body-text">
-    During the internship period, ${d.candidateName} demonstrated professionalism, dedication, and strong
-    learning abilities. We wish them success in their future endeavors.
-  </p>
+  <!-- Closing Line -->
+  <div class="closing-line">
+    ${d.candidateName.toUpperCase()} demonstrated professionalism, dedication, and strong learning abilities throughout the internship. We wish them success in their future endeavors.
+  </div>
   
-  <div class="sig-section">
+  <!-- Signature Zone -->
+  <div class="signature-zone">
     <div class="sig-block">
-      ${d.hrSignatureBase64
-        ? `<img src="${d.hrSignatureBase64}" class="sig-img" alt="HR Signature"/>`
-        : `<div class="sig-cursive">${d.hrName.split(" ").slice(0, 2).join(" ")}</div>`}
+      <div class="sig-placeholder">
+        ${d.hrSignatureBase64
+          ? `<img src="${d.hrSignatureBase64}" class="sig-img" alt="HR Signature"/>`
+          : `<span class="sig-cursive">${d.hrName.split(" ").slice(0, 2).join(" ")}</span>`}
+      </div>
       <div class="sig-line"></div>
       <div class="sig-name">${d.hrName}</div>
-      <div class="sig-designation">${d.hrDesignation}</div>
+      <div class="sig-title">${d.hrDesignation}</div>
     </div>
     <div class="sig-block">
-      ${d.founderSignatureBase64
-        ? `<img src="${d.founderSignatureBase64}" class="sig-img" alt="Founder Signature"/>`
-        : `<div style="height:70px;"></div>`}
+      <div class="sig-placeholder">
+        ${d.founderSignatureBase64
+          ? `<img src="${d.founderSignatureBase64}" class="sig-img" alt="CEO Signature"/>`
+          : `<span class="sig-cursive">Achhuta Jha</span>`}
+      </div>
       <div class="sig-line"></div>
       <div class="sig-name">ACHHUTA NAND JHA</div>
-      <div class="sig-designation">Founder & CEO</div>
+      <div class="sig-title">Founder & CEO</div>
     </div>
   </div>
   
-  ${d.companySealBase64 ? `
-  <div style="text-align:center; margin-top:20px;">
-    <img src="${d.companySealBase64}" style="width:100px; height:100px; object-fit:contain;" alt="Company Seal"/>
-  </div>
-  ` : ''}
-  
-  <div class="qr-section">
-    <img src="${d.qrCodeDataUrl}" class="qr-code" alt="Verification QR Code"/>
-    <div class="verify-text"><strong>Verify this certificate</strong></div>
-    <div class="verify-url">${d.verificationUrl}</div>
-  </div>
-  
+  <!-- Footer -->
   <div class="footer">
-    ${d.companyName || 'Fluenzy AI'} · Date of Issue: ${issueDateStr} · This is a computer-generated certificate
+    <p>${d.companyName || 'Fluenzy AI'} · Date of Issue: ${issueDateStr} · This is a computer-generated certificate · Certificate ID: ${d.certificateNumber}</p>
   </div>
-  
 </div>
 </body>
 </html>`;
 }
 
 /**
- * Build Experience Letter HTML
+ * Build Experience Letter HTML - Enterprise Redesign
  */
 function buildExperienceLetterHtml(d: CertificateData): string {
   const issueDateStr = d.issueDate.toLocaleDateString("en-IN", {
@@ -295,150 +576,797 @@ function buildExperienceLetterHtml(d: CertificateData): string {
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: 'Times New Roman', Times, serif; font-size:13px; color:#1a1a1a; background:#fff; }
-  .page { width:210mm; min-height:297mm; padding:20mm 25mm; position:relative; background:#fff; }
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
   
-  .header { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid#4f46e5; padding-bottom:15px; margin-bottom:25px; }
-  .header-left { display:flex; align-items:center; gap:15px; }
-  .logo { width:60px; height:60px; object-fit:contain; }
-  .company-name { font-size:26px; font-weight:800; color:#4f46e5; letter-spacing:0.6px; }
-  .company-tagline { font-size:10px; color:#6b7280; margin-top:3px; }
-  .header-right { text-align:right; font-size:10px; color:#6b7280; line-height:1.8; }
+  body {
+    font-family: 'Inter', 'Helvetica Neue', sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #FFFFFF;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
   
-  .qr-top-left { position:absolute; top:20mm; left:25mm; text-align:center; }
-  .qr-top-left .qr-code { width:80px; height:80px; border:2px solid #e5e7eb; border-radius:8px; padding:3px; background:#fff; }
-  .qr-top-left .verify-text { font-size:8px; color:#6b7280; margin-top:4px; }
+  .page {
+    width: 794px;
+    min-height: 1123px;
+    padding: 52px 60px;
+    position: relative;
+    background: #FFFFFF;
+  }
   
-  .doc-title { background:linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); color:#fff; text-align:center; padding:12px 0; border-radius:8px; margin-bottom:25px; }
-  .doc-title h1 { font-size:22px; letter-spacing:3px; font-weight:700; text-transform:uppercase; }
+  /* Decorative side borders */
+  .page::before,
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(46, 58, 140, 0.15);
+  }
+  .page::before { left: 0; }
+  .page::after { right: 0; }
   
-  .ref-date { display:flex; justify-content:space-between; font-size:12px; color:#374151; margin-bottom:25px; font-weight:600; }
+  /* Watermark */
+  .watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 72px;
+    font-weight: 900;
+    color: rgba(46, 58, 140, 0.03);
+    letter-spacing: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: -1;
+  }
   
-  .salutation { font-size:13px; margin-bottom:15px; font-weight:600; }
-  .body-text { font-size:13px; line-height:1.9; color:#374151; margin-bottom:15px; text-align:justify; }
+  /* Header Zone */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #2E3A8C;
+    margin-bottom: 24px;
+  }
   
-  .details-box { border:2px solid #4f46e5; border-radius:10px; padding:18px 22px; margin:25px 0; background:#f5f3ff; }
-  .details-box table { width:100%; border-collapse:collapse; }
-  .details-box td { padding:8px 5px; font-size:13px; vertical-align:top; }
-  .details-box td:first-child { font-weight:700; color:#374151; width:40%; }
-  .details-box td:last-child { color:#111827; }
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
   
-  .sig-section { display:flex; justify-content:space-between; margin-top:60px; }
-  .sig-block { width:42%; text-align:center; }
-  .sig-img { height:70px; object-fit:contain; display:block; margin:0 auto 8px; max-width:180px; }
-  .sig-cursive { font-family: 'Brush Script MT', cursive; font-size:32px; color:#1a1a1a; height:70px; display:flex; align-items:center; justify-content:center; }
-  .sig-line { border-top:2px solid #4b5563; width:100%; margin-bottom:8px; }
-  .sig-name { font-size:13px; font-weight:700; color:#111827; }
-  .sig-designation { font-size:11px; color:#6b7280; margin-top:2px; }
+  .logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
   
-  .qr-section { text-align:center; margin-top:40px; padding-top:30px; border-top:1px dashed #d1d5db; display:none; }
-  .qr-code { width:100px; height:100px; margin:10px auto; border:2px solid #e5e7eb; border-radius:8px; padding:5px; }
-  .verify-text { font-size:10px; color:#6b7280; }
+  .company-info .company-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1A1A2E;
+    letter-spacing: 0.02em;
+  }
   
-  .watermark { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-35deg); font-size:80px; color:rgba(79,70,229,0.04); font-weight:900; letter-spacing:8px; pointer-events:none; z-index:0; }
+  .company-info .tagline {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
   
-  .footer { position:fixed; bottom:10mm; left:25mm; right:25mm; text-align:center; font-size:9px; color:#9ca3af; border-top:1px solid #e5e7eb; padding-top:8px; }
+  .header-right {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .contact-info {
+    text-align: right;
+    font-size: 11px;
+    color: #374151;
+    line-height: 1.6;
+  }
+  
+  .qr-box {
+    width: 64px;
+    height: 64px;
+    padding: 6px;
+    background: #FFFFFF;
+    border: 1px solid #E5E8F0;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  
+  .qr-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  /* Date Line */
+  .date-line {
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  /* Title */
+  .title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1A1A2E;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  
+  /* Salutation */
+  .salutation {
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  /* Body Paragraphs */
+  .body-text {
+    font-size: 13px;
+    line-height: 1.85;
+    color: #333;
+    text-align: justify;
+    margin-bottom: 12px;
+  }
+  
+  .body-text strong {
+    color: #2E3A8C;
+    font-weight: 600;
+  }
+  
+  /* Performance Paragraph */
+  .performance-text {
+    font-size: 12px;
+    line-height: 1.75;
+    color: #444;
+    font-style: italic;
+    text-align: justify;
+    margin-bottom: 20px;
+  }
+  
+  /* Details Box */
+  .details-box {
+    border: 1px solid #D0D4E8;
+    border-radius: 8px;
+    margin: 20px 0;
+  }
+  
+  .detail-row {
+    display: flex;
+    border-bottom: 1px solid #E5E8F0;
+    font-size: 12px;
+  }
+  
+  .detail-row:last-child {
+    border-bottom: none;
+  }
+  
+  .detail-row:nth-child(even) {
+    background: #F7F8FC;
+  }
+  
+  .detail-row:nth-child(odd) {
+    background: #FFFFFF;
+  }
+  
+  .detail-row:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .detail-row:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+  
+  .detail-label {
+    width: 35%;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: #2E3A8C;
+    flex-shrink: 0;
+  }
+  
+  .detail-value {
+    width: 65%;
+    padding: 10px 14px;
+    color: #333;
+    line-height: 1.5;
+  }
+  
+  /* Signature Zone */
+  .signature-zone {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 20px;
+    border-top: 1px solid #E5E8F0;
+    margin-top: 28px;
+  }
+  
+  .sig-block {
+    width: 45%;
+    text-align: center;
+  }
+  
+  .sig-placeholder {
+    height: 40px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  
+  .sig-img {
+    max-height: 40px;
+    max-width: 120px;
+    object-fit: contain;
+  }
+  
+  .sig-cursive {
+    font-family: 'Brush Script MT', 'Segoe Script', cursive;
+    font-size: 22px;
+    color: #1A1A2E;
+  }
+  
+  .sig-line {
+    width: 120px;
+    height: 1px;
+    background: #333;
+    margin: 8px auto;
+  }
+  
+  .sig-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1A1A2E;
+  }
+  
+  .sig-title {
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+  }
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding-top: 12px;
+    border-top: 1px solid #E0E3EF;
+    margin-top: 20px;
+  }
+  
+  .footer p {
+    font-size: 9px;
+    color: #999;
+    letter-spacing: 0.04em;
+  }
 </style>
 </head>
 <body>
-<div class="watermark">${d.companyName || 'FLUENZY AI'}</div>
 <div class="page">
+  <!-- Watermark -->
+  <div class="watermark">FLUENZY AI</div>
   
-  <div class="qr-top-left">
-    <img src="${d.qrCodeDataUrl}" class="qr-code" alt="Verification QR"/>
-    <div class="verify-text">Scan to verify</div>
-  </div>
-  
+  <!-- Header Zone -->
   <div class="header">
     <div class="header-left">
-      ${d.logoBase64 ? `<img src="${d.logoBase64}" class="logo" alt="Company Logo"/>` : ""}
-      <div>
+      ${d.logoBase64 ? `<img src="${d.logoBase64}" class="logo" alt="Company Logo"/>` : '<div class="logo"></div>'}
+      <div class="company-info">
         <div class="company-name">${d.companyName || 'Fluenzy AI'}</div>
-        <div class="company-tagline">AI-Powered Communication & Interview Training Platform</div>
+        <div class="tagline">AI-Powered Communication Training</div>
       </div>
     </div>
     <div class="header-right">
-      <div><strong>Website:</strong> fluenzyai.com</div>
-      <div><strong>Email:</strong> hr@fluenzyai.com</div>
-      <div><strong>Country:</strong> India</div>
+      <div class="contact-info">
+        <div>https://www.fluenzyai.app/</div>
+      </div>
+      <div class="qr-box">
+        <img src="${d.qrCodeDataUrl}" alt="QR Code"/>
+      </div>
     </div>
   </div>
   
-  <div class="doc-title">
-    <h1>Experience Letter</h1>
-  </div>
+  <!-- Date Line -->
+  <div class="date-line">Date: ${issueDateStr}</div>
   
-  <div class="ref-date">
-    <span><strong>Ref:</strong> ${d.certificateNumber}</span>
-    <span><strong>Date:</strong> ${issueDateStr}</span>
-  </div>
+  <!-- Title -->
+  <div class="title">TO WHOMSOEVER IT MAY CONCERN</div>
   
-  <p class="salutation">To Whom It May Concern,</p>
+  <!-- Salutation -->
+  <div class="salutation">This is to certify that</div>
   
+  <!-- Body Paragraph 1 -->
   <p class="body-text">
-    This is to certify that <strong>${d.candidateName}</strong> was employed with <strong>${d.companyName || 'Fluenzy AI'}</strong>
-    ${d.position ? `as <strong>${d.position}</strong>` : ''}
+    <strong>${d.candidateName}</strong> was employed with <strong>${d.companyName || 'Fluenzy AI'}</strong>
+    ${d.position ? ` as a <strong>${d.position}</strong>` : ''}
     ${d.department ? ` in the <strong>${d.department}</strong> department` : ''}
-    from <strong>${startDateStr}</strong> to <strong>${endDateStr}</strong>.
+    from <strong>${startDateStr}</strong> to <strong>${endDateStr}</strong>,
+    a total duration of <strong>${duration}</strong>.
   </p>
   
+  <!-- Body Paragraph 2 -->
+  <p class="body-text">
+    During the tenure, ${d.candidateName} demonstrated excellent professionalism and technical skills.
+    ${d.projectDescription ? d.projectDescription : 'They contributed effectively to various projects and initiatives.'}
+    We found them to be hardworking, reliable, and a collaborative team member.
+  </p>
+  
+  <!-- Performance Paragraph -->
+  <p class="performance-text">
+    ${d.performanceNotes ? d.performanceNotes : `During their tenure, ${d.candidateName} consistently delivered high-quality work and contributed meaningfully to ${d.department || 'team'} goals.`}
+    We wish them continued success in all future professional endeavors.
+  </p>
+  
+  <!-- Details Box -->
   <div class="details-box">
-    <table>
-      <tr><td>Employee Name</td><td>${d.candidateName}</td></tr>
-      ${d.position ? `<tr><td>Designation</td><td>${d.position}</td></tr>` : ''}
-      ${d.department ? `<tr><td>Department</td><td>${d.department}</td></tr>` : ''}
-      ${startDateStr ? `<tr><td>Date of Joining</td><td>${startDateStr}</td></tr>` : ''}
-      ${endDateStr ? `<tr><td>Last Working Day</td><td>${endDateStr}</td></tr>` : ''}
-      ${duration ? `<tr><td>Total Duration</td><td>${duration}</td></tr>` : ''}
-    </table>
+    <div class="detail-row"><div class="detail-label">Full Name</div><div class="detail-value">${d.candidateName}</div></div>
+    ${d.position ? `<div class="detail-row"><div class="detail-label">Designation</div><div class="detail-value">${d.position}</div></div>` : ''}
+    ${d.department ? `<div class="detail-row"><div class="detail-label">Department</div><div class="detail-value">${d.department}</div></div>` : ''}
+    <div class="detail-row"><div class="detail-label">Period</div><div class="detail-value">${startDateStr} to ${endDateStr}</div></div>
+    ${duration ? `<div class="detail-row"><div class="detail-label">Duration</div><div class="detail-value">${duration}</div></div>` : ''}
   </div>
   
-  ${d.responsibilities ? `
-  <p class="body-text">
-    <strong>Key Responsibilities:</strong><br/>
-    ${d.responsibilities}
-  </p>
-  ` : ''}
-  
-  <p class="body-text">
-    During their tenure, ${d.candidateName} demonstrated excellent professional skills, dedication, and
-    a positive attitude. They were a valuable member of our team.
-  </p>
-  
-  <p class="body-text">
-    We wish them all the best in their future endeavors.
-  </p>
-  
-  <div class="sig-section">
+  <!-- Signature Zone -->
+  <div class="signature-zone">
     <div class="sig-block">
-      ${d.hrSignatureBase64
-        ? `<img src="${d.hrSignatureBase64}" class="sig-img" alt="HR Signature"/>`
-        : `<div class="sig-cursive">${d.hrName.split(" ").slice(0, 2).join(" ")}</div>`}
+      <div class="sig-placeholder">
+        ${d.hrSignatureBase64
+          ? `<img src="${d.hrSignatureBase64}" class="sig-img" alt="HR Signature"/>`
+          : `<span class="sig-cursive">${d.hrName.split(" ").slice(0, 2).join(" ")}</span>`}
+      </div>
       <div class="sig-line"></div>
       <div class="sig-name">${d.hrName}</div>
-      <div class="sig-designation">${d.hrDesignation}</div>
+      <div class="sig-title">${d.hrDesignation}</div>
     </div>
     <div class="sig-block">
-      ${d.founderSignatureBase64
-        ? `<img src="${d.founderSignatureBase64}" class="sig-img" alt="Founder Signature"/>`
-        : `<div style="height:70px;"></div>`}
+      <div class="sig-placeholder">
+        ${d.founderSignatureBase64
+          ? `<img src="${d.founderSignatureBase64}" class="sig-img" alt="CEO Signature"/>`
+          : `<span class="sig-cursive">Achhuta Jha</span>`}
+      </div>
       <div class="sig-line"></div>
       <div class="sig-name">ACHHUTA NAND JHA</div>
-      <div class="sig-designation">Founder & CEO</div>
+      <div class="sig-title">Founder & CEO</div>
     </div>
   </div>
   
-  <div class="qr-section">
-    <img src="${d.qrCodeDataUrl}" class="qr-code" alt="QR Code"/>
-    <div class="verify-text">Verify: ${d.verificationUrl}</div>
-  </div>
-  
+  <!-- Footer -->
   <div class="footer">
-    ${d.companyName || 'Fluenzy AI'} · ${issueDateStr} · This is a computer-generated letter
+    <p>${d.companyName || 'Fluenzy AI'} · Date of Issue: ${issueDateStr} · This is a computer-generated letter · Ref: ${d.certificateNumber}</p>
+  </div>
+</div>
+</body>
+</html>`;
+}
+
+/**
+ * Build Relieving Letter HTML - Enterprise Redesign
+ */
+function buildRelievingLetterHtml(d: CertificateData): string {
+  const issueDateStr = d.issueDate.toLocaleDateString("en-IN", {
+    day: "numeric", month: "long", year: "numeric"
+  });
+  const startDateStr = d.startDate?.toLocaleDateString("en-IN", {
+    day: "numeric", month: "long", year: "numeric"
+  });
+  const endDateStr = d.endDate?.toLocaleDateString("en-IN", {
+    day: "numeric", month: "long", year: "numeric"
+  });
+  
+  const duration = d.duration || (d.startDate && d.endDate ? calculateDuration(d.startDate, d.endDate) : "");
+  
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Inter', 'Helvetica Neue', sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #FFFFFF;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .page {
+    width: 794px;
+    min-height: 1123px;
+    padding: 52px 60px;
+    position: relative;
+    background: #FFFFFF;
+  }
+  
+  /* Decorative side borders */
+  .page::before,
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(46, 58, 140, 0.15);
+  }
+  .page::before { left: 0; }
+  .page::after { right: 0; }
+  
+  /* Watermark */
+  .watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 72px;
+    font-weight: 900;
+    color: rgba(46, 58, 140, 0.03);
+    letter-spacing: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  /* Header Zone */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #C8A951;
+    margin-bottom: 24px;
+  }
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
+  
+  .company-info .company-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1A1A2E;
+    letter-spacing: 0.02em;
+  }
+  
+  .company-info .tagline {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+  
+  .header-right {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .contact-info {
+    text-align: right;
+    font-size: 11px;
+    color: #374151;
+    line-height: 1.6;
+  }
+  
+  .qr-box {
+    width: 64px;
+    height: 64px;
+    padding: 6px;
+    background: #FFFFFF;
+    border: 1px solid #E5E8F0;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  
+  .qr-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  
+  /* Date Line */
+  .date-line {
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  
+  /* Title Block */
+  .title-block {
+    margin-bottom: 18px;
+  }
+  
+  .title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1A1A2E;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  
+  .title-underline {
+    width: 40px;
+    height: 2px;
+    background: #2E3A8C;
+    margin-top: 6px;
+  }
+  
+  /* To Block */
+  .to-block {
+    margin-bottom: 14px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  
+  .to-block .to-label {
+    color: #333;
+  }
+  
+  .to-block .to-name {
+    font-weight: 700;
+    color: #1A1A2E;
+  }
+  
+  .to-block .to-designation {
+    font-size: 12px;
+    color: #555;
+  }
+  
+  /* Body Paragraphs */
+  .body-text {
+    font-size: 13px;
+    line-height: 1.85;
+    color: #333;
+    text-align: justify;
+    margin-bottom: 12px;
+  }
+  
+  .body-text strong {
+    color: #2E3A8C;
+    font-weight: 600;
+  }
+  
+  /* Closing Paragraph */
+  .closing-text {
+    font-size: 12px;
+    line-height: 1.75;
+    color: #444;
+    font-style: italic;
+    text-align: justify;
+    margin-bottom: 18px;
+  }
+  
+  /* Summary Box */
+  .summary-box {
+    border: 1px solid #D0D4E8;
+    border-radius: 8px;
+    margin: 18px 0;
+  }
+  
+  .summary-row {
+    display: flex;
+    border-bottom: 1px solid #E5E8F0;
+    font-size: 12px;
+  }
+  
+  .summary-row:last-child {
+    border-bottom: none;
+  }
+  
+  .summary-row:nth-child(even) {
+    background: #F7F8FC;
+  }
+  
+  .summary-row:nth-child(odd) {
+    background: #FFFFFF;
+  }
+  
+  .summary-row:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .summary-row:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+  
+  .summary-label {
+    width: 35%;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: #2E3A8C;
+    flex-shrink: 0;
+  }
+  
+  .summary-value {
+    width: 65%;
+    padding: 10px 14px;
+    color: #333;
+    line-height: 1.5;
+  }
+  
+  /* Signature Zone - Right aligned single signature */
+  .signature-zone {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 20px;
+    border-top: 1px solid #E5E8F0;
+    margin-top: 24px;
+  }
+  
+  .sig-block {
+    width: 45%;
+    text-align: center;
+  }
+  
+  .sig-placeholder {
+    height: 40px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  
+  .sig-img {
+    max-height: 40px;
+    max-width: 120px;
+    object-fit: contain;
+  }
+  
+  .sig-cursive {
+    font-family: 'Brush Script MT', 'Segoe Script', cursive;
+    font-size: 22px;
+    color: #1A1A2E;
+  }
+  
+  .sig-line {
+    width: 120px;
+    height: 1px;
+    background: #333;
+    margin: 8px auto;
+  }
+  
+  .sig-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #1A1A2E;
+  }
+  
+  .sig-title {
+    font-size: 10px;
+    color: #666;
+    margin-top: 2px;
+  }
+  
+  .sig-date {
+    font-size: 10px;
+    color: #666;
+    margin-top: 4px;
+  }
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding-top: 12px;
+    border-top: 1px solid #E0E3EF;
+    margin-top: 20px;
+  }
+  
+  .footer p {
+    font-size: 9px;
+    color: #999;
+    letter-spacing: 0.04em;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Watermark -->
+  <div class="watermark">FLUENZY AI</div>
+  
+  <!-- Header Zone -->
+  <div class="header">
+    <div class="header-left">
+      ${d.logoBase64 ? `<img src="${d.logoBase64}" class="logo" alt="Company Logo"/>` : '<div class="logo"></div>'}
+      <div class="company-info">
+        <div class="company-name">${d.companyName || 'Fluenzy AI'}</div>
+        <div class="tagline">AI-Powered Communication Training</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="contact-info">
+        <div>https://www.fluenzyai.app/</div>
+      </div>
+      <div class="qr-box">
+        <img src="${d.qrCodeDataUrl}" alt="QR Code"/>
+      </div>
+    </div>
   </div>
   
+  <!-- Date Line -->
+  <div class="date-line">Date: ${issueDateStr}</div>
+  
+  <!-- Title Block -->
+  <div class="title-block">
+    <div class="title">RELIEVING LETTER</div>
+    <div class="title-underline"></div>
+  </div>
+  
+  <!-- To Block -->
+  <div class="to-block">
+    <div class="to-label">To,</div>
+    <div class="to-name">${d.candidateName}</div>
+    <div class="to-designation">${d.position || 'Employee'}${d.department ? `, ${d.department}` : ''}</div>
+  </div>
+  
+  <!-- Body Paragraph 1 -->
+  <p class="body-text">
+    This is to certify that <strong>${d.candidateName}</strong> has been relieved from their
+    duties as <strong>${d.position || 'Employee'}</strong>
+    ${d.department ? ` in the <strong>${d.department}</strong> department` : ''} at <strong>${d.companyName || 'Fluenzy AI'}</strong>,
+    effective <strong>${endDateStr}</strong>.
+  </p>
+  
+  <!-- Body Paragraph 2 -->
+  <p class="body-text">
+    They joined us on <strong>${startDateStr}</strong> and served until <strong>${endDateStr}</strong>,
+    completing a tenure of <strong>${duration}</strong>. All formalities including handover of
+    responsibilities and clearance have been completed satisfactorily.
+  </p>
+  
+  <!-- Closing Paragraph -->
+  <p class="closing-text">
+    We appreciate ${d.candidateName}'s contributions to the team and wish them all the
+    best in their future endeavors.
+  </p>
+  
+  <!-- Summary Box -->
+  <div class="summary-box">
+    <div class="summary-row"><div class="summary-label">Name</div><div class="summary-value">${d.candidateName}</div></div>
+    ${d.position ? `<div class="summary-row"><div class="summary-label">Designation</div><div class="summary-value">${d.position}</div></div>` : ''}
+    ${d.department ? `<div class="summary-row"><div class="summary-label">Department</div><div class="summary-value">${d.department}</div></div>` : ''}
+    <div class="summary-row"><div class="summary-label">Date of Joining</div><div class="summary-value">${startDateStr}</div></div>
+    <div class="summary-row"><div class="summary-label">Last Working Date</div><div class="summary-value">${endDateStr}</div></div>
+    ${duration ? `<div class="summary-row"><div class="summary-label">Total Duration</div><div class="summary-value">${duration}</div></div>` : ''}
+  </div>
+  
+  <!-- Signature Zone - Right aligned -->
+  <div class="signature-zone">
+    <div class="sig-block">
+      <div class="sig-placeholder">
+        ${d.hrSignatureBase64
+          ? `<img src="${d.hrSignatureBase64}" class="sig-img" alt="HR Signature"/>`
+          : `<span class="sig-cursive">${d.hrName.split(" ").slice(0, 2).join(" ")}</span>`}
+      </div>
+      <div class="sig-line"></div>
+      <div class="sig-name">${d.hrName}</div>
+      <div class="sig-title">${d.hrDesignation}</div>
+      <div class="sig-date">Date: ${issueDateStr}</div>
+    </div>
+  </div>
+  
+  <!-- Footer -->
+  <div class="footer">
+    <p>${d.companyName || 'Fluenzy AI'} · Date of Issue: ${issueDateStr} · This is a computer-generated letter · Ref: ${d.certificateNumber}</p>
+  </div>
 </div>
 </body>
 </html>`;
@@ -453,7 +1381,8 @@ export function buildCertificateHtml(data: CertificateData): string {
       return buildInternshipCertificateHtml(data);
     case "EXPERIENCE":
       return buildExperienceLetterHtml(data);
-    // Add more types here
+    case "RELIEVING":
+      return buildRelievingLetterHtml(data);
     default:
       return buildInternshipCertificateHtml(data); // fallback
   }

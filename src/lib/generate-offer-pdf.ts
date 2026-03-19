@@ -69,152 +69,410 @@ export function buildOfferHtml(d: OfferPdfData): string {
     day: "numeric", month: "long", year: "numeric",
   });
 
-  const refNo = `FLZ/HR/${d.createdAt.getFullYear()}/${d.offerId.slice(-6).toUpperCase()}`;
+  const refNo = `FLUENZY-OFR-${d.createdAt.getFullYear()}-${d.offerId.slice(-5).toUpperCase()}`;
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family: 'Times New Roman', Times, serif; font-size:13px; color:#1a1a1a; background:#fff; }
-  .page { width:210mm; min-height:297mm; padding:16mm 22mm 28mm 22mm; position:relative; }
-
-  .header { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid #4f46e5; padding-bottom:12px; margin-bottom:18px; }
-  .header-left { display:flex; align-items:center; gap:14px; }
-  .logo { width:52px; height:52px; object-fit:contain; }
-  .company-name { font-size:24px; font-weight:800; color:#4f46e5; letter-spacing:0.5px; }
-  .company-tagline { font-size:9.5px; color:#6b7280; margin-top:2px; }
-  .header-right { text-align:right; font-size:10px; color:#6b7280; line-height:1.7; }
-
-  .title-band { background:#4f46e5; color:#fff; text-align:center; padding:8px 0; border-radius:4px; margin-bottom:18px; }
-  .title-band h1 { font-size:16px; letter-spacing:2.5px; font-weight:700; text-transform:uppercase; }
-
-  .meta-row { display:flex; justify-content:space-between; font-size:11.5px; color:#374151; margin-bottom:16px; }
-  .salutation { font-size:13px; margin-bottom:10px; }
-  .body-text { font-size:13px; line-height:1.75; color:#374151; margin-bottom:12px; }
-
-  .details-box { border:1.5px solid #4f46e5; border-radius:6px; padding:14px 18px; margin:16px 0; background:#f5f3ff; }
-  .details-box table { width:100%; border-collapse:collapse; }
-  .details-box td { padding:5px 2px; font-size:12.5px; vertical-align:top; }
-  .details-box td:first-child { font-weight:700; color:#374151; width:45%; }
-  .details-box td:last-child { color:#111827; }
-
-  .closing { font-size:13px; line-height:1.75; color:#374151; margin-top:12px; }
-
-  .sig-section { display:flex; justify-content:space-between; margin-top:44px; }
-  .sig-block { width:44%; text-align:center; }
-  .sig-img { height:60px; object-fit:contain; display:block; margin:0 auto 4px; max-width:160px; }
-  .sig-cursive { font-family: 'Brush Script MT', 'Segoe Script', cursive; font-size:30px; color:#1a1a1a; height:60px; display:flex; align-items:center; justify-content:center; }
-  .sig-line { border-top:1.5px solid #4b5563; width:100%; margin-bottom:6px; }
-  .sig-name { font-size:12.5px; font-weight:700; color:#111827; }
-  .sig-designation { font-size:10.5px; color:#6b7280; margin-top:1px; }
-
-  .watermark { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-35deg); font-size:72px; color:rgba(79,70,229,0.05); font-weight:900; letter-spacing:6px; white-space:nowrap; pointer-events:none; z-index:0; }
-
-  .footer { position:fixed; bottom:8mm; left:22mm; right:22mm; text-align:center; font-size:8.5px; color:#9ca3af; border-top:1px solid #e5e7eb; padding-top:5px; }
-  .confidential { text-align:center; margin-top:24px; font-size:10px; color:#9ca3af; font-style:italic; }
-
-  .accept-box { border:1px dashed #d1d5db; border-radius:6px; padding:12px 16px; margin-top:20px; font-size:12px; color:#374151; }
-  .accept-box strong { display:block; margin-bottom:6px; font-size:12.5px; color:#111827; }
+  @page { size: A4; margin: 0; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Inter', 'Helvetica Neue', sans-serif;
+    font-size: 13px;
+    color: #333;
+    background: #FFFFFF;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .page {
+    width: 794px;
+    min-height: 1123px;
+    padding: 52px 60px;
+    position: relative;
+    background: #FFFFFF;
+  }
+  
+  /* Left accent bar */
+  .page::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 4px;
+    background: #2E3A8C;
+  }
+  
+  /* Right decorative border */
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 3px;
+    background: rgba(46, 58, 140, 0.15);
+  }
+  
+  /* Watermark */
+  .watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 72px;
+    font-weight: 900;
+    color: rgba(46, 58, 140, 0.03);
+    letter-spacing: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  /* Header Zone */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #2E3A8C;
+    margin-bottom: 24px;
+  }
+  
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  .logo {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+  }
+  
+  .company-info .company-name {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1A1A2E;
+    letter-spacing: 0.02em;
+  }
+  
+  .company-info .tagline {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 2px;
+  }
+  
+  .header-right {
+    text-align: right;
+    font-size: 11px;
+    color: #374151;
+    line-height: 1.6;
+  }
+  
+  /* Date + Ref Line */
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  /* Addressee Block */
+  .addressee {
+    margin-bottom: 16px;
+  }
+  
+  .addressee-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1A1A2E;
+  }
+  
+  .addressee-detail {
+    font-size: 12px;
+    color: #555;
+    line-height: 1.5;
+  }
+  
+  /* Subject Line */
+  .subject-line {
+    font-size: 13px;
+    font-weight: 700;
+    color: #2E3A8C;
+    text-decoration: underline;
+    margin-bottom: 14px;
+  }
+  
+  /* Salutation */
+  .salutation {
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  /* Body Paragraphs */
+  .body-text {
+    font-size: 13px;
+    line-height: 1.85;
+    color: #333;
+    text-align: justify;
+    margin-bottom: 12px;
+  }
+  
+  .body-text strong {
+    color: #2E3A8C;
+    font-weight: 600;
+  }
+  
+  /* Terms Box */
+  .terms-box {
+    border: 1px solid #D0D4E8;
+    border-radius: 8px;
+    margin: 18px 0;
+  }
+  
+  .terms-row {
+    display: flex;
+    border-bottom: 1px solid #E5E8F0;
+    font-size: 12px;
+  }
+  
+  .terms-row:last-child {
+    border-bottom: none;
+  }
+  
+  .terms-row:nth-child(even) {
+    background: #F7F8FC;
+  }
+  
+  .terms-row:nth-child(odd) {
+    background: #FFFFFF;
+  }
+  
+  .terms-row:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .terms-row:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+  
+  .terms-label {
+    width: 35%;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: #2E3A8C;
+    flex-shrink: 0;
+  }
+  
+  .terms-value {
+    width: 65%;
+    padding: 10px 14px;
+    color: #333;
+    line-height: 1.5;
+  }
+  
+  /* Acceptance Clause */
+  .acceptance-clause {
+    font-size: 12px;
+    font-style: italic;
+    color: #666;
+    text-align: center;
+    margin: 16px 0;
+  }
+  
+  /* Signature Zone */
+  .signature-zone {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 16px;
+    border-top: 1px solid #E5E8F0;
+    margin-top: 20px;
+  }
+  
+  .sig-block {
+    width: 45%;
+    text-align: center;
+  }
+  
+  .sig-placeholder {
+    height: 36px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  
+  .sig-img {
+    max-height: 36px;
+    max-width: 100px;
+    object-fit: contain;
+  }
+  
+  .sig-cursive {
+    font-family: 'Brush Script MT', 'Segoe Script', cursive;
+    font-size: 20px;
+    color: #1A1A2E;
+  }
+  
+  .sig-line {
+    width: 100px;
+    height: 1px;
+    background: #333;
+    margin: 6px auto;
+  }
+  
+  .sig-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: #1A1A2E;
+  }
+  
+  .sig-title {
+    font-size: 9px;
+    color: #666;
+    margin-top: 2px;
+  }
+  
+  /* Candidate Acceptance Box */
+  .accept-box {
+    margin-top: 16px;
+    padding: 12px 14px;
+    border: 1px dashed #D0D4E8;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #444;
+  }
+  
+  .accept-box strong {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #1A1A2E;
+  }
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding-top: 10px;
+    border-top: 1px solid #E0E3EF;
+    margin-top: 16px;
+  }
+  
+  .footer p {
+    font-size: 8px;
+    color: #999;
+    letter-spacing: 0.04em;
+  }
 </style>
 </head>
 <body>
-<div class="watermark">FLUENZY AI</div>
 <div class="page">
-
+  <!-- Watermark -->
+  <div class="watermark">FLUENZY AI</div>
+  
+  <!-- Header Zone -->
   <div class="header">
     <div class="header-left">
-      ${d.logoBase64 ? `<img src="${d.logoBase64}" class="logo" alt="Fluenzy AI Logo"/>` : ""}
-      <div>
+      ${d.logoBase64 ? `<img src="${d.logoBase64}" class="logo" alt="Company Logo"/>` : '<div class="logo"></div>'}
+      <div class="company-info">
         <div class="company-name">Fluenzy AI</div>
-        <div class="company-tagline">AI-Powered Communication &amp; Interview Training Platform</div>
+        <div class="tagline">AI-Powered Communication Training</div>
       </div>
     </div>
     <div class="header-right">
-      <div><strong>Website:</strong> fluenzyai.com</div>
-      <div><strong>Email:</strong> hr@fluenzyai.com</div>
-      <div><strong>Country:</strong> India</div>
+      <div>https://www.fluenzyai.app/</div>
     </div>
   </div>
-
-  <div class="title-band"><h1>Letter of Offer</h1></div>
-
+  
+  <!-- Date + Ref Line -->
   <div class="meta-row">
-    <span><strong>Ref:</strong> ${refNo}</span>
-    <span><strong>Date of Issue:</strong> ${issueDateStr}</span>
+    <span>Date: ${issueDateStr}</span>
+    <span>Ref No: ${refNo}</span>
   </div>
-
-  <p class="salutation">Dear <strong>${d.candidateName}</strong>,</p>
-
-  <p class="body-text">
-    We are delighted to extend this offer of employment to you at <strong>Fluenzy AI</strong>.
-    After careful consideration of your profile, we are pleased to offer you the position of
-    <strong>${d.position}</strong> in the <strong>${d.department}</strong> department.
-    We believe your skills and experience will be a valuable addition to our growing team.
-  </p>
-
-  <div class="details-box">
-    <table>
-      <tr><td>Position / Designation</td><td>${d.position}</td></tr>
-      <tr><td>Department</td><td>${d.department}</td></tr>
-      <tr><td>${d.salaryType === "per month" ? "Monthly Stipend / Salary" : "Annual CTC (Cost to Company)"}</td><td>₹${d.salary.toLocaleString("en-IN")} ${d.salaryType || "per annum"}</td></tr>
-      <tr><td>Date of Joining</td><td>${joiningDateStr}</td></tr>
-      <tr><td>Accept Offer By</td><td><strong>${acceptanceDeadlineStr}</strong></td></tr>
-      <tr><td>Employment Type</td><td>${d.employmentType || "Full-Time, Permanent"}</td></tr>
-      <tr><td>Work Location</td><td>${d.workLocation || "India (Remote / Hybrid)"}</td></tr>
-    </table>
+  
+  <!-- Addressee Block -->
+  <div class="addressee">
+    <div class="addressee-name">${d.candidateName}</div>
+    <div class="addressee-detail">${d.workLocation || 'India'}</div>
   </div>
-
+  
+  <!-- Subject Line -->
+  <div class="subject-line">Subject: Offer of Employment — ${d.position}</div>
+  
+  <!-- Salutation -->
+  <div class="salutation">Dear <strong>${d.candidateName.split(' ')[0]}</strong>,</div>
+  
+  <!-- Opening Paragraph -->
   <p class="body-text">
-    This offer is subject to satisfactory completion of background verification and timely submission
-    of all required documents prior to your joining date. Please sign and return a copy of this letter
-    to confirm your acceptance on or before <strong>${acceptanceDeadlineStr}</strong>.
+    We are pleased to offer you the position of <strong>${d.position}</strong> in the
+    <strong>${d.department}</strong> department at <strong>Fluenzy AI</strong>.
+    Your start date will be <strong>${joiningDateStr}</strong>.
   </p>
-
+  
+  <!-- Terms Table -->
+  <div class="terms-box">
+    <div class="terms-row"><div class="terms-label">Position / Role</div><div class="terms-value">${d.position}</div></div>
+    <div class="terms-row"><div class="terms-label">Department</div><div class="terms-value">${d.department}</div></div>
+    <div class="terms-row"><div class="terms-label">Start Date</div><div class="terms-value">${joiningDateStr}</div></div>
+    <div class="terms-row"><div class="terms-label">Work Type</div><div class="terms-value">${d.workLocation || 'Remote / Hybrid'}</div></div>
+    <div class="terms-row"><div class="terms-label">${d.salaryType === "per month" ? "Monthly Stipend" : "Salary (CTC)"}</div><div class="terms-value">₹${d.salary.toLocaleString("en-IN")} ${d.salaryType || "per annum"}</div></div>
+    <div class="terms-row"><div class="terms-label">Employment Type</div><div class="terms-value">${d.employmentType || 'Full-Time'}</div></div>
+    <div class="terms-row"><div class="terms-label">Accept By</div><div class="terms-value">${acceptanceDeadlineStr}</div></div>
+  </div>
+  
+  <!-- Additional Info -->
   <p class="body-text">
-    We look forward to having you join our team and contribute to Fluenzy AI's mission of building
-    world-class AI-powered learning and communication experiences. Should you have any questions
-    regarding this offer, please feel free to contact our HR team.
+    This offer is subject to satisfactory completion of background verification and submission of required documents.
+    We look forward to having you join our team and contribute to Fluenzy AI's mission.
   </p>
-
-  <p class="closing">Congratulations and a warm welcome to the <strong>Fluenzy AI</strong> family!</p>
-
+  
+  <!-- Acceptance Clause -->
+  <div class="acceptance-clause">
+    This offer is valid until ${acceptanceDeadlineStr}. Please sign and return a copy to confirm acceptance.
+  </div>
+  
+  <!-- Signature Zone -->
+  <div class="signature-zone">
+    <div class="sig-block">
+      <div class="sig-placeholder">
+        <span class="sig-cursive">${d.hrName.split(" ").slice(0, 2).join(" ")}</span>
+      </div>
+      <div class="sig-line"></div>
+      <div class="sig-name">${d.hrName}</div>
+      <div class="sig-title">${d.hrDesignation}</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-placeholder">
+        ${d.founderSigBase64
+          ? `<img src="${d.founderSigBase64}" class="sig-img" alt="Founder Signature"/>`
+          : `<span class="sig-cursive">Achhuta Jha</span>`}
+      </div>
+      <div class="sig-line"></div>
+      <div class="sig-name">ACHHUTA NAND JHA</div>
+      <div class="sig-title">Founder & CEO</div>
+    </div>
+  </div>
+  
+  <!-- Candidate Acceptance Box -->
   <div class="accept-box">
     <strong>Candidate Acceptance</strong>
-    I, <strong>${d.candidateName}</strong>, hereby accept the above offer of employment and confirm my
-    joining date of <strong>${joiningDateStr}</strong>.
+    I, ${d.candidateName}, hereby accept the above offer of employment and confirm my joining date of ${joiningDateStr}.
     <br/><br/>
     Signature: ________________________ &nbsp;&nbsp;&nbsp; Date: ________________________
   </div>
-
-  <div class="sig-section">
-    <div class="sig-block">
-      <div class="sig-cursive">${d.hrName.split(" ").slice(0, 2).join(" ")}</div>
-      <div class="sig-line"></div>
-      <div class="sig-name">${d.hrName}</div>
-      <div class="sig-designation">${d.hrDesignation}, Fluenzy AI</div>
-    </div>
-    <div class="sig-block">
-      ${d.founderSigBase64
-        ? `<img src="${d.founderSigBase64}" class="sig-img" alt="Founder Signature"/>`
-        : `<div style="height:60px;"></div>`}
-      <div class="sig-line"></div>
-      <div class="sig-name">ACHHUTA NAND JHA</div>
-      <div class="sig-designation">Founder &amp; CEO, Fluenzy AI</div>
-    </div>
-  </div>
-
-  <p class="confidential">
-    This document is confidential and intended solely for ${d.candidateName}.
-    Unauthorized use, reproduction or distribution is strictly prohibited.
-  </p>
-
+  
+  <!-- Footer -->
   <div class="footer">
-    Fluenzy AI &nbsp;·&nbsp; AI-Powered Communication Training &nbsp;·&nbsp; fluenzyai.com
-    &nbsp;·&nbsp; This offer letter was generated electronically and is legally binding.
+    <p>Fluenzy AI · https://www.fluenzyai.app/ · This offer letter is confidential and legally binding</p>
   </div>
-
 </div>
 </body>
 </html>`;
