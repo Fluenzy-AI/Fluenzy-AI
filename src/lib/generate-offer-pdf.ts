@@ -235,9 +235,9 @@ export async function generateOfferPdfBuffer(d: OfferPdfData): Promise<Buffer> {
       // Production or local without puppeteer - use chromium
       browser = await puppeteer.launch({
         args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
-        defaultViewport: chromium.defaultViewport,
+        defaultViewport: { width: 1920, height: 1080 },
         executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
+        headless: true,
       });
     }
     
