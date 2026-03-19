@@ -4,9 +4,18 @@
  * and GET /api/portal/hr/offer-letters/[id]/pdf (download)
  */
 
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import path from "path";
+
+// Try to require regular puppeteer as fallback for local development
+let puppeteerLocal: typeof puppeteer | null = null;
+try {
+  puppeteerLocal = require("puppeteer");
+} catch {
+  // puppeteer not available, will use puppeteer-core with chromium
+}
 
 export interface OfferPdfData {
   offerId: string;
@@ -215,10 +224,23 @@ export async function generateOfferPdfBuffer(d: OfferPdfData): Promise<Buffer> {
   const html = buildOfferHtml(d);
   let browser;
   try {
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-    });
+    // Try to use local puppeteer first (development), fallback to chromium (production)
+    if (puppeteerLocal && process.env.NODE_ENV !== "production") {
+      // Local development with puppeteer
+      browser = await puppeteerLocal.launch({
+        headless: true,
+        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
+      });
+    } else {
+      // Production or local without puppeteer - use chromium
+      browser = await puppeteer.launch({
+        args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+      });
+    }
+    
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle0" });
     const pdfBuffer = await page.pdf({

@@ -1181,6 +1181,7 @@ model Employee {
   attendances     Attendance[]
   payrollRecords  PayrollRecord[]
   offerLetters    OfferLetter[]
+  certificates    Certificate[]
 
   @@index([hrId, status])
   @@index([department])
@@ -1215,6 +1216,7 @@ model Candidate {
 
   offerLetters    OfferLetter[]
   interviews      Interview[]
+  certificates    Certificate[]
 
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -1582,4 +1584,114 @@ model ATSRanking {
   @@index([totalScore])
   @@index([userId])
   @@index([jobRole])
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Certificate Management System
+// ──────────────────────────────────────────────────────────────────────────────
+
+enum CertificateType {
+  INTERNSHIP
+  EXPERIENCE
+  OFFER
+  RELIEVING
+  APPRECIATION
+  TRAINING
+}
+
+enum CertificateStatus {
+  DRAFT
+  ISSUED
+  REVOKED
+}
+
+model Certificate {
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  certificateNumber String            @unique
+  type              CertificateType
+  
+  // Relations
+  candidateId       String?           @db.ObjectId
+  candidate         Candidate?        @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  employeeId        String?           @db.ObjectId
+  employee          Employee?         @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+  
+  templateId        String?           @db.ObjectId
+  template          CertificateTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  
+  // Certificate Data (JSON for flexibility)
+  data              Json
+  
+  // Files
+  pdfUrl            String?
+  qrCodeDataUrl     String?
+  
+  // Status
+  status            CertificateStatus @default(DRAFT)
+  
+  // Issuance
+  issuedBy          String
+  issuedAt          DateTime          @default(now())
+  sentViaEmail      Boolean           @default(false)
+  emailSentAt       DateTime?
+  
+  // Revocation
+  revokedAt         DateTime?
+  revokedBy         String?
+  revocationReason  String?
+  
+  // Verification
+  verifications     CertificateVerification[]
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  
+  @@index([certificateNumber])
+  @@index([type])
+  @@index([status])
+  @@index([candidateId])
+  @@index([employeeId])
+  @@index([issuedAt])
+}
+
+model CertificateTemplate {
+  id           String          @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  type         CertificateType
+  description  String?
+  
+  // Template content (HTML with variables)
+  contentHtml  String
+  
+  // Available variables for this template
+  variables    Json
+  
+  // Styling options
+  styles       Json?
+  
+  isActive     Boolean         @default(true)
+  isDefault    Boolean         @default(false)
+  
+  createdBy    String
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  
+  certificates Certificate[]
+  
+  @@index([type])
+  @@index([isActive])
+  @@index([isDefault])
+}
+
+model CertificateVerification {
+  id            String      @id @default(auto()) @map("_id") @db.ObjectId
+  certificateId String      @db.ObjectId
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  
+  verifiedAt    DateTime    @default(now())
+  ipAddress     String?
+  userAgent     String?
+  
+  @@index([certificateId])
+  @@index([verifiedAt])
 }
