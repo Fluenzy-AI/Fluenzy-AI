@@ -53,10 +53,11 @@ export const metadata: Metadata = {
     google: "your-google-site-verification-code", // Replace with actual
   },
   icons: {
-    icon: '/image/final_logo-removebg-preview.png',
-    apple: '/image/icon-192.png',
+    icon: '/favicon/white-removebg-preview1.png',
+    shortcut: '/favicon/white-removebg-preview1.png',
+    apple: '/favicon/white-removebg-preview1.png',
   },
-  manifest: '/manifest.json',
+  manifest: '/favicon/site.webmanifest',
 };
 
 export const viewport: Viewport = {
@@ -93,7 +94,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="FluenzyAI" />
-        <link rel="apple-touch-icon" href="/image/icon-192.png" />
+        <link rel="apple-touch-icon" href="/favicon/white-removebg-preview1.png" />
         {/* Razorpay Checkout Script */}
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <script

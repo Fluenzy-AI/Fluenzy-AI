@@ -84,9 +84,11 @@ function LoginContent() {
         {/* Logo */}
         <div className="relative z-10">
           <Link href="/" className="inline-flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
-              <span className="text-white font-black text-lg">F</span>
-            </div>
+            <img 
+              src="/favicon/apple-touch-icon.png" 
+              alt="Fluenzy AI Logo" 
+              className="w-16 h-16 rounded-xl shadow-lg shadow-indigo-500/30"
+            />
             <span className="text-white font-bold text-xl">Fluenzy AI</span>
           </Link>
         </div>

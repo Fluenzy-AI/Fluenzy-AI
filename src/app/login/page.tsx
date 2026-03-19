@@ -200,9 +200,11 @@ export default function LoginPage() {
           className="mb-8 flex justify-center"
         >
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-shadow">
-              <Sparkles size={16} className="text-white" />
-            </div>
+            <img 
+              src="/favicon/apple-touch-icon.png" 
+              alt="Fluenzy AI Logo" 
+              className="h-9 w-9 rounded-xl shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-shadow"
+            />
             <span className="text-xl font-bold tracking-tight">Fluenzy AI</span>
           </Link>
         </motion.div>

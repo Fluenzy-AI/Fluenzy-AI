@@ -14,9 +14,9 @@ const Footer = () => {
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-3 mb-4">
               <img 
-                src="/image/fluenzyAI.jpeg" 
+                src="/favicon/apple-touch-icon.png" 
                 alt="Fluenzy AI Logo" 
-                className="h-9 w-auto rounded-lg object-contain shadow-lg"
+                className="h-14 w-auto rounded-lg shadow-lg"
               />
               <span
                 className="text-2xl font-black tracking-tight"

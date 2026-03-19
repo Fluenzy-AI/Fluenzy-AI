@@ -161,9 +161,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         {/* Minimal Super Admin top bar */}
         <header className={`h-14 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-6 sticky top-0 z-30`}>
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center">
-              <span className="text-white font-black text-sm">F</span>
-            </div>
+            <img 
+              src="/favicon/apple-touch-icon.png" 
+              alt="Fluenzy AI Logo" 
+              className="w-12 h-12 rounded-lg shadow-md"
+            />
             <span className={`font-bold ${currentTheme.text}`}>Fluenzy AI</span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 ml-1">SUPER ADMIN</span>
           </div>
@@ -314,9 +316,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {/* Logo */}
       <div className={`p-4 border-b ${currentTheme.cardBorder} flex items-center justify-between`}>
         <Link href="/" className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center">
-            <span className="text-white font-black text-lg">F</span>
-          </div>
+          <img 
+            src="/favicon/apple-touch-icon.png" 
+            alt="Fluenzy AI Logo" 
+            className="w-14 h-14 rounded-xl shadow-md"
+          />
           {!collapsed && (
             <span className={`font-bold ${currentTheme.text} text-lg`}>Fluenzy AI</span>
           )}

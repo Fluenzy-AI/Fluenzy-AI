@@ -495,9 +495,11 @@ export default function SignupPage() {
           className="mb-8 flex justify-center"
         >
           <Link href="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center">
-              <Sparkles size={14} className="text-white" />
-            </div>
+            <img 
+              src="/favicon/apple-touch-icon.png" 
+              alt="Fluenzy AI Logo" 
+              className="h-8 w-8 rounded-full"
+            />
             <span className="text-lg font-bold text-white">Fluenzy AI</span>
           </Link>
         </motion.div>

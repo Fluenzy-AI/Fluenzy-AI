@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { parseResume, scoreResume } from "@/lib/ats-engine";
+import { extractTextWithAdobe, isAdobeConfigured } from "@/lib/adobe-pdf-extract";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -150,8 +151,47 @@ export async function POST(request: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Parse resume text – never fails, always returns something
-    const { text: rawText, parseWarning } = await parseResume(buffer, file.type);
+    // Parse resume text using Adobe PDF Services (preferred) or fallback
+    let rawText = "";
+    let parseWarning: string | undefined;
+    let extractionMethod = "fallback";
+
+    const isPdf = file.type === "application/pdf";
+    const adobeAvailable = isAdobeConfigured();
+    
+    console.log("[ATS Upload] File type:", file.type, "isPdf:", isPdf, "adobeConfigured:", adobeAvailable);
+
+    // Try Adobe PDF Services first for PDFs
+    if (isPdf && adobeAvailable) {
+      console.log("[ATS Upload] Using Adobe PDF Services for extraction");
+      try {
+        const adobeResult = await extractTextWithAdobe(buffer, file.name);
+        if (adobeResult.success && adobeResult.text && adobeResult.text.trim().length > 100) {
+          rawText = adobeResult.text;
+          extractionMethod = "adobe";
+          console.log(`[ATS Upload] Adobe extraction successful: ${rawText.length} chars`);
+        } else {
+          console.warn("[ATS Upload] Adobe extraction returned insufficient text:", adobeResult.error);
+          parseWarning = adobeResult.error || "Adobe extraction returned insufficient text";
+        }
+      } catch (adobeError) {
+        console.error("[ATS Upload] Adobe extraction error:", adobeError);
+        parseWarning = "Adobe PDF extraction failed";
+      }
+    } else {
+      console.log("[ATS Upload] Skipping Adobe - isPdf:", isPdf, "adobeConfigured:", adobeAvailable);
+    }
+
+    // Fallback to local parsing if Adobe didn't work
+    if (!rawText || rawText.trim().length < 100) {
+      console.log("[ATS Upload] Using local parser fallback");
+      const localResult = await parseResume(buffer, file.type);
+      rawText = localResult.text;
+      extractionMethod = "fallback";
+      if (localResult.parseWarning) {
+        parseWarning = localResult.parseWarning;
+      }
+    }
 
     // Sanitize text
     const sanitizedText = rawText
@@ -254,6 +294,7 @@ export async function POST(request: NextRequest) {
       analysisId: analysis.id,
       scores,
       parseWarning: parseWarning ?? null,
+      extractionMethod,
       message: "Resume analyzed successfully!",
     });
   } catch (err) {

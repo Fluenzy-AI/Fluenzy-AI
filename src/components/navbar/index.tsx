@@ -154,7 +154,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                 <SheetContent side="left" className="w-[300px] bg-slate-950 border-r border-white/5 p-0 overflow-y-auto">
                   <SheetHeader className="p-3 border-b border-white/5 bg-slate-900/50">
                     <SheetTitle className="flex items-center space-x-3">
-                      <img src="/image/fluenzyAI.jpeg" alt="Logo" className="h-8 w-auto rounded-lg" />
+                      <img src="/favicon/apple-touch-icon.png" alt="Logo" className="h-14 w-auto rounded-lg" />
                       <span className="text-xl font-black bg-gradient-primary !bg-clip-text text-transparent">Menu</span>
                     </SheetTitle>
                   </SheetHeader>
@@ -171,9 +171,9 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
               onClick={() => window.location.href = "/"}
             >
               <img 
-                src="/image/fluenzyAI.jpeg" 
+                src="/favicon/apple-touch-icon.png" 
                 alt="Fluenzy AI Logo" 
-                className="h-8 w-auto rounded-lg object-contain shadow-lg shadow-purple-500/10"
+                className="h-16 w-auto rounded-lg shadow-lg shadow-purple-500/10"
               />
               <span className="text-xl font-black bg-gradient-primary !bg-clip-text text-transparent tracking-tight hidden sm:block">
                 Fluenzy AI
