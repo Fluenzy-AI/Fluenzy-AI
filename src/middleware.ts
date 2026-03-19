@@ -5,10 +5,12 @@ import { Role } from "@prisma/client";
 export default withAuth(
   function middleware(req) {
     const token = req.nextauth.token;
-    const isProRoute = req.nextUrl.pathname.startsWith("/pro") ||
-                      req.nextUrl.pathname.startsWith("/api/pro");
-    const isAdminRoute = req.nextUrl.pathname.startsWith("/superadmin") ||
-                        req.nextUrl.pathname.startsWith("/api/admin");
+    const pathname = req.nextUrl.pathname;
+    const isProRoute = pathname === "/pro" || 
+                      pathname.startsWith("/pro/") ||
+                      pathname.startsWith("/api/pro");
+    const isAdminRoute = pathname.startsWith("/superadmin") ||
+                        pathname.startsWith("/api/admin");
 
     if (isProRoute && token?.plan !== "Pro") {
       return NextResponse.redirect(new URL("/?upgrade=true", req.url));
