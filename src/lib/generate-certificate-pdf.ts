@@ -457,7 +457,7 @@ export async function generateCertificatePdfBuffer(data: CertificateData): Promi
     } else {
       browser = await puppeteer.launch({
         args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
-        defaultViewport: chromium.defaultViewport,
+        defaultViewport: { width: 1920, height: 1080 },
         executablePath: await chromium.executablePath(),
         headless: chromium.headless,
       });
