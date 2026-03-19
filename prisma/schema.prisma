@@ -1646,7 +1646,6 @@ model Certificate {
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
   
-  @@index([certificateNumber])
   @@index([type])
   @@index([status])
   @@index([candidateId])

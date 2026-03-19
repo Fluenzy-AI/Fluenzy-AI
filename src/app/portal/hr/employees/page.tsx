@@ -16,6 +16,7 @@ const HR_NAV = [
   { label: "Attendance", href: "/portal/hr/attendance", icon: <CheckSquareIcon /> },
   { label: "Payroll", href: "/portal/hr/payroll", icon: <BanknotesIcon /> },
   { label: "Offer Letters", href: "/portal/hr/offer-letters", icon: <DocumentIcon /> },
+  { label: "Certificates", href: "/portal/hr/certificates" },
   { label: "Send Email", href: "/portal/hr/send-email", icon: <MailIcon /> },
   { label: "Email History", href: "/portal/hr/email-logs", icon: <MailOpenIcon /> },
   { label: "Job Applications", href: "/portal/hr/job-applications", icon: <ClipboardListIcon /> },
