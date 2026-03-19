@@ -459,7 +459,7 @@ export async function generateCertificatePdfBuffer(data: CertificateData): Promi
         args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
         defaultViewport: { width: 1920, height: 1080 },
         executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
+        headless: true,
       });
     }
     
