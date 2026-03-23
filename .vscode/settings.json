@@ -1,3 +1,6 @@
 {
-  "liveServer.settings.multiRootWorkspaceName": "Fluenzy-AI"
+  "liveServer.settings.multiRootWorkspaceName": "Fluenzy-AI",
+  "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true,
+  "github.copilot.chat.claudeAgent.enabled": true,
+  "github.copilot.chat.terminalChatLocation": "chatView"
 }

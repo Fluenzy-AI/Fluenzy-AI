@@ -159,7 +159,7 @@ function ApplicationForm({ job, onClose, candidate }: { job: Job; onClose: () =>
         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-muted-foreground">
           <span>💡</span>
           <span>Have a candidate account?</span>
-          <Link href={`/candidates/login?redirect=/careers/${job.slug}`} className="text-primary hover:underline ml-1">Login to auto-fill</Link>
+          <Link href={`/candidates/login?redirect=${encodeURIComponent(`/candidates/dashboard/jobs/${job.slug}?autoApply=true`)}`} className="text-primary hover:underline ml-1">Login to auto-fill</Link>
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -309,17 +309,6 @@ export default function JobDetailClient({ job }: { job: Job }) {
               </div>
               <h1 className="text-3xl sm:text-4xl font-bold text-foreground mb-2">{job.title}</h1>
               <p className="text-muted-foreground">{job.experienceYears} experience required{job.salaryRange ? ` · ${job.salaryRange}` : ""}</p>
-
-              {/* Mobile-only Apply Now button */}
-              <button
-                onClick={handleApplyClick}
-                disabled={candidate === undefined}
-                className="lg:hidden mt-5 w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2"
-              >
-                {candidate === undefined ? (
-                  <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Loading...</>
-                ) : "Apply Now →"}
-              </button>
             </motion.div>
 
             {/* Description */}
@@ -473,7 +462,7 @@ export default function JobDetailClient({ job }: { job: Job }) {
 
                 <div className="flex flex-col gap-3">
                   <a
-                    href={`/api/candidates/auth/google?redirect=/careers/${job.slug}`}
+                    href={`/api/candidates/auth/google?redirect=${encodeURIComponent(`/candidates/dashboard/jobs/${job.slug}?autoApply=true`)}`}
                     className="w-full py-3 rounded-xl border border-border bg-background text-foreground font-semibold text-sm hover:bg-white/5 hover:border-white/30 transition text-center flex items-center justify-center gap-2.5"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -490,13 +479,13 @@ export default function JobDetailClient({ job }: { job: Job }) {
                     <div className="flex-1 h-px bg-white/10" />
                   </div>
                   <Link
-                    href={`/candidates/login?redirect=/careers/${job.slug}`}
+                    href={`/candidates/login?redirect=${encodeURIComponent(`/candidates/dashboard/jobs/${job.slug}?autoApply=true`)}`}
                     className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 text-white font-bold text-sm hover:from-violet-500 hover:to-purple-400 transition-all shadow-lg shadow-violet-500/25 text-center"
                   >
                     Login with Email
                   </Link>
                   <Link
-                    href={`/candidates/signup?redirect=/careers/${job.slug}`}
+                    href={`/candidates/signup?redirect=${encodeURIComponent(`/candidates/dashboard/jobs/${job.slug}?autoApply=true`)}`}
                     className="w-full py-3 rounded-xl border border-violet-500/30 bg-violet-500/5 text-violet-300 font-semibold text-sm hover:bg-violet-500/10 hover:border-violet-500/50 transition-all text-center"
                   >
                     Create Free Account

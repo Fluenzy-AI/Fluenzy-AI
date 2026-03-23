@@ -166,6 +166,7 @@ export default function JobApplicationsPage() {
                     <th className="text-left px-5 py-3">Applicant</th>
                     <th className="text-left px-5 py-3">Position</th>
                     <th className="text-left px-5 py-3">Experience</th>
+                    <th className="text-left px-5 py-3">Resume</th>
                     <th className="text-left px-5 py-3">Applied</th>
                     <th className="text-left px-5 py-3">Status</th>
                     <th className="text-right px-5 py-3">Actions</th>
@@ -184,6 +185,17 @@ export default function JobApplicationsPage() {
                         <p className="text-xs text-slate-500">{app.job.department}</p>
                       </td>
                       <td className="px-5 py-3 text-sm text-slate-400">{app.experience}</td>
+                      <td className="px-5 py-3">
+                        {app.resumeUrl ? (
+                          <a href={app.resumeUrl} target="_blank" rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-xs text-emerald-400 hover:text-emerald-300 transition">
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                            View
+                          </a>
+                        ) : (
+                          <span className="text-xs text-slate-600">—</span>
+                        )}
+                      </td>
                       <td className="px-5 py-3 text-xs text-slate-400">{new Date(app.createdAt).toLocaleDateString("en-IN")}</td>
                       <td className="px-5 py-3">
                         <span className={`text-xs px-2 py-0.5 rounded-full border font-medium ${STATUS_COLORS[app.status] || "bg-slate-500/10 text-slate-400"}`}>
@@ -243,11 +255,20 @@ export default function JobApplicationsPage() {
 
               {/* Links */}
               <div className="flex flex-wrap gap-2">
-                <a href={selected.resumeUrl} download target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/20 transition">
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                  Download Resume
-                </a>
+                {selected.resumeUrl && (
+                  <a href={selected.resumeUrl} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-lg hover:bg-emerald-500/20 transition">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                    View Resume
+                  </a>
+                )}
+                {selected.resumeUrl && (
+                  <a href={selected.resumeUrl} download target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-lg hover:bg-blue-500/20 transition">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                    Download Resume
+                  </a>
+                )}
                 {selected.portfolio && (
                   <a href={selected.portfolio} target="_blank" rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 rounded-lg hover:bg-white/10 transition">
@@ -261,6 +282,21 @@ export default function JobApplicationsPage() {
                   </a>
                 )}
               </div>
+
+              {/* Resume Preview */}
+              {selected.resumeUrl && (
+                <div className="border border-white/8 rounded-xl overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-2 bg-white/3 border-b border-white/8">
+                    <p className="text-xs text-slate-400 font-medium">Resume Preview</p>
+                    <span className="text-[10px] text-slate-600">{selected.resumeName || "resume.pdf"}</span>
+                  </div>
+                  <iframe
+                    src={selected.resumeUrl}
+                    className="w-full h-80 bg-slate-950"
+                    title={`Resume - ${selected.name}`}
+                  />
+                </div>
+              )}
 
               {/* Cover Letter */}
               {selected.coverLetter && (
