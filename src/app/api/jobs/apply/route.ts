@@ -12,13 +12,13 @@ const ApplySchema = z.object({
   jobId: z.string(),
   name: z.string().min(2).max(100),
   email: z.string().email(),
-  phone: z.string().min(10).max(20),
-  resumeUrl: z.string().url(),
+  phone: z.string().min(1, "Phone number is required"),
+  resumeUrl: z.string().url("Resume is required"),
   resumeName: z.string().optional(),
-  portfolio: z.string().url().optional().or(z.literal("")),
-  linkedin: z.string().url().optional().or(z.literal("")),
-  coverLetter: z.string().max(3000).optional(),
-  experience: z.string(),
+  portfolio: z.string().url().optional().or(z.literal("")).or(z.undefined()),
+  linkedin: z.string().url().optional().or(z.literal("")).or(z.undefined()),
+  coverLetter: z.string().max(3000).optional().or(z.literal("")),
+  experience: z.string().min(1, "Experience is required"),
 });
 
 // Simple rate limiting
@@ -58,7 +58,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = ApplySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Invalid data", details: parsed.error.flatten() }, { status: 400 });
+      const errors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(errors)[0]?.[0] || "Invalid data";
+      return NextResponse.json({ error: firstError, details: errors }, { status: 400 });
     }
 
     const data = parsed.data;

@@ -50,22 +50,46 @@ const TYPE_LABELS: Record<string, string> = {
   INTERNSHIP: "Internship",
 };
 
+interface CandidateData {
+  name?: string;
+  email?: string;
+  phone?: string;
+  resumeUrl?: string;
+  portfolio?: string;
+  linkedin?: string;
+  experience?: string;
+  plan?: string;
+  autoApplyEnabled?: boolean;
+  autoApplyCount?: number;
+  autoApplyLimit?: number;
+}
+
 export default function JobDetailClient({ job }: { job: Job }) {
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [candidate, setCandidate] = useState<{ name?: string; email?: string; phone?: string; resumeUrl?: string } | null>(null);
+  const [candidate, setCandidate] = useState<CandidateData | null>(null);
+  const [showAutoApplyNotice, setShowAutoApplyNotice] = useState(false);
 
   useEffect(() => {
-    // Check if candidate is logged in
-    fetch("/api/candidates/me", { credentials: "include" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.candidate?.profile) {
+    // Check if candidate is logged in and fetch profile + preferences
+    Promise.all([
+      fetch("/api/candidates/me", { credentials: "include" }).then(r => r.json()),
+      fetch("/api/candidates/preferences", { credentials: "include" }).then(r => r.json()),
+    ])
+      .then(([userData, prefData]) => {
+        if (userData.candidate?.profile) {
           setCandidate({
-            name: data.candidate.name,
-            email: data.candidate.email,
-            phone: data.candidate.profile.phone,
-            resumeUrl: data.candidate.profile.resumeUrl,
+            name: userData.candidate.name,
+            email: userData.candidate.email,
+            phone: userData.candidate.profile.phone,
+            resumeUrl: userData.candidate.profile.resumeUrl,
+            portfolio: userData.candidate.profile.portfolio,
+            linkedin: userData.candidate.profile.linkedin,
+            experience: userData.candidate.profile.experience,
+            plan: userData.user?.plan || "Free",
+            autoApplyEnabled: prefData.preferences?.autoApplyEnabled || false,
+            autoApplyCount: prefData.preferences?.autoApplyCount || 0,
+            autoApplyLimit: prefData.preferences?.monthlyLimit || 0,
           });
         }
       })
@@ -149,10 +173,24 @@ export default function JobDetailClient({ job }: { job: Job }) {
                 {copied ? "Copied!" : "Share"}
               </button>
               <button
-                onClick={() => setShowApplyModal(true)}
+                onClick={() => {
+                  // If paid plan + auto-apply enabled, show notice instead of modal
+                  if (candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled) {
+                    setShowAutoApplyNotice(true);
+                  } else {
+                    setShowApplyModal(true);
+                  }
+                }}
                 className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition"
               >
-                Apply Now
+                {candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Auto-Apply Active
+                  </>
+                ) : (
+                  "Apply Now"
+                )}
               </button>
             </div>
           </div>
@@ -264,10 +302,20 @@ export default function JobDetailClient({ job }: { job: Job }) {
               )}
 
               <button
-                onClick={() => setShowApplyModal(true)}
+                onClick={() => {
+                  if (candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled) {
+                    setShowAutoApplyNotice(true);
+                  } else {
+                    setShowApplyModal(true);
+                  }
+                }}
                 className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition"
               >
-                Apply for this Job
+                {candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled ? (
+                  <>Auto-Apply Active</>
+                ) : (
+                  <>Apply for this Job</>
+                )}
               </button>
             </div>
 
@@ -317,6 +365,13 @@ export default function JobDetailClient({ job }: { job: Job }) {
             onClose={() => setShowApplyModal(false)}
           />
         )}
+        {showAutoApplyNotice && (
+          <AutoApplyNoticeModal
+            job={job}
+            candidate={candidate}
+            onClose={() => setShowAutoApplyNotice(false)}
+          />
+        )}
       </AnimatePresence>
     </div>
   );
@@ -328,7 +383,7 @@ function ApplyModal({
   onClose,
 }: {
   job: Job;
-  candidate: { name?: string; email?: string; phone?: string; resumeUrl?: string } | null;
+  candidate: CandidateData | null;
   onClose: () => void;
 }) {
   const [form, setForm] = useState({
@@ -337,15 +392,18 @@ function ApplyModal({
     phone: candidate?.phone || "",
     resumeUrl: candidate?.resumeUrl || "",
     resumeName: "",
-    portfolio: "",
-    linkedin: "",
+    portfolio: candidate?.portfolio || "",
+    linkedin: candidate?.linkedin || "",
     coverLetter: "",
-    experience: "",
+    experience: candidate?.experience || "",
   });
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  const isPaidPlan = candidate?.plan && candidate.plan !== "Free";
+  const isOneClick = isPaidPlan && !candidate?.autoApplyEnabled;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -428,8 +486,21 @@ function ApplyModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/5">
           <div>
-            <h2 className="text-xl font-bold text-white">Apply for {job.title}</h2>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-xl font-bold text-white">Apply for {job.title}</h2>
+              {candidate?.plan && candidate.plan !== "Free" && (
+                <span className="px-2 py-0.5 bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-xs font-semibold rounded-full">
+                  {candidate.plan}
+                </span>
+              )}
+            </div>
             <p className="text-sm text-slate-400">{job.company.name}</p>
+            {isOneClick && (
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-green-400">
+                <Zap className="w-3 h-3" />
+                <span>Your profile is pre-filled — just review and submit!</span>
+              </div>
+            )}
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white">
             <X className="w-5 h-5" />
@@ -599,12 +670,109 @@ function ApplyModal({
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Submitting...
                 </>
+              ) : isOneClick ? (
+                <>
+                  <Zap className="w-4 h-4" />
+                  Submit Application (1-Click)
+                </>
               ) : (
                 "Submit Application"
               )}
             </button>
           </form>
         )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+function AutoApplyNoticeModal({
+  job,
+  candidate,
+  onClose,
+}: {
+  job: Job;
+  candidate: CandidateData | null;
+  onClose: () => void;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        className="bg-slate-900 border border-white/10 rounded-2xl w-full max-w-lg"
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-white/5">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+              <Zap className="w-6 h-6 text-green-400" />
+            </div>
+            <h2 className="text-xl font-bold text-white">Auto-Apply Active</h2>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-6">
+          <div className="space-y-4">
+            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+              <div className="flex items-start gap-3">
+                <Check className="w-5 h-5 text-green-400 mt-0.5" />
+                <div>
+                  <p className="text-sm text-white font-medium mb-1">
+                    You&apos;re already auto-applying to jobs like this!
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Your {candidate?.plan} plan allows you to automatically apply to {candidate?.autoApplyLimit} jobs per month.
+                    You&apos;ve used {candidate?.autoApplyCount}/{candidate?.autoApplyLimit} applications this month.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-white">What happens next?</h3>
+              <div className="space-y-2 text-sm text-slate-300">
+                <div className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 flex-shrink-0" />
+                  <p>If this job matches your preferences (role, location, skills), you&apos;ll be automatically applied</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 flex-shrink-0" />
+                  <p>Our AI checks job compatibility every 15 minutes</p>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 mt-2 flex-shrink-0" />
+                  <p>You&apos;ll receive a notification when your application is submitted</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition"
+              >
+                Got it
+              </button>
+              <button
+                onClick={() => window.location.href = "/candidates/dashboard/auto-apply"}
+                className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition"
+              >
+                Manage Settings
+              </button>
+            </div>
+          </div>
+        </div>
       </motion.div>
     </motion.div>
   );

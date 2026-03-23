@@ -37,15 +37,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
     }
 
+    // Get linked main user account to determine plan
+    const linkedUser = await prisma.users.findUnique({
+      where: { email: candidate.email },
+      select: { plan: true },
+    });
+    const plan = linkedUser?.plan || "Free";
+    const monthlyLimit = getAutoApplyLimitByPlan(plan);
+
     // Get or create preferences
     let preferences = await prisma.candidateJobPreferences.findUnique({
       where: { candidateId: session.id },
     });
-
-    // Determine plan (for now, assume Free unless linked to main user)
-    // In a real implementation, you'd link candidate to main user account
-    const plan = "Free";
-    const monthlyLimit = getAutoApplyLimitByPlan(plan);
 
     if (!preferences) {
       // Create default preferences
@@ -116,13 +119,31 @@ export async function PATCH(req: NextRequest) {
 
     const data = parsed.data;
 
+    // Get candidate to determine plan
+    const candidate = await prisma.candidateUser.findUnique({
+      where: { id: session.id },
+      select: { email: true },
+    });
+
+    if (!candidate) {
+      return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
+    }
+
+    // Get linked user plan
+    const linkedUser = await prisma.users.findUnique({
+      where: { email: candidate.email },
+      select: { plan: true },
+    });
+    const plan = linkedUser?.plan || "Free";
+    const monthlyLimit = getAutoApplyLimitByPlan(plan);
+
     // Update or create preferences
     const preferences = await prisma.candidateJobPreferences.upsert({
       where: { candidateId: session.id },
       create: {
         candidateId: session.id,
         ...data,
-        monthlyLimit: 0, // Free plan
+        monthlyLimit,
       },
       update: data,
     });

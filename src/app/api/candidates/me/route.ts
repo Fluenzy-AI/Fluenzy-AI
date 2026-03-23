@@ -1,6 +1,6 @@
 /**
  * GET /api/candidates/me
- * Returns current candidate + profile
+ * Returns current candidate + profile + linked user plan
  */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -19,5 +19,15 @@ export async function GET(req: NextRequest) {
   });
 
   if (!candidate) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ candidate });
+
+  // Try to find linked main user account by email
+  const linkedUser = await prisma.users.findUnique({
+    where: { email: candidate.email },
+    select: { plan: true, id: true },
+  });
+
+  return NextResponse.json({
+    candidate,
+    user: linkedUser ? { plan: linkedUser.plan } : { plan: "Free" },
+  });
 }
