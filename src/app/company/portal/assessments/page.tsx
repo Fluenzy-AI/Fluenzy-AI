@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import CompanyPortalLayout from "@/components/CompanyPortalLayout";
 import {
   Plus,
   Search,
@@ -15,8 +16,23 @@ import {
   Clock,
   TrendingUp,
   BarChart3,
+  LayoutDashboard,
+  Briefcase,
+  Users,
+  FileText,
+  UserPlus,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const COMPANY_NAV = [
+  { label: "Dashboard", href: "/company/portal", icon: <LayoutDashboard className="w-4 h-4" /> },
+  { label: "Job Postings", href: "/company/portal/jobs", icon: <Briefcase className="w-4 h-4" /> },
+  { label: "Applications", href: "/company/portal/applications", icon: <Users className="w-4 h-4" /> },
+  { label: "Assessments", href: "/company/portal/assessments", icon: <FileText className="w-4 h-4" /> },
+  { label: "Team", href: "/company/portal/team", icon: <UserPlus className="w-4 h-4" />, adminOnly: true },
+  { label: "Settings", href: "/company/portal/settings", icon: <Settings className="w-4 h-4" />, adminOnly: true },
+];
 
 interface Assessment {
   id: string;
@@ -83,7 +99,8 @@ export default function AssessmentsPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <CompanyPortalLayout navItems={COMPANY_NAV} title="Assessments">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -276,5 +293,6 @@ export default function AssessmentsPage() {
         </div>
       )}
     </div>
+    </CompanyPortalLayout>
   );
 }

@@ -15,6 +15,7 @@ import {
   LogOut,
   ChevronLeft,
   ChevronRight,
+  GraduationCap,
 } from "lucide-react";
 
 // Context for sidebar state
@@ -80,6 +81,11 @@ const NAV_ITEMS = [
     href: "/candidates/dashboard/profile",
     label: "My Profile",
     icon: User,
+  },
+  {
+    href: "/train",
+    label: "Training Hub",
+    icon: GraduationCap,
   },
 ];
 

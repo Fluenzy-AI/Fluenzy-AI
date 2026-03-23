@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import CompanyPortalLayout from "@/components/CompanyPortalLayout";
 import {
   ArrowLeft,
   Briefcase,
@@ -14,8 +15,20 @@ import {
   Zap,
   Globe,
   Building2,
+  LayoutDashboard,
+  UserPlus,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const COMPANY_NAV = [
+  { label: "Dashboard", href: "/company/portal", icon: <LayoutDashboard className="w-4 h-4" /> },
+  { label: "Job Postings", href: "/company/portal/jobs", icon: <Briefcase className="w-4 h-4" /> },
+  { label: "Applications", href: "/company/portal/applications", icon: <Users className="w-4 h-4" /> },
+  { label: "Assessments", href: "/company/portal/assessments", icon: <FileText className="w-4 h-4" /> },
+  { label: "Team", href: "/company/portal/team", icon: <UserPlus className="w-4 h-4" />, adminOnly: true },
+  { label: "Settings", href: "/company/portal/settings", icon: <Settings className="w-4 h-4" />, adminOnly: true },
+];
 
 export default function NewJobPage() {
   const router = useRouter();

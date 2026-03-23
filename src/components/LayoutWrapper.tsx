@@ -58,6 +58,7 @@ const navItems = [
 ];
 
 const secondaryNavItems = [
+  { href: '/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/interview-guide', label: 'Interview Guide', icon: GraduationCap },
   { href: '/ats', label: 'Advanced ATS System', icon: ShieldCheck },
   { href: '/history', label: 'History', icon: History },
@@ -66,6 +67,7 @@ const secondaryNavItems = [
   { href: '/billing', label: 'Billing', icon: CreditCard },
 ];
 const topQuickLinks = [
+  { href: '/jobs', label: 'Jobs' },
   { href: '/history', label: 'History' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/interview-guide', label: 'Interview Guide' },
@@ -377,7 +379,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
         <div className={`px-3 mt-6 mb-2`}>
           <span className={`text-xs font-semibold uppercase tracking-wider ${currentTheme.textMuted}`}>
-            {collapsed ? 'S' : 'Support'}
+            {collapsed ? 'Q' : 'Quick Access'}
           </span>
         </div>
 

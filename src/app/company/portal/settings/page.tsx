@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
+import CompanyPortalLayout from "@/components/CompanyPortalLayout";
 import {
   Building2,
   Mail,
@@ -14,8 +15,21 @@ import {
   Save,
   Image as ImageIcon,
   Check,
+  LayoutDashboard,
+  Briefcase,
+  UserPlus,
+  Settings,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+const COMPANY_NAV = [
+  { label: "Dashboard", href: "/company/portal", icon: <LayoutDashboard className="w-4 h-4" /> },
+  { label: "Job Postings", href: "/company/portal/jobs", icon: <Briefcase className="w-4 h-4" /> },
+  { label: "Applications", href: "/company/portal/applications", icon: <Users className="w-4 h-4" /> },
+  { label: "Assessments", href: "/company/portal/assessments", icon: <FileText className="w-4 h-4" /> },
+  { label: "Team", href: "/company/portal/team", icon: <UserPlus className="w-4 h-4" />, adminOnly: true },
+  { label: "Settings", href: "/company/portal/settings", icon: <Settings className="w-4 h-4" />, adminOnly: true },
+];
 
 interface CompanySettings {
   name: string;
@@ -101,14 +115,17 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-      </div>
+      <CompanyPortalLayout navItems={COMPANY_NAV} title="Settings">
+        <div className="flex items-center justify-center py-12">
+          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        </div>
+      </CompanyPortalLayout>
     );
   }
 
   return (
-    <div className="p-6 max-w-4xl mx-auto">
+    <CompanyPortalLayout navItems={COMPANY_NAV} title="Settings">
+      <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-white">Company Settings</h1>
@@ -345,5 +362,6 @@ export default function SettingsPage() {
         </div>
       </form>
     </div>
+    </CompanyPortalLayout>
   );
 }
