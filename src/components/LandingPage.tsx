@@ -12,6 +12,7 @@ import ProFeatures from "@/modules/pro-features";
 import TrustSection from "@/modules/trust";
 import TrainingShowcase from "@/modules/hero/TrainingShowcase";
 import CollegeCta from "@/modules/college-cta";
+import CompanyCta from "@/modules/company-cta";
 import MobileLandingPage from "@/components/MobileLandingPage";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -67,6 +68,7 @@ const LandingPage = () => {
     <div className="overflow-x-hidden">
       <Hero />
       <TrustSection />
+      <CompanyCta />
       <CollegeCta />
       <TrainingShowcase />
       <Features />

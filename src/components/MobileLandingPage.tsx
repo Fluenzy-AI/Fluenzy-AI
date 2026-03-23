@@ -17,6 +17,7 @@ import {
   Zap,
   Shield,
   ChevronDown,
+  Building2,
 } from "lucide-react";
 
 /* ─── data ─────────────────────────────────────────────────── */
@@ -273,6 +274,75 @@ const MobileLandingPage = () => {
               </span>
             )
           )}
+        </div>
+      </section>
+
+      {/* ── COMPANY CTA ────────────────────────────────────── */}
+      <section className="px-5 py-12 bg-[#06090f]">
+        {/* Badge */}
+        <div className="flex justify-center mb-5">
+          <span className="inline-flex items-center gap-2 text-[10px] font-bold tracking-widest text-purple-400 uppercase bg-purple-500/10 border border-purple-500/20 px-3 py-1.5 rounded-full">
+            <Building2 className="w-3 h-3" /> For Companies
+          </span>
+        </div>
+
+        {/* Heading */}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl font-extrabold text-white leading-tight">
+            Hire top talent with{" "}
+            <span className="bg-gradient-to-r from-purple-400 to-cyan-400 bg-clip-text text-transparent">
+              AI recruiting
+            </span>
+          </h2>
+          <p className="text-slate-400 text-sm mt-3 leading-relaxed">
+            Post jobs, manage applications, and find the best candidates with our AI-powered recruitment platform.
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 mb-8">
+          {[
+            { value: "500+", label: "Companies Hiring" },
+            { value: "10K+", label: "Jobs Posted" },
+            { value: "50K+", label: "Candidates Placed" },
+            { value: "4.8★", label: "Company Rating" },
+          ].map((s) => (
+            <div key={s.label} className="text-center bg-white/[0.03] border border-white/[0.07] rounded-2xl py-4 px-3">
+              <p className="text-2xl font-bold text-white">{s.value}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Feature list */}
+        <div className="space-y-3 mb-8">
+          {[
+            { color: "text-indigo-400", text: "Post jobs & manage applications" },
+            { color: "text-purple-400", text: "Access candidate database" },
+            { color: "text-cyan-400",   text: "Real-time hiring analytics" },
+          ].map((f) => (
+            <div key={f.text} className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-4 py-3">
+              <CheckCircle className={`w-4 h-4 flex-shrink-0 ${f.color}`} />
+              <span className="text-sm text-slate-300">{f.text}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Buttons */}
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/company/login"
+            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-cyan-600 text-white font-bold text-sm shadow-lg shadow-purple-500/25"
+          >
+            Company Login
+          </Link>
+          <Link
+            href="/company/signup"
+            className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl bg-white/[0.05] border border-purple-500/30 text-slate-300 font-semibold text-sm"
+          >
+            Register Company
+          </Link>
+          <p className="text-center text-xs text-slate-600 pt-1">Post jobs & hire talent for free</p>
         </div>
       </section>
 

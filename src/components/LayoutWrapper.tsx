@@ -58,16 +58,15 @@ const navItems = [
 ];
 
 const secondaryNavItems = [
-  { href: '/jobs', label: 'Jobs', icon: Briefcase },
   { href: '/interview-guide', label: 'Interview Guide', icon: GraduationCap },
   { href: '/ats', label: 'Advanced ATS System', icon: ShieldCheck },
   { href: '/history', label: 'History', icon: History },
+  { href: '/jobs', label: 'Job', icon: Briefcase },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/billing', label: 'Billing', icon: CreditCard },
 ];
 const topQuickLinks = [
-  { href: '/jobs', label: 'Jobs' },
   { href: '/history', label: 'History' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/interview-guide', label: 'Interview Guide' },

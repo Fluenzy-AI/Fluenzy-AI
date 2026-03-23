@@ -30,23 +30,33 @@ const COMPANY_NAV = [
   { label: "Settings", href: "/company/portal/settings", icon: <Settings className="w-4 h-4" />, adminOnly: true },
 ];
 
+// Generate slug from title
+const generateSlug = (title: string) => {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 100);
+};
+
 export default function NewJobPage() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     department: "",
-    location: "",
+    location: "REMOTE" as "REMOTE" | "HYBRID" | "ONSITE",
+    city: "",
     employmentType: "FULL_TIME",
-    experience: "",
+    experienceYears: "",
     salaryMin: "",
     salaryMax: "",
     skills: [] as string[],
     description: "",
     requirements: "",
-    benefits: "",
-    isActive: true,
-    autoApplyEnabled: false,
+    responsibilities: "",
+    autoApplyEnabled: true,
   });
   const [skillInput, setSkillInput] = useState("");
 
@@ -82,20 +92,48 @@ export default function NewJobPage() {
     setIsSubmitting(true);
 
     try {
+      // Parse requirements and responsibilities into arrays (split by newline)
+      const requirementsArray = formData.requirements
+        .split("\n")
+        .map((r) => r.trim())
+        .filter((r) => r.length > 0);
+
+      const responsibilitiesArray = formData.responsibilities
+        .split("\n")
+        .map((r) => r.trim())
+        .filter((r) => r.length > 0);
+
+      const payload = {
+        title: formData.title,
+        slug: generateSlug(formData.title),
+        department: formData.department,
+        location: formData.location,
+        city: formData.city || undefined,
+        employmentType: formData.employmentType,
+        experienceYears: formData.experienceYears,
+        salaryMin: formData.salaryMin || undefined,
+        salaryMax: formData.salaryMax || undefined,
+        skills: formData.skills,
+        description: formData.description,
+        requirements: requirementsArray,
+        responsibilities: responsibilitiesArray,
+        autoApplyEnabled: formData.autoApplyEnabled,
+      };
+
       const res = await fetch("/api/company/jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...formData,
-          salaryMin: parseFloat(formData.salaryMin),
-          salaryMax: parseFloat(formData.salaryMax),
-        }),
+        body: JSON.stringify(payload),
       });
 
+      const data = await res.json();
+      console.log("API Response:", data);
+      
       if (res.ok) {
         router.push("/company/portal/jobs");
       } else {
         const data = await res.json();
+        console.error("API Error:", data);
         alert(data.error || "Failed to create job");
       }
     } catch (error) {
@@ -107,7 +145,8 @@ export default function NewJobPage() {
   };
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <CompanyPortalLayout navItems={COMPANY_NAV} title="Post New Job">
+      <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -167,15 +206,31 @@ export default function NewJobPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Location <span className="text-red-400">*</span>
+                Work Location <span className="text-red-400">*</span>
               </label>
-              <input
-                type="text"
+              <select
                 name="location"
                 value={formData.location}
                 onChange={handleInputChange}
                 required
-                placeholder="e.g., Bangalore / Remote"
+                className="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+              >
+                <option value="REMOTE">Remote</option>
+                <option value="HYBRID">Hybrid</option>
+                <option value="ONSITE">On-site</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                City
+              </label>
+              <input
+                type="text"
+                name="city"
+                value={formData.city}
+                onChange={handleInputChange}
+                placeholder="e.g., Bangalore, Mumbai"
                 className="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
               />
             </div>
@@ -204,8 +259,8 @@ export default function NewJobPage() {
               </label>
               <input
                 type="text"
-                name="experience"
-                value={formData.experience}
+                name="experienceYears"
+                value={formData.experienceYears}
                 onChange={handleInputChange}
                 required
                 placeholder="e.g., 3-5 years"
@@ -230,14 +285,13 @@ export default function NewJobPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Minimum Salary (₹) <span className="text-red-400">*</span>
+                Minimum Salary (₹)
               </label>
               <input
-                type="number"
+                type="text"
                 name="salaryMin"
                 value={formData.salaryMin}
                 onChange={handleInputChange}
-                required
                 placeholder="e.g., 800000"
                 className="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
               />
@@ -245,14 +299,13 @@ export default function NewJobPage() {
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Maximum Salary (₹) <span className="text-red-400">*</span>
+                Maximum Salary (₹)
               </label>
               <input
-                type="number"
+                type="text"
                 name="salaryMax"
                 value={formData.salaryMax}
                 onChange={handleInputChange}
-                required
                 placeholder="e.g., 1200000"
                 className="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
               />
@@ -332,7 +385,7 @@ export default function NewJobPage() {
                 onChange={handleInputChange}
                 required
                 rows={6}
-                placeholder="Describe the role, responsibilities, and what the candidate will be working on..."
+                placeholder="Describe the role, responsibilities, and what the candidate will be working on... (minimum 50 characters)"
                 className="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
               />
             </div>
@@ -340,6 +393,7 @@ export default function NewJobPage() {
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Requirements <span className="text-red-400">*</span>
+                <span className="text-slate-500 font-normal ml-2">(one per line)</span>
               </label>
               <textarea
                 name="requirements"
@@ -347,19 +401,23 @@ export default function NewJobPage() {
                 onChange={handleInputChange}
                 required
                 rows={6}
-                placeholder="List qualifications, technical skills, and experience requirements..."
+                placeholder="Bachelor's degree in Computer Science&#10;3+ years of experience with React&#10;Strong problem-solving skills&#10;Excellent communication abilities"
                 className="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Benefits</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">
+                Responsibilities <span className="text-red-400">*</span>
+                <span className="text-slate-500 font-normal ml-2">(one per line)</span>
+              </label>
               <textarea
-                name="benefits"
-                value={formData.benefits}
+                name="responsibilities"
+                value={formData.responsibilities}
                 onChange={handleInputChange}
-                rows={4}
-                placeholder="List perks and benefits (optional)..."
+                required
+                rows={6}
+                placeholder="Design and develop user interfaces&#10;Collaborate with backend team&#10;Write clean, maintainable code&#10;Participate in code reviews"
                 className="w-full px-4 py-2 bg-slate-900/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500 resize-none"
               />
             </div>
@@ -382,20 +440,6 @@ export default function NewJobPage() {
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleInputChange}
-                className="w-5 h-5 rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500"
-              />
-              <div>
-                <span className="text-white font-medium">Activate immediately</span>
-                <p className="text-sm text-slate-400">Make this job visible to candidates right away</p>
-              </div>
-            </label>
-
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
                 name="autoApplyEnabled"
                 checked={formData.autoApplyEnabled}
                 onChange={handleInputChange}
@@ -404,7 +448,7 @@ export default function NewJobPage() {
               <div>
                 <span className="text-white font-medium">Enable Auto-Apply</span>
                 <p className="text-sm text-slate-400">
-                  Allow candidates with matching profiles to auto-apply
+                  Allow candidates with matching profiles to auto-apply to this job
                 </p>
               </div>
             </label>
@@ -431,5 +475,6 @@ export default function NewJobPage() {
         </div>
       </form>
     </div>
+    </CompanyPortalLayout>
   );
 }

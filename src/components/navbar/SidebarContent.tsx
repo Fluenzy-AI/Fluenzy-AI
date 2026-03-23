@@ -14,6 +14,7 @@ import {
   Building2,
   Briefcase,
   Users,
+  FilePlus,
 } from "lucide-react";
 
 interface SidebarContentProps {
@@ -115,6 +116,10 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ session, pathname }) =>
                 <Link href="/contact" className={`flex items-center px-4 py-2 text-xs font-bold rounded-xl transition-all ${pathname === '/contact' ? 'text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
                   Contact Us
                 </Link>
+                <Link href="/jobs" className={`flex items-center px-4 py-2 text-xs font-bold rounded-xl transition-all ${pathname.startsWith('/jobs') ? 'text-white' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                  <Briefcase className="mr-3 h-4 w-4" />
+                  Browse Jobs
+                </Link>
               </div>
 
               <div className="mt-4">
@@ -164,6 +169,18 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ session, pathname }) =>
                 <Link href="/company/signup" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname === '/company/signup' ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
                   <Building2 className={`mr-3 h-4 w-4 ${pathname === '/company/signup' ? 'text-purple-400' : 'text-slate-500'}`} />
                   Register Company
+                </Link>
+              </div>
+
+              <div className="mt-4">
+                <h2 className="mb-2 px-4 text-xs font-black uppercase tracking-[0.2em] text-slate-500">For Colleges</h2>
+                <Link href="/college/login" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname === '/college/login' ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
+                  <GraduationCap className={`mr-3 h-4 w-4 ${pathname === '/college/login' ? 'text-emerald-400' : 'text-slate-500'}`} />
+                  College Admin Portal
+                </Link>
+                <Link href="/college/signup" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname === '/college/signup' ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
+                  <FilePlus className={`mr-3 h-4 w-4 ${pathname === '/college/signup' ? 'text-cyan-400' : 'text-slate-500'}`} />
+                  Apply for Partnership
                 </Link>
               </div>
             </>
