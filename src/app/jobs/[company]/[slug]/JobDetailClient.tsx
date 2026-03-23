@@ -55,6 +55,7 @@ interface CandidateData {
   email?: string;
   phone?: string;
   resumeUrl?: string;
+  resumeName?: string;
   portfolio?: string;
   linkedin?: string;
   experience?: string;
@@ -83,6 +84,7 @@ export default function JobDetailClient({ job }: { job: Job }) {
             email: userData.candidate.email,
             phone: userData.candidate.profile.phone,
             resumeUrl: userData.candidate.profile.resumeUrl,
+            resumeName: userData.candidate.profile.resumeName,
             portfolio: userData.candidate.profile.portfolio,
             linkedin: userData.candidate.profile.linkedin,
             experience: userData.candidate.profile.experience,
@@ -391,7 +393,7 @@ function ApplyModal({
     email: candidate?.email || "",
     phone: candidate?.phone || "",
     resumeUrl: candidate?.resumeUrl || "",
-    resumeName: "",
+    resumeName: candidate?.resumeName || "",
     portfolio: candidate?.portfolio || "",
     linkedin: candidate?.linkedin || "",
     coverLetter: "",
@@ -590,9 +592,15 @@ function ApplyModal({
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Resume (PDF) *</label>
               {form.resumeUrl ? (
-                <div className="flex items-center gap-3 p-3 bg-slate-800/50 border border-slate-700 rounded-xl">
-                  <FileText className="w-5 h-5 text-indigo-400" />
-                  <span className="flex-1 text-sm text-slate-300 truncate">{form.resumeName || "Resume uploaded"}</span>
+                <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+                  <FileText className="w-5 h-5 text-green-400" />
+                  <span className="flex-1 text-sm text-slate-300 truncate">
+                    {form.resumeName || "Resume uploaded"}
+                  </span>
+                  <span className="flex items-center gap-1 text-xs text-green-400 font-medium">
+                    <Check className="w-3 h-3" />
+                    Ready
+                  </span>
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, resumeUrl: "", resumeName: "" })}
