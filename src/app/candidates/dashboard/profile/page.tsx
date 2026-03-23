@@ -75,19 +75,36 @@ export default function ProfilePage() {
     setUploading(true);
     setMessage(null);
     try {
+      if (!file.name.toLowerCase().endsWith(".pdf") && file.type !== "application/pdf") {
+        throw new Error("Only PDF files are allowed");
+      }
+
       const fd = new FormData();
       fd.append("file", file);
       const res = await fetch("/api/careers/upload-resume", { method: "POST", body: fd });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
-      setForm(f => ({ ...f, resumeUrl: data.url, resumeName: data.name }));
-      setMessage({ type: "success", text: "Resume uploaded! Save your profile to keep changes." });
+
+      const updatedForm = { ...form, resumeUrl: data.url, resumeName: data.name };
+      setForm(updatedForm);
+
+      // Persist immediately so refresh does not lose resume reference.
+      const saveRes = await fetch("/api/candidates/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatedForm),
+      });
+      const saveData = await saveRes.json();
+      if (!saveRes.ok) throw new Error(saveData.error || "Resume saved failed");
+
+      setForm(f => ({ ...f, profileCompletion: saveData.profile?.profileCompletion ?? f.profileCompletion }));
+      setMessage({ type: "success", text: "Resume uploaded and saved successfully!" });
     } catch (err: unknown) {
       setMessage({ type: "error", text: err instanceof Error ? err.message : "Upload failed" });
     } finally {
       setUploading(false);
     }
-  }, []);
+  }, [form]);
 
   const addSkill = () => {
     const s = skillInput.trim();

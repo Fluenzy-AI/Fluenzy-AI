@@ -67,6 +67,8 @@ export default function JobApplicationsPage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [notes, setNotes] = useState("");
   const [interviewDate, setInterviewDate] = useState("");
+  const [quickActionLoading, setQuickActionLoading] = useState<"candidate" | "employee" | null>(null);
+  const [quickActionMessage, setQuickActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const fetchApps = useCallback(async () => {
     setLoading(true);
@@ -96,6 +98,88 @@ export default function JobApplicationsPage() {
     });
     if (res.ok) { await fetchApps(); setSelected(null); }
     setActionLoading(false);
+  }
+
+  function parseExperienceYears(experienceText?: string): number | undefined {
+    if (!experienceText) return undefined;
+    const match = experienceText.match(/\d+(?:\.\d+)?/);
+    if (!match) return undefined;
+    return Math.round(parseFloat(match[0]));
+  }
+
+  async function addToCandidates() {
+    if (!selected) return;
+    setQuickActionMessage(null);
+    setQuickActionLoading("candidate");
+
+    try {
+      const payload = {
+        name: selected.name,
+        email: selected.email,
+        phone: selected.phone || undefined,
+        position: selected.job.title,
+        department: selected.job.department || undefined,
+        source: "Website",
+        experience: parseExperienceYears(selected.experience),
+        resumeUrl: selected.resumeUrl || undefined,
+        interviewNotes: selected.coverLetter || undefined,
+        interviewerName: user?.name || undefined,
+        skills: [],
+      };
+
+      const res = await fetch("/api/portal/hr/candidates", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to add candidate");
+
+      setQuickActionMessage({ type: "success", text: "Successfully added to the candidate list." });
+    } catch (err) {
+      setQuickActionMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to add candidate" });
+    } finally {
+      setQuickActionLoading(null);
+    }
+  }
+
+  async function addToEmployees() {
+    if (!selected) return;
+    setQuickActionMessage(null);
+    setQuickActionLoading("employee");
+
+    try {
+      const payload = {
+        name: selected.name,
+        email: selected.email,
+        phone: selected.phone || undefined,
+        department: selected.job.department || "Engineering",
+        designation: selected.job.title,
+        joinDate: new Date().toISOString().slice(0, 10),
+        salary: undefined,
+        address: undefined,
+        emergencyContact: undefined,
+        resumeUrl: selected.resumeUrl || undefined,
+      };
+
+      const res = await fetch("/api/portal/hr/employees", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to add employee");
+
+      setQuickActionMessage({ type: "success", text: "Successfully added to the employee list." });
+    } catch (err) {
+      setQuickActionMessage({ type: "error", text: err instanceof Error ? err.message : "Failed to add employee" });
+    } finally {
+      setQuickActionLoading(null);
+    }
   }
 
   const totalApplications = stats.reduce((a, s) => a + (Number(s._count) || 0), 0);
@@ -203,7 +287,11 @@ export default function JobApplicationsPage() {
                         </span>
                       </td>
                       <td className="px-5 py-3 text-right">
-                        <button onClick={() => { setSelected(app); setNotes(app.notes || ""); }}
+                        <button onClick={() => {
+                          setSelected(app);
+                          setNotes(app.notes || "");
+                          setQuickActionMessage(null);
+                        }}
                           className="text-xs text-blue-400 hover:text-blue-300 transition">View</button>
                       </td>
                     </tr>
@@ -280,6 +368,35 @@ export default function JobApplicationsPage() {
                     className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 rounded-lg hover:bg-white/10 transition">
                     LinkedIn ↗
                   </a>
+                )}
+              </div>
+
+              {/* One-click transfer actions */}
+              <div className="rounded-xl border border-white/8 bg-white/3 p-3 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs text-slate-400">Quick Add</p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={addToCandidates}
+                      disabled={quickActionLoading !== null}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {quickActionLoading === "candidate" ? "Adding..." : "Add to Candidates"}
+                    </button>
+                    <button
+                      onClick={addToEmployees}
+                      disabled={quickActionLoading !== null}
+                      className="text-xs px-3 py-1.5 rounded-lg border border-blue-500/25 bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {quickActionLoading === "employee" ? "Adding..." : "Add to Employees"}
+                    </button>
+                  </div>
+                </div>
+
+                {quickActionMessage && (
+                  <div className={`text-xs rounded-lg px-3 py-2 border ${quickActionMessage.type === "success" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-300" : "bg-red-500/10 border-red-500/20 text-red-300"}`}>
+                    {quickActionMessage.text}
+                  </div>
                 )}
               </div>
 

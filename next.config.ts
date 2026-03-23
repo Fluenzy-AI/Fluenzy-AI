@@ -34,6 +34,16 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "public, max-age=0, must-revalidate" },
         ],
       },
+      {
+        // Resume PDFs - serve with proper headers
+        source: "/uploads/resumes/:path*",
+        headers: [
+          { key: "Content-Type", value: "application/pdf" },
+          { key: "Cache-Control", value: "public, max-age=3600, immutable" },
+          { key: "Content-Disposition", value: "inline" },
+          { key: "Access-Control-Allow-Origin", value: "*" },
+        ],
+      },
     ];
   },
 };

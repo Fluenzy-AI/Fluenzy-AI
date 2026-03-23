@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File size must be under 5MB" }, { status: 400 });
     }
 
-    if (file.type !== "application/pdf") {
+    if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       return NextResponse.json({ error: "Only PDF files are allowed" }, { status: 400 });
     }
 
@@ -51,6 +51,7 @@ export async function POST(request: Request) {
     const filePath = path.join(uploadDir, uniqueName);
     await writeFile(filePath, buffer);
 
+    // Normalize URL to use forward slashes
     const fileUrl = `/uploads/resumes/${user.id}/${uniqueName}`;
 
     const resume = await (prisma as any).resume.create({
