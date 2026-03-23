@@ -21,19 +21,25 @@ interface Preferences {
 }
 
 const COMMON_ROLES = [
-  "Software Engineer",
   "Frontend Developer",
   "Backend Developer",
   "Full Stack Developer",
+  "Software Engineer",
   "Data Analyst",
+  "Data Scientist",
+  "AI / ML Engineer",
+  "DevOps / Cloud Engineer",
   "Product Manager",
   "UI/UX Designer",
-  "DevOps Engineer",
+  "Android / iOS Developer",
+  "Embedded Systems Engineer",
+  "Cybersecurity Analyst",
   "QA Engineer",
-  "Data Scientist",
 ];
 
-const LOCATIONS = ["REMOTE", "HYBRID", "ONSITE"];
+const WORK_MODES = ["REMOTE", "HYBRID", "ONSITE"];
+const CITIES = ["Delhi", "Bangalore", "Mumbai", "Hyderabad", "Pune", "Chennai", "Noida", "Gurugram"];
+const LOCATIONS = [...WORK_MODES, ...CITIES];
 const EMPLOYMENT_TYPES = ["FULL_TIME", "PART_TIME", "CONTRACT", "INTERNSHIP"];
 
 const LOC_LABELS: Record<string, string> = {
@@ -42,12 +48,17 @@ const LOC_LABELS: Record<string, string> = {
   ONSITE: "On-site",
 };
 
+// Cities use their own names as labels
+const getCityLabel = (city: string) => city in LOC_LABELS ? LOC_LABELS[city] : city;
+
 const TYPE_LABELS: Record<string, string> = {
   FULL_TIME: "Full-time",
   PART_TIME: "Part-time",
   CONTRACT: "Contract",
   INTERNSHIP: "Internship",
 };
+
+const AUTO_APPLY_DISCLAIMER = "By enabling this, Fluenzy AI will automatically submit job applications on your behalf for jobs matching your preferences above. You can turn this off anytime.";
 
 export default function AutoApplySettingsPage() {
   const router = useRouter();
@@ -68,6 +79,9 @@ export default function AutoApplySettingsPage() {
   });
   const [newRole, setNewRole] = useState("");
   const [newCompany, setNewCompany] = useState("");
+  const [selectedRolesSet, setSelectedRolesSet] = useState<Set<string>>(new Set());
+  const [selectedLocationsSet, setSelectedLocationsSet] = useState<Set<string>>(new Set());
+  const [selectedTypesSet, setSelectedTypesSet] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchPreferences();
@@ -83,6 +97,9 @@ export default function AutoApplySettingsPage() {
       if (res.ok) {
         const data = await res.json();
         setPreferences(data.preferences);
+        setSelectedRolesSet(new Set(data.preferences.targetRoles));
+        setSelectedLocationsSet(new Set(data.preferences.targetLocations));
+        setSelectedTypesSet(new Set(data.preferences.targetTypes));
         setCanAutoApply(data.canAutoApply);
         setPlan(data.plan);
       }
@@ -113,6 +130,15 @@ export default function AutoApplySettingsPage() {
   }
 
   const toggleLocation = (loc: string) => {
+    setSelectedLocationsSet((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(loc)) {
+        newSet.delete(loc);
+      } else {
+        newSet.add(loc);
+      }
+      return newSet;
+    });
     setPreferences((p) => ({
       ...p,
       targetLocations: p.targetLocations.includes(loc)
@@ -122,6 +148,15 @@ export default function AutoApplySettingsPage() {
   };
 
   const toggleType = (type: string) => {
+    setSelectedTypesSet((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(type)) {
+        newSet.delete(type);
+      } else {
+        newSet.add(type);
+      }
+      return newSet;
+    });
     setPreferences((p) => ({
       ...p,
       targetTypes: p.targetTypes.includes(type)
@@ -131,13 +166,19 @@ export default function AutoApplySettingsPage() {
   };
 
   const addRole = (role: string) => {
-    if (role && !preferences.targetRoles.includes(role)) {
+    if (role && !selectedRolesSet.has(role)) {
+      setSelectedRolesSet((prev) => new Set([...prev, role]));
       setPreferences((p) => ({ ...p, targetRoles: [...p.targetRoles, role] }));
       setNewRole("");
     }
   };
 
   const removeRole = (role: string) => {
+    setSelectedRolesSet((prev) => {
+      const newSet = new Set(prev);
+      newSet.delete(role);
+      return newSet;
+    });
     setPreferences((p) => ({ ...p, targetRoles: p.targetRoles.filter((r) => r !== role) }));
   };
 
@@ -241,11 +282,11 @@ export default function AutoApplySettingsPage() {
 
         {/* Toggle Auto-Apply */}
         <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-6 mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-white">Enable Auto-Apply</h3>
-              <p className="text-sm text-slate-400 mt-1">
-                Automatically apply to matching jobs based on your preferences
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex-1">
+              <h3 className="font-semibold text-white mb-1">Enable Auto-Apply</h3>
+              <p className="text-sm text-slate-400">
+                Automatically apply to matching jobs based on your preferences below
               </p>
             </div>
             <button
@@ -267,6 +308,9 @@ export default function AutoApplySettingsPage() {
               />
             </button>
           </div>
+          <div className="mt-3 p-3 bg-white/5 border border-white/10 rounded-xl text-xs text-slate-400 leading-relaxed">
+            {AUTO_APPLY_DISCLAIMER}
+          </div>
         </div>
 
         {/* Preferences */}
@@ -286,9 +330,9 @@ export default function AutoApplySettingsPage() {
                 <button
                   key={role}
                   onClick={() => addRole(role)}
-                  disabled={preferences.targetRoles.includes(role)}
+                  disabled={selectedRolesSet.has(role)}
                   className={`px-3 py-1.5 rounded-lg text-sm transition ${
-                    preferences.targetRoles.includes(role)
+                    selectedRolesSet.has(role)
                       ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30"
                       : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                   }`}
@@ -344,12 +388,12 @@ export default function AutoApplySettingsPage() {
                   key={loc}
                   onClick={() => toggleLocation(loc)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-                    preferences.targetLocations.includes(loc)
+                    selectedLocationsSet.has(loc)
                       ? "bg-green-600/20 text-green-300 border border-green-500/30"
                       : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                   }`}
                 >
-                  {LOC_LABELS[loc]}
+                  {LOC_LABELS[loc] || getCityLabel(loc)}
                 </button>
               ))}
             </div>
@@ -367,7 +411,7 @@ export default function AutoApplySettingsPage() {
                   key={type}
                   onClick={() => toggleType(type)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition ${
-                    preferences.targetTypes.includes(type)
+                    selectedTypesSet.has(type)
                       ? "bg-blue-600/20 text-blue-300 border border-blue-500/30"
                       : "bg-slate-800 text-slate-400 hover:bg-slate-700"
                   }`}
