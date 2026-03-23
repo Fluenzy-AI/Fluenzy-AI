@@ -298,6 +298,59 @@ export default function JobDetailClient({ job }: { job: Job }) {
         </Link>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Right: Sticky Apply Card (appears first on mobile) */}
+          <div className="lg:col-span-1 order-first lg:order-last">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="sticky top-6 rounded-2xl border border-white/10 bg-card/60 backdrop-blur-sm p-6 space-y-4"
+            >
+              <div>
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Job Summary</p>
+                <div className="space-y-2.5 text-sm">
+                  {[
+                    { label: "Department", value: job.department },
+                    { label: "Location", value: LOC_LABELS[job.location] },
+                    { label: "Type", value: TYPE_LABELS[job.employmentType] },
+                    { label: "Experience", value: job.experienceYears },
+                    ...(job.salaryRange ? [{ label: "Salary", value: job.salaryRange }] : []),
+                    { label: "Posted", value: new Date(job.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
+                  ].map((row) => (
+                    <div key={row.label} className="flex justify-between gap-2">
+                      <span className="text-muted-foreground">{row.label}</span>
+                      <span className="text-foreground font-medium text-right">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="border-t border-white/8 pt-4 space-y-2.5">
+                <button
+                  onClick={handleApplyClick}
+                  disabled={candidate === undefined}
+                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2"
+                >
+                  {candidate === undefined ? (
+                    <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Loading...</>
+                  ) : "Apply Now →"}
+                </button>
+                <button
+                  onClick={copyLink}
+                  className="w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-muted-foreground text-sm hover:bg-white/8 hover:text-foreground transition-all flex items-center justify-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                  {copied ? "Link Copied!" : "Copy Link"}
+                </button>
+              </div>
+
+              <p className="text-xs text-center text-muted-foreground">
+                Questions? Email{" "}
+                <a href="mailto:careers@fluenzyai.app" className="text-primary hover:underline">careers@fluenzyai.app</a>
+              </p>
+            </motion.div>
+          </div>
+
           {/* Left: Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Header */}
@@ -368,59 +421,6 @@ export default function JobDetailClient({ job }: { job: Job }) {
                 </div>
               </motion.div>
             )}
-          </div>
-
-          {/* Right: Sticky Apply Card */}
-          <div className="lg:col-span-1">
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="sticky top-6 rounded-2xl border border-white/10 bg-card/60 backdrop-blur-sm p-6 space-y-4"
-            >
-              <div>
-                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Job Summary</p>
-                <div className="space-y-2.5 text-sm">
-                  {[
-                    { label: "Department", value: job.department },
-                    { label: "Location", value: LOC_LABELS[job.location] },
-                    { label: "Type", value: TYPE_LABELS[job.employmentType] },
-                    { label: "Experience", value: job.experienceYears },
-                    ...(job.salaryRange ? [{ label: "Salary", value: job.salaryRange }] : []),
-                    { label: "Posted", value: new Date(job.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) },
-                  ].map((row) => (
-                    <div key={row.label} className="flex justify-between gap-2">
-                      <span className="text-muted-foreground">{row.label}</span>
-                      <span className="text-foreground font-medium text-right">{row.value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-white/8 pt-4 space-y-2.5">
-                <button
-                  onClick={handleApplyClick}
-                  disabled={candidate === undefined}
-                  className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-all hover:scale-[1.01] active:scale-[0.99] shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-wait flex items-center justify-center gap-2"
-                >
-                  {candidate === undefined ? (
-                    <><svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>Loading...</>
-                  ) : "Apply Now →"}
-                </button>
-                <button
-                  onClick={copyLink}
-                  className="w-full py-2.5 rounded-xl border border-white/10 bg-white/5 text-muted-foreground text-sm hover:bg-white/8 hover:text-foreground transition-all flex items-center justify-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-                  {copied ? "Link Copied!" : "Copy Link"}
-                </button>
-              </div>
-
-              <p className="text-xs text-center text-muted-foreground">
-                Questions? Email{" "}
-                <a href="mailto:careers@fluenzyai.app" className="text-primary hover:underline">careers@fluenzyai.app</a>
-              </p>
-            </motion.div>
           </div>
         </div>
       </div>
