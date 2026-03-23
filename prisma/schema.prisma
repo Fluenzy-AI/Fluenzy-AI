@@ -1497,8 +1497,10 @@ model CandidateUser {
   createdAt    DateTime          @default(now())
   updatedAt    DateTime          @updatedAt
 
-  profile      CandidateProfile?
-  applications JobApplication[]
+  profile                CandidateProfile?
+  applications           JobApplication[]
+  externalApplications   ExternalJobApplication[]
+  jobPreferences         CandidateJobPreferences?
 }
 
 model CandidateProfile {
@@ -1686,11 +1688,299 @@ model CertificateVerification {
   id            String      @id @default(auto()) @map("_id") @db.ObjectId
   certificateId String      @db.ObjectId
   certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
-  
+
   verifiedAt    DateTime    @default(now())
   ipAddress     String?
   userAgent     String?
-  
+
   @@index([certificateId])
   @@index([verifiedAt])
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Global Jobs Portal - External Company System
+// ──────────────────────────────────────────────────────────────────────────────
+
+enum CompanyStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum CompanyMemberRole {
+  ADMIN
+  HIRING_MANAGER
+  HR_RECRUITER
+}
+
+enum CompanyMemberStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum AssessmentType {
+  MCQ
+  CODING
+  AI_INTERVIEW
+  VOICE
+  GD
+}
+
+enum AutoApplyStatus {
+  PENDING
+  APPLIED
+  FAILED
+  SKIPPED
+}
+
+model Company {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  name             String
+  slug             String         @unique
+  domain           String         @unique
+
+  // Branding
+  logoUrl          String?
+  website          String?
+  description      String?
+  industry         String?
+  size             String?
+
+  // Settings
+  status           CompanyStatus  @default(ACTIVE)
+  autoApplyEnabled Boolean        @default(true)
+
+  // Verification
+  verifiedAt       DateTime?
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  members          CompanyMember[]
+  jobs             ExternalJob[]
+  assessments      Assessment[]
+
+  @@index([status])
+}
+
+model CompanyMember {
+  id              String              @id @default(auto()) @map("_id") @db.ObjectId
+  companyId       String              @db.ObjectId
+  company         Company             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  email           String              @unique
+  name            String
+  password        String
+  role            CompanyMemberRole   @default(HR_RECRUITER)
+  status          CompanyMemberStatus @default(ACTIVE)
+
+  phone           String?
+  avatar          String?
+
+  // Security
+  loginAttempts   Int                 @default(0)
+  lockedUntil     DateTime?
+  lastLoginAt     DateTime?
+  refreshToken    String?
+
+  // Password reset
+  resetToken      String?
+  resetExpiry     DateTime?
+
+  // Invite flow
+  inviteToken     String?             @unique
+  invitedBy       String?             @db.ObjectId
+  invitedAt       DateTime?
+  joinedAt        DateTime?
+
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([companyId])
+}
+
+model CompanyOtp {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  email           String
+  otp             String
+  type            String    @default("company_signup")
+  attempts        Int       @default(0)
+  expiresAt       DateTime
+  verified        Boolean   @default(false)
+
+  // Pending signup data
+  pendingName     String?
+  pendingPassword String?
+  pendingMeta     Json?
+
+  createdAt       DateTime  @default(now())
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
+model ExternalJob {
+  id               String       @id @default(auto()) @map("_id") @db.ObjectId
+  companyId        String       @db.ObjectId
+  company          Company      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  title            String
+  slug             String
+  department       String
+  location         JobLocation  @default(REMOTE)
+  city             String?
+  employmentType   JobType      @default(FULL_TIME)
+  description      String
+  requirements     String[]
+  responsibilities String[]
+  skills           String[]
+  experienceYears  String
+  salaryMin        String?
+  salaryMax        String?
+
+  isActive         Boolean      @default(true)
+  autoApplyEnabled Boolean      @default(true)
+
+  // Posted by
+  createdBy        String       @db.ObjectId
+  createdByEmail   String
+
+  // Stats
+  viewCount        Int          @default(0)
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  expiresAt        DateTime?
+
+  applications     ExternalJobApplication[]
+
+  @@unique([companyId, slug])
+  @@index([companyId, isActive])
+  @@index([isActive])
+}
+
+model ExternalJobApplication {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  jobId           String         @db.ObjectId
+  job             ExternalJob    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  // Applicant (linked if logged in)
+  candidateId     String?        @db.ObjectId
+  candidate       CandidateUser? @relation(fields: [candidateId], references: [id])
+
+  // Application data
+  name            String
+  email           String
+  phone           String
+  resumeUrl       String
+  resumeName      String?
+  portfolio       String?
+  coverLetter     String?
+  experience      String
+  linkedin        String?
+
+  // Tracking
+  status          AppStatus      @default(PENDING)
+  notes           String?
+  interviewDate   DateTime?
+
+  // Auto-apply tracking
+  isAutoApplied   Boolean        @default(false)
+  autoApplyLogId  String?        @db.ObjectId
+
+  // Fluenzy scores (from candidate training data)
+  fluenzyScore    Float?
+  confidenceScore Float?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@index([jobId])
+  @@index([candidateId])
+  @@index([email])
+  @@index([status])
+}
+
+model CandidateJobPreferences {
+  id                String        @id @default(auto()) @map("_id") @db.ObjectId
+  candidateId       String        @unique @db.ObjectId
+  candidate         CandidateUser @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  // Auto-apply settings
+  autoApplyEnabled  Boolean       @default(false)
+
+  // Preferences
+  targetRoles       String[]
+  targetLocations   String[]
+  targetTypes       String[]
+  minSalary         String?
+  maxExperience     String?
+  excludeCompanies  String[]
+
+  // Usage tracking (monthly reset)
+  autoApplyCount    Int           @default(0)
+  monthlyLimit      Int           @default(0)
+  lastResetAt       DateTime      @default(now())
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+model AutoApplyLog {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  candidateId     String          @db.ObjectId
+  jobId           String          @db.ObjectId
+  companyId       String          @db.ObjectId
+
+  status          AutoApplyStatus @default(PENDING)
+  appliedAt       DateTime?
+  failureReason   String?
+
+  createdAt       DateTime        @default(now())
+
+  @@index([candidateId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Assessment {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  companyId       String         @db.ObjectId
+  company         Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  title           String
+  description     String?
+  type            AssessmentType @default(MCQ)
+  duration        Int            @default(30)
+  passingScore    Int            @default(60)
+
+  questions       Json
+  isActive        Boolean        @default(true)
+
+  createdBy       String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  results         AssessmentResult[]
+
+  @@index([companyId])
+}
+
+model AssessmentResult {
+  id              String     @id @default(auto()) @map("_id") @db.ObjectId
+  assessmentId    String     @db.ObjectId
+  assessment      Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  candidateId     String     @db.ObjectId
+
+  score           Float
+  passed          Boolean
+  timeTaken       Int
+  answers         Json
+
+  startedAt       DateTime
+  completedAt     DateTime   @default(now())
+
+  @@index([assessmentId])
+  @@index([candidateId])
 }

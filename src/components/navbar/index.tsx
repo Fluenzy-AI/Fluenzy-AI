@@ -2,9 +2,10 @@
 import { signOut, useSession } from "next-auth/react";
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Sparkles, X, User, CreditCard, LogOut, Bell, Search, ChevronRight } from "lucide-react";
+import { Menu, Sparkles, X, User, CreditCard, LogOut, Bell, Search, ChevronRight, Building2, Briefcase } from "lucide-react";
 
 interface CandidateSession { id: string; name: string; email: string }
+interface CompanyMemberSession { id: string; name: string; email: string; role: string; companyName: string }
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -68,6 +69,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [candidate, setCandidate] = useState<CandidateSession | null>(null);
+  const [companyMember, setCompanyMember] = useState<CompanyMemberSession | null>(null);
   const { data: session } = useSession();
   const pathname = usePathname();
   const router = useRouter();
@@ -78,6 +80,26 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
       fetch("/api/candidates/me")
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d?.candidate) setCandidate(d.candidate); })
+        .catch(() => {});
+    }
+  }, [pathname]);
+
+  // Check company member session on company/jobs pages
+  useEffect(() => {
+    if (pathname.startsWith("/company") || pathname.startsWith("/jobs")) {
+      fetch("/api/company/auth/me")
+        .then(r => r.ok ? r.json() : null)
+        .then(d => {
+          if (d?.user && d?.company) {
+            setCompanyMember({
+              id: d.user.id,
+              name: d.user.name,
+              email: d.user.email,
+              role: d.user.role,
+              companyName: d.company.name,
+            });
+          }
+        })
         .catch(() => {});
     }
   }, [pathname]);
@@ -278,14 +300,89 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                     </Link>
                   </div>
                 )
+              ) : (pathname.startsWith("/company") || pathname.startsWith("/jobs")) ? (
+                // Company auth buttons on company/jobs pages
+                companyMember ? (
+                  <div className="flex items-center gap-2">
+                    <Link href="/company/portal"
+                      className="flex items-center gap-2 text-[11px] font-bold px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 hover:bg-indigo-500/20 transition-all uppercase tracking-wide">
+                      <span className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-[9px] flex items-center justify-center font-black">
+                        {companyMember.name.charAt(0).toUpperCase()}
+                      </span>
+                      Portal
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Link href="/company/login"
+                      className="hidden sm:inline-flex h-9 items-center px-4 rounded-full text-[11px] font-bold uppercase tracking-widest border border-white/15 text-slate-300 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all">
+                      Login
+                    </Link>
+                    <Link href="/company/signup"
+                      className="inline-flex h-9 items-center px-4 rounded-full text-[11px] font-black uppercase tracking-widest bg-gradient-to-r from-indigo-600 to-purple-500 text-white hover:from-indigo-500 hover:to-purple-400 transition-all shadow-lg shadow-indigo-500/20">
+                      <Building2 className="w-3.5 h-3.5 mr-1.5" />
+                      For Companies
+                    </Link>
+                  </div>
+                )
               ) : (
-                <Button
-                  variant="hero"
-                  className="h-9 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] sm:px-8 sm:text-xs sm:tracking-widest"
-                  onClick={() => router.push("/login")}
-                >
-                  Sign In
-                </Button>
+                // Default: Landing page - show both options
+                <div className="flex items-center gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="hidden sm:inline-flex h-9 items-center gap-1.5 px-3 rounded-full text-[11px] font-bold uppercase tracking-widest border border-white/15 text-slate-300 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all"
+                      >
+                        <Building2 className="w-3.5 h-3.5" />
+                        Companies
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56 bg-slate-900/95 backdrop-blur-xl border-white/10 mt-2 rounded-xl p-1">
+                      <DropdownMenuItem asChild>
+                        <Link href="/company/login" className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer">
+                          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
+                            <User className="h-4 w-4 text-indigo-400" />
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium">Company Login</span>
+                            <p className="text-[10px] text-slate-500">Access your portal</p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/company/signup" className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer">
+                          <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center">
+                            <Building2 className="h-4 w-4 text-purple-400" />
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium">Register Company</span>
+                            <p className="text-[10px] text-slate-500">Post jobs & hire talent</p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator className="bg-white/5" />
+                      <DropdownMenuItem asChild>
+                        <Link href="/jobs" className="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer">
+                          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
+                            <Briefcase className="h-4 w-4 text-emerald-400" />
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium">Browse Jobs</span>
+                            <p className="text-[10px] text-slate-500">Find opportunities</p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button
+                    variant="hero"
+                    className="h-9 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] sm:px-8 sm:text-xs sm:tracking-widest"
+                    onClick={() => router.push("/login")}
+                  >
+                    Sign In
+                  </Button>
+                </div>
               )
             )}
           </div>

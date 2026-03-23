@@ -11,6 +11,9 @@ import {
   Target,
   GraduationCap,
   ShieldCheck,
+  Building2,
+  Briefcase,
+  Users,
 } from "lucide-react";
 
 interface SidebarContentProps {
@@ -138,6 +141,31 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ session, pathname }) =>
               <Link href="/blog" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname.startsWith('/blog') ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
                 Blog
               </Link>
+
+              {/* Jobs & Companies Section */}
+              <div className="mt-6">
+                <h2 className="mb-2 px-4 text-xs font-black uppercase tracking-[0.2em] text-slate-500">Jobs Portal</h2>
+                <Link href="/jobs" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname.startsWith('/jobs') ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
+                  <Briefcase className={`mr-3 h-4 w-4 ${pathname.startsWith('/jobs') ? 'text-emerald-400' : 'text-slate-500'}`} />
+                  Browse Jobs
+                </Link>
+                <Link href="/careers" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname.startsWith('/careers') ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
+                  <Users className={`mr-3 h-4 w-4 ${pathname.startsWith('/careers') ? 'text-violet-400' : 'text-slate-500'}`} />
+                  Fluenzy Careers
+                </Link>
+              </div>
+
+              <div className="mt-4">
+                <h2 className="mb-2 px-4 text-xs font-black uppercase tracking-[0.2em] text-slate-500">For Companies</h2>
+                <Link href="/company/login" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname === '/company/login' ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
+                  <Building2 className={`mr-3 h-4 w-4 ${pathname === '/company/login' ? 'text-indigo-400' : 'text-slate-500'}`} />
+                  Company Login
+                </Link>
+                <Link href="/company/signup" className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname === '/company/signup' ? 'text-white bg-white/5' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}>
+                  <Building2 className={`mr-3 h-4 w-4 ${pathname === '/company/signup' ? 'text-purple-400' : 'text-slate-500'}`} />
+                  Register Company
+                </Link>
+              </div>
             </>
           )}
         </div>

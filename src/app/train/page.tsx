@@ -56,6 +56,13 @@ interface PlanInfo {
   isUnlimited: boolean;
 }
 
+interface AutoApplyStatus {
+  enabled: boolean;
+  count: number;
+  limit: number;
+  canAutoApply: boolean;
+}
+
 interface UsageData {
   canUse: Record<string, boolean>;
   remaining: Record<string, number | string>;
@@ -202,6 +209,7 @@ export default function TrainPage() {
   const { resolvedTheme } = useTheme();
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
+  const [autoApplyStatus, setAutoApplyStatus] = useState<AutoApplyStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
@@ -211,12 +219,13 @@ export default function TrainPage() {
     try {
       setIsLoading(true);
       console.log('[TRAIN_PAGE_FETCH_START] Fetching usage data from /api/training-usage');
-      
-      const [usageRes, planRes] = await Promise.all([
+
+      const [usageRes, planRes, autoApplyRes] = await Promise.all([
         fetch('/api/training-usage'),
         fetch('/api/user-plan'),
+        fetch('/api/candidates/preferences').catch(() => null),
       ]);
-      
+
       if (usageRes.ok) {
         const data = await usageRes.json();
         console.log('[TRAIN_PAGE_FETCH_SUCCESS] Usage data received:', {
@@ -230,13 +239,26 @@ export default function TrainPage() {
       } else {
         console.warn('[TRAIN_PAGE_FETCH_FAILED] Usage fetch failed:', usageRes.status);
       }
-      
+
       if (planRes.ok) {
         const data = await planRes.json();
         console.log('[TRAIN_PAGE_PLAN_FETCHED] Plan data:', data.planName);
         setPlanInfo(data);
       } else {
         console.warn('[TRAIN_PAGE_PLAN_FAILED] Plan fetch failed:', planRes.status);
+      }
+
+      // Fetch auto-apply status (might not be a candidate user)
+      if (autoApplyRes && autoApplyRes.ok) {
+        const data = await autoApplyRes.json();
+        if (data.preferences) {
+          setAutoApplyStatus({
+            enabled: data.preferences.autoApplyEnabled,
+            count: data.preferences.autoApplyCount || 0,
+            limit: data.preferences.monthlyLimit || 0,
+            canAutoApply: data.canAutoApply,
+          });
+        }
       }
     } catch (error) {
       console.error('[TRAIN_PAGE_FETCH_ERROR] Error fetching data:', error);
@@ -540,6 +562,111 @@ export default function TrainPage() {
           ))}
         </div>
       </div>
+
+      {/* Career Portal CTA Section */}
+      {autoApplyStatus && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`mb-8 ${currentTheme.cardBg} border ${
+            autoApplyStatus.enabled && autoApplyStatus.canAutoApply
+              ? resolvedTheme === 'light'
+                ? 'border-emerald-200 shadow-lg shadow-emerald-100'
+                : 'border-emerald-500/30'
+              : resolvedTheme === 'light'
+                ? 'border-purple-200 shadow-lg shadow-purple-100'
+                : 'border-purple-500/30'
+          } rounded-2xl p-6 bg-gradient-to-r ${
+            autoApplyStatus.enabled && autoApplyStatus.canAutoApply
+              ? resolvedTheme === 'light'
+                ? 'from-emerald-50 to-teal-50'
+                : 'from-emerald-500/10 to-teal-500/10'
+              : resolvedTheme === 'light'
+                ? 'from-purple-50 to-indigo-50'
+                : 'from-purple-500/10 to-indigo-500/10'
+          }`}
+        >
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${
+                autoApplyStatus.enabled && autoApplyStatus.canAutoApply
+                  ? 'from-emerald-500 to-teal-500'
+                  : 'from-purple-500 to-indigo-500'
+              } flex items-center justify-center`}>
+                <Briefcase size={24} className="text-white" />
+              </div>
+              <div>
+                {autoApplyStatus.enabled && autoApplyStatus.canAutoApply ? (
+                  <>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className={`text-lg font-bold ${currentTheme.text}`}>
+                        Auto-Apply Active
+                      </h3>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">
+                        <Zap size={12} />
+                        {autoApplyStatus.count}/{autoApplyStatus.limit} used
+                      </span>
+                    </div>
+                    <p className={`text-sm ${currentTheme.textMuted}`}>
+                      Your profile is being matched with new jobs automatically. Browse available positions now!
+                    </p>
+                  </>
+                ) : !autoApplyStatus.canAutoApply ? (
+                  <>
+                    <h3 className={`text-lg font-bold ${currentTheme.text} mb-1`}>
+                      Unlock Auto-Apply
+                    </h3>
+                    <p className={`text-sm ${currentTheme.textMuted}`}>
+                      Upgrade to Standard or Pro to automatically apply to matching jobs while you train
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className={`text-lg font-bold ${currentTheme.text} mb-1`}>
+                      Enable Auto-Apply
+                    </h3>
+                    <p className={`text-sm ${currentTheme.textMuted}`}>
+                      Set your job preferences and let our AI apply to matching positions for you
+                    </p>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => router.push('/jobs')}
+                variant="outline"
+                className={`${
+                  resolvedTheme === 'light'
+                    ? 'border-slate-300 hover:bg-slate-100'
+                    : 'border-white/10 hover:bg-white/5'
+                } font-medium`}
+              >
+                Browse Jobs
+              </Button>
+              {autoApplyStatus.canAutoApply ? (
+                <Button
+                  onClick={() => router.push('/candidates/dashboard/auto-apply')}
+                  className={`bg-gradient-to-r ${
+                    autoApplyStatus.enabled
+                      ? 'from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
+                      : 'from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
+                  } text-white font-semibold`}
+                >
+                  {autoApplyStatus.enabled ? 'Manage Settings' : 'Enable Auto-Apply'}
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => router.push('/pricing')}
+                  className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold"
+                >
+                  Upgrade Plan
+                </Button>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* CTA Section */}
       {planInfo && planInfo.plan === 'Free' && (

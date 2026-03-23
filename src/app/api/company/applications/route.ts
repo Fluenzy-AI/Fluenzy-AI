@@ -1,0 +1,66 @@
+import { NextRequest, NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
+import { requireCompanyRoles } from "@/lib/company-auth";
+
+/**
+ * GET /api/company/applications
+ * Fetch all applications for company jobs
+ */
+export async function GET(req: NextRequest) {
+  try {
+    // Verify company member authentication
+    const authResult = await requireCompanyRoles(req, ["ADMIN", "HR_RECRUITER", "HIRING_MANAGER"]);
+    if (!authResult.authorized || !authResult.member || !authResult.company) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get all applications for this company's jobs
+    const applications = await prisma.externalJobApplication.findMany({
+      where: {
+        job: {
+          companyId: authResult.company.id,
+        },
+      },
+      orderBy: {
+        appliedAt: "desc",
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        resumeUrl: true,
+        status: true,
+        appliedAt: true,
+        isAutoApplied: true,
+        skills: true,
+        job: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    // Format the response
+    const formattedApplications = applications.map((app) => ({
+      id: app.id,
+      name: app.name,
+      email: app.email,
+      phone: app.phone,
+      resumeUrl: app.resumeUrl,
+      jobTitle: app.job.title,
+      jobId: app.job.id,
+      status: app.status,
+      appliedAt: app.appliedAt.toISOString(),
+      isAutoApplied: app.isAutoApplied,
+      skills: app.skills,
+    }));
+
+    return NextResponse.json({ applications: formattedApplications });
+  } catch (error) {
+    console.error("[COMPANY_APPLICATIONS_GET]", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
