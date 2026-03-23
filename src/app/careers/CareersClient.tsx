@@ -196,7 +196,7 @@ export default function CareersClient() {
   }, [filters, jobs, candidate]);
 
   const scrollToPositions = () => {
-    positionsRef.current?.scrollIntoView({ behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSaveJob = (jobId: string) => {
@@ -225,8 +225,72 @@ export default function CareersClient() {
 
   return (
     <div className="min-h-screen bg-[#0D0F14] text-[#F1F0F5]">
+      {/* ── Open Positions ── */}
+      <section ref={positionsRef} className="pt-24 pb-20 px-4 bg-[#0D0F14]">
+        <div className="max-w-6xl mx-auto">
+          <FadeIn className="text-center mb-8">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Open Positions</h2>
+            {candidate && candidate.skills && candidate.skills.length > 0 ? (
+              <p className="text-[#8B8A99] text-lg">
+                Showing roles matching your {candidate.skills.slice(0, 3).join(", ")} skills
+              </p>
+            ) : (
+              <p className="text-[#8B8A99] text-lg">Find your next opportunity and make an impact.</p>
+            )}
+          </FadeIn>
+
+          {/* Filter Bar */}
+          <FadeIn delay={0.05} className="mb-8">
+            <FilterBar
+              departments={departments}
+              resultsCount={filtered.length}
+              filters={filters}
+              onFilterChange={setFilters}
+              loading={loading}
+            />
+          </FadeIn>
+
+          {/* Jobs Grid */}
+          {loading ? (
+            <div className="grid gap-5 md:grid-cols-2">
+              {[...Array(4)].map((_, i) => (
+                <JobCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <EmptyState onClearFilters={clearFilters} />
+          ) : (
+            <>
+              <div className="grid gap-5 md:grid-cols-2">
+                {displayedJobs.map((job, i) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    index={i}
+                    isSaved={savedJobs.has(job.id)}
+                    onSave={handleSaveJob}
+                  />
+                ))}
+              </div>
+
+              {/* Load more button */}
+              {hasMore && (
+                <div className="text-center mt-8">
+                  <button
+                    onClick={() => setDisplayCount((prev) => prev + 6)}
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm font-medium hover:bg-white/[0.08] transition-colors"
+                  >
+                    Load more ({filtered.length - displayCount} remaining)
+                  </button>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </section>
+
       {/* ── Hero ── */}
-      <section className="relative overflow-hidden pt-24 pb-20 px-4">
+      <section className="relative overflow-hidden py-20 px-4">
         {/* Background effects */}
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-[-10%] left-[10%] w-[600px] h-[600px] rounded-full bg-[#7C5CFC]/10 blur-[120px]" />
@@ -310,70 +374,6 @@ export default function CareersClient() {
               </div>
             ))}
           </motion.div>
-        </div>
-      </section>
-
-      {/* ── Open Positions ── */}
-      <section ref={positionsRef} className="py-20 px-4 bg-[#0D0F14]">
-        <div className="max-w-6xl mx-auto">
-          <FadeIn className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Open Positions</h2>
-            {candidate && candidate.skills && candidate.skills.length > 0 ? (
-              <p className="text-[#8B8A99] text-lg">
-                Showing roles matching your {candidate.skills.slice(0, 3).join(", ")} skills
-              </p>
-            ) : (
-              <p className="text-[#8B8A99] text-lg">Find your next opportunity and make an impact.</p>
-            )}
-          </FadeIn>
-
-          {/* Filter Bar */}
-          <FadeIn delay={0.05} className="mb-8">
-            <FilterBar
-              departments={departments}
-              resultsCount={filtered.length}
-              filters={filters}
-              onFilterChange={setFilters}
-              loading={loading}
-            />
-          </FadeIn>
-
-          {/* Jobs Grid */}
-          {loading ? (
-            <div className="grid gap-5 md:grid-cols-2">
-              {[...Array(4)].map((_, i) => (
-                <JobCardSkeleton key={i} />
-              ))}
-            </div>
-          ) : filtered.length === 0 ? (
-            <EmptyState onClearFilters={clearFilters} />
-          ) : (
-            <>
-              <div className="grid gap-5 md:grid-cols-2">
-                {displayedJobs.map((job, i) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    index={i}
-                    isSaved={savedJobs.has(job.id)}
-                    onSave={handleSaveJob}
-                  />
-                ))}
-              </div>
-
-              {/* Load more button */}
-              {hasMore && (
-                <div className="text-center mt-8">
-                  <button
-                    onClick={() => setDisplayCount((prev) => prev + 6)}
-                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/[0.04] border border-white/[0.08] text-sm font-medium hover:bg-white/[0.08] transition-colors"
-                  >
-                    Load more ({filtered.length - displayCount} remaining)
-                  </button>
-                </div>
-              )}
-            </>
-          )}
         </div>
       </section>
 

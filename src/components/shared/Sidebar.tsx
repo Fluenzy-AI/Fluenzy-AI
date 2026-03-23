@@ -144,9 +144,11 @@ export function CandidateSidebar({ candidate, onLogout }: CandidateSidebarProps)
         <div className="px-4 pt-5 pb-4 border-b border-white/[0.06]">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#7C5CFC] to-[#A855F7] flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-[#7C5CFC]/20">
-                F
-              </div>
+              <img
+                src="/favicon/apple-touch-icon.png"
+                alt="Fluenzy AI Logo"
+                className="w-8 h-8 rounded-xl shadow-lg"
+              />
               <AnimatePresence>
                 {!isCollapsed && (
                   <motion.span
