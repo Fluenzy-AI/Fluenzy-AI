@@ -12,7 +12,7 @@ export async function GET(
   {
     params,
   }: {
-    params: Promise<{ id: string }>;
+    params: { id: string };
   }
 ) {
   try {
@@ -21,7 +21,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = await params;
+    const { id } = params;
 
     // Find application - can be either internal JobApplication or ExternalJobApplication
     let application: any = await prisma.externalJobApplication.findUnique({
