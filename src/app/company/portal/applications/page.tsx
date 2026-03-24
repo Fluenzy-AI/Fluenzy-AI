@@ -51,9 +51,17 @@ interface Application {
   jobTitle: string;
   jobId: string;
   status: string;
-  appliedAt: string;
+  createdAt: string;
   isAutoApplied: boolean;
   skills: string[];
+  fluenzyScore?: number | null;
+  confidenceScore?: number | null;
+  experience?: string;
+}
+
+interface Job {
+  id: string;
+  title: string;
 }
 
 const statusColors: Record<string, { bg: string; text: string; icon: any }> = {
@@ -67,9 +75,13 @@ const statusColors: Record<string, { bg: string; text: string; icon: any }> = {
 export default function ApplicationsPage() {
   const router = useRouter();
   const [applications, setApplications] = useState<Application[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterJob, setFilterJob] = useState<string>("all");
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedAppForAssign, setSelectedAppForAssign] = useState<Application | null>(null);
 
   useEffect(() => {
     fetchApplications();
@@ -82,6 +94,7 @@ export default function ApplicationsPage() {
       if (res.ok) {
         const data = await res.json();
         setApplications(data.applications || []);
+        setJobs(data.jobs || []);
       }
     } catch (error) {
       console.error("Failed to fetch applications:", error);
@@ -111,8 +124,9 @@ export default function ApplicationsPage() {
       app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterStatus === "all" || app.status === filterStatus;
-    return matchesSearch && matchesFilter;
+    const matchesStatus = filterStatus === "all" || app.status === filterStatus;
+    const matchesJob = filterJob === "all" || app.jobId === filterJob;
+    return matchesSearch && matchesStatus && matchesJob;
   });
 
   const stats = {
@@ -215,6 +229,21 @@ export default function ApplicationsPage() {
             className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
           />
         </div>
+
+        {/* Job Filter */}
+        <select
+          value={filterJob}
+          onChange={(e) => setFilterJob(e.target.value)}
+          className="px-3 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500"
+        >
+          <option value="all">All Jobs</option>
+          {jobs.map((job) => (
+            <option key={job.id} value={job.id}>
+              {job.title}
+            </option>
+          ))}
+        </select>
+
         <div className="flex gap-2 overflow-x-auto">
           <Button
             variant={filterStatus === "all" ? "default" : "outline"}
@@ -325,9 +354,27 @@ export default function ApplicationsPage() {
                       )}
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
-                        Applied {new Date(app.appliedAt).toLocaleDateString()}
+                        Applied {new Date(app.createdAt).toLocaleDateString()}
                       </div>
                     </div>
+
+                    {/* Fluenzy Score Bar */}
+                    {app.fluenzyScore !== null && app.fluenzyScore !== undefined && (
+                      <div className="mb-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-medium text-slate-300">Match Score</span>
+                          <span className="text-xs font-bold text-emerald-400">
+                            {Math.round(app.fluenzyScore)}%
+                          </span>
+                        </div>
+                        <div className="w-full h-2 bg-slate-700/50 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 transition-all"
+                            style={{ width: `${Math.min(app.fluenzyScore, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {app.skills.length > 0 && (
                       <div className="flex flex-wrap gap-2">
@@ -369,6 +416,16 @@ export default function ApplicationsPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-slate-800 border-slate-700">
                         <DropdownMenuItem
+                          onClick={() => {
+                            setSelectedAppForAssign(app);
+                            setAssignModalOpen(true);
+                          }}
+                          className="text-slate-300 hover:text-white"
+                        >
+                          <FileText className="w-4 h-4 mr-2" />
+                          Assign Assessment
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
                           onClick={() => updateApplicationStatus(app.id, "SHORTLISTED")}
                           className="text-slate-300 hover:text-white"
                         >
@@ -406,6 +463,61 @@ export default function ApplicationsPage() {
         </div>
       )}
     </div>
+
+    {/* Assign Assessment Modal */}
+    {assignModalOpen && selectedAppForAssign && (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-md w-full"
+        >
+          <h2 className="text-xl font-bold text-white mb-2">Assign Assessment</h2>
+          <p className="text-slate-400 mb-4">
+            Assign an assessment for {selectedAppForAssign.name}
+          </p>
+
+          <div className="space-y-3 mb-6">
+            <label className="block">
+              <span className="text-sm font-medium text-slate-300 mb-2 block">
+                Select Assessment Type
+              </span>
+              <select className="w-full px-3 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-indigo-500">
+                <option value="">Choose an assessment...</option>
+                <option value="mcq">Multiple Choice Questions</option>
+                <option value="coding">Coding Challenge</option>
+                <option value="interview">AI Interview</option>
+                <option value="portfolio">Portfolio Review</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="flex-1 border-slate-600 hover:bg-slate-700"
+              onClick={() => {
+                setAssignModalOpen(false);
+                setSelectedAppForAssign(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+              onClick={() => {
+                // TODO: Implement assessment assignment
+                setAssignModalOpen(false);
+                setSelectedAppForAssign(null);
+              }}
+            >
+              Assign
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    )}
     </CompanyPortalLayout>
   );
 }

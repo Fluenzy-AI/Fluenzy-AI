@@ -285,6 +285,34 @@ export async function POST(req: NextRequest) {
           }),
         ]);
 
+        // Create notification for candidate
+        const jobDetails = eligibleJobs.find(j => j.id === app.jobId);
+        if (jobDetails) {
+          try {
+            // Find the user associated with this candidate email
+            const user = await prisma.users.findFirst({
+              where: { email: app.email },
+              select: { id: true },
+            });
+
+            if (user) {
+              await prisma.notification.create({
+                data: {
+                  userId: user.id,
+                  title: "Auto-Applied to a Job",
+                  message: `You were auto-applied to ${jobDetails.title} at ${jobDetails.company.name}`,
+                  type: "success",
+                  sentBy: "system",
+                  sentByRole: "SYSTEM",
+                },
+              });
+            }
+          } catch (notifError) {
+            console.error("[AUTO_APPLY] Failed to create notification:", notifError);
+            // Don't fail the application if notification fails
+          }
+        }
+
         applicationsCreated++;
         logs.push({
           candidateId: app.candidateId,

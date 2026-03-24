@@ -33,12 +33,38 @@ export async function GET(req: NextRequest) {
         status: true,
         createdAt: true,
         isAutoApplied: true,
+        fluenzyScore: true,
+        confidenceScore: true,
+        experience: true,
+        candidate: {
+          select: {
+            profile: {
+              select: {
+                skills: true,
+              },
+            },
+          },
+        },
         job: {
           select: {
             id: true,
             title: true,
           },
         },
+      },
+    });
+
+    // Get unique jobs for filter dropdown
+    const jobs = await prisma.externalJob.findMany({
+      where: {
+        companyId: authResult.company.id,
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+      orderBy: {
+        title: "asc",
       },
     });
 
@@ -54,9 +80,16 @@ export async function GET(req: NextRequest) {
       status: app.status,
       createdAt: app.createdAt.toISOString(),
       isAutoApplied: app.isAutoApplied,
+      fluenzyScore: app.fluenzyScore,
+      confidenceScore: app.confidenceScore,
+      experience: app.experience,
+      skills: app.candidate?.profile?.skills || [],
     }));
 
-    return NextResponse.json({ applications: formattedApplications });
+    return NextResponse.json({
+      applications: formattedApplications,
+      jobs: jobs.map(j => ({ id: j.id, title: j.title })),
+    });
   } catch (error) {
     console.error("[COMPANY_APPLICATIONS_GET]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

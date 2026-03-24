@@ -413,6 +413,23 @@ function ApplyModal({
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
 
+  // Update form when candidate data loads (for async pre-fill)
+  useEffect(() => {
+    if (candidate) {
+      setForm(prev => ({
+        ...prev,
+        name: candidate.name || prev.name,
+        email: candidate.email || prev.email,
+        phone: candidate.phone || prev.phone,
+        resumeUrl: candidate.resumeUrl || prev.resumeUrl,
+        resumeName: candidate.resumeName || prev.resumeName,
+        portfolio: candidate.portfolio || prev.portfolio,
+        linkedin: candidate.linkedin || prev.linkedin,
+        experience: candidate.experience || prev.experience,
+      }));
+    }
+  }, [candidate]);
+
   const isPaidPlan = candidate?.plan && candidate.plan !== "Free";
   const isOneClick = isPaidPlan && !candidate?.autoApplyEnabled;
 
@@ -536,6 +553,18 @@ function ApplyModal({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="p-6 space-y-5">
+            {/* Pre-fill info bar */}
+            {candidate && form.name && (
+              <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400 text-sm flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                {isPaidPlan ? (
+                  <span>Your profile is pre-filled — just review and submit!</span>
+                ) : (
+                  <span>Logged in as {form.name} — form auto-filled from your profile.</span>
+                )}
+              </div>
+            )}
+
             {error && (
               <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
                 {error}

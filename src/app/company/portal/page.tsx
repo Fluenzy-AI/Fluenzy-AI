@@ -47,6 +47,11 @@ interface DashboardStats {
   applicationsThisMonth: number;
 }
 
+interface DepartmentBreakdown {
+  department: string;
+  count: number;
+}
+
 interface RecentApplication {
   id: string;
   name: string;
@@ -73,6 +78,7 @@ export default function CompanyPortalDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentApplications, setRecentApplications] = useState<RecentApplication[]>([]);
   const [recentJobs, setRecentJobs] = useState<RecentJob[]>([]);
+  const [departmentBreakdown, setDepartmentBreakdown] = useState<DepartmentBreakdown[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
@@ -91,6 +97,7 @@ export default function CompanyPortalDashboard() {
         setStats(data.stats);
         setRecentApplications(data.recentApplications || []);
         setRecentJobs(data.recentJobs || []);
+        setDepartmentBreakdown(data.departmentBreakdown || []);
       }
     } catch {
       // Silent fail
@@ -236,30 +243,36 @@ export default function CompanyPortalDashboard() {
                 Department Breakdown
               </h3>
             </div>
-            <div className="space-y-4">
-              {[
-                { dept: "Engineering", jobs: stats?.totalJobs ? Math.floor(stats.totalJobs * 0.4) : 0, color: "bg-blue-500" },
-                { dept: "Product", jobs: stats?.totalJobs ? Math.floor(stats.totalJobs * 0.25) : 0, color: "bg-purple-500" },
-                { dept: "Design", jobs: stats?.totalJobs ? Math.floor(stats.totalJobs * 0.15) : 0, color: "bg-pink-500" },
-                { dept: "Marketing", jobs: stats?.totalJobs ? Math.floor(stats.totalJobs * 0.12) : 0, color: "bg-emerald-500" },
-                { dept: "Sales", jobs: stats?.totalJobs ? Math.floor(stats.totalJobs * 0.08) : 0, color: "bg-amber-500" },
-              ].map((item, idx) => (
-                <div key={idx} className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-300 font-medium">{item.dept}</span>
-                    <span className="text-slate-400">{item.jobs} jobs</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
-                    <motion.div
-                      initial={{ width: 0 }}
-                      animate={{ width: `${stats?.totalJobs ? (item.jobs / stats.totalJobs) * 100 : 0}%` }}
-                      transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
-                      className={`h-full ${item.color}`}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            {departmentBreakdown.length > 0 ? (
+              <div className="space-y-4">
+                {departmentBreakdown.slice(0, 5).map((item, idx) => {
+                  const colors = ["bg-blue-500", "bg-purple-500", "bg-pink-500", "bg-emerald-500", "bg-amber-500"];
+                  const maxCount = Math.max(...departmentBreakdown.map(d => d.count), 1);
+                  return (
+                    <div key={idx} className="space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-slate-300 font-medium">{item.department}</span>
+                        <span className="text-slate-400">{item.count} jobs</span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${(item.count / maxCount) * 100}%` }}
+                          transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
+                          className={`h-full ${colors[idx % colors.length]}`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
+                <p className="text-slate-500 text-sm">No department data yet</p>
+                <p className="text-slate-600 text-xs mt-1">Post jobs to see breakdown by department</p>
+              </div>
+            )}
           </motion.div>
 
           {/* Recent Applications - Takes 1 column */}

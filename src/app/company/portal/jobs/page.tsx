@@ -22,6 +22,8 @@ import {
   FileText,
   UserPlus,
   Settings,
+  Pause,
+  Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,8 +53,8 @@ interface Job {
   experience: string;
   isActive: boolean;
   autoApplyEnabled: boolean;
-  applications: number;
-  views: number;
+  applicationsCount: number;
+  viewCount: number;
   createdAt: string;
 }
 
@@ -62,6 +64,7 @@ export default function JobPostingsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
+  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJobs();
@@ -82,6 +85,38 @@ export default function JobPostingsPage() {
     }
   };
 
+  const toggleJobStatus = async (jobId: string, currentStatus: boolean) => {
+    try {
+      const res = await fetch(`/api/company/jobs/${jobId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: !currentStatus }),
+      });
+      if (res.ok) {
+        // Update local state
+        setJobs(jobs.map(job =>
+          job.id === jobId ? { ...job, isActive: !currentStatus } : job
+        ));
+      }
+    } catch (error) {
+      console.error("Failed to toggle job status:", error);
+    }
+  };
+
+  const deleteJob = async (jobId: string) => {
+    try {
+      const res = await fetch(`/api/company/jobs/${jobId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setJobs(jobs.filter(job => job.id !== jobId));
+        setDeleteJobId(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete job:", error);
+    }
+  };
+
   const filteredJobs = jobs.filter((job) => {
     const matchesSearch =
       job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -97,7 +132,7 @@ export default function JobPostingsPage() {
     total: jobs.length,
     active: jobs.filter((j) => j.isActive).length,
     inactive: jobs.filter((j) => !j.isActive).length,
-    totalApplications: jobs.reduce((sum, j) => sum + j.applications, 0),
+    totalApplications: jobs.reduce((sum, j) => sum + (j.applicationsCount || 0), 0),
   };
 
   return (
@@ -301,12 +336,12 @@ export default function JobPostingsPage() {
                   <div className="flex items-center gap-6 text-sm">
                     <div className="flex items-center gap-2 text-slate-300">
                       <Users className="w-4 h-4 text-purple-400" />
-                      <span className="font-semibold">{job.applications}</span>
+                      <span className="font-semibold">{job.applicationsCount ?? 0}</span>
                       <span className="text-slate-500">applications</span>
                     </div>
                     <div className="flex items-center gap-2 text-slate-300">
                       <Eye className="w-4 h-4 text-blue-400" />
-                      <span className="font-semibold">{job.views}</span>
+                      <span className="font-semibold">{job.viewCount ?? 0}</span>
                       <span className="text-slate-500">views</span>
                     </div>
                     <span className="text-slate-500">
@@ -336,7 +371,33 @@ export default function JobPostingsPage() {
                       <Edit className="w-4 h-4 mr-2" />
                       Edit Job
                     </DropdownMenuItem>
-                    <DropdownMenuItem className="text-red-400 hover:text-red-300">
+                    <DropdownMenuItem
+                      onClick={() => toggleJobStatus(job.id, job.isActive)}
+                      className="text-slate-300 hover:text-white"
+                    >
+                      {job.isActive ? (
+                        <>
+                          <Pause className="w-4 h-4 mr-2" />
+                          Pause Job
+                        </>
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 mr-2" />
+                          Activate Job
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => router.push(`/company/portal/applications?jobId=${job.id}`)}
+                      className="text-slate-300 hover:text-white"
+                    >
+                      <Users className="w-4 h-4 mr-2" />
+                      View Candidates ({job.applicationsCount ?? 0})
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => setDeleteJobId(job.id)}
+                      className="text-red-400 hover:text-red-300"
+                    >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Delete Job
                     </DropdownMenuItem>
@@ -345,6 +406,34 @@ export default function JobPostingsPage() {
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {/* Delete Confirmation Dialog */}
+      {deleteJobId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-slate-800 border border-slate-700 rounded-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold text-white mb-2">Delete Job?</h3>
+            <p className="text-slate-400 text-sm mb-6">
+              This will permanently delete this job posting and all associated applications. This action cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setDeleteJobId(null)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => deleteJob(deleteJobId)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Delete Job
+              </Button>
+            </div>
+          </div>
         </div>
       )}
       </div>

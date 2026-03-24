@@ -65,7 +65,20 @@ export async function GET(req: NextRequest) {
       where: { companyId },
       select: { viewCount: true },
     });
-    const viewsThisMonth = jobs.reduce((acc, job) => acc + job.viewCount, 0);
+    const viewsThisMonth = jobs.reduce((acc, job) => acc + (job.viewCount || 0), 0);
+
+    // Get department breakdown
+    const jobsByDepartment = await prisma.externalJob.groupBy({
+      by: ['department'],
+      where: { companyId, isActive: true },
+      _count: { id: true },
+      orderBy: { _count: { id: 'desc' } },
+    });
+
+    const departmentBreakdown = jobsByDepartment.map((item) => ({
+      department: item.department || 'Other',
+      count: item._count.id,
+    }));
 
     // Get recent applications
     const recentApplications = await prisma.externalJobApplication.findMany({
@@ -116,6 +129,7 @@ export async function GET(req: NextRequest) {
         viewsThisMonth,
         applicationsThisMonth,
       },
+      departmentBreakdown,
       recentApplications: recentApplications.map((app) => ({
         id: app.id,
         name: app.name,

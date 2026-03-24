@@ -37,7 +37,7 @@ interface CompanySettings {
   website: string;
   location: string;
   size: string;
-  about: string;
+  description: string;
   logoUrl?: string;
   autoApplyEnabled: boolean;
 }
@@ -50,7 +50,7 @@ export default function SettingsPage() {
     website: "",
     location: "",
     size: "",
-    about: "",
+    description: "",
     autoApplyEnabled: false,
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -236,8 +236,8 @@ export default function SettingsPage() {
                 About Company
               </label>
               <textarea
-                name="about"
-                value={settings.about}
+                name="description"
+                value={settings.description}
                 onChange={handleInputChange}
                 rows={4}
                 placeholder="Tell candidates about your company..."

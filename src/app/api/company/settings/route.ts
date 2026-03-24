@@ -32,7 +32,18 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ settings: company });
+    return NextResponse.json({
+      settings: {
+        name: company.name,
+        domain: company.domain,
+        website: company.website || "",
+        location: "",
+        size: company.size || "",
+        description: company.description || "",
+        logoUrl: company.logoUrl || "",
+        autoApplyEnabled: company.autoApplyEnabled || false,
+      },
+    });
   } catch (error) {
     console.error("[COMPANY_SETTINGS_GET]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -51,7 +62,12 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, website, size, description, logoUrl, autoApplyEnabled } = await req.json();
+  const { name, website, size, description, logoUrl, autoApplyEnabled, location } = await req.json();
+
+    // Validate required fields
+    if (!name) {
+      return NextResponse.json({ error: "Company name is required" }, { status: 400 });
+    }
 
     // Update company
     const company = await prisma.company.update({
@@ -66,7 +82,18 @@ export async function PATCH(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({ company });
+    return NextResponse.json({
+      settings: {
+        name: company.name,
+        domain: company.domain,
+        website: company.website || "",
+        location: location || "",
+        size: company.size || "",
+        description: company.description || "",
+        logoUrl: company.logoUrl || "",
+        autoApplyEnabled: company.autoApplyEnabled || false,
+      },
+    });
   } catch (error) {
     console.error("[COMPANY_SETTINGS_PATCH]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

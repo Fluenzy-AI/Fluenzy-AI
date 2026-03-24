@@ -71,10 +71,25 @@ export default function TeamPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState("HR_RECRUITER");
   const [isInviting, setIsInviting] = useState(false);
+  const [companyDomain, setCompanyDomain] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState("");
 
   useEffect(() => {
     fetchTeamMembers();
+    fetchCompanyDomain();
   }, []);
+
+  const fetchCompanyDomain = async () => {
+    try {
+      const res = await fetch("/api/company/settings");
+      if (res.ok) {
+        const data = await res.json();
+        setCompanyDomain(data.settings?.domain || null);
+      }
+    } catch (error) {
+      console.error("Failed to fetch company domain:", error);
+    }
+  };
 
   const fetchTeamMembers = async () => {
     try {
@@ -92,6 +107,25 @@ export default function TeamPage() {
   };
 
   const sendInvite = async () => {
+    setInviteError("");
+
+    // Validate email domain matches company domain
+    if (companyDomain) {
+      const inviteDomain = inviteEmail.split("@")[1]?.toLowerCase();
+      if (inviteDomain !== companyDomain.toLowerCase()) {
+        setInviteError(`Email must be from @${companyDomain}`);
+        return;
+      }
+    }
+
+    // Block personal email domains
+    const personalDomains = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "live.com", "icloud.com", "protonmail.com"];
+    const emailDomain = inviteEmail.split("@")[1]?.toLowerCase();
+    if (personalDomains.includes(emailDomain)) {
+      setInviteError("Please use a work email address");
+      return;
+    }
+
     try {
       setIsInviting(true);
       const res = await fetch("/api/company/team/invite", {
@@ -104,14 +138,15 @@ export default function TeamPage() {
         setShowInviteModal(false);
         setInviteEmail("");
         setInviteRole("HR_RECRUITER");
+        setInviteError("");
         fetchTeamMembers();
       } else {
         const data = await res.json();
-        alert(data.error || "Failed to send invite");
+        setInviteError(data.error || "Failed to send invite");
       }
     } catch (error) {
       console.error("Failed to send invite:", error);
-      alert("Failed to send invite");
+      setInviteError("Failed to send invite");
     } finally {
       setIsInviting(false);
     }
@@ -358,18 +393,33 @@ export default function TeamPage() {
             className="bg-slate-900 border border-slate-700 rounded-xl p-6 max-w-md w-full"
           >
             <h2 className="text-2xl font-bold text-white mb-4">Invite Team Member</h2>
+
+            {inviteError && (
+              <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                {inviteError}
+              </div>
+            )}
+
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Email Address <span className="text-red-400">*</span>
+                  Work Email Address <span className="text-red-400">*</span>
                 </label>
                 <input
                   type="email"
                   value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="colleague@company.com"
+                  onChange={(e) => {
+                    setInviteEmail(e.target.value);
+                    setInviteError("");
+                  }}
+                  placeholder={companyDomain ? `colleague@${companyDomain}` : "colleague@company.com"}
                   className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
                 />
+                {companyDomain && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    Invite email must be from @{companyDomain}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
@@ -384,12 +434,20 @@ export default function TeamPage() {
                   <option value="HIRING_MANAGER">Hiring Manager</option>
                   <option value="ADMIN">Admin</option>
                 </select>
+                <p className="text-xs text-slate-500 mt-1">
+                  {inviteRole === "ADMIN" && "Full access to all company settings and team management"}
+                  {inviteRole === "HR_RECRUITER" && "Can manage job postings and applications"}
+                  {inviteRole === "HIRING_MANAGER" && "Can review applications and schedule interviews"}
+                </p>
               </div>
             </div>
             <div className="flex gap-3 mt-6">
               <Button
                 variant="outline"
-                onClick={() => setShowInviteModal(false)}
+                onClick={() => {
+                  setShowInviteModal(false);
+                  setInviteError("");
+                }}
                 className="flex-1 border-slate-700"
               >
                 Cancel

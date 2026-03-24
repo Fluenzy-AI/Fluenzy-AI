@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import {
   Search, MapPin, Briefcase, Clock, Building2, Zap, Filter, X, ChevronRight,
-  ChevronLeft, DollarSign, Calendar
+  ChevronLeft, DollarSign, Calendar, Lock, Settings
 } from "lucide-react";
 import {
   LOC_LABELS,
@@ -12,6 +12,7 @@ import {
   LOC_COLORS,
   POSTED_WITHIN_OPTIONS,
 } from "@/lib/job-constants";
+import { getRelativeTime } from "@/lib/utils";
 
 interface Job {
   id: string;
@@ -49,11 +50,17 @@ interface FilterState {
 interface CandidatePrefs {
   autoApplyEnabled: boolean;
   targetRoles: string[];
+  hasPreferences: boolean;
+  plan: string;
+  canAutoApply: boolean;
+  autoApplyCount: number;
+  monthlyLimit: number;
 }
 
 export default function JobsClient() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchInput, setSearchInput] = useState(""); // For debounce
   const [filters, setFilters] = useState<FilterState>({
     search: "",
     department: "",
@@ -75,21 +82,41 @@ export default function JobsClient() {
   const [candidatePrefs, setCandidatePrefs] = useState<CandidatePrefs | null>(null);
   const [matchingJobsCount, setMatchingJobsCount] = useState(0);
 
-  // Check if user is logged in and has auto-apply enabled
+  // Search debounce effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== filters.search) {
+        handleFilterChange("search", searchInput);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
+  // Check if user is logged in and fetch auto-apply preferences
   useEffect(() => {
     fetch("/api/candidates/preferences", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
-        if (data.preferences?.autoApplyEnabled) {
-          setCandidatePrefs({
-            autoApplyEnabled: true,
-            targetRoles: data.preferences.targetRoles || [],
-          });
-          // Count matching jobs (simplified - would be more accurate with API)
-          setMatchingJobsCount(data.preferences.targetRoles?.length * 3 || 0);
+        const prefs = data.preferences;
+        const hasPrefs = (prefs?.targetRoles?.length || 0) > 0;
+        setCandidatePrefs({
+          autoApplyEnabled: prefs?.autoApplyEnabled || false,
+          targetRoles: prefs?.targetRoles || [],
+          hasPreferences: hasPrefs,
+          plan: data.plan || "Free",
+          canAutoApply: data.canAutoApply || false,
+          autoApplyCount: prefs?.autoApplyCount || 0,
+          monthlyLimit: prefs?.monthlyLimit || 0,
+        });
+        // Count matching jobs (simplified)
+        if (prefs?.autoApplyEnabled) {
+          setMatchingJobsCount(prefs.targetRoles?.length * 3 || 0);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Not logged in or error - set to null
+        setCandidatePrefs(null);
+      });
   }, []);
 
   const fetchJobs = useCallback(async () => {
@@ -135,6 +162,7 @@ export default function JobsClient() {
   };
 
   const clearFilters = () => {
+    setSearchInput("");
     setFilters({
       search: "",
       department: "",
@@ -212,31 +240,121 @@ export default function JobsClient() {
 
   return (
     <div className="min-h-screen bg-[#080c14]">
-      {/* Auto-Apply Banner */}
-      {candidatePrefs?.autoApplyEnabled && (
-        <div className="sticky top-0 z-50 bg-gradient-to-r from-purple-600/90 to-indigo-600/90 backdrop-blur-sm border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Zap className="w-5 h-5 text-yellow-300" />
-                <p className="text-white text-sm">
-                  <span className="font-semibold">Auto-Apply is active</span>
-                  {matchingJobsCount > 0 && (
-                    <span className="text-white/80 ml-2">
-                      — {matchingJobsCount} matching jobs found for your profile
-                    </span>
-                  )}
-                </p>
+      {/* Auto-Apply Banner - 4 States */}
+      {candidatePrefs && (
+        <>
+          {/* State A: FREE_LOCKED - User has Free plan, no auto-apply access */}
+          {!candidatePrefs.canAutoApply && (
+            <div className="sticky top-0 z-50 bg-gradient-to-r from-slate-700/90 to-slate-600/90 backdrop-blur-sm border-b border-amber-500/20">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Lock className="w-5 h-5 text-amber-400" />
+                    <p className="text-white text-sm">
+                      <span className="font-semibold">Automated Job Applications</span>
+                      <span className="text-white/70 ml-2">
+                        — Upgrade to Standard or Pro to enable auto-apply
+                      </span>
+                    </p>
+                  </div>
+                  <Link
+                    href="/pricing"
+                    className="text-sm bg-amber-500 hover:bg-amber-600 text-black font-medium px-4 py-1.5 rounded-lg transition"
+                  >
+                    View Plans
+                  </Link>
+                </div>
               </div>
-              <Link
-                href="/candidates/dashboard/auto-apply"
-                className="text-sm text-white/90 hover:text-white underline underline-offset-2"
-              >
-                Manage preferences →
-              </Link>
             </div>
-          </div>
-        </div>
+          )}
+
+          {/* State B: PAID_NO_PREFS - Paid plan, no preferences set */}
+          {candidatePrefs.canAutoApply && !candidatePrefs.hasPreferences && (
+            <div className="sticky top-0 z-50 bg-gradient-to-r from-purple-600/90 to-indigo-600/90 backdrop-blur-sm border-b border-purple-400/20">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Zap className="w-5 h-5 text-yellow-300 animate-pulse" />
+                    <p className="text-white text-sm">
+                      <span className="font-semibold">Set Up Auto-Apply — One Time Only</span>
+                      <span className="text-white/80 ml-2">
+                        — Tell us your preferred roles and we&apos;ll automatically apply to matching jobs
+                      </span>
+                    </p>
+                  </div>
+                  <Link
+                    href="/candidates/dashboard/auto-apply"
+                    className="text-sm bg-white hover:bg-white/90 text-purple-700 font-medium px-4 py-1.5 rounded-lg transition"
+                  >
+                    Set Up Now →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* State C: PREFS_OFF - Preferences exist but auto-apply is OFF */}
+          {candidatePrefs.canAutoApply && candidatePrefs.hasPreferences && !candidatePrefs.autoApplyEnabled && (
+            <div className="sticky top-0 z-50 bg-gradient-to-r from-amber-600/90 to-orange-600/90 backdrop-blur-sm border-b border-amber-400/20">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Settings className="w-5 h-5 text-yellow-200" />
+                    <p className="text-white text-sm">
+                      <span className="font-semibold">Auto-Apply is Paused</span>
+                      <span className="text-white/80 ml-2">
+                        — Turn on auto-apply to start getting automatically applied to matching jobs
+                      </span>
+                    </p>
+                  </div>
+                  <Link
+                    href="/candidates/dashboard/auto-apply"
+                    className="text-sm bg-white hover:bg-white/90 text-amber-700 font-medium px-4 py-1.5 rounded-lg transition"
+                  >
+                    Enable Auto-Apply →
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* State D: ACTIVE - Auto-apply is ON and active */}
+          {candidatePrefs.canAutoApply && candidatePrefs.hasPreferences && candidatePrefs.autoApplyEnabled && (
+            <div className="sticky top-0 z-50 bg-gradient-to-r from-emerald-600/90 to-teal-600/90 backdrop-blur-sm border-b border-teal-400/20">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="relative flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                    </span>
+                    <p className="text-white text-sm">
+                      <span className="font-semibold">Auto-Apply is Active</span>
+                      <span className="text-white/80 ml-2">
+                        — {candidatePrefs.autoApplyCount}/{candidatePrefs.monthlyLimit} applications this month
+                        {matchingJobsCount > 0 && ` • ${matchingJobsCount} matching jobs`}
+                      </span>
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <Link
+                      href="/candidates/dashboard/auto-apply"
+                      className="text-sm text-white/90 hover:text-white underline underline-offset-2"
+                    >
+                      Manage Preferences
+                    </Link>
+                    <Link
+                      href="/candidates/dashboard/applications"
+                      className="text-sm text-white/90 hover:text-white underline underline-offset-2"
+                    >
+                      View Applications
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
 
       {/* Header */}
@@ -257,8 +375,8 @@ export default function JobsClient() {
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
               <input
                 type="text"
-                value={filters.search}
-                onChange={(e) => handleFilterChange("search", e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search jobs, skills, or companies..."
                 className="w-full bg-[#0f1627] border border-slate-700/60 rounded-xl pl-12 pr-4 py-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
               />
@@ -488,10 +606,7 @@ export default function JobsClient() {
 }
 
 function JobCard({ job }: { job: Job }) {
-  const postedDate = new Date(job.createdAt).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-  });
+  const postedRelative = getRelativeTime(job.createdAt);
 
   return (
     <Link
@@ -504,7 +619,9 @@ function JobCard({ job }: { job: Job }) {
           {job.company.logoUrl ? (
             <img src={job.company.logoUrl} alt={job.company.name} className="w-full h-full object-cover" />
           ) : (
-            <Building2 className="w-6 h-6 text-slate-500" />
+            <span className="text-lg font-bold text-indigo-400">
+              {job.company.name.charAt(0).toUpperCase()}
+            </span>
           )}
         </div>
 
@@ -568,7 +685,7 @@ function JobCard({ job }: { job: Job }) {
         <span className={`px-2 py-1 rounded-full text-xs border ${LOC_COLORS[job.location]}`}>
           {LOC_LABELS[job.location]}
         </span>
-        <span className="text-xs text-slate-500">Posted {postedDate}</span>
+        <span className="text-xs text-slate-500">Posted {postedRelative}</span>
       </div>
     </Link>
   );

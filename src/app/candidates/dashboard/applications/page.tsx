@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { getRelativeTime } from "@/lib/utils";
 
 interface Application {
   id: string;
@@ -8,6 +9,7 @@ interface Application {
   createdAt: string;
   interviewDate?: string | null;
   coverLetter?: string;
+  isAutoApplied?: boolean;
   job: {
     title: string;
     department: string;
@@ -42,9 +44,12 @@ function StatusTimeline({ current }: { current: string }) {
     <div className="mt-3 flex items-center gap-1 overflow-x-auto pb-1">
       {TIMELINE.map((step, idx) => {
         const done = idx <= currentIdx;
+        const isCurrent = idx === currentIdx;
         return (
           <div key={step} className="flex items-center gap-1 shrink-0">
-            <div className={`h-2 w-2 rounded-full transition-colors ${done ? "bg-primary" : "bg-border"}`} />
+            <div className={`h-2 w-2 rounded-full transition-colors ${
+              isCurrent ? "bg-primary animate-pulse" : done ? "bg-primary" : "bg-border"
+            }`} />
             <span className={`text-[10px] whitespace-nowrap ${done ? "text-primary font-medium" : "text-muted-foreground"}`}>
               {step.replace(/_/g, " ")}
             </span>
@@ -60,40 +65,85 @@ export default function ApplicationsPage() {
   const [apps, setApps] = useState<Application[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("ALL");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest" | "status">("newest");
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  useEffect(() => {
+  const fetchApplications = useCallback(() => {
     fetch("/api/candidates/applications")
       .then(r => r.json())
-      .then(d => setApps(Array.isArray(d.applications) ? d.applications : []))
+      .then(d => {
+        setApps(Array.isArray(d.applications) ? d.applications : []);
+        setLastUpdated(new Date());
+      })
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchApplications();
+    // Poll every 60 seconds for status updates
+    const interval = setInterval(fetchApplications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchApplications]);
+
   const FILTERS = ["ALL", "PENDING", "REVIEWED", "SHORTLISTED", "INTERVIEW_SCHEDULED", "HIRED", "REJECTED"];
+
+  // Compute counts for each filter
+  const counts: Record<string, number> = {
+    ALL: apps.length,
+    PENDING: apps.filter(a => a.status === "PENDING").length,
+    REVIEWED: apps.filter(a => a.status === "REVIEWED").length,
+    SHORTLISTED: apps.filter(a => a.status === "SHORTLISTED").length,
+    INTERVIEW_SCHEDULED: apps.filter(a => a.status === "INTERVIEW_SCHEDULED").length,
+    HIRED: apps.filter(a => a.status === "HIRED").length,
+    REJECTED: apps.filter(a => a.status === "REJECTED").length,
+  };
+
+  // Filter and sort applications
   const filtered = filter === "ALL" ? apps : apps.filter(a => a.status === filter);
+  const sorted = [...filtered].sort((a, b) => {
+    if (sortBy === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortBy === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    return a.status.localeCompare(b.status);
+  });
 
   return (
     <div className="max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-xl font-bold text-foreground">My Applications</h1>
-        <p className="text-muted-foreground text-sm">Track the status of all your job applications</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-foreground">My Applications</h1>
+          <p className="text-muted-foreground text-sm">Track the status of all your job applications</p>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Updated {getRelativeTime(lastUpdated)}
+        </p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2">
-        {FILTERS.map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className={`text-xs px-3 py-1 rounded-full border transition ${filter === f ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary hover:text-foreground"}`}>
-            {f.replace(/_/g, " ")}
-            {f !== "ALL" && ` (${apps.filter(a => a.status === f).length})`}
-          </button>
-        ))}
+      {/* Filters and Sort */}
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex flex-wrap gap-2">
+          {FILTERS.map(f => (
+            <button key={f} onClick={() => setFilter(f)}
+              className={`text-xs px-3 py-1 rounded-full border transition ${filter === f ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary hover:text-foreground"}`}>
+              {f === "ALL" ? `All (${counts.ALL})` : `${f.replace(/_/g, " ")} (${counts[f]})`}
+            </button>
+          ))}
+        </div>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+          className="text-xs px-3 py-1.5 rounded-lg bg-card border border-border text-foreground focus:outline-none focus:border-primary"
+        >
+          <option value="newest">Most Recent</option>
+          <option value="oldest">Oldest</option>
+          <option value="status">By Status</option>
+        </select>
       </div>
 
       {loading ? (
         <div className="space-y-3">
           {[1, 2, 3].map(i => <div key={i} className="h-28 bg-card border border-border rounded-2xl animate-pulse" />)}
         </div>
-      ) : filtered.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <div className="bg-card border border-border rounded-2xl py-12 text-center">
           <p className="text-4xl mb-3">📋</p>
           <p className="text-muted-foreground text-sm">
@@ -102,7 +152,7 @@ export default function ApplicationsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map(app => (
+          {sorted.map(app => (
             <div key={app.id} className="bg-card border border-border rounded-2xl p-5">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
@@ -110,8 +160,13 @@ export default function ApplicationsPage() {
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {app.job.department} · {app.job.location} · {app.job.employmentType?.replace(/_/g, " ")}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Applied {new Date(app.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                    <span>Applied {getRelativeTime(app.createdAt)}</span>
+                    {app.isAutoApplied && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/10 text-purple-400 rounded text-[10px] font-medium">
+                        ⚡ Auto-Applied
+                      </span>
+                    )}
                   </p>
                 </div>
                 <span className={`shrink-0 text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[app.status] || "bg-muted text-muted-foreground"}`}>
