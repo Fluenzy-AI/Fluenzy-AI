@@ -388,7 +388,7 @@ export default function JobDetailClient({ job }: { job: Job }) {
   );
 }
 
-export default function ApplyModal({
+function ApplyModal({
   job,
   candidate,
   onClose,
