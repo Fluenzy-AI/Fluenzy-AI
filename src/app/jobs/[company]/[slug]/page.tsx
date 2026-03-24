@@ -35,12 +35,21 @@ async function getJob(companySlug: string, jobSlug: string) {
 
   if (!job) return null;
 
-  // Convert null values to undefined to match the Job interface
+  // Convert null values to undefined and Date to string to match the Job interface
   return {
     ...job,
+    createdAt: job.createdAt.toISOString(),
     city: job.city || undefined,
     salaryMin: job.salaryMin || undefined,
     salaryMax: job.salaryMax || undefined,
+    company: {
+      ...job.company,
+      description: job.company.description || undefined,
+      logoUrl: job.company.logoUrl || undefined,
+      website: job.company.website || undefined,
+      industry: job.company.industry || undefined,
+      size: job.company.size || undefined,
+    },
   };
 }
 
