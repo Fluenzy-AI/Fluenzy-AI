@@ -37,9 +37,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
     }
 
-    // Get linked main user account to determine plan
-    const linkedUser = await prisma.users.findUnique({
-      where: { email: candidate.email },
+    // Get linked main user account to determine plan (case-insensitive)
+    const linkedUser = await prisma.users.findFirst({
+      where: {
+        email: {
+          equals: candidate.email,
+          mode: "insensitive"
+        }
+      },
       select: { plan: true },
     });
     const plan = linkedUser?.plan || "Free";
@@ -129,9 +134,14 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Candidate not found" }, { status: 404 });
     }
 
-    // Get linked user plan
-    const linkedUser = await prisma.users.findUnique({
-      where: { email: candidate.email },
+    // Get linked user plan (case-insensitive)
+    const linkedUser = await prisma.users.findFirst({
+      where: {
+        email: {
+          equals: candidate.email,
+          mode: "insensitive"
+        }
+      },
       select: { plan: true },
     });
     const plan = linkedUser?.plan || "Free";
