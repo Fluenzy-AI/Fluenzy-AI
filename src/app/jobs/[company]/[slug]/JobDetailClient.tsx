@@ -664,7 +664,12 @@ export default function ApplyModal({
                   </span>
                   <button
                     type="button"
-                    onClick={() => setForm({ ...form, resumeUrl: "", resumeName: "" })}
+                    onClick={() => {
+                      setForm({ ...form, resumeUrl: "", resumeName: "" });
+                      // Reset file input so user can select the same file again
+                      const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+                      if (fileInput) fileInput.value = "";
+                    }}
                     className="text-slate-400 hover:text-red-400"
                   >
                     <X className="w-4 h-4" />
