@@ -187,16 +187,16 @@ export function requireCompanyRoles(
 
 // Implementation
 export function requireCompanyRoles(
-  reqOrRole: NextRequest | CompanyRole,
-  rolesOrUndefined?: CompanyRole[]
+  reqOrRole?: NextRequest | CompanyRole,
+  ...rest: CompanyRole[]
 ): any {
   // If first argument is NextRequest, it's the async pattern
   if (reqOrRole instanceof NextRequest) {
-    return requireCompanyRolesAsync(reqOrRole, rolesOrUndefined || []);
+    return requireCompanyRolesAsync(reqOrRole, rest || []);
   }
 
   // Otherwise it's the curried pattern - collect all role arguments
-  const roles = [reqOrRole as CompanyRole, ...(rolesOrUndefined || [])].filter(
+  const roles = [reqOrRole as CompanyRole, ...rest].filter(
     (r): r is CompanyRole => typeof r === "string"
   );
 
