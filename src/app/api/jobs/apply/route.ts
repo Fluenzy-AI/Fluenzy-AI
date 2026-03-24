@@ -13,7 +13,7 @@ const ApplySchema = z.object({
   name: z.string().min(2).max(100),
   email: z.string().email(),
   phone: z.string().min(1, "Phone number is required"),
-  resumeUrl: z.string().url("Resume is required"),
+  resumeUrl: z.string().min(1, "Resume is required"),
   resumeName: z.string().optional(),
   portfolio: z.string().url().optional().or(z.literal("")).or(z.undefined()),
   linkedin: z.string().url().optional().or(z.literal("")).or(z.undefined()),
