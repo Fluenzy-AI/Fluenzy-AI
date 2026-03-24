@@ -20,9 +20,14 @@ export async function GET(req: NextRequest) {
 
   if (!candidate) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  // Try to find linked main user account by email
-  const linkedUser = await prisma.users.findUnique({
-    where: { email: candidate.email },
+  // Try to find linked main user account by email (case-insensitive)
+  const linkedUser = await prisma.users.findFirst({
+    where: {
+      email: {
+        equals: candidate.email,
+        mode: "insensitive"
+      }
+    },
     select: { plan: true, id: true },
   });
 

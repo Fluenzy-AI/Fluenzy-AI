@@ -156,6 +156,9 @@ export async function POST(req: NextRequest) {
       const prefs = candidate.jobPreferences;
       if (!prefs) continue;
 
+      // Skip if candidate doesn't have a resume - required for applications
+      if (!candidate.profile?.resumeUrl) continue;
+
       // Check quota (use Free plan as default since CandidateUser doesn't have plan field)
       const limit = getAutoApplyLimitByPlan("Free");
       if (limit === 0 || prefs.autoApplyCount >= limit) continue;
@@ -289,9 +292,14 @@ export async function POST(req: NextRequest) {
         const jobDetails = eligibleJobs.find(j => j.id === app.jobId);
         if (jobDetails) {
           try {
-            // Find the user associated with this candidate email
+            // Find the user associated with this candidate email (case-insensitive)
             const user = await prisma.users.findFirst({
-              where: { email: app.email },
+              where: {
+                email: {
+                  equals: app.email,
+                  mode: "insensitive"
+                }
+              },
               select: { id: true },
             });
 
