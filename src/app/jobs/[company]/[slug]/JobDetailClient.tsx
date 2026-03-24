@@ -353,7 +353,16 @@ export default function JobDetailClient({ job }: { job: Job }) {
                   </a>
                 )}
               </div>
+              <Link
+                href={`/jobs?company=${job.company.slug}`}
+                className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5 text-sm text-indigo-400 hover:text-indigo-300 transition"
+              >
+                View all jobs from {job.company.name} →
+              </Link>
             </div>
+
+            {/* Similar Jobs */}
+            <SimilarJobs jobId={job.id} />
           </aside>
         </div>
       </div>
@@ -783,5 +792,70 @@ function AutoApplyNoticeModal({
         </div>
       </motion.div>
     </motion.div>
+  );
+}
+
+// Similar Jobs Component
+function SimilarJobs({ jobId }: { jobId: string }) {
+  const [jobs, setJobs] = useState<{
+    id: string;
+    title: string;
+    slug: string;
+    location: string;
+    employmentType: string;
+    company: { name: string; slug: string; logoUrl?: string };
+  }[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`/api/jobs/similar/${jobId}`)
+      .then((res) => res.json())
+      .then((data) => setJobs(data.jobs || []))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [jobId]);
+
+  if (loading) {
+    return (
+      <div className="bg-slate-900/50 rounded-2xl border border-white/5 p-6">
+        <h3 className="font-semibold text-white mb-4">Similar Jobs</h3>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="h-4 bg-slate-800 rounded w-3/4 mb-2" />
+              <div className="h-3 bg-slate-800 rounded w-1/2" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (jobs.length === 0) return null;
+
+  return (
+    <div className="bg-slate-900/50 rounded-2xl border border-white/5 p-6">
+      <h3 className="font-semibold text-white mb-4">Similar Jobs</h3>
+      <div className="space-y-4">
+        {jobs.map((job) => (
+          <Link
+            key={job.id}
+            href={`/jobs/${job.company.slug}/${job.slug}`}
+            className="block p-3 rounded-xl bg-slate-800/50 hover:bg-slate-800 border border-transparent hover:border-indigo-500/30 transition"
+          >
+            <p className="text-sm font-medium text-white truncate">{job.title}</p>
+            <p className="text-xs text-slate-400 mt-1">{job.company.name}</p>
+            <div className="flex items-center gap-2 mt-2">
+              <span className="text-xs px-2 py-0.5 bg-slate-700 text-slate-300 rounded">
+                {LOC_LABELS[job.location] || job.location}
+              </span>
+              <span className="text-xs px-2 py-0.5 bg-slate-700 text-slate-300 rounded">
+                {TYPE_LABELS[job.employmentType] || job.employmentType}
+              </span>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
   );
 }

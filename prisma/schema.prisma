@@ -1217,6 +1217,7 @@ model Candidate {
   offerLetters    OfferLetter[]
   interviews      Interview[]
   certificates    Certificate[]
+  assessments     HRAssessmentAssignment[]
 
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -1788,6 +1789,10 @@ model CompanyMember {
   resetToken      String?
   resetExpiry     DateTime?
 
+  // Magic link
+  magicLinkToken  String?
+  magicLinkExpiry DateTime?
+
   // Invite flow
   inviteToken     String?             @unique
   invitedBy       String?             @db.ObjectId
@@ -1981,6 +1986,50 @@ model AssessmentResult {
   startedAt       DateTime
   completedAt     DateTime   @default(now())
 
+  @@index([assessmentId])
+  @@index([candidateId])
+}
+
+// ─── HR Portal Assessments ─────────────────────────────────────────────────────
+
+model HRAssessment {
+  id            String              @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String?
+  type          AssessmentType      @default(MCQ)
+  duration      Int                 @default(30) // minutes
+  passingScore  Int                 @default(60)
+  questions     Json                // Array of questions
+  isActive      Boolean             @default(true)
+  createdBy     String              // HR staff ID
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  assignments   HRAssessmentAssignment[]
+
+  @@index([createdBy])
+}
+
+model HRAssessmentAssignment {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  assessmentId    String       @db.ObjectId
+  assessment      HRAssessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  candidateId     String       @db.ObjectId
+  candidate       Candidate    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+
+  assignedBy      String       // HR staff ID
+  assignedAt      DateTime     @default(now())
+
+  // Result fields (populated when completed)
+  status          String       @default("PENDING") // PENDING | IN_PROGRESS | COMPLETED | EXPIRED
+  score           Float?
+  passed          Boolean?
+  timeTaken       Int?         // seconds
+  answers         Json?
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  @@unique([assessmentId, candidateId])
   @@index([assessmentId])
   @@index([candidateId])
 }

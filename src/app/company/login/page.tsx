@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Eye, EyeOff, Building2, Mail, Lock, ArrowLeft, Briefcase,
-  Zap, Globe, Users, BarChart3,
+  Zap, Globe, Users, BarChart3, Loader2, CheckCircle,
 } from "lucide-react";
 
 const BENEFITS = [
@@ -30,24 +30,48 @@ const BENEFITS = [
   },
 ];
 
+const BLOCKED_DOMAINS = [
+  "gmail.com", "yahoo.com", "outlook.com", "hotmail.com", "icloud.com",
+  "protonmail.com", "zoho.com", "aol.com", "live.com", "msn.com",
+  "yahoo.in", "rediffmail.com",
+];
+
 export default function CompanyLoginPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<"password" | "magic">("password");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
 
   const [form, setForm] = useState({
     email: "",
     password: "",
   });
 
+  const validateEmail = (email: string) => {
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (!domain) return "Enter a valid email address.";
+    if (BLOCKED_DOMAINS.includes(domain)) {
+      return "Personal emails are not allowed. Please use your official work email.";
+    }
+    return null;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
     setError("");
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const emailError = validateEmail(form.email);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -61,8 +85,37 @@ export default function CompanyLoginPage() {
         setError(data.error ?? "Login failed. Please try again.");
         return;
       }
-      // Redirect to company portal
       router.push("/company/portal");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMagicLinkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const emailError = validateEmail(form.email);
+    if (emailError) {
+      setError(emailError);
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/company/magic-link", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Failed to send magic link. Please try again.");
+        return;
+      }
+      setMagicLinkSent(true);
     } catch {
       setError("Network error. Please try again.");
     } finally {
@@ -168,70 +221,162 @@ export default function CompanyLoginPage() {
 
             {/* Card */}
             <div className="bg-[#0d1427]/70 border border-slate-700/40 rounded-2xl p-8 backdrop-blur-sm shadow-2xl">
-              <form onSubmit={handleSubmit} className="space-y-5">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Work Email</label>
-                  <div className="relative">
-                    <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      name="email"
-                      type="email"
-                      value={form.email}
-                      onChange={handleChange}
-                      placeholder="hr@company.com"
-                      required
-                      className={inputCls}
-                    />
-                  </div>
-                </div>
+              {/* Tabs */}
+              <div className="flex mb-6 bg-[#0a0f1f] rounded-xl p-1">
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab("password"); setMagicLinkSent(false); setError(""); }}
+                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+                    activeTab === "password"
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  Password Login
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveTab("magic"); setError(""); }}
+                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+                    activeTab === "magic"
+                      ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  Magic Link
+                </button>
+              </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                    <input
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={form.password}
-                      onChange={handleChange}
-                      placeholder="Enter your password"
-                      required
-                      className="w-full bg-[#0f172a]/80 border border-slate-700/60 rounded-xl pl-11 pr-10 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-200 transition-colors"
+              {/* Password Login Form */}
+              {activeTab === "password" && (
+                <form onSubmit={handlePasswordSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Work Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        placeholder="hr@company.com"
+                        required
+                        className={inputCls}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        value={form.password}
+                        onChange={handleChange}
+                        placeholder="Enter your password"
+                        required
+                        className="w-full bg-[#0f172a]/80 border border-slate-700/60 rounded-xl pl-11 pr-10 py-3 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-200 transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end">
+                    <Link
+                      href="/company/forgot-password"
+                      className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
                     >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
+                      Forgot password?
+                    </Link>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-end">
-                  <Link
-                    href="/company/forgot-password"
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
+                  >
+                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {loading ? "Signing in..." : "Sign In"}
+                  </button>
+
+                  <p className="text-center text-sm text-slate-500 pt-2">
+                    Don&apos;t have an account?{" "}
+                    <Link href="/company/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                      Register your company
+                    </Link>
+                  </p>
+                </form>
+              )}
+
+              {/* Magic Link Form */}
+              {activeTab === "magic" && !magicLinkSent && (
+                <form onSubmit={handleMagicLinkSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">Work Email</label>
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={handleChange}
+                        placeholder="hr@company.com"
+                        required
+                        className={inputCls}
+                      />
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2">
+                      We&apos;ll send a secure login link to your work email.
+                    </p>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
+                  >
+                    {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                    {loading ? "Sending..." : "Send Magic Link"}
+                  </button>
+
+                  <p className="text-center text-sm text-slate-500 pt-2">
+                    Don&apos;t have an account?{" "}
+                    <Link href="/company/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
+                      Register your company
+                    </Link>
+                  </p>
+                </form>
+              )}
+
+              {/* Magic Link Sent Success */}
+              {activeTab === "magic" && magicLinkSent && (
+                <div className="text-center py-8 space-y-4">
+                  <div className="w-16 h-16 mx-auto rounded-full bg-green-500/10 border border-green-500/20 flex items-center justify-center">
+                    <CheckCircle className="w-8 h-8 text-green-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">Check your inbox</h3>
+                    <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">
+                      We&apos;ve sent a magic link to <span className="text-indigo-400">{form.email}</span>. Click the link to sign in.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setMagicLinkSent(false)}
                     className="text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
                   >
-                    Forgot password?
-                  </Link>
+                    Didn&apos;t receive it? Send again
+                  </button>
                 </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold text-sm hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-indigo-500/25"
-                >
-                  {loading ? "Signing in..." : "Sign In"}
-                </button>
-
-                <p className="text-center text-sm text-slate-500 pt-2">
-                  Don&apos;t have an account?{" "}
-                  <Link href="/company/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
-                    Register your company
-                  </Link>
-                </p>
-              </form>
+              )}
             </div>
 
             {/* Help text */}
