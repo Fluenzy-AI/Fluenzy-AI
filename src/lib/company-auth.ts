@@ -187,26 +187,34 @@ export function requireCompanyRoles(
 
 // Implementation
 export function requireCompanyRoles(
-  reqOrRole?: NextRequest | CompanyRole,
-  ...rest: CompanyRole[]
+  req?: NextRequest | CompanyRole,
+  rolesOrFirstRole?: CompanyRole[] | CompanyRole,
+  ...moreRoles: CompanyRole[]
 ): any {
   // If first argument is NextRequest, it's the async pattern
-  if (reqOrRole instanceof NextRequest) {
-    return requireCompanyRolesAsync(reqOrRole, rest || []);
+  if (req instanceof NextRequest) {
+    return requireCompanyRolesAsync(req, (rolesOrFirstRole as CompanyRole[]) || []);
   }
 
   // Otherwise it's the curried pattern - collect all role arguments
-  const roles = [reqOrRole as CompanyRole, ...rest].filter(
-    (r): r is CompanyRole => typeof r === "string"
-  );
+  const allRoles: CompanyRole[] = [];
+  if (req && typeof req === "string") {
+    allRoles.push(req);
+  }
+  if (rolesOrFirstRole && typeof rolesOrFirstRole === "string") {
+    allRoles.push(rolesOrFirstRole);
+  } else if (rolesOrFirstRole && Array.isArray(rolesOrFirstRole)) {
+    allRoles.push(...rolesOrFirstRole);
+  }
+  allRoles.push(...moreRoles);
 
   return function (decoded: DecodedCompanyToken | null) {
     if (!decoded)
       return { authorized: false, error: "Unauthorized: not authenticated" };
-    if (!roles.includes(decoded.role)) {
+    if (!allRoles.includes(decoded.role)) {
       return {
         authorized: false,
-        error: `Forbidden: requires one of [${roles.join(", ")}]`,
+        error: `Forbidden: requires one of [${allRoles.join(", ")}]`,
       };
     }
     return { authorized: true };
