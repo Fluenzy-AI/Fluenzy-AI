@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { getRelativeTime } from "@/lib/utils";
+import { ArrowRight } from "lucide-react";
 
 interface Application {
   id: string;
@@ -153,36 +155,45 @@ export default function ApplicationsPage() {
       ) : (
         <div className="space-y-3">
           {sorted.map(app => (
-            <div key={app.id} className="bg-card border border-border rounded-2xl p-5">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h3 className="font-semibold text-foreground text-sm truncate">{app.job.title}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {app.job.department} · {app.job.location} · {app.job.employmentType?.replace(/_/g, " ")}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
-                    <span>Applied {getRelativeTime(app.createdAt)}</span>
-                    {app.isAutoApplied && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/10 text-purple-400 rounded text-[10px] font-medium">
-                        ⚡ Auto-Applied
-                      </span>
-                    )}
-                  </p>
+            <Link
+              key={app.id}
+              href={`/candidates/dashboard/applications/${app.id}`}
+              className="block"
+            >
+              <div className="bg-card border border-border rounded-2xl p-5 hover:border-primary hover:shadow-lg transition-all hover:bg-card/70 cursor-pointer group">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-semibold text-foreground text-sm truncate group-hover:text-primary transition-colors">{app.job.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {app.job.department} · {app.job.location} · {app.job.employmentType?.replace(/_/g, " ")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-2">
+                      <span>Applied {getRelativeTime(app.createdAt)}</span>
+                      {app.isAutoApplied && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/10 text-purple-400 rounded text-[10px] font-medium">
+                          ⚡ Auto-Applied
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`shrink-0 text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[app.status] || "bg-muted text-muted-foreground"}`}>
+                      {app.status.replace(/_/g, " ")}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors opacity-0 group-hover:opacity-100" />
+                  </div>
                 </div>
-                <span className={`shrink-0 text-xs px-2.5 py-1 rounded-full font-medium ${STATUS_COLORS[app.status] || "bg-muted text-muted-foreground"}`}>
-                  {app.status.replace(/_/g, " ")}
-                </span>
+
+                {app.interviewDate && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-violet-400 bg-violet-500/10 px-3 py-2 rounded-lg">
+                    <span>📅</span>
+                    <span>Interview scheduled: <strong>{new Date(app.interviewDate).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</strong></span>
+                  </div>
+                )}
+
+                <StatusTimeline current={app.status} />
               </div>
-
-              {app.interviewDate && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-violet-400 bg-violet-500/10 px-3 py-2 rounded-lg">
-                  <span>📅</span>
-                  <span>Interview scheduled: <strong>{new Date(app.interviewDate).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</strong></span>
-                </div>
-              )}
-
-              <StatusTimeline current={app.status} />
-            </div>
+            </Link>
           ))}
         </div>
       )}

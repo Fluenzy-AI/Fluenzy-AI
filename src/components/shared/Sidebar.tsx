@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   GraduationCap,
+  Zap,
 } from "lucide-react";
 
 // Context for sidebar state
@@ -71,6 +72,12 @@ const NAV_ITEMS = [
     href: "/candidates/dashboard/applications",
     label: "My Applications",
     icon: FileText,
+  },
+  {
+    href: "/candidates/dashboard/auto-apply-setup",
+    label: "Auto-Apply Setup",
+    icon: Zap,
+    badge: true, // Will show setup status badge
   },
   {
     href: "/candidates/dashboard/jobs",
