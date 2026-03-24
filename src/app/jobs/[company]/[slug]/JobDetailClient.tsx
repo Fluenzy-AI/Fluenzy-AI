@@ -421,7 +421,7 @@ function ApplyModal({
         name: candidate.name || prev.name,
         email: candidate.email || prev.email,
         phone: candidate.phone || prev.phone,
-        resumeUrl: candidate.resumeUrl || prev.resumeUrl,
+        resumeUrl: candidate.resumeUrl || prev.resumeUrl || "",
         resumeName: candidate.resumeName || prev.resumeName,
         portfolio: candidate.portfolio || prev.portfolio,
         linkedin: candidate.linkedin || prev.linkedin,
@@ -453,6 +453,7 @@ function ApplyModal({
     }
 
     setUploading(true);
+    setError("");
     const formData = new FormData();
     formData.append("file", file);
 
@@ -460,12 +461,22 @@ function ApplyModal({
       const res = await fetch("/api/careers/upload-resume", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setForm({ ...form, resumeUrl: data.url, resumeName: file.name });
+      if (!res.ok) throw new Error(data.error || "Upload failed");
+
+      if (!data.url) {
+        throw new Error("No URL returned from server");
+      }
+
+      setForm(prev => ({ ...prev, resumeUrl: data.url, resumeName: file.name }));
+      setError("");
     } catch (err) {
-      setError("Failed to upload resume. Please try again.");
+      console.error("Resume upload error:", err);
+      setError(err instanceof Error ? err.message : "Failed to upload resume. Please try again.");
+      // Reset form if upload failed
+      setForm(prev => ({ ...prev, resumeUrl: "", resumeName: "" }));
     } finally {
       setUploading(false);
     }
