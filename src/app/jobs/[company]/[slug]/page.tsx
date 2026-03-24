@@ -33,7 +33,15 @@ async function getJob(companySlug: string, jobSlug: string) {
     },
   });
 
-  return job;
+  if (!job) return null;
+
+  // Convert null values to undefined to match the Job interface
+  return {
+    ...job,
+    city: job.city || undefined,
+    salaryMin: job.salaryMin || undefined,
+    salaryMax: job.salaryMax || undefined,
+  };
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
