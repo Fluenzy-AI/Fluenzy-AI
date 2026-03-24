@@ -388,7 +388,7 @@ export default function JobDetailClient({ job }: { job: Job }) {
   );
 }
 
-function ApplyModal({
+export default function ApplyModal({
   job,
   candidate,
   onClose,
@@ -413,22 +413,21 @@ function ApplyModal({
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
 
-  // Update form when candidate data loads (for async pre-fill)
+  // Initialize form only once on mount with candidate data
+  // Do NOT update form if candidate changes, as it would overwrite user edits
   useEffect(() => {
-    if (candidate) {
-      setForm(prev => ({
-        ...prev,
-        name: candidate.name || prev.name,
-        email: candidate.email || prev.email,
-        phone: candidate.phone || prev.phone,
-        resumeUrl: candidate.resumeUrl || prev.resumeUrl || "",
-        resumeName: candidate.resumeName || prev.resumeName,
-        portfolio: candidate.portfolio || prev.portfolio,
-        linkedin: candidate.linkedin || prev.linkedin,
-        experience: candidate.experience || prev.experience,
-      }));
-    }
-  }, [candidate]);
+    setForm(prev => ({
+      name: candidate?.name || prev.name,
+      email: candidate?.email || prev.email,
+      phone: candidate?.phone || prev.phone,
+      resumeUrl: candidate?.resumeUrl || prev.resumeUrl,
+      resumeName: candidate?.resumeName || prev.resumeName,
+      portfolio: candidate?.portfolio || prev.portfolio,
+      linkedin: candidate?.linkedin || prev.linkedin,
+      coverLetter: prev.coverLetter,
+      experience: candidate?.experience || prev.experience,
+    }));
+  }, []); // Empty dependency array - only run once on mount
 
   const isPaidPlan = candidate?.plan && candidate.plan !== "Free";
   const isOneClick = isPaidPlan && !candidate?.autoApplyEnabled;
@@ -484,8 +483,15 @@ function ApplyModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.resumeUrl) {
-      setError("Please upload your resume");
+
+    // Validate resume before submission
+    if (!form.resumeUrl || form.resumeUrl.trim() === "") {
+      setError("Please upload your resume before applying");
+      return;
+    }
+
+    if (!form.name.trim() || !form.email.trim() || !form.phone.trim() || !form.experience.trim()) {
+      setError("Please fill all required fields");
       return;
     }
 
@@ -496,10 +502,16 @@ function ApplyModal({
       const res = await fetch("/api/jobs/apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, jobId: job.id }),
+        body: JSON.stringify({
+          ...form,
+          jobId: job.id,
+          // Ensure resumeUrl is sent correctly
+          resumeUrl: form.resumeUrl.trim(),
+        }),
+        credentials: "include",
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      if (!res.ok) throw new Error(data.error || data.details?.resumeUrl?.[0] || "Failed to apply");
       setSuccess(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit application");
