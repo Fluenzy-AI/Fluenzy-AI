@@ -139,6 +139,22 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    // Get candidate plans from linked main user accounts
+    const candidatePlans = new Map<string, string>();
+    if (eligibleCandidates.length > 0) {
+      const linkedUsers = await prisma.users.findMany({
+        where: {
+          email: {
+            in: eligibleCandidates.map(c => c.email),
+          }
+        },
+        select: { email: true, plan: true },
+      });
+      linkedUsers.forEach(user => {
+        candidatePlans.set(user.email.toLowerCase(), user.plan);
+      });
+    }
+
     const matches: MatchResult[] = [];
     const applicationsToCreate: Array<{
       jobId: string;
@@ -159,11 +175,12 @@ export async function POST(req: NextRequest) {
       // Skip if candidate doesn't have a resume - required for applications
       if (!candidate.profile?.resumeUrl) continue;
 
-      // Check quota (use Free plan as default since CandidateUser doesn't have plan field)
-      const limit = getAutoApplyLimitByPlan("Free");
+      // Get candidate's actual plan
+      const candidatePlan = candidatePlans.get(candidate.email.toLowerCase()) || "Free";
+      const limit = getAutoApplyLimitByPlan(candidatePlan);
       if (limit === 0 || prefs.autoApplyCount >= limit) continue;
 
-      const threshold = getSkillMatchThresholdByPlan("Free");
+      const threshold = getSkillMatchThresholdByPlan(candidatePlan);
       const candidateSkills = candidate.profile?.skills || [];
 
       for (const job of eligibleJobs) {
@@ -248,7 +265,8 @@ export async function POST(req: NextRequest) {
         const candidate = eligibleCandidates.find(c => c.id === app.candidateId);
         if (!candidate || !currentPrefs) continue;
 
-        const limit = getAutoApplyLimitByPlan("Free");
+        const candidatePlan = candidatePlans.get(candidate.email.toLowerCase()) || "Free";
+        const limit = getAutoApplyLimitByPlan(candidatePlan);
         if (currentPrefs.autoApplyCount >= limit) {
           logs.push({
             candidateId: app.candidateId,
