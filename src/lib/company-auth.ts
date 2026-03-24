@@ -157,17 +157,89 @@ export async function getCompanyMemberFromRequest(
 
 // ── Route Guards ─────────────────────────────────────────────────────────────
 
-export function requireCompanyRoles(...roles: CompanyRole[]) {
-  return function (decoded: DecodedCompanyToken | null): {
-    authorized: boolean;
-    error?: string;
-  } {
-    if (!decoded) return { authorized: false, error: "Unauthorized: not authenticated" };
+// Overload 1: Async pattern for route handlers with NextRequest
+export function requireCompanyRoles(
+  req: NextRequest,
+  roles: CompanyRole[]
+): Promise<{
+  authorized: boolean;
+  error?: string;
+  member?: {
+    id: string;
+    email: string;
+    name: string;
+    role: CompanyRole;
+    companyId: string;
+    company: { id: string; name: string; slug: string; domain: string };
+  };
+  company?: { id: string; name: string; slug: string; domain: string };
+}>;
+
+// Overload 2: Curried pattern for manual token validation
+export function requireCompanyRoles(
+  ...roles: CompanyRole[]
+): (
+  decoded: DecodedCompanyToken | null
+) => {
+  authorized: boolean;
+  error?: string;
+};
+
+// Implementation
+export function requireCompanyRoles(
+  reqOrRole: NextRequest | CompanyRole,
+  rolesOrUndefined?: CompanyRole[]
+): any {
+  // If first argument is NextRequest, it's the async pattern
+  if (reqOrRole instanceof NextRequest) {
+    return requireCompanyRolesAsync(reqOrRole, rolesOrUndefined || []);
+  }
+
+  // Otherwise it's the curried pattern - collect all role arguments
+  const roles = [reqOrRole as CompanyRole, ...(rolesOrUndefined || [])].filter(
+    (r): r is CompanyRole => typeof r === "string"
+  );
+
+  return function (decoded: DecodedCompanyToken | null) {
+    if (!decoded)
+      return { authorized: false, error: "Unauthorized: not authenticated" };
     if (!roles.includes(decoded.role)) {
-      return { authorized: false, error: `Forbidden: requires one of [${roles.join(", ")}]` };
+      return {
+        authorized: false,
+        error: `Forbidden: requires one of [${roles.join(", ")}]`,
+      };
     }
     return { authorized: true };
   };
+}
+
+async function requireCompanyRolesAsync(
+  req: NextRequest,
+  roles: CompanyRole[]
+): Promise<{
+  authorized: boolean;
+  error?: string;
+  member?: {
+    id: string;
+    email: string;
+    name: string;
+    role: CompanyRole;
+    companyId: string;
+    company: { id: string; name: string; slug: string; domain: string };
+  };
+  company?: { id: string; name: string; slug: string; domain: string };
+}> {
+  const member = await getCompanyMemberFromRequest(req);
+  if (!member) {
+    return { authorized: false, error: "Unauthorized: not authenticated" };
+  }
+  if (!roles.includes(member.role)) {
+    return {
+      authorized: false,
+      error: `Forbidden: requires one of [${roles.join(", ")}]`,
+    };
+  }
+  return { authorized: true, member, company: member.company };
 }
 
 // ── Work Email Validation ────────────────────────────────────────────────────

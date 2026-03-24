@@ -57,7 +57,6 @@ export async function POST(req: NextRequest) {
         email,
         otp,
         expiresAt,
-        companyId: authResult.company.id,
       },
     });
 

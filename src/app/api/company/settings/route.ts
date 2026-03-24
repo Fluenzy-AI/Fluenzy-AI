@@ -14,18 +14,25 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const settings = {
-      name: authResult.company.name,
-      domain: authResult.company.domain,
-      website: authResult.company.website || "",
-      location: authResult.company.location || "",
-      size: authResult.company.size || "",
-      about: authResult.company.about || "",
-      logoUrl: authResult.company.logoUrl || "",
-      autoApplyEnabled: authResult.company.autoApplyEnabled,
-    };
+    // Fetch full company settings
+    const company = await prisma.company.findUnique({
+      where: { id: authResult.company.id },
+      select: {
+        name: true,
+        domain: true,
+        website: true,
+        size: true,
+        description: true,
+        logoUrl: true,
+        autoApplyEnabled: true,
+      },
+    });
 
-    return NextResponse.json({ settings });
+    if (!company) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ settings: company });
   } catch (error) {
     console.error("[COMPANY_SETTINGS_GET]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -44,19 +51,18 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, website, location, size, about, logoUrl, autoApplyEnabled } = await req.json();
+    const { name, website, size, description, logoUrl, autoApplyEnabled } = await req.json();
 
     // Update company
     const company = await prisma.company.update({
       where: { id: authResult.company.id },
       data: {
-        name,
-        website,
-        location,
-        size,
-        about,
-        logoUrl,
-        autoApplyEnabled,
+        ...(name !== undefined && { name }),
+        ...(website !== undefined && { website }),
+        ...(size !== undefined && { size }),
+        ...(description !== undefined && { description }),
+        ...(logoUrl !== undefined && { logoUrl }),
+        ...(autoApplyEnabled !== undefined && { autoApplyEnabled }),
       },
     });
 

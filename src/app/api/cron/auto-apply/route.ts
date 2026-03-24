@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
     // Get candidates with auto-apply enabled and quota remaining
     const eligibleCandidates = await prisma.candidateUser.findMany({
       where: {
-        isActive: true,
+        isVerified: true,
         jobPreferences: {
           autoApplyEnabled: true,
         },
@@ -119,7 +119,6 @@ export async function POST(req: NextRequest) {
         id: true,
         email: true,
         name: true,
-        plan: true,
         profile: {
           select: {
             skills: true,
@@ -143,6 +142,7 @@ export async function POST(req: NextRequest) {
     const matches: MatchResult[] = [];
     const applicationsToCreate: Array<{
       jobId: string;
+      companyId: string;
       candidateId: string;
       name: string;
       email: string;
@@ -156,11 +156,11 @@ export async function POST(req: NextRequest) {
       const prefs = candidate.jobPreferences;
       if (!prefs) continue;
 
-      // Check quota
-      const limit = getAutoApplyLimitByPlan(candidate.plan);
+      // Check quota (use Free plan as default since CandidateUser doesn't have plan field)
+      const limit = getAutoApplyLimitByPlan("Free");
       if (limit === 0 || prefs.autoApplyCount >= limit) continue;
 
-      const threshold = getSkillMatchThresholdByPlan(candidate.plan);
+      const threshold = getSkillMatchThresholdByPlan("Free");
       const candidateSkills = candidate.profile?.skills || [];
 
       for (const job of eligibleJobs) {
@@ -192,7 +192,8 @@ export async function POST(req: NextRequest) {
         // Check salary (if candidate has minimum and job has range)
         if (prefs.minSalary && job.salaryMax) {
           const candidateMinSalary = parseFloat(prefs.minSalary.replace(/[^0-9.]/g, ''));
-          if (!isNaN(candidateMinSalary) && job.salaryMax < candidateMinSalary) {
+          const jobMaxSalary = typeof job.salaryMax === 'string' ? parseFloat(job.salaryMax) : job.salaryMax;
+          if (!isNaN(candidateMinSalary) && !isNaN(jobMaxSalary) && jobMaxSalary < candidateMinSalary) {
             continue;
           }
         }
@@ -210,6 +211,7 @@ export async function POST(req: NextRequest) {
 
           applicationsToCreate.push({
             jobId: job.id,
+            companyId: job.companyId,
             candidateId: candidate.id,
             name: candidate.name || "Candidate",
             email: candidate.email,
@@ -243,7 +245,7 @@ export async function POST(req: NextRequest) {
         const candidate = eligibleCandidates.find(c => c.id === app.candidateId);
         if (!candidate || !currentPrefs) continue;
 
-        const limit = getAutoApplyLimitByPlan(candidate.plan);
+        const limit = getAutoApplyLimitByPlan("Free");
         if (currentPrefs.autoApplyCount >= limit) {
           logs.push({
             candidateId: app.candidateId,
@@ -262,8 +264,9 @@ export async function POST(req: NextRequest) {
               candidateId: app.candidateId,
               name: app.name,
               email: app.email,
-              resumeUrl: app.resumeUrl,
-              skills: app.skills,
+              phone: "",
+              resumeUrl: app.resumeUrl || "",
+              experience: "",
               isAutoApplied: true,
               status: "PENDING",
             },
@@ -276,8 +279,8 @@ export async function POST(req: NextRequest) {
             data: {
               candidateId: app.candidateId,
               jobId: app.jobId,
-              status: "SUCCESS",
-              matchScore: app.matchScore,
+              companyId: app.companyId,
+              status: "APPLIED",
             },
           }),
         ]);
@@ -302,8 +305,9 @@ export async function POST(req: NextRequest) {
           data: {
             candidateId: app.candidateId,
             jobId: app.jobId,
+            companyId: app.companyId,
             status: "FAILED",
-            errorMessage: error instanceof Error ? error.message : "Unknown error",
+            failureReason: error instanceof Error ? error.message : "Unknown error",
           },
         }).catch(() => {});
       }

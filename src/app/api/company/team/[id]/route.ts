@@ -8,7 +8,7 @@ import { requireCompanyRoles } from "@/lib/company-auth";
  */
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify company member authentication (only ADMIN can update team)
@@ -17,7 +17,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await context.params;
     const { status } = await req.json();
 
     // Validate status

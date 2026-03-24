@@ -17,9 +17,7 @@ export async function GET(req: NextRequest) {
     // Get all assessments for this company's jobs
     const assessments = await prisma.assessment.findMany({
       where: {
-        job: {
-          companyId: authResult.company.id,
-        },
+        companyId: authResult.company.id,
       },
       orderBy: {
         createdAt: "desc",
@@ -30,14 +28,8 @@ export async function GET(req: NextRequest) {
         title: true,
         questions: true,
         duration: true,
-        passPercentage: true,
+        passingScore: true,
         createdAt: true,
-        job: {
-          select: {
-            id: true,
-            title: true,
-          },
-        },
         _count: {
           select: {
             results: true,
@@ -49,13 +41,11 @@ export async function GET(req: NextRequest) {
     // Format the response
     const formattedAssessments = assessments.map((assessment) => ({
       id: assessment.id,
-      jobId: assessment.job.id,
-      jobTitle: assessment.job.title,
       type: assessment.type,
       title: assessment.title,
       questions: Array.isArray(assessment.questions) ? assessment.questions.length : 0,
       duration: assessment.duration,
-      passPercentage: assessment.passPercentage,
+      passingScore: assessment.passingScore,
       assigned: assessment._count.results,
       completed: assessment._count.results, // In a real app, filter by completed status
       createdAt: assessment.createdAt.toISOString(),

@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: {
-        appliedAt: "desc",
+        createdAt: "desc",
       },
       select: {
         id: true,
@@ -31,9 +31,8 @@ export async function GET(req: NextRequest) {
         phone: true,
         resumeUrl: true,
         status: true,
-        appliedAt: true,
+        createdAt: true,
         isAutoApplied: true,
-        skills: true,
         job: {
           select: {
             id: true,
@@ -53,9 +52,8 @@ export async function GET(req: NextRequest) {
       jobTitle: app.job.title,
       jobId: app.job.id,
       status: app.status,
-      appliedAt: app.appliedAt.toISOString(),
+      createdAt: app.createdAt.toISOString(),
       isAutoApplied: app.isAutoApplied,
-      skills: app.skills,
     }));
 
     return NextResponse.json({ applications: formattedApplications });

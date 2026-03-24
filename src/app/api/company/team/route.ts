@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
       email: member.email,
       role: member.role,
       status: member.status,
-      joinedAt: member.joinedAt.toISOString(),
+      joinedAt: member.joinedAt?.toISOString() || null,
     }));
 
     return NextResponse.json({ members: formattedMembers });
