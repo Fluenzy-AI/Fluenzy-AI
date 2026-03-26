@@ -8,26 +8,22 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireCompanyRoles } from "@/lib/company-auth";
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
 /**
  * GET /api/company/jobs/[id]
  * Get a specific job's details
  */
-export async function GET(req: NextRequest, { params }: RouteParams) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authResult = await requireCompanyRoles(req, ["ADMIN", "HR_RECRUITER", "HIRING_MANAGER"]);
     if (!authResult.authorized || !authResult.company) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const job = await prisma.externalJob.findFirst({
       where: {
-        id: params.id,
+        id: id,
         companyId: authResult.company.id,
       },
       include: {
@@ -57,17 +53,19 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
  * PATCH /api/company/jobs/[id]
  * Update a job (toggle active status, update details)
  */
-export async function PATCH(req: NextRequest, { params }: RouteParams) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authResult = await requireCompanyRoles(req, ["ADMIN", "HR_RECRUITER", "HIRING_MANAGER"]);
     if (!authResult.authorized || !authResult.company) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Verify job belongs to company
     const existingJob = await prisma.externalJob.findFirst({
       where: {
-        id: params.id,
+        id: id,
         companyId: authResult.company.id,
       },
     });
@@ -80,7 +78,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     const { isActive, title, department, location, city, employmentType, description, requirements, responsibilities, skills, experienceYears, salaryMin, salaryMax, autoApplyEnabled } = body;
 
     const job = await prisma.externalJob.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         ...(isActive !== undefined && { isActive }),
         ...(title !== undefined && { title }),
@@ -110,7 +108,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
  * DELETE /api/company/jobs/[id]
  * Delete a job posting
  */
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     // Only ADMIN can delete jobs
     const authResult = await requireCompanyRoles(req, ["ADMIN"]);
@@ -118,10 +116,12 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Verify job belongs to company
     const existingJob = await prisma.externalJob.findFirst({
       where: {
-        id: params.id,
+        id: id,
         companyId: authResult.company.id,
       },
     });
@@ -132,12 +132,12 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     // Delete associated applications first (or use cascading delete if configured)
     await prisma.externalJobApplication.deleteMany({
-      where: { jobId: params.id },
+      where: { jobId: id },
     });
 
     // Delete the job
     await prisma.externalJob.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({ success: true });

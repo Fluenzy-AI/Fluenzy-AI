@@ -8,7 +8,7 @@ import { requireCompanyRoles } from "@/lib/company-auth";
  */
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify company member authentication
@@ -17,7 +17,7 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Get assessment with results
     const assessment = await prisma.assessment.findUnique({
@@ -30,11 +30,11 @@ export async function GET(
           select: {
             id: true,
             score: true,
-            status: true,
+            passed: true,
             startedAt: true,
             completedAt: true,
-            candidateEmail: true,
-            candidateName: true,
+            candidateId: true,
+            timeTaken: true,
           },
           orderBy: {
             startedAt: 'desc',
@@ -52,16 +52,16 @@ export async function GET(
       return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
     }
 
-    // Calculate statistics
-    const completedResults = assessment.results.filter(r => r.status === 'COMPLETED');
-    const passedResults = completedResults.filter(r => r.score >= assessment.passingScore);
+    // Calculate statistics (all results are completed since they have scores)
+    const completedResults = assessment.results; // All results are completed
+    const passedResults = completedResults.filter(r => r.passed);
 
     const statistics = {
       totalAssigned: assessment.results.length,
       completed: completedResults.length,
       passed: passedResults.length,
       failed: completedResults.length - passedResults.length,
-      pending: assessment.results.filter(r => r.status === 'IN_PROGRESS').length,
+      pending: 0, // No pending status in schema
       averageScore: completedResults.length > 0
         ? Math.round(completedResults.reduce((sum, r) => sum + r.score, 0) / completedResults.length)
         : 0,
@@ -86,15 +86,15 @@ export async function GET(
       statistics,
       results: assessment.results.map(result => ({
         id: result.id,
-        candidateName: result.candidateName || 'Anonymous',
-        candidateEmail: result.candidateEmail,
+        candidateId: result.candidateId,
+        candidateName: 'Candidate', // Not in schema
+        candidateEmail: null, // Not in schema
         score: result.score,
-        status: result.status,
+        passed: result.passed,
+        status: result.passed ? 'COMPLETED' : 'COMPLETED', // All are completed
         startedAt: result.startedAt?.toISOString(),
         completedAt: result.completedAt?.toISOString(),
-        duration: result.startedAt && result.completedAt
-          ? Math.round((new Date(result.completedAt).getTime() - new Date(result.startedAt).getTime()) / (1000 * 60))
-          : null,
+        duration: Math.round((new Date(result.completedAt).getTime() - new Date(result.startedAt).getTime()) / (1000 * 60)),
       })),
     };
 
@@ -115,7 +115,7 @@ export async function GET(
  */
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify company member authentication
@@ -124,7 +124,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
 
     // Verify assessment belongs to this company
@@ -169,7 +169,7 @@ export async function PUT(
  */
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Verify company member authentication
@@ -178,7 +178,7 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Verify assessment belongs to this company
     const existingAssessment = await prisma.assessment.findUnique({

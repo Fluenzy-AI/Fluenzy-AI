@@ -86,44 +86,12 @@ export async function GET(req: NextRequest) {
     // Get total count
     const total = await prisma.autoApplyLog.count({ where }).catch(() => 0);
 
-    // Get logs with job and company details
+    // Get logs (no relations in schema, just IDs)
     const logs = await prisma.autoApplyLog.findMany({
       where,
-      include: {
-        // Old structure
-        job: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            location: true,
-            salary: true,
-          },
-        },
-        company: {
-          select: {
-            id: true,
-            name: true,
-            logo: true,
-          },
-        },
-        // New structure
-        externalJob: {
-          include: {
-            company: {
-              select: {
-                id: true,
-                name: true,
-                logo: true,
-              },
-            },
-          },
-        },
+      orderBy: {
+        createdAt: "desc"
       },
-      orderBy: [
-        { createdAt: "desc" },
-        { timestamp: "desc" }
-      ],
       take: limit,
       skip: offset,
     }).catch(() => []);
@@ -131,16 +99,11 @@ export async function GET(req: NextRequest) {
     // Calculate statistics
     const allActivities = await prisma.autoApplyLog.findMany({
       where: {
-        OR: [
-          { candidateId: session.user.id },
-          { userId: session.user.id },
-        ],
+        candidateId: session.user.id,
       },
       select: {
         status: true,
-        action: true,
         createdAt: true,
-        timestamp: true,
       },
     }).catch(() => []);
 
@@ -149,28 +112,30 @@ export async function GET(req: NextRequest) {
 
     const stats = {
       totalProcessed: allActivities.length,
-      applied: allActivities.filter(a => (a.action || a.status) === 'APPLIED').length,
-      skipped: allActivities.filter(a => (a.action || a.status) === 'SKIPPED').length,
-      failed: allActivities.filter(a => (a.action || a.status) === 'FAILED').length,
+      applied: allActivities.filter(a => a.status === 'APPLIED').length,
+      skipped: allActivities.filter(a => a.status === 'SKIPPED').length,
+      failed: allActivities.filter(a => a.status === 'FAILED').length,
       todayActivity: allActivities.filter(a =>
-        (a.timestamp || a.createdAt) >= todayStart
+        a.createdAt >= todayStart
       ).length,
     };
 
-    // Format the response - support both old and new structure
+    // Format the response - simplified without relations (they don't exist in schema)
     const formattedActivities = logs.map((log) => ({
       id: log.id,
       jobId: log.jobId,
-      jobTitle: log.externalJob?.title || log.job?.title || 'Unknown Job',
-      companyName: log.externalJob?.company?.name || log.company?.name || 'Unknown Company',
-      companyLogo: log.externalJob?.company?.logo || log.company?.logo,
-      location: log.externalJob?.location || log.job?.location || 'Location not specified',
-      salary: log.externalJob?.salary || log.job?.salary,
-      action: log.action || log.status,
-      reason: log.failureReason || log.skipReason || log.reason,
-      timestamp: (log.timestamp || log.createdAt).toISOString(),
-      matchScore: log.matchScore,
-      jobUrl: log.externalJob?.url || (log.job?.slug ? `/jobs/${log.job.slug}` : null),
+      companyId: log.companyId,
+      jobTitle: 'Job Details', // Relations not available in schema
+      companyName: 'Company Details', // Relations not available in schema
+      companyLogo: null,
+      location: 'N/A',
+      salary: null,
+      action: log.status,
+      reason: log.failureReason,
+      timestamp: log.createdAt.toISOString(),
+      appliedAt: log.appliedAt?.toISOString(),
+      matchScore: null,
+      jobUrl: null,
     }));
 
     return NextResponse.json({
