@@ -17,28 +17,28 @@ interface QuickAction {
 
 const QUICK_ACTIONS: QuickAction[] = [
   {
-    href: "/candidates/dashboard/profile",
+    href: "/profile",
     icon: <User className="w-5 h-5 text-white" />,
     label: "Edit Profile",
     description: "Update your info and skills",
     gradient: "from-[#7C5CFC] to-[#9F7FFF]",
   },
   {
-    href: "/candidates/dashboard/profile#resume",
+    href: "/profile#resume",
     icon: <Upload className="w-5 h-5 text-white" />,
     label: "Upload Resume",
     description: "Attach or update your CV",
     gradient: "from-[#22C55E] to-[#4ADE80]",
   },
   {
-    href: "/careers",
+    href: "/jobs",
     icon: <Briefcase className="w-5 h-5 text-white" />,
     label: "Browse Jobs",
     description: "Find new opportunities",
     gradient: "from-[#3B82F6] to-[#60A5FA]",
   },
   {
-    href: "/candidates/dashboard/ai-review",
+    href: "/train/ai-review",
     icon: <Sparkles className="w-5 h-5 text-white" />,
     label: "AI Resume Review",
     description: "Get instant feedback",

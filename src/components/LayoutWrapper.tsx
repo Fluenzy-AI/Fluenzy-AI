@@ -8,14 +8,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import NotificationBell from '@/components/NotificationBell';
-import { 
-  Menu, 
-  X, 
-  ChevronRight, 
+import {
+  Menu,
+  X,
+  ChevronRight,
   ChevronDown,
   Zap,
-  BarChart3, 
-  History, 
+  BarChart3,
+  History,
   Sun,
   Moon,
   Monitor,
@@ -38,7 +38,9 @@ import {
   Lock,
   Shuffle,
   Crown,
-  ShieldCheck
+  ShieldCheck,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
 
@@ -57,11 +59,17 @@ const navItems = [
   { href: '/train/corporate-voice', label: 'Voice Practice', icon: Phone },
 ];
 
+const jobCareerItems = [
+  { href: '/train/auto-apply-setup', label: 'Auto-Apply Setup', icon: ShieldCheck },
+  { href: '/train/applications', label: 'My Applications', icon: Briefcase },
+  { href: '/train/auto-apply-activity', label: 'Auto-Apply Activity', icon: BarChart3 },
+  { href: '/jobs', label: 'Browse Jobs', icon: Briefcase },
+];
+
 const secondaryNavItems = [
   { href: '/interview-guide', label: 'Interview Guide', icon: GraduationCap },
   { href: '/ats', label: 'Advanced ATS System', icon: ShieldCheck },
   { href: '/history', label: 'History', icon: History },
-  { href: '/jobs', label: 'Job', icon: Briefcase },
   { href: '/analytics', label: 'Analytics', icon: BarChart3 },
   { href: '/profile', label: 'Profile', icon: User },
   { href: '/billing', label: 'Billing', icon: CreditCard },
@@ -92,6 +100,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [planInfo, setPlanInfo] = useState<any>(null);
   const [imageError, setImageError] = useState(false);
+  const [autoApplyStatus, setAutoApplyStatus] = useState<{completed: boolean; enabled: boolean}>({
+    completed: false,
+    enabled: false,
+  });
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
   const isLight = resolvedTheme === 'light';
@@ -114,21 +126,34 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     setImageError(false);
   }, [avatarUrl]);
 
-  // Fetch user plan info
+  // Fetch user plan info and auto-apply status
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const planRes = await fetch('/api/user-plan');
-        
+        const [planRes, autoApplyRes] = await Promise.all([
+          fetch('/api/user-plan'),
+          fetch('/api/candidates/preferences')
+        ]);
+
         if (planRes.ok) {
           const data = await planRes.json();
           setPlanInfo(data);
+        }
+
+        if (autoApplyRes.ok) {
+          const autoApplyData = await autoApplyRes.json();
+          if (autoApplyData.preferences) {
+            setAutoApplyStatus({
+              completed: !!autoApplyData.preferences.targetRoles?.length || !!autoApplyData.preferences.preferredLocations?.length,
+              enabled: autoApplyData.preferences.autoApplyEnabled || false,
+            });
+          }
         }
       } catch (error) {
         console.error('Error fetching data:', error);
       }
     };
-    
+
     if (session?.user) {
       fetchData();
     }
@@ -153,7 +178,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isSuperAdminPage = pathname.startsWith('/superadmin');
   const isCollegePage = pathname.startsWith('/college');
   const isPortalPage = pathname.startsWith('/portal');
-  const isCandidateDashboardPage = pathname.startsWith('/candidates/dashboard');
 
   // ── Super Admin: completely separate clean layout ──────────────────────────
   if (isSuperAdminPage) {
@@ -285,12 +309,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   }
   // ────────────────────────────────────────────────────────────────────────────
 
-  // ── Candidate Dashboard: completely separate layout (no main-site nav) ─────
-  if (isCandidateDashboardPage) {
-    return <>{children}</>;
-  }
-  // ────────────────────────────────────────────────────────────────────────────
-
   // Show persistent sidebar if logged in and not on a special page
   const showSidebar = !!session?.user && !hideNav && !isAuthPage;
   const shouldExpandSidebar = sidebarOpen || sidebarHovered;
@@ -370,6 +388,55 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                     layoutId={mobile ? 'activeIndicator-mobile' : 'activeIndicator-desktop'}
                     className={`ml-auto w-1.5 h-1.5 rounded-full ${isLight ? 'bg-indigo-500' : 'bg-[#5B6CFF]'}`}
                   />
+                )}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className={`px-3 mt-6 mb-2`}>
+          <span className={`text-xs font-semibold uppercase tracking-wider ${currentTheme.textMuted}`}>
+            {collapsed ? 'J&C' : 'Job & Career'}
+          </span>
+        </div>
+
+        <nav className="space-y-1 px-3">
+          {jobCareerItems.map((item) => {
+            const isActive = pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={() => mobile && setMobileMenuOpen(false)}
+                className={`
+                  flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
+                  ${isActive
+                    ? isLight
+                      ? 'text-indigo-600 bg-indigo-50 font-semibold border-l-2 border-indigo-400'
+                      : `${currentTheme.accent} bg-cyan-500/10`
+                    : isLight
+                      ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
+                      : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                  }
+                  ${collapsed ? 'justify-center' : ''}
+                `}
+                title={collapsed ? item.label : undefined}
+              >
+                <item.icon size={20} className={isActive ? isLight ? 'text-indigo-500' : 'text-cyan-400' : ''} />
+                {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
+                {/* Special badge for Auto-Apply Setup */}
+                {!collapsed && item.href === '/train/auto-apply-setup' && (
+                  <div className={`ml-auto w-5 h-5 rounded-full flex items-center justify-center ${
+                    autoApplyStatus.completed
+                      ? 'bg-green-500/20 text-green-400'
+                      : 'bg-orange-500/20 text-orange-400'
+                  }`}>
+                    {autoApplyStatus.completed ? (
+                      <CheckCircle size={12} />
+                    ) : (
+                      <Clock size={12} />
+                    )}
+                  </div>
                 )}
               </Link>
             );

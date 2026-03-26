@@ -283,7 +283,7 @@ export default function JobsClient() {
                     </p>
                   </div>
                   <Link
-                    href="/candidates/dashboard/auto-apply"
+                    href="/train/auto-apply-setup"
                     className="text-sm bg-white hover:bg-white/90 text-purple-700 font-medium px-4 py-1.5 rounded-lg transition"
                   >
                     Set Up Now →
@@ -308,7 +308,7 @@ export default function JobsClient() {
                     </p>
                   </div>
                   <Link
-                    href="/candidates/dashboard/auto-apply"
+                    href="/train/auto-apply-setup"
                     className="text-sm bg-white hover:bg-white/90 text-amber-700 font-medium px-4 py-1.5 rounded-lg transition"
                   >
                     Enable Auto-Apply →
@@ -338,13 +338,13 @@ export default function JobsClient() {
                   </div>
                   <div className="flex items-center gap-4">
                     <Link
-                      href="/candidates/dashboard/auto-apply"
+                      href="/train/auto-apply-setup"
                       className="text-sm text-white/90 hover:text-white underline underline-offset-2"
                     >
                       Manage Preferences
                     </Link>
                     <Link
-                      href="/candidates/dashboard/applications"
+                      href="/train/applications"
                       className="text-sm text-white/90 hover:text-white underline underline-offset-2"
                     >
                       View Applications

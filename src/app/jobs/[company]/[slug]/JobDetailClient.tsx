@@ -412,22 +412,25 @@ function ApplyModal({
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [isFormInitialized, setIsFormInitialized] = useState(false);
 
-  // Initialize form only once on mount with candidate data
-  // Do NOT update form if candidate changes, as it would overwrite user edits
+  // Pre-fill form with candidate data when it becomes available (only once)
   useEffect(() => {
-    setForm(prev => ({
-      name: candidate?.name || prev.name,
-      email: candidate?.email || prev.email,
-      phone: candidate?.phone || prev.phone,
-      resumeUrl: candidate?.resumeUrl || prev.resumeUrl,
-      resumeName: candidate?.resumeName || prev.resumeName,
-      portfolio: candidate?.portfolio || prev.portfolio,
-      linkedin: candidate?.linkedin || prev.linkedin,
-      coverLetter: prev.coverLetter,
-      experience: candidate?.experience || prev.experience,
-    }));
-  }, []); // Empty dependency array - only run once on mount
+    if (candidate && !isFormInitialized) {
+      setForm(prev => ({
+        name: candidate.name || prev.name,
+        email: candidate.email || prev.email,
+        phone: candidate.phone || prev.phone,
+        resumeUrl: candidate.resumeUrl || prev.resumeUrl,
+        resumeName: candidate.resumeName || prev.resumeName,
+        portfolio: candidate.portfolio || prev.portfolio,
+        linkedin: candidate.linkedin || prev.linkedin,
+        coverLetter: prev.coverLetter,
+        experience: candidate.experience || prev.experience,
+      }));
+      setIsFormInitialized(true);
+    }
+  }, [candidate, isFormInitialized]);
 
   const isPaidPlan = candidate?.plan && candidate.plan !== "Free";
   const isOneClick = isPaidPlan && !candidate?.autoApplyEnabled;
@@ -839,7 +842,7 @@ function AutoApplyNoticeModal({
                 Got it
               </button>
               <button
-                onClick={() => window.location.href = "/candidates/dashboard/auto-apply"}
+                onClick={() => window.location.href = "/train/auto-apply-setup"}
                 className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition"
               >
                 Manage Settings

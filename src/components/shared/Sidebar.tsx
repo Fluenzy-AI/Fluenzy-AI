@@ -60,32 +60,32 @@ export function SidebarProvider({ children }: SidebarProviderProps) {
   );
 }
 
-// Navigation items
+// Navigation items - All routes unified under /train
 const NAV_ITEMS = [
   {
-    href: "/candidates/dashboard",
-    label: "Overview",
+    href: "/train",
+    label: "Training Hub",
     icon: Home,
     exact: true,
   },
   {
-    href: "/candidates/dashboard/applications",
+    href: "/train/applications",
     label: "My Applications",
     icon: FileText,
   },
   {
-    href: "/candidates/dashboard/auto-apply-setup",
+    href: "/train/auto-apply-setup",
     label: "Auto-Apply Setup",
     icon: Zap,
     badge: true, // Will show setup status badge
   },
   {
-    href: "/candidates/dashboard/jobs",
+    href: "/jobs",
     label: "Browse Jobs",
     icon: Briefcase,
   },
   {
-    href: "/candidates/dashboard/profile",
+    href: "/profile",
     label: "My Profile",
     icon: User,
   },
@@ -93,12 +93,13 @@ const NAV_ITEMS = [
     href: "/train",
     label: "Training Hub",
     icon: GraduationCap,
+    hidden: true, // Already listed as first item
   },
 ];
 
 const BOTTOM_NAV_ITEMS = [
   {
-    href: "/candidates/dashboard/settings",
+    href: "/settings",
     label: "Settings",
     icon: Settings,
   },

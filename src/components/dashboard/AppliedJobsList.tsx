@@ -217,7 +217,7 @@ export function AppliedJobsList({
         <h2 className="text-sm font-bold text-[#F1F0F5]">Applied Jobs</h2>
         {applications.length > 0 && (
           <Link
-            href="/candidates/dashboard/applications"
+            href="/train/applications"
             className="text-xs font-medium text-[#7C5CFC] hover:text-[#9F7FFF] transition-colors flex items-center gap-1"
           >
             View all

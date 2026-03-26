@@ -72,7 +72,7 @@ export function TopSkillsWidget({
           Add your skills to help employers find you
         </p>
         <Link
-          href="/candidates/dashboard/profile#skills"
+          href="/profile#skills"
           className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#7C5CFC]/10 text-[#9F7FFF] hover:bg-[#7C5CFC]/20 text-xs font-semibold transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />

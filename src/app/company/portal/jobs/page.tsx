@@ -48,8 +48,8 @@ interface Job {
   department: string;
   location: string;
   employmentType: string;
-  salaryMin: number;
-  salaryMax: number;
+  salaryMin?: string | number | null;
+  salaryMax?: string | number | null;
   experience: string;
   isActive: boolean;
   autoApplyEnabled: boolean;
@@ -325,7 +325,9 @@ export default function JobPostingsPage() {
                     </div>
                     <div className="flex items-center gap-1">
                       <DollarSign className="w-4 h-4" />
-                      ₹{job.salaryMin.toLocaleString()} - ₹{job.salaryMax.toLocaleString()}
+                      {job.salaryMin && job.salaryMax 
+                        ? `₹${Number(job.salaryMin).toLocaleString()} - ₹${Number(job.salaryMax).toLocaleString()}`
+                        : 'Not disclosed'}
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />

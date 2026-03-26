@@ -234,7 +234,7 @@ export function ProfileStrength({
       {/* CTA when incomplete */}
       {completion < 100 && (
         <Link
-          href="/candidates/dashboard/profile"
+          href="/profile"
           className="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#7C5CFC]/10 text-[#9F7FFF] hover:bg-[#7C5CFC]/20 text-xs font-semibold transition-colors"
         >
           Complete Profile

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const redirect = searchParams.get("redirect") || "/candidates/dashboard";
+  const redirect = searchParams.get("redirect") || "/train";
 
   const clientId = process.env.GOOGLE_CLIENT_ID!;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";

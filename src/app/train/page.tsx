@@ -646,7 +646,7 @@ export default function TrainPage() {
               </Button>
               {autoApplyStatus.canAutoApply ? (
                 <Button
-                  onClick={() => router.push('/candidates/dashboard/auto-apply')}
+                  onClick={() => router.push('/train/auto-apply-setup')}
                   className={`bg-gradient-to-r ${
                     autoApplyStatus.enabled
                       ? 'from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'

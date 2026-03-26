@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
   const callbackUrl = `${appUrl}/api/candidates/auth/google/callback`;
 
   // Parse redirect from state
-  let redirect = "/candidates/dashboard";
+  let redirect = "/train";
   if (stateRaw) {
     try {
       const parsed = JSON.parse(Buffer.from(stateRaw, "base64url").toString());

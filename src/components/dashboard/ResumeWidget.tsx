@@ -163,7 +163,7 @@ export function ResumeWidget({
             </a>
 
             <Link
-              href="/candidates/dashboard/profile#resume"
+              href="/profile#resume"
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#7C5CFC]/10 hover:bg-[#7C5CFC]/20 text-[#9F7FFF] text-xs font-medium transition-colors"
             >
               <RefreshCw className="w-3.5 h-3.5" />
@@ -181,7 +181,7 @@ export function ResumeWidget({
             No resume uploaded yet. Add one to auto-fill applications.
           </p>
           <Link
-            href="/candidates/dashboard/profile#resume"
+            href="/profile#resume"
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#22C55E]/10 text-[#22C55E] hover:bg-[#22C55E]/20 text-xs font-semibold transition-colors"
           >
             <Upload className="w-3.5 h-3.5" />
@@ -193,7 +193,7 @@ export function ResumeWidget({
       {/* AI Review upsell */}
       {resumeUrl && !aiScore && (
         <Link
-          href="/candidates/dashboard/ai-review"
+          href="/train/ai-review"
           className="flex items-center gap-3 mt-4 p-3 rounded-xl bg-gradient-to-r from-[#7C5CFC]/5 to-[#A855F7]/5 border border-[#7C5CFC]/10 hover:border-[#7C5CFC]/20 transition-colors"
         >
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#7C5CFC] to-[#A855F7] flex items-center justify-center">

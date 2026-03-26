@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all assessments for this company's jobs
+    // Get all assessments for this company
     const assessments = await prisma.assessment.findMany({
       where: {
         companyId: authResult.company.id,
@@ -26,15 +26,12 @@ export async function GET(req: NextRequest) {
         id: true,
         type: true,
         title: true,
+        description: true,
         questions: true,
         duration: true,
         passingScore: true,
+        isActive: true,
         createdAt: true,
-        job: {
-          select: {
-            title: true,
-          },
-        },
         _count: {
           select: {
             results: true,
@@ -48,12 +45,13 @@ export async function GET(req: NextRequest) {
       id: assessment.id,
       type: assessment.type,
       title: assessment.title,
-      jobTitle: assessment.job?.title || "General",
+      description: assessment.description,
       questions: Array.isArray(assessment.questions) ? assessment.questions.length : 0,
       duration: assessment.duration,
       passPercentage: assessment.passingScore || 70,
       assigned: assessment._count.results,
       completed: assessment._count.results, // In a real app, filter by completed status
+      isActive: assessment.isActive,
       createdAt: assessment.createdAt.toISOString(),
     }));
 
@@ -80,7 +78,6 @@ export async function POST(req: NextRequest) {
     const {
       type,
       title,
-      jobId,
       duration,
       passPercentage,
       description,
@@ -90,17 +87,8 @@ export async function POST(req: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!type || !title || !jobId || !duration || passPercentage === undefined) {
+    if (!type || !title || !duration || passPercentage === undefined) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
-    }
-
-    // Verify the job belongs to this company
-    const job = await prisma.externalJob.findUnique({
-      where: { id: jobId },
-    });
-
-    if (!job || job.companyId !== authResult.company.id) {
-      return NextResponse.json({ error: "Invalid job" }, { status: 400 });
     }
 
     // Create assessment
@@ -112,12 +100,8 @@ export async function POST(req: NextRequest) {
         duration,
         passingScore: passPercentage,
         companyId: authResult.company.id,
-        jobId,
         questions: type === "MCQ" ? questions : [],
-        additionalData: {
-          codingProblem,
-          codingLanguage,
-        },
+        createdBy: authResult.member.id,
       },
     });
 
