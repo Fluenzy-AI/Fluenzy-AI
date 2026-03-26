@@ -187,28 +187,79 @@ export default function AutoApplySetupPage() {
 
     const usagePercentage = preferences.monthlyLimit > 0 ?
       (preferences.autoApplyCount / preferences.monthlyLimit) * 100 : 0;
+    
+    const remaining = preferences.monthlyLimit - preferences.autoApplyCount;
+    const isLowUsage = remaining <= 10 && remaining > 0;
+    const isExhausted = remaining <= 0;
 
     return (
-      <div className="space-y-3">
-        <div className="flex justify-between items-center">
-          <span className="text-sm font-medium">Monthly Usage</span>
-          <span className={`text-sm ${usagePercentage > 80 ? 'text-orange-400' : 'text-green-400'}`}>
-            {preferences.autoApplyCount}/{preferences.monthlyLimit}
-          </span>
+      <div className="space-y-4">
+        {/* Large counter display like training modules */}
+        <div className="text-center py-4">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Zap className={`w-5 h-5 ${
+              isExhausted ? 'text-red-400' : 
+              isLowUsage ? 'text-orange-400' : 
+              'text-cyan-400'
+            }`} />
+            <span className={`text-3xl font-bold ${
+              isExhausted ? 'text-red-400' : 
+              isLowUsage ? 'text-orange-400' : 
+              'text-cyan-400'
+            }`}>
+              {remaining}
+            </span>
+            <span className="text-gray-400 text-xl">/ {preferences.monthlyLimit}</span>
+          </div>
+          <p className="text-sm text-gray-400">
+            {remaining === 0 ? 'No applications remaining' :
+             remaining === 1 ? '1 application remaining' :
+             `${remaining} applications remaining`}
+          </p>
         </div>
-        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-          <div
-            className={`h-2 rounded-full transition-all ${
-              usagePercentage > 80 ? 'bg-orange-500' : 'bg-green-500'
-            }`}
-            style={{ width: `${Math.min(usagePercentage, 100)}%` }}
-          />
+
+        <Separator className="bg-gray-700" />
+
+        {/* Usage breakdown */}
+        <div className="space-y-2">
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-400">Used this month</span>
+            <span className={`font-semibold ${
+              usagePercentage > 80 ? 'text-orange-400' : 'text-green-400'
+            }`}>
+              {preferences.autoApplyCount}
+            </span>
+          </div>
+          <div className="w-full bg-gray-700 rounded-full h-2">
+            <div
+              className={`h-2 rounded-full transition-all ${
+                usagePercentage > 80 ? 'bg-orange-500' : 'bg-cyan-500'
+              }`}
+              style={{ width: `${Math.min(usagePercentage, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-gray-500 text-center">
+            {planInfo.plan === 'Standard' ? 'Standard Plan: 300/month' :
+             planInfo.plan === 'Pro' ? 'Pro Plan: 30 high-quality/month' :
+             'Unlimited applications'}
+          </p>
         </div>
-        <p className="text-xs text-gray-500">
-          {planInfo.plan === 'Standard' ? '150 auto-applies per month' :
-           planInfo.plan === 'Pro' ? '30 high-quality targeted auto-applies per month' :
-           'Unlimited auto-applies'}
-        </p>
+
+        {/* Warning or info messages */}
+        {isExhausted && (
+          <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
+            <p className="text-xs text-red-400 text-center">
+              Monthly limit reached. Resets on 1st of next month.
+            </p>
+          </div>
+        )}
+        {isLowUsage && (
+          <div className="p-3 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+            <p className="text-xs text-orange-400 text-center">
+              Only {remaining} application{remaining > 1 ? 's' : ''} left this month!
+            </p>
+          </div>
+        )}
       </div>
     );
   };
@@ -249,7 +300,7 @@ export default function AutoApplySetupPage() {
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center">
               <Settings className="w-6 h-6 text-white" />
             </div>
-            <div>
+            <div className="flex-1">
               <h1 className={`text-3xl font-bold ${currentTheme.text}`}>
                 Auto-Apply Setup
               </h1>
@@ -257,6 +308,26 @@ export default function AutoApplySetupPage() {
                 Configure your job application preferences and let AI apply for you
               </p>
             </div>
+            {/* Usage indicator like training modules */}
+            {planInfo && planInfo.plan !== 'Free' && (
+              <div className="hidden md:flex items-center gap-3 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3">
+                <Zap className={`w-5 h-5 ${
+                  preferences.monthlyLimit - preferences.autoApplyCount <= 0 ? 'text-red-400' :
+                  preferences.monthlyLimit - preferences.autoApplyCount <= 10 ? 'text-orange-400' :
+                  'text-cyan-400'
+                }`} />
+                <div>
+                  <p className="text-xs text-gray-400">Applications Remaining</p>
+                  <p className={`text-lg font-bold ${
+                    preferences.monthlyLimit - preferences.autoApplyCount <= 0 ? 'text-red-400' :
+                    preferences.monthlyLimit - preferences.autoApplyCount <= 10 ? 'text-orange-400' :
+                    'text-cyan-400'
+                  }`}>
+                    {preferences.monthlyLimit - preferences.autoApplyCount} / {preferences.monthlyLimit}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </motion.div>
 
@@ -275,20 +346,49 @@ export default function AutoApplySetupPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Auto-Apply Status</p>
-                    <p className="text-sm text-gray-500">
-                      {preferences.autoApplyEnabled ? 'Applications will be submitted automatically' : 'Manual applications only'}
-                    </p>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">Auto-Apply Status</p>
+                      <p className="text-sm text-gray-500">
+                        {preferences.autoApplyEnabled ? 'Applications will be submitted automatically' : 'Manual applications only'}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={preferences.autoApplyEnabled}
+                      onCheckedChange={(enabled) =>
+                        setPreferences(prev => ({ ...prev, autoApplyEnabled: enabled }))
+                      }
+                      disabled={planInfo?.plan === 'Free'}
+                    />
                   </div>
-                  <Switch
-                    checked={preferences.autoApplyEnabled}
-                    onCheckedChange={(enabled) =>
-                      setPreferences(prev => ({ ...prev, autoApplyEnabled: enabled }))
-                    }
-                    disabled={planInfo?.plan === 'Free'}
-                  />
+                  
+                  {/* Mini usage counter in toggle card */}
+                  {planInfo?.plan !== 'Free' && preferences.monthlyLimit > 0 && (
+                    <div className="pt-3 border-t border-gray-700">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-400 flex items-center gap-1">
+                          <Zap className="w-3.5 h-3.5" />
+                          This Month
+                        </span>
+                        <span className={`font-semibold ${
+                          preferences.monthlyLimit - preferences.autoApplyCount <= 0 ? 'text-red-400' :
+                          preferences.monthlyLimit - preferences.autoApplyCount <= 10 ? 'text-orange-400' :
+                          'text-cyan-400'
+                        }`}>
+                          {preferences.monthlyLimit - preferences.autoApplyCount} remaining
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-700 rounded-full h-1.5 mt-2">
+                        <div
+                          className={`h-1.5 rounded-full transition-all ${
+                            (preferences.autoApplyCount / preferences.monthlyLimit) * 100 > 80 ? 'bg-orange-500' : 'bg-cyan-500'
+                          }`}
+                          style={{ width: `${Math.min((preferences.autoApplyCount / preferences.monthlyLimit) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -498,12 +598,20 @@ export default function AutoApplySetupPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Usage Stats */}
-            <Card className={`${currentTheme.cardBg} border ${currentTheme.cardBorder}`}>
+            <Card className={`${currentTheme.cardBg} border ${currentTheme.cardBorder} ${
+              preferences.autoApplyEnabled ? 'ring-2 ring-cyan-500/20' : ''
+            }`}>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 text-blue-400" />
-                  Usage Stats
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Clock className="w-5 h-5 text-cyan-400" />
+                  Monthly Usage Tracker
                 </CardTitle>
+                {preferences.autoApplyEnabled && (
+                  <Badge variant="outline" className="w-fit mt-2 bg-green-500/10 text-green-400 border-green-500/20">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Auto-Apply Active
+                  </Badge>
+                )}
               </CardHeader>
               <CardContent>
                 {getUsageDisplay()}

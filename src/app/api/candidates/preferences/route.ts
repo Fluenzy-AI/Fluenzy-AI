@@ -9,6 +9,8 @@ import prisma from "@/lib/prisma";
 import { getCandidateSession } from "@/lib/candidate-auth";
 import { getAutoApplyLimitByPlan } from "@/lib/company-auth";
 import { z } from "zod";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 
 const PreferencesSchema = z.object({
   autoApplyEnabled: z.boolean().optional(),
@@ -22,14 +24,57 @@ const PreferencesSchema = z.object({
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getCandidateSession();
+    console.log('[CANDIDATE_PREFERENCES_GET] Checking session...');
+    
+    // Try candidate session first (JWT)
+    let session = await getCandidateSession();
+    let candidateId: string | null = session?.id || null;
+    let userEmail: string | null = session?.email || null;
+    
+    // If no candidate session, check NextAuth session
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.log('[CANDIDATE_PREFERENCES_GET] No candidate session, checking NextAuth...');
+      const nextAuthSession = await getServerSession(authOptions);
+      
+      if (!nextAuthSession?.user?.email) {
+        console.log('[CANDIDATE_PREFERENCES_GET] No NextAuth session found');
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      
+      console.log('[CANDIDATE_PREFERENCES_GET] NextAuth user:', nextAuthSession.user.email);
+      userEmail = nextAuthSession.user.email;
+      
+      // Find or create CandidateUser by email
+      let candidateUser = await prisma.candidateUser.findFirst({
+        where: {
+          email: {
+            equals: userEmail,
+            mode: "insensitive"
+          }
+        }
+      });
+      
+      if (!candidateUser) {
+        console.log('[CANDIDATE_PREFERENCES_GET] Creating new CandidateUser for:', userEmail);
+        // Auto-create CandidateUser from NextAuth user
+        candidateUser = await prisma.candidateUser.create({
+          data: {
+            email: userEmail,
+            name: nextAuthSession.user.name || '',
+            password: '', // No password needed for auto-linked accounts
+          }
+        });
+        console.log('[CANDIDATE_PREFERENCES_GET] Created CandidateUser:', candidateUser.id);
+      }
+      
+      candidateId = candidateUser.id;
     }
+
+    console.log('[CANDIDATE_PREFERENCES_GET] Using candidateId:', candidateId);
 
     // Get candidate profile to determine plan
     const candidate = await prisma.candidateUser.findUnique({
-      where: { id: session.id },
+      where: { id: candidateId! },
       include: { profile: true },
     });
 
@@ -45,21 +90,29 @@ export async function GET(req: NextRequest) {
           mode: "insensitive"
         }
       },
-      select: { plan: true },
+      select: { plan: true, email: true, name: true },
     });
+    
+    console.log('[CANDIDATE_PREFS_GET] Candidate email:', candidate.email);
+    console.log('[CANDIDATE_PREFS_GET] Linked user:', linkedUser);
+    
     const plan = linkedUser?.plan || "Free";
     const monthlyLimit = getAutoApplyLimitByPlan(plan);
+    
+    console.log('[CANDIDATE_PREFS_GET] Determined plan:', plan);
+    console.log('[CANDIDATE_PREFS_GET] Monthly limit:', monthlyLimit);
+    console.log('[CANDIDATE_PREFS_GET] Using candidateId:', candidateId);
 
     // Get or create preferences
     let preferences = await prisma.candidateJobPreferences.findUnique({
-      where: { candidateId: session.id },
+      where: { candidateId: candidateId! },
     });
 
     if (!preferences) {
       // Create default preferences
       preferences = await prisma.candidateJobPreferences.create({
         data: {
-          candidateId: session.id,
+          candidateId: candidateId!,
           autoApplyEnabled: false,
           targetRoles: [],
           targetLocations: [],
@@ -98,7 +151,7 @@ export async function GET(req: NextRequest) {
         maxExperience: preferences.maxExperience,
         excludeCompanies: preferences.excludeCompanies,
         autoApplyCount: preferences.autoApplyCount,
-        monthlyLimit: preferences.monthlyLimit,
+        monthlyLimit: monthlyLimit, // Use dynamically calculated limit based on current plan
       },
       plan,
       canAutoApply: plan !== "Free",
@@ -111,10 +164,51 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getCandidateSession();
+    console.log('[CANDIDATE_PREFERENCES_PATCH] Checking session...');
+    
+    // Try candidate session first (JWT)
+    let session = await getCandidateSession();
+    let candidateId: string | null = session?.id || null;
+    let userEmail: string | null = session?.email || null;
+    
+    // If no candidate session, check NextAuth session
     if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      console.log('[CANDIDATE_PREFERENCES_PATCH] No candidate session, checking NextAuth...');
+      const nextAuthSession = await getServerSession(authOptions);
+      
+      if (!nextAuthSession?.user?.email) {
+        console.log('[CANDIDATE_PREFERENCES_PATCH] No NextAuth session found');
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      
+      console.log('[CANDIDATE_PREFERENCES_PATCH] NextAuth user:', nextAuthSession.user.email);
+      userEmail = nextAuthSession.user.email;
+      
+      // Find or create CandidateUser by email
+      let candidateUser = await prisma.candidateUser.findFirst({
+        where: {
+          email: {
+            equals: userEmail,
+            mode: "insensitive"
+          }
+        }
+      });
+      
+      if (!candidateUser) {
+        console.log('[CANDIDATE_PREFERENCES_PATCH] Creating new CandidateUser for:', userEmail);
+        candidateUser = await prisma.candidateUser.create({
+          data: {
+            email: userEmail,
+            name: nextAuthSession.user.name || '',
+            password: '',
+          }
+        });
+      }
+      
+      candidateId = candidateUser.id;
     }
+
+    console.log('[CANDIDATE_PREFERENCES_PATCH] Using candidateId:', candidateId);
 
     const body = await req.json();
     const parsed = PreferencesSchema.safeParse(body);
@@ -126,7 +220,7 @@ export async function PATCH(req: NextRequest) {
 
     // Get candidate to determine plan
     const candidate = await prisma.candidateUser.findUnique({
-      where: { id: session.id },
+      where: { id: candidateId! },
       select: { email: true },
     });
 
@@ -149,18 +243,24 @@ export async function PATCH(req: NextRequest) {
 
     // Update or create preferences
     const preferences = await prisma.candidateJobPreferences.upsert({
-      where: { candidateId: session.id },
+      where: { candidateId: candidateId! },
       create: {
-        candidateId: session.id,
+        candidateId: candidateId!,
         ...data,
         monthlyLimit,
       },
-      update: data,
+      update: {
+        ...data,
+        monthlyLimit, // Always sync monthlyLimit with current plan
+      },
     });
 
     return NextResponse.json({
       success: true,
-      preferences,
+      preferences: {
+        ...preferences,
+        monthlyLimit, // Return dynamically calculated limit
+      },
     });
   } catch (error) {
     console.error("[CANDIDATE_PREFS_PATCH]", error);

@@ -89,8 +89,17 @@ export async function POST(req: NextRequest) {
     const existingApplication = await prisma.externalJobApplication.findFirst({
       where: {
         jobId: data.jobId,
-        email: data.email.toLowerCase(),
+        email: { equals: data.email, mode: "insensitive" }, // Case-insensitive check
       },
+    });
+
+    console.log('[JOBS_APPLY] Duplicate check:', {
+      jobId: data.jobId,
+      email: data.email,
+      found: !!existingApplication,
+      existingId: existingApplication?.id,
+      existingEmail: existingApplication?.email,
+      existingCandidateId: existingApplication?.candidateId,
     });
 
     if (existingApplication) {
@@ -102,6 +111,10 @@ export async function POST(req: NextRequest) {
 
     // Check if candidate is logged in
     const candidate = await getCandidateFromRequest(req);
+    
+    console.log('[JOBS_APPLY] Job ID:', data.jobId);
+    console.log('[JOBS_APPLY] Applicant email:', data.email);
+    console.log('[JOBS_APPLY] Candidate session:', candidate ? { id: candidate.id, email: candidate.email } : 'Not logged in');
 
     // Create application
     const application = await prisma.externalJobApplication.create({
@@ -121,6 +134,8 @@ export async function POST(req: NextRequest) {
         isAutoApplied: false,
       },
     });
+    
+    console.log('[JOBS_APPLY] Application created:', application.id);
 
     return NextResponse.json({
       success: true,

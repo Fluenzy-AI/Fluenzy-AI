@@ -300,8 +300,8 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                     </Link>
                   </div>
                 )
-              ) : (pathname.startsWith("/company") || pathname.startsWith("/jobs")) ? (
-                // Company auth buttons on company/jobs pages
+              ) : pathname.startsWith("/company") ? (
+                // Company auth buttons on /company pages only
                 companyMember ? (
                   <div className="flex items-center gap-2">
                     <Link href="/company/portal"
@@ -326,7 +326,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                   </div>
                 )
               ) : (
-                // Default: Landing page - show only Sign In button
+                // Default: Landing page & /jobs pages - show only Sign In button
                 <Button
                   variant="hero"
                   className="h-9 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] sm:px-8 sm:text-xs sm:tracking-widest"

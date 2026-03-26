@@ -370,7 +370,7 @@ export function getAutoApplyLimitByPlan(plan: string): number {
     case "Free":
       return 0; // Manual only
     case "Standard":
-      return 150;
+      return 300; // Changed from 150 to 300 as per requirement
     case "Pro":
       return 30; // High-quality targeted
     case "Enterprise":

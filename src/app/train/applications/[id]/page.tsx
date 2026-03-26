@@ -66,7 +66,7 @@ interface TimelineEvent {
   data?: any;
 }
 
-const statusConfig = {
+const statusConfig: Record<string, { label: string; color: string; icon: any; step: number }> = {
   APPLIED: {
     label: 'Applied',
     color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
@@ -78,6 +78,18 @@ const statusConfig = {
     color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
     icon: Eye,
     step: 2,
+  },
+  REVIEWED: {
+    label: 'Reviewed',
+    color: 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400',
+    icon: Eye,
+    step: 2,
+  },
+  PENDING: {
+    label: 'Pending',
+    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+    icon: Clock,
+    step: 1,
   },
   SHORTLISTED: {
     label: 'Shortlisted',
@@ -180,7 +192,12 @@ export default function ApplicationDetailPage() {
     return null;
   }
 
-  const statusInfo = statusConfig[application.status];
+  const statusInfo = statusConfig[application.status] || {
+    label: application.status || 'Unknown',
+    color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
+    icon: Clock,
+    step: 1,
+  };
   const StatusIcon = statusInfo.icon;
   const currentStep = getCurrentStep();
 

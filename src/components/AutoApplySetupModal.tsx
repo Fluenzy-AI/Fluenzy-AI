@@ -314,7 +314,7 @@ export default function AutoApplySetupModal({
                               Please complete your profile before setting up auto-apply.
                             </p>
                             <a
-                              href="/candidates/dashboard/profile"
+                              href="/profile"
                               className="inline-block mt-2 text-sm text-amber-400 hover:text-amber-300 underline"
                             >
                               Complete Profile →

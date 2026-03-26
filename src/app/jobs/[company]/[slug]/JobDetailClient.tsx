@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   MapPin, Briefcase, Clock, Building2, Globe, Zap, Share2, Check,
-  ChevronLeft, X, Upload, FileText, Loader2, ExternalLink
+  ChevronLeft, X, Upload, FileText, Loader2, ExternalLink, LogIn
 } from "lucide-react";
 
 interface Job {
@@ -66,36 +67,48 @@ interface CandidateData {
 }
 
 export default function JobDetailClient({ job }: { job: Job }) {
+  const router = useRouter();
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [copied, setCopied] = useState(false);
   const [candidate, setCandidate] = useState<CandidateData | null>(null);
   const [showAutoApplyNotice, setShowAutoApplyNotice] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
 
   useEffect(() => {
     // Check if candidate is logged in and fetch profile + preferences
+    setCheckingAuth(true);
     Promise.all([
-      fetch("/api/candidates/me", { credentials: "include" }).then(r => r.json()),
-      fetch("/api/candidates/preferences", { credentials: "include" }).then(r => r.json()),
+      fetch("/api/candidates/me", { credentials: "include" }).then(r => r.ok ? r.json() : null),
+      fetch("/api/candidates/preferences", { credentials: "include" }).then(r => r.ok ? r.json() : null),
     ])
       .then(([userData, prefData]) => {
-        if (userData.candidate?.profile) {
+        if (userData?.candidate) {
+          setIsLoggedIn(true);
           setCandidate({
             name: userData.candidate.name,
             email: userData.candidate.email,
-            phone: userData.candidate.profile.phone,
-            resumeUrl: userData.candidate.profile.resumeUrl,
-            resumeName: userData.candidate.profile.resumeName,
-            portfolio: userData.candidate.profile.portfolio,
-            linkedin: userData.candidate.profile.linkedin,
-            experience: userData.candidate.profile.experience,
+            phone: userData.candidate.profile?.phone,
+            resumeUrl: userData.candidate.profile?.resumeUrl,
+            resumeName: userData.candidate.profile?.resumeName,
+            portfolio: userData.candidate.profile?.portfolio,
+            linkedin: userData.candidate.profile?.linkedin,
+            experience: userData.candidate.profile?.experience,
             plan: userData.user?.plan || "Free",
-            autoApplyEnabled: prefData.preferences?.autoApplyEnabled || false,
-            autoApplyCount: prefData.preferences?.autoApplyCount || 0,
-            autoApplyLimit: prefData.preferences?.monthlyLimit || 0,
+            autoApplyEnabled: prefData?.preferences?.autoApplyEnabled || false,
+            autoApplyCount: prefData?.preferences?.autoApplyCount || 0,
+            autoApplyLimit: prefData?.preferences?.monthlyLimit || 0,
           });
+        } else {
+          setIsLoggedIn(false);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        setIsLoggedIn(false);
+      })
+      .finally(() => {
+        setCheckingAuth(false);
+      });
   }, []);
 
   const handleShare = async () => {
@@ -174,26 +187,43 @@ export default function JobDetailClient({ job }: { job: Job }) {
                 {copied ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
                 {copied ? "Copied!" : "Share"}
               </button>
-              <button
-                onClick={() => {
-                  // If paid plan + auto-apply enabled, show notice instead of modal
-                  if (candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled) {
-                    setShowAutoApplyNotice(true);
-                  } else {
-                    setShowApplyModal(true);
-                  }
-                }}
-                className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition"
-              >
-                {candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled ? (
-                  <>
-                    <Check className="w-4 h-4" />
-                    Auto-Apply Active
-                  </>
-                ) : (
-                  "Apply Now"
-                )}
-              </button>
+              {checkingAuth ? (
+                <button
+                  disabled
+                  className="flex items-center gap-2 px-6 py-2.5 bg-slate-700 text-slate-400 rounded-xl text-sm font-medium cursor-wait"
+                >
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading...
+                </button>
+              ) : isLoggedIn ? (
+                <button
+                  onClick={() => {
+                    if (candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled) {
+                      setShowAutoApplyNotice(true);
+                    } else {
+                      setShowApplyModal(true);
+                    }
+                  }}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition"
+                >
+                  {candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Auto-Apply Active
+                    </>
+                  ) : (
+                    "Apply Now"
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`)}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-medium transition"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign In to Apply
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -303,22 +333,40 @@ export default function JobDetailClient({ job }: { job: Job }) {
                 </div>
               )}
 
-              <button
-                onClick={() => {
-                  if (candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled) {
-                    setShowAutoApplyNotice(true);
-                  } else {
-                    setShowApplyModal(true);
-                  }
-                }}
-                className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition"
-              >
-                {candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled ? (
-                  <>Auto-Apply Active</>
-                ) : (
-                  <>Apply for this Job</>
-                )}
-              </button>
+              {checkingAuth ? (
+                <button
+                  disabled
+                  className="w-full mt-6 py-3 bg-slate-700 text-slate-400 rounded-xl font-medium cursor-wait flex items-center justify-center gap-2"
+                >
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Loading...
+                </button>
+              ) : isLoggedIn ? (
+                <button
+                  onClick={() => {
+                    if (candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled) {
+                      setShowAutoApplyNotice(true);
+                    } else {
+                      setShowApplyModal(true);
+                    }
+                  }}
+                  className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition"
+                >
+                  {candidate?.plan && candidate.plan !== "Free" && candidate.autoApplyEnabled ? (
+                    <>Auto-Apply Active</>
+                  ) : (
+                    <>Apply for this Job</>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={() => router.push(`/login?callbackUrl=${encodeURIComponent(window.location.pathname)}`)}
+                  className="w-full mt-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition flex items-center justify-center gap-2"
+                >
+                  <LogIn className="w-4 h-4" />
+                  Sign In to Apply
+                </button>
+              )}
             </div>
 
             {/* Company Card */}

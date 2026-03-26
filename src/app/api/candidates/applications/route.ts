@@ -33,9 +33,44 @@ export async function GET(req: NextRequest) {
       whereClause.status = status;
     }
 
+    // Get user's linked candidate account to match by candidateId
+    const linkedCandidate = await prisma.candidateUser.findFirst({
+      where: {
+        email: {
+          equals: session.user.email,
+          mode: "insensitive"
+        }
+      },
+      select: { id: true, email: true }
+    });
+
+    console.log('[CANDIDATES_APPLICATIONS_GET] Session user:', {
+      id: session.user.id,
+      email: session.user.email,
+    });
+    console.log('[CANDIDATES_APPLICATIONS_GET] Linked candidate:', linkedCandidate);
+
+    // Build filter conditions for external jobs
+    const externalWhereClause: any = {
+      OR: [
+        ...(linkedCandidate ? [{ candidateId: linkedCandidate.id }] : []),
+        { email: { equals: session.user.email, mode: "insensitive" } },
+      ],
+    };
+
+    if (status && status !== 'all') {
+      externalWhereClause.status = status;
+    }
+
+    if (source && source !== 'all') {
+      externalWhereClause.isAutoApplied = source === 'auto_apply';
+    }
+
+    console.log('[CANDIDATES_APPLICATIONS_GET] Query where clause:', JSON.stringify(externalWhereClause, null, 2));
+
     // Support both old and new application structures
     const [jobApplications, externalApplications] = await Promise.all([
-      // Old structure - internal jobs
+      // Old structure - internal jobs (Fluenzy careers)
       prisma.jobApplication.findMany({
         where: whereClause,
         include: {
@@ -48,12 +83,7 @@ export async function GET(req: NextRequest) {
               location: true,
               employmentType: true,
               salaryRange: true,
-              company: {
-                select: {
-                  name: true,
-                  logo: true,
-                },
-              },
+              // Note: Job model doesn't have company relation - it's Fluenzy's own jobs
             },
           },
         },
@@ -61,37 +91,34 @@ export async function GET(req: NextRequest) {
       }),
 
       // New structure - external jobs with application tracking
-      prisma.application.findMany({
-        where: {
-          userId: session.user.id,
-          ...(status && status !== 'all' && { status: status }),
-          ...(source && source !== 'all' && { source: source.toUpperCase() }),
-        },
+      prisma.externalJobApplication.findMany({
+        where: externalWhereClause,
         include: {
-          externalJob: {
+          job: {
             include: {
               company: {
                 select: {
                   name: true,
-                  logo: true,
+                  logoUrl: true,
+                  slug: true,
                 },
               },
             },
           },
         },
         orderBy: {
-          appliedAt: 'desc',
+          createdAt: 'desc',
         },
-      }).catch(() => []) // Fallback to empty array if table doesn't exist
+      }).catch(() => []) // Fallback to empty array if error
     ]);
 
-    // Format old applications
+    // Format old applications (Fluenzy internal careers)
     const formattedOldApplications = jobApplications.map((app) => ({
       id: app.id,
       jobId: app.jobId,
       jobTitle: app.job?.title || 'Unknown Job',
-      companyName: app.job?.company?.name || 'Unknown Company',
-      companyLogo: app.job?.company?.logo,
+      companyName: 'Fluenzy AI', // Fluenzy's own jobs
+      companyLogo: null, // Fluenzy logo can be added here
       location: app.job?.location || 'Location not specified',
       salary: app.job?.salaryRange,
       appliedAt: app.createdAt.toISOString(),
@@ -102,22 +129,40 @@ export async function GET(req: NextRequest) {
       lastUpdated: app.updatedAt?.toISOString() || app.createdAt.toISOString(),
     }));
 
-    // Format new applications
+    // Format new applications (external jobs)
     const formattedNewApplications = externalApplications.map((app) => ({
       id: app.id,
       jobId: app.jobId,
-      jobTitle: app.externalJob?.title || 'Unknown Job',
-      companyName: app.externalJob?.company?.name || 'Unknown Company',
-      companyLogo: app.externalJob?.company?.logo,
-      location: app.externalJob?.location || 'Location not specified',
-      salary: app.externalJob?.salary,
-      appliedAt: app.appliedAt.toISOString(),
+      jobTitle: app.job?.title || 'Unknown Job',
+      companyName: app.job?.company?.name || 'Unknown Company',
+      companyLogo: app.job?.company?.logoUrl,
+      companySlug: app.job?.company?.slug,
+      location: app.job?.city || app.job?.location || 'Remote',
+      salary: app.job?.salaryMin && app.job?.salaryMax 
+        ? `₹${app.job.salaryMin} - ₹${app.job.salaryMax}` 
+        : 'Not disclosed',
+      appliedAt: app.createdAt.toISOString(),
       status: app.status,
-      source: app.source || 'MANUAL',
-      jobType: app.externalJob?.jobType || 'Full-time',
-      experienceLevel: app.externalJob?.experienceLevel,
+      source: app.isAutoApplied ? 'AUTO_APPLY' : 'MANUAL',
+      jobType: app.job?.employmentType || 'FULL_TIME',
+      experienceLevel: app.job?.experienceYears || 'Not specified',
       lastUpdated: app.updatedAt.toISOString(),
+      isAutoApplied: app.isAutoApplied,
+      fluenzyScore: app.fluenzyScore,
+      confidenceScore: app.confidenceScore,
     }));
+
+    console.log('[CANDIDATES_APPLICATIONS_GET] Found applications:', {
+      oldApplications: jobApplications.length,
+      externalApplications: externalApplications.length,
+      total: jobApplications.length + externalApplications.length,
+      externalSample: externalApplications[0] ? {
+        id: externalApplications[0].id,
+        email: externalApplications[0].email,
+        candidateId: externalApplications[0].candidateId,
+        jobTitle: externalApplications[0].job?.title,
+      } : 'none'
+    });
 
     // Combine and sort all applications
     const allApplications = [...formattedOldApplications, ...formattedNewApplications];

@@ -87,12 +87,14 @@ const Pricing = () => {
           const pricingData = await response.json();
 
           // Convert to array and merge with features
-          const plansArray = Object.entries(pricingData).map(([planName, data]: [string, any]) => ({
-            name: planName,
-            price: data.price,
-            currency: data.currency,
-            ...planFeatures[planName as keyof typeof planFeatures],
-          }));
+          const plansArray = Object.entries(pricingData)
+            .filter(([planName]) => planName in planFeatures) // Only include plans we have features for
+            .map(([planName, data]: [string, any]) => ({
+              name: planName,
+              price: data.price,
+              currency: data.currency,
+              ...planFeatures[planName as keyof typeof planFeatures],
+            }));
 
           setPlans(plansArray);
         }
@@ -306,7 +308,7 @@ const Pricing = () => {
                 )}
                 <div className="text-center mb-8">
                   <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-4 bg-gradient-to-br ${plan.popular ? "from-purple-500 to-blue-500" : "from-slate-600 to-slate-500"} group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                    <plan.icon className="w-8 h-8 text-white" />
+                    {plan.icon ? <plan.icon className="w-8 h-8 text-white" /> : <Star className="w-8 h-8 text-white" />}
                   </div>
 
                   <h3 className="text-2xl font-bold mb-2 text-white">
