@@ -19,7 +19,8 @@ const planFeatures = {
   Free: {
     description: "Start your interview preparation journey",
     features: [
-      "3 interview sessions per month",
+      "2 training sessions per module",
+      "1 interview guide session",
       "Basic AI feedback",
       "English conversation practice",
       "Community support",
@@ -33,7 +34,8 @@ const planFeatures = {
   Standard: {
     description: "Unlimited training for serious candidates",
     features: [
-      "Unlimited interview sessions",
+      "300 training sessions per module",
+      "30 interview guide sessions",
       "Advanced AI feedback & analytics",
       "All training modules unlocked",
       "Priority support",
@@ -49,7 +51,8 @@ const planFeatures = {
   Pro: {
     description: "Premium training with detailed analytics",
     features: [
-      "100 interview sessions per month",
+      "30 training sessions per module",
+      "10 interview guide sessions",
       "Advanced AI feedback & analytics",
       "All training modules unlocked",
       "Priority support",

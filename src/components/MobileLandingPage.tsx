@@ -505,7 +505,7 @@ const MobileLandingPage = () => {
         <div className="rounded-2xl border border-white/10 bg-white/5 px-5">
           <Faq
             q="Is Fluenzy AI free to use?"
-            a="Yes! The free plan gives you 3 interview sessions per month. No credit card required to get started."
+            a="Yes! The free plan gives you 2 training sessions per module and 1 interview guide session. No credit card required to get started."
           />
           <Faq
             q="What types of interviews can I practice?"
