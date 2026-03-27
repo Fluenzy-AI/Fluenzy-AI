@@ -10,7 +10,7 @@ function LoginForm() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [redirect, setRedirect] = useState("/train");
+  const [redirect, setRedirect] = useState("/candidates/dashboard");
 
   useEffect(() => {
     const r = searchParams.get("redirect");

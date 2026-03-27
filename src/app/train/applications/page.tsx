@@ -111,7 +111,8 @@ export default function ApplicationsPage() {
     const fetchApplications = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/candidates/applications');
+        // Only fetch external company applications (not Fluenzy AI internal jobs)
+        const response = await fetch('/api/candidates/applications?type=external');
         if (response.ok) {
           const data = await response.json();
           setApplications(data.applications || []);

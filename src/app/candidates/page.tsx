@@ -54,7 +54,7 @@ export default function CandidatesPortalPage() {
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d?.candidate) {
-          router.replace("/train");
+          router.replace("/candidates/dashboard");
         } else {
           setChecking(false);
         }

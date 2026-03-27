@@ -280,7 +280,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                 // Candidate auth buttons on careers/candidates pages
                 candidate ? (
                   <div className="flex items-center gap-2">
-                    <Link href="/train"
+                    <Link href="/candidates/dashboard"
                       className="flex items-center gap-2 text-[11px] font-bold px-3 py-1.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 hover:bg-violet-500/20 transition-all uppercase tracking-wide">
                       <span className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-purple-600 text-white text-[9px] flex items-center justify-center font-black">
                         {candidate.name.charAt(0).toUpperCase()}
@@ -288,7 +288,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                       Dashboard
                     </Link>
                   </div>
-                ) : (
+                ): (
                   <div className="flex items-center gap-2">
                     <Link href="/candidates/login"
                       className="hidden sm:inline-flex h-9 items-center px-4 rounded-full text-[11px] font-bold uppercase tracking-widest border border-white/15 text-slate-300 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all">

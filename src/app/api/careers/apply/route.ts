@@ -107,22 +107,39 @@ async function sendEmails(
 
 // ── Handler ────────────────────────────────────────────────────────────────
 export async function POST(req: NextRequest) {
-  // Rate limiting
-  const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
-  if (!checkRateLimit(ip)) {
-    return NextResponse.json({ error: "Too many applications. Please try again later." }, { status: 429 });
-  }
+  try {
+    // Rate limiting
+    const ip = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "unknown";
+    if (!checkRateLimit(ip)) {
+      return NextResponse.json({ error: "Too many applications. Please try again later." }, { status: 429 });
+    }
 
-  const body = await req.json();
-  const parsed = ApplySchema.safeParse(body);
-  if (!parsed.success) {
-    // Return first field-level error message for clarity
-    const fieldErrors = parsed.error.flatten().fieldErrors;
-    const firstError = Object.values(fieldErrors).flat()[0] || "Validation failed";
-    return NextResponse.json({ error: firstError, details: parsed.error.flatten() }, { status: 400 });
-  }
+    // Parse request body with error handling
+    let body;
+    try {
+      body = await req.json();
+    } catch (parseError) {
+      console.error("[CAREERS_APPLY] JSON parse error:", parseError);
+      return NextResponse.json({ error: "Invalid request data. Please try again." }, { status: 400 });
+    }
 
-  const d = parsed.data;
+    console.log("[CAREERS_APPLY] Received application data:", {
+      jobId: body.jobId,
+      name: body.name,
+      email: body.email,
+      hasResume: !!body.resumeUrl,
+    });
+
+    const parsed = ApplySchema.safeParse(body);
+    if (!parsed.success) {
+      console.error("[CAREERS_APPLY] Validation failed:", parsed.error.flatten());
+      // Return first field-level error message for clarity
+      const fieldErrors = parsed.error.flatten().fieldErrors;
+      const firstError = Object.values(fieldErrors).flat()[0] || "Validation failed";
+      return NextResponse.json({ error: firstError, details: parsed.error.flatten() }, { status: 400 });
+    }
+
+    const d = parsed.data;
 
   // Check job exists and is active
   const job = await prisma.job.findUnique({ where: { id: d.jobId } });
@@ -152,10 +169,19 @@ export async function POST(req: NextRequest) {
     },
   });
 
+  console.log("[CAREERS_APPLY] Application created successfully:", application.id);
+
   // Send emails non-blocking
   sendEmails(job, { name: d.name, email: d.email, resumeUrl: d.resumeUrl, experience: d.experience }).catch(
     (err) => console.warn("[CAREERS_EMAIL_WARN]", err)
   );
 
   return NextResponse.json({ success: true, applicationId: application.id }, { status: 201 });
+  } catch (error) {
+    console.error("[CAREERS_APPLY] Unexpected error:", error);
+    return NextResponse.json(
+      { error: "Failed to submit application. Please try again." },
+      { status: 500 }
+    );
+  }
 }

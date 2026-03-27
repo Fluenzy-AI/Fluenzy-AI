@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import { getCandidateFromRequest } from "@/lib/candidate-auth";
 import prisma from "@/lib/prisma";
 
 export async function GET(
@@ -13,14 +14,22 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    // Try candidate JWT auth first (for /candidates/* routes)
+    const candidateAuth = getCandidateFromRequest(req);
+    
+    // Fallback to NextAuth session (for /train/* routes)
+    const session = candidateAuth ? null : await getServerSession(authOptions);
 
-    if (!session?.user?.email) {
+    // Must be authenticated via either method
+    if (!candidateAuth && !session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Determine user identity
+    const userEmail = candidateAuth?.email || session?.user?.email;
+
     const { id } = await params;
-    console.log('[APPLICATION_DETAIL] Fetching application:', id, 'for user:', session.user.email);
+    console.log('[APPLICATION_DETAIL] Fetching application:', id, 'for user:', userEmail, 'authMethod:', candidateAuth ? 'JWT' : 'NextAuth');
 
     // Try ExternalJobApplication first (external company jobs)
     let oldApplication: any = await prisma.externalJobApplication.findUnique({
@@ -73,9 +82,8 @@ export async function GET(
     }
 
     // Verify ownership
-    const userEmail = session.user.email.toLowerCase();
     const appEmail = oldApplication.email?.toLowerCase();
-    const hasAccess = appEmail === userEmail;
+    const hasAccess = appEmail === userEmail?.toLowerCase();
 
     console.log('[APPLICATION_DETAIL] Access check:', { userEmail, appEmail, hasAccess });
 
@@ -89,32 +97,31 @@ export async function GET(
     const formattedApplication = {
       id: oldApplication.id,
       jobId: oldApplication.jobId,
-      jobTitle: oldApplication.job?.title || 'Unknown Job',
+      status: oldApplication.status || 'APPLIED',
+      createdAt: oldApplication.createdAt.toISOString(),
+      updatedAt: oldApplication.updatedAt?.toISOString() || oldApplication.createdAt.toISOString(),
+      name: oldApplication.name || 'Applicant',
+      email: oldApplication.email,
+      phone: oldApplication.phone,
+      experience: oldApplication.experience,
+      coverLetter: oldApplication.coverLetter || null,
+      resumeUrl: oldApplication.resumeUrl || null,
+      resumeName: oldApplication.resumeName || 'Resume.pdf',
+      linkedin: oldApplication.linkedin || null,
+      portfolio: oldApplication.portfolio || null,
+      job: {
+        id: oldApplication.job?.id || oldApplication.jobId,
+        title: oldApplication.job?.title || 'Unknown Job',
+        slug: oldApplication.job?.slug || '',
+        department: oldApplication.job?.department || 'General',
+        location: oldApplication.job?.location || oldApplication.job?.city || 'Location not specified',
+        employmentType: oldApplication.job?.employmentType || oldApplication.job?.jobType || 'Full-time',
+        description: oldApplication.job?.description || 'No description available',
+        salaryRange: oldApplication.job?.salaryRange || oldApplication.job?.salary || null,
+      },
       companyName: isFluenzyJob ? 'Fluenzy AI' : (oldApplication.job?.company?.name || 'Unknown Company'),
       companyLogo: isFluenzyJob ? '/logo.png' : (oldApplication.job?.company?.logoUrl || null),
-      location: oldApplication.job?.location || oldApplication.job?.city || 'Location not specified',
-      salary: oldApplication.job?.salaryRange || oldApplication.job?.salary || null,
-      jobDescription: oldApplication.job?.description || 'No description available',
-      requirements: oldApplication.job?.requirements ?
-        (Array.isArray(oldApplication.job.requirements) ?
-          oldApplication.job.requirements :
-          [oldApplication.job.requirements]) : [],
-      appliedAt: oldApplication.createdAt.toISOString(),
-      status: oldApplication.status || 'APPLIED',
-      source: oldApplication.source || 'MANUAL',
-      jobType: oldApplication.job?.employmentType || oldApplication.job?.jobType || 'Full-time',
-      experienceLevel: oldApplication.job?.experienceLevel || null,
-      lastUpdated: oldApplication.updatedAt?.toISOString() || oldApplication.createdAt.toISOString(),
-      jobUrl: isFluenzyJob ? 
-        `/jobs/fluenzy/${oldApplication.job?.slug}` : 
-        (oldApplication.job?.company?.slug && oldApplication.job?.slug ? 
-          `/jobs/${oldApplication.job.company.slug}/${oldApplication.job.slug}` : null),
-      resume: oldApplication.resumeUrl ? {
-        name: oldApplication.resumeName || 'Resume.pdf',
-        url: oldApplication.resumeUrl
-      } : null,
-      coverLetter: oldApplication.coverLetter || null,
-      matchScore: oldApplication.fluenzyScore || null,
+      interviews: [], // TODO: Add interviews when Interview model is created
       timeline: [
         {
           id: '1',

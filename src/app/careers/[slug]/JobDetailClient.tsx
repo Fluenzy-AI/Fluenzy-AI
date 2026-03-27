@@ -45,6 +45,7 @@ interface Job {
 
 // ── Application Form ──────────────────────────────────────────────────────
 function ApplicationForm({ job, onClose, candidate }: { job: Job; onClose: () => void; candidate: CandidateSession | null }) {
+  const router = useRouter();
   const [form, setForm] = useState({
     name: "", email: "", phone: "", portfolio: "",
     coverLetter: "", experience: "", linkedin: "",
@@ -140,9 +141,19 @@ function ApplicationForm({ job, onClose, candidate }: { job: Job; onClose: () =>
         <p className="text-muted-foreground text-sm mb-6 max-w-sm mx-auto">
           Thanks, we've received your application for <strong className="text-foreground">{job.title}</strong>. We'll be in touch within 5–7 business days.
         </p>
-        <button onClick={onClose} className="px-6 py-2.5 bg-primary text-primary-foreground text-sm font-medium rounded-xl hover:bg-primary/90 transition-all">
-          Close
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          {candidate && (
+            <button 
+              onClick={() => router.push(`/candidates/dashboard?success=true&job=${job.slug}`)}
+              className="px-6 py-2.5 bg-gradient-to-r from-violet-600 to-purple-500 text-white text-sm font-bold rounded-xl hover:from-violet-500 hover:to-purple-400 transition-all shadow-lg shadow-violet-500/25"
+            >
+              Go to Dashboard →
+            </button>
+          )}
+          <button onClick={onClose} className="px-6 py-2.5 border border-white/20 text-foreground text-sm font-medium rounded-xl hover:bg-white/5 transition-all">
+            Close
+          </button>
+        </div>
       </div>
     );
   }
@@ -153,13 +164,13 @@ function ApplicationForm({ job, onClose, candidate }: { job: Job; onClose: () =>
         <div className="flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-2.5 text-xs text-emerald-400">
           <span>✓</span>
           <span>Logged in as <strong>{candidate.name}</strong> — form auto-filled from your profile.</span>
-          <Link href="/train" className="ml-auto underline hover:no-underline">Dashboard</Link>
+          <Link href="/candidates/dashboard" className="ml-auto underline hover:no-underline">Dashboard</Link>
         </div>
       ) : (
         <div className="flex items-center gap-2 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-muted-foreground">
           <span>💡</span>
           <span>Have a candidate account?</span>
-          <Link href={`/candidates/login?redirect=${encodeURIComponent(`/careers/${job.slug}?autoApply=true`)}`} className="text-primary hover:underline ml-1">Login to auto-fill</Link>
+          <Link href={`/candidates/login?redirect=${encodeURIComponent(`/candidates/dashboard/careers/${job.slug}?autoApply=true`)}`} className="text-primary hover:underline ml-1">Login to auto-fill</Link>
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -462,7 +473,7 @@ export default function JobDetailClient({ job }: { job: Job }) {
 
                 <div className="flex flex-col gap-3">
                   <a
-                    href={`/api/candidates/auth/google?redirect=${encodeURIComponent(`/careers/${job.slug}?autoApply=true`)}`}
+                    href={`/api/candidates/auth/google?redirect=${encodeURIComponent(`/candidates/dashboard/careers/${job.slug}?autoApply=true`)}`}
                     className="w-full py-3 rounded-xl border border-border bg-background text-foreground font-semibold text-sm hover:bg-white/5 hover:border-white/30 transition text-center flex items-center justify-center gap-2.5"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -479,13 +490,13 @@ export default function JobDetailClient({ job }: { job: Job }) {
                     <div className="flex-1 h-px bg-white/10" />
                   </div>
                   <Link
-                    href={`/candidates/login?redirect=${encodeURIComponent(`/careers/${job.slug}?autoApply=true`)}`}
+                    href={`/candidates/login?redirect=${encodeURIComponent(`/candidates/dashboard/careers/${job.slug}?autoApply=true`)}`}
                     className="w-full py-3 rounded-xl bg-gradient-to-r from-violet-600 to-purple-500 text-white font-bold text-sm hover:from-violet-500 hover:to-purple-400 transition-all shadow-lg shadow-violet-500/25 text-center"
                   >
                     Login with Email
                   </Link>
                   <Link
-                    href={`/candidates/signup?redirect=${encodeURIComponent(`/careers/${job.slug}?autoApply=true`)}`}
+                    href={`/candidates/signup?redirect=${encodeURIComponent(`/candidates/dashboard/careers/${job.slug}?autoApply=true`)}`}
                     className="w-full py-3 rounded-xl border border-violet-500/30 bg-violet-500/5 text-violet-300 font-semibold text-sm hover:bg-violet-500/10 hover:border-violet-500/50 transition-all text-center"
                   >
                     Create Free Account
