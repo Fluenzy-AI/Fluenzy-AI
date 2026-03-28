@@ -1901,6 +1901,8 @@ model ExternalJobApplication {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 
+  assessmentSessions CandidateAssessmentSession[]
+
   @@index([jobId])
   @@index([candidateId])
   @@index([email])
@@ -1968,6 +1970,7 @@ model Assessment {
   updatedAt       DateTime       @updatedAt
 
   results         AssessmentResult[]
+  sessions        CandidateAssessmentSession[]
 
   @@index([companyId])
 }
@@ -2032,4 +2035,62 @@ model HRAssessmentAssignment {
   @@unique([assessmentId, candidateId])
   @@index([assessmentId])
   @@index([candidateId])
+}
+
+// ─── Company Portal Candidate Assessment Sessions ─────────────────────────────────
+
+model CandidateAssessmentSession {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  assessmentId    String         @db.ObjectId
+  assessment      Assessment     @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  applicationId   String         @db.ObjectId
+  application     ExternalJobApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  candidateId     String         // From application
+
+  // Assignment tracking
+  assignedBy      String         // Company member ID who assigned
+  assignedAt      DateTime       @default(now())
+
+  // Assessment status
+  status          String         @default("PENDING") // PENDING | INVITED | IN_PROGRESS | COMPLETED | EXPIRED | CANCELLED
+
+  // Session data for AI/Voice/GD assessments
+  sessionToken    String?        // Unique token for candidate to access assessment
+  agoraChannel    String?        // For Voice/GD: Agora channel name
+  agoraToken      String?        // For Voice/GD: Agora RTC token
+  agoraUid        Int?           // For Voice/GD: Agora user ID
+  geminiSessionId String?        // For AI Interview: Gemini session tracking
+  gdRoomId        String?        // For GD: Room ID for private GD
+  gdParticipants  Int?           // For GD: Number of participants
+
+  // Result fields
+  score           Float?
+  passed          Boolean?
+  timeTaken       Int?           // seconds
+  answers         Json?          // For MCQ/Coding
+  aiTranscript    Json?          // For AI Interview: conversation transcript
+  voiceRecording  String?        // For Voice: recording URL
+  gdTranscript    Json?          // For GD: discussion transcript
+  feedback        Json?          // AI-generated feedback
+
+  // Email tracking
+  inviteEmailSent Boolean        @default(false)
+  inviteSentAt    DateTime?
+  reminderSent    Boolean        @default(false)
+  reminderSentAt  DateTime?
+
+  // Timing
+  expiresAt       DateTime?      // When the assessment link expires
+  startedAt       DateTime?
+  completedAt     DateTime?
+
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([assessmentId, applicationId])
+  @@index([assessmentId])
+  @@index([applicationId])
+  @@index([candidateId])
+  @@index([sessionToken])
+  @@index([status])
 }

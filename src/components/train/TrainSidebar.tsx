@@ -35,7 +35,8 @@ import {
   FileText,
   Clock,
   Activity,
-  CheckCircle
+  CheckCircle,
+  Award
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -174,6 +175,12 @@ export function TrainSidebar() {
       icon: FileText,
       href: '/train/applications',
       isActive: pathname === '/train/applications',
+    },
+    {
+      title: 'My Assessments',
+      icon: Award,
+      href: '/train/assessments',
+      isActive: pathname === '/train/assessments',
     },
     {
       title: 'Auto-Apply Activity',

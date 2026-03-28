@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
   FileText,
@@ -21,12 +21,24 @@ import {
   Calendar,
   Award,
   BarChart3,
-  Settings
+  Settings,
+  UserPlus,
+  Mail,
+  X,
+  Loader2,
+  ClipboardList,
+  Code,
+  Mic,
+  Video,
+  Search,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Table,
   TableBody,
@@ -46,6 +58,25 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+
+interface Application {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  jobTitle: string;
+  jobId: string;
+  status: string;
+  selected?: boolean;
+}
 
 interface AssessmentResult {
   id: string;
@@ -56,6 +87,7 @@ interface AssessmentResult {
   startedAt?: string;
   completedAt?: string;
   duration?: number;
+  sessionToken?: string;
 }
 
 interface AssessmentStatistics {
@@ -70,7 +102,7 @@ interface AssessmentStatistics {
 
 interface AssessmentDetails {
   id: string;
-  type: 'MCQ' | 'CODING' | 'AI_INTERVIEW';
+  type: 'MCQ' | 'CODING' | 'AI_INTERVIEW' | 'VOICE' | 'GD';
   title: string;
   description?: string;
   duration: number;
@@ -84,6 +116,22 @@ interface AssessmentDetails {
   results: AssessmentResult[];
 }
 
+const assessmentTypeIcons: Record<string, any> = {
+  MCQ: ClipboardList,
+  CODING: Code,
+  AI_INTERVIEW: Mic,
+  VOICE: Video,
+  GD: Users,
+};
+
+const assessmentTypeLabels: Record<string, string> = {
+  MCQ: "Multiple Choice",
+  CODING: "Coding Challenge",
+  AI_INTERVIEW: "AI Interview",
+  VOICE: "Voice Interview",
+  GD: "Group Discussion",
+};
+
 export default function AssessmentDetailPage() {
   const params = useParams();
   const router = useRouter();
@@ -92,7 +140,132 @@ export default function AssessmentDetailPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Quick Actions State
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [isAssigning, setIsAssigning] = useState(false);
+  
+  // Assign Modal State
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [selectedApplications, setSelectedApplications] = useState<Set<string>>(new Set());
+  const [searchQuery, setSearchQuery] = useState('');
+  const [loadingApplications, setLoadingApplications] = useState(false);
+  const [assignSuccess, setAssignSuccess] = useState<string | null>(null);
+
   const assessmentId = params.id as string;
+
+  // Fetch applications for assignment
+  const fetchApplications = useCallback(async () => {
+    try {
+      setLoadingApplications(true);
+      const res = await fetch('/api/company/applications');
+      if (res.ok) {
+        const data = await res.json();
+        setApplications(data.applications || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch applications:', error);
+    } finally {
+      setLoadingApplications(false);
+    }
+  }, []);
+
+  // Export Results
+  const handleExportResults = async () => {
+    try {
+      setIsExporting(true);
+      const response = await fetch(`/api/company/assessments/${assessmentId}/export`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to export results');
+      }
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${assessment?.title || 'assessment'}_results.csv`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to export results. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Assign to Candidates
+  const handleAssignCandidates = async () => {
+    if (selectedApplications.size === 0) {
+      alert('Please select at least one candidate');
+      return;
+    }
+
+    try {
+      setIsAssigning(true);
+      const response = await fetch(`/api/company/assessments/${assessmentId}/assign`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          applicationIds: Array.from(selectedApplications),
+          sendInviteEmail: true,
+          expiryDays: 7,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to assign assessment');
+      }
+
+      setAssignSuccess(`Assessment assigned to ${data.assigned} candidate(s). ${data.emailsSent} invite email(s) sent.`);
+      setSelectedApplications(new Set());
+      
+      // Refresh assessment data
+      setTimeout(() => {
+        setShowAssignModal(false);
+        setAssignSuccess(null);
+        window.location.reload();
+      }, 2000);
+    } catch (error: any) {
+      console.error('Assignment failed:', error);
+      alert(error.message || 'Failed to assign assessment. Please try again.');
+    } finally {
+      setIsAssigning(false);
+    }
+  };
+
+  // Toggle application selection
+  const toggleApplicationSelection = (appId: string) => {
+    setSelectedApplications(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(appId)) {
+        newSet.delete(appId);
+      } else {
+        newSet.add(appId);
+      }
+      return newSet;
+    });
+  };
+
+  // Select all filtered applications
+  const selectAllFiltered = () => {
+    const filtered = applications.filter(app =>
+      app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      app.email.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setSelectedApplications(new Set(filtered.map(app => app.id)));
+  };
+
+  // Deselect all
+  const deselectAll = () => {
+    setSelectedApplications(new Set());
+  };
 
   // Fetch assessment details
   useEffect(() => {
@@ -489,9 +662,46 @@ export default function AssessmentDetailPage() {
                             {result.completedAt ? formatDate(result.completedAt) : '-'}
                           </TableCell>
                           <TableCell>
-                            <Button variant="ghost" size="sm">
-                              <Eye className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="sm"
+                                onClick={() => {
+                                  console.log('[DEBUG] Eye button clicked', { 
+                                    sessionToken: result.sessionToken,
+                                    status: result.status 
+                                  });
+                                  if (result.sessionToken) {
+                                    router.push(`/candidate/assessment/${result.sessionToken}/result`);
+                                  } else {
+                                    alert('Session token not available');
+                                  }
+                                }}
+                                title="View Result"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              {result.status === 'COMPLETED' && result.sessionToken && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    console.log('[DEBUG] Analytics button clicked', {
+                                      assessmentId: assessment?.id,
+                                      sessionToken: result.sessionToken
+                                    });
+                                    if (assessment?.id && result.sessionToken) {
+                                      router.push(`/company/portal/assessments/${assessment.id}/analytics/${result.sessionToken}`);
+                                    } else {
+                                      alert('Data not available for analytics');
+                                    }
+                                  }}
+                                  title="View Analytics"
+                                >
+                                  <BarChart3 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -559,18 +769,45 @@ export default function AssessmentDetailPage() {
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Export Results
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => {
+                    console.log('[DEBUG] Export Results clicked');
+                    handleExportResults();
+                  }}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4 mr-2" />
+                  )}
+                  {isExporting ? 'Exporting...' : 'Export Results'}
                 </Button>
 
-                <Button className="w-full justify-start" variant="outline">
-                  <FileText className="w-4 h-4 mr-2" />
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => {
+                    console.log('[DEBUG] Preview Assessment clicked');
+                    setShowPreviewModal(true);
+                  }}
+                >
+                  <Eye className="w-4 h-4 mr-2" />
                   Preview Assessment
                 </Button>
 
-                <Button className="w-full justify-start" variant="outline">
-                  <Users className="w-4 h-4 mr-2" />
+                <Button 
+                  className="w-full justify-start" 
+                  variant="outline"
+                  onClick={() => {
+                    console.log('[DEBUG] Assign to Candidates clicked');
+                    setShowAssignModal(true);
+                    fetchApplications();
+                  }}
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
                   Assign to Candidates
                 </Button>
               </CardContent>
@@ -578,6 +815,265 @@ export default function AssessmentDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Preview Assessment Modal */}
+      <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="w-5 h-5" />
+              Preview Assessment
+            </DialogTitle>
+            <DialogDescription>
+              Preview how this assessment will appear to candidates
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            {/* Assessment Header */}
+            <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                {(() => {
+                  const Icon = assessmentTypeIcons[assessment.type] || FileText;
+                  return <Icon className="w-8 h-8 text-indigo-500" />;
+                })()}
+                <div>
+                  <h2 className="text-xl font-bold">{assessment.title}</h2>
+                  <p className="text-sm text-gray-500">
+                    {assessmentTypeLabels[assessment.type] || assessment.type}
+                  </p>
+                </div>
+              </div>
+              {assessment.description && (
+                <p className="text-gray-600 dark:text-gray-400">{assessment.description}</p>
+              )}
+              <div className="flex gap-6 mt-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-gray-500" />
+                  <span>{assessment.duration} minutes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Target className="w-4 h-4 text-gray-500" />
+                  <span>Passing: {assessment.passingScore}%</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-500" />
+                  <span>{assessment.questionsCount} questions</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Questions Preview for MCQ */}
+            {assessment.type === 'MCQ' && assessment.questions && assessment.questions.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="font-semibold">Questions Preview</h3>
+                {(assessment.questions as any[]).slice(0, 5).map((q, idx) => (
+                  <Card key={idx}>
+                    <CardContent className="pt-4">
+                      <p className="font-medium mb-3">
+                        Q{idx + 1}. {q.text}
+                      </p>
+                      <div className="space-y-2">
+                        {(q.options || []).map((opt: string, optIdx: number) => (
+                          <div
+                            key={optIdx}
+                            className={`p-2 rounded border ${
+                              (q.correctAnswers || []).includes(optIdx)
+                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                : 'border-gray-200 dark:border-gray-700'
+                            }`}
+                          >
+                            <span className="mr-2">
+                              {String.fromCharCode(65 + optIdx)}.
+                            </span>
+                            {opt}
+                            {(q.correctAnswers || []).includes(optIdx) && (
+                              <Check className="w-4 h-4 inline ml-2 text-green-500" />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {assessment.questions.length > 5 && (
+                  <p className="text-center text-gray-500 text-sm">
+                    + {assessment.questions.length - 5} more questions
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Non-MCQ Assessment Types */}
+            {(assessment.type === 'AI_INTERVIEW' || assessment.type === 'VOICE' || assessment.type === 'GD') && (
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 text-center">
+                {(() => {
+                  const Icon = assessmentTypeIcons[assessment.type] || FileText;
+                  return <Icon className="w-12 h-12 mx-auto text-blue-500 mb-4" />;
+                })()}
+                <h3 className="font-semibold mb-2">
+                  {assessmentTypeLabels[assessment.type]}
+                </h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                  {assessment.type === 'AI_INTERVIEW' && 'Candidates will participate in an AI-powered interview session. The AI will ask questions and evaluate responses.'}
+                  {assessment.type === 'VOICE' && 'Candidates will join a live voice/video interview session using Agora.'}
+                  {assessment.type === 'GD' && 'Candidates will participate in a group discussion with other candidates and AI moderator.'}
+                </p>
+              </div>
+            )}
+
+            {assessment.type === 'CODING' && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                <Code className="w-12 h-12 mx-auto text-emerald-500 mb-4" />
+                <h3 className="font-semibold text-center mb-2">Coding Challenge</h3>
+                <p className="text-gray-600 dark:text-gray-400 text-sm text-center">
+                  Candidates will solve programming problems in an integrated code editor.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPreviewModal(false)}>
+              Close Preview
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign to Candidates Modal */}
+      <Dialog open={showAssignModal} onOpenChange={setShowAssignModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5" />
+              Assign Assessment to Candidates
+            </DialogTitle>
+            <DialogDescription>
+              Select candidates from job applications to assign this assessment
+            </DialogDescription>
+          </DialogHeader>
+
+          {assignSuccess ? (
+            <div className="py-8 text-center">
+              <CheckCircle className="w-16 h-16 mx-auto text-green-500 mb-4" />
+              <h3 className="text-lg font-semibold text-green-600 mb-2">Success!</h3>
+              <p className="text-gray-600">{assignSuccess}</p>
+            </div>
+          ) : (
+            <>
+              <div className="py-4 space-y-4">
+                {/* Search and Select All */}
+                <div className="flex gap-4">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <Input
+                      placeholder="Search candidates by name or email..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                  <Button variant="outline" size="sm" onClick={selectAllFiltered}>
+                    Select All
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={deselectAll}>
+                    Clear
+                  </Button>
+                </div>
+
+                {/* Selected Count */}
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <Users className="w-4 h-4" />
+                  <span>{selectedApplications.size} candidate(s) selected</span>
+                </div>
+
+                {/* Candidates List */}
+                <div className="max-h-[400px] overflow-y-auto space-y-2 border rounded-lg p-2">
+                  {loadingApplications ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+                    </div>
+                  ) : applications.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <p>No applications found</p>
+                    </div>
+                  ) : (
+                    applications
+                      .filter(app =>
+                        app.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        app.email.toLowerCase().includes(searchQuery.toLowerCase())
+                      )
+                      .map((app) => (
+                        <div
+                          key={app.id}
+                          className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                            selectedApplications.has(app.id)
+                              ? 'bg-indigo-50 border-indigo-300 dark:bg-indigo-900/20 dark:border-indigo-600'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-800'
+                          }`}
+                          onClick={() => toggleApplicationSelection(app.id)}
+                        >
+                          <Checkbox
+                            checked={selectedApplications.has(app.id)}
+                            onCheckedChange={() => toggleApplicationSelection(app.id)}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{app.name}</p>
+                            <p className="text-sm text-gray-500 truncate">{app.email}</p>
+                          </div>
+                          <div className="text-right">
+                            <Badge variant="outline" className="text-xs">
+                              {app.jobTitle}
+                            </Badge>
+                            <p className="text-xs text-gray-400 mt-1">{app.status}</p>
+                          </div>
+                        </div>
+                      ))
+                  )}
+                </div>
+
+                {/* Email Notice */}
+                <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-sm">
+                  <Mail className="w-4 h-4 text-blue-500 mt-0.5" />
+                  <div>
+                    <p className="font-medium text-blue-700 dark:text-blue-300">
+                      Email Invitations
+                    </p>
+                    <p className="text-blue-600 dark:text-blue-400">
+                      Selected candidates will receive an email invitation with a unique link to complete the assessment.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowAssignModal(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleAssignCandidates}
+                  disabled={selectedApplications.size === 0 || isAssigning}
+                  className="bg-indigo-600 hover:bg-indigo-700"
+                >
+                  {isAssigning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Assigning...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4 mr-2" />
+                      Assign to {selectedApplications.size} Candidate(s)
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

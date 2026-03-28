@@ -19,7 +19,7 @@ export async function GET(
 
     const { id } = await params;
 
-    // Get assessment with results
+    // Get assessment with results and sessions
     const assessment = await prisma.assessment.findUnique({
       where: {
         id: id,
@@ -40,6 +40,33 @@ export async function GET(
             startedAt: 'desc',
           },
         },
+        sessions: {
+          select: {
+            id: true,
+            sessionToken: true,
+            status: true,
+            score: true,
+            passed: true,
+            startedAt: true,
+            completedAt: true,
+            timeTaken: true,
+            application: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                job: {
+                  select: {
+                    title: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: {
+            createdAt: 'desc',
+          },
+        },
         _count: {
           select: {
             results: true,
@@ -52,21 +79,23 @@ export async function GET(
       return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
     }
 
-    // Calculate statistics (all results are completed since they have scores)
-    const completedResults = assessment.results; // All results are completed
-    const passedResults = completedResults.filter(r => r.passed);
+    // Calculate statistics from sessions (more accurate than results)
+    const completedSessions = assessment.sessions.filter(s => s.status === 'COMPLETED');
+    const passedSessions = completedSessions.filter(s => s.passed);
+    const inProgressSessions = assessment.sessions.filter(s => s.status === 'IN_PROGRESS');
+    const pendingSessions = assessment.sessions.filter(s => s.status === 'PENDING' || s.status === 'INVITED');
 
     const statistics = {
-      totalAssigned: assessment.results.length,
-      completed: completedResults.length,
-      passed: passedResults.length,
-      failed: completedResults.length - passedResults.length,
-      pending: 0, // No pending status in schema
-      averageScore: completedResults.length > 0
-        ? Math.round(completedResults.reduce((sum, r) => sum + r.score, 0) / completedResults.length)
+      totalAssigned: assessment.sessions.length,
+      completed: completedSessions.length,
+      passed: passedSessions.length,
+      failed: completedSessions.length - passedSessions.length,
+      pending: pendingSessions.length + inProgressSessions.length,
+      averageScore: completedSessions.length > 0
+        ? Math.round(completedSessions.reduce((sum, s) => sum + (s.score || 0), 0) / completedSessions.length)
         : 0,
-      passRate: completedResults.length > 0
-        ? Math.round((passedResults.length / completedResults.length) * 100)
+      passRate: completedSessions.length > 0
+        ? Math.round((passedSessions.length / completedSessions.length) * 100)
         : 0,
     };
 
@@ -84,17 +113,18 @@ export async function GET(
       createdAt: assessment.createdAt.toISOString(),
       updatedAt: assessment.updatedAt.toISOString(),
       statistics,
-      results: assessment.results.map(result => ({
-        id: result.id,
-        candidateId: result.candidateId,
-        candidateName: 'Candidate', // Not in schema
-        candidateEmail: null, // Not in schema
-        score: result.score,
-        passed: result.passed,
-        status: result.passed ? 'COMPLETED' : 'COMPLETED', // All are completed
-        startedAt: result.startedAt?.toISOString(),
-        completedAt: result.completedAt?.toISOString(),
-        duration: Math.round((new Date(result.completedAt).getTime() - new Date(result.startedAt).getTime()) / (1000 * 60)),
+      results: assessment.sessions.map(session => ({
+        id: session.id,
+        candidateName: session.application?.name || 'Candidate',
+        candidateEmail: session.application?.email || '',
+        score: session.score || 0,
+        passed: session.passed || false,
+        status: session.status === 'COMPLETED' ? 'COMPLETED' : 
+                session.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'NOT_STARTED',
+        startedAt: session.startedAt?.toISOString(),
+        completedAt: session.completedAt?.toISOString(),
+        duration: session.timeTaken || 0,
+        sessionToken: session.sessionToken,
       })),
     };
 

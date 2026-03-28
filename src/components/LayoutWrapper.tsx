@@ -40,7 +40,8 @@ import {
   Crown,
   ShieldCheck,
   CheckCircle,
-  Clock
+  Clock,
+  Award
 } from 'lucide-react';
 import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
 
@@ -62,6 +63,7 @@ const navItems = [
 const jobCareerItems = [
   { href: '/train/auto-apply-setup', label: 'Auto-Apply Setup', icon: ShieldCheck },
   { href: '/train/applications', label: 'My Applications', icon: Briefcase },
+  { href: '/train/assessments', label: 'My Assessments', icon: Award },
   { href: '/train/auto-apply-activity', label: 'Auto-Apply Activity', icon: BarChart3 },
   { href: '/jobs', label: 'Browse Jobs', icon: Briefcase },
 ];
