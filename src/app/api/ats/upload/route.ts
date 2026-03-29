@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { parseResume, scoreResume } from "@/lib/ats-engine";
 import { extractTextWithAdobe, isAdobeConfigured } from "@/lib/adobe-pdf-extract";
+import { uploadToR2, buildFileKey } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -213,12 +215,41 @@ export async function POST(request: NextRequest) {
       }
     } catch { /* non-critical */ }
 
+    // Upload file to R2 if configured
+    let fileUrl = "";
+    let fileKey: string | null = null;
+    
+    if (isR2Configured()) {
+      try {
+        fileKey = buildFileKey("ats-resume", user.id, file.name);
+        await uploadToR2(fileKey, buffer, file.type);
+        fileUrl = fileKey; // Store R2 key
+        
+        // Create FileRecord
+        await prisma.fileRecord.create({
+          data: {
+            userId: user.id,
+            fileType: "ats-resume",
+            fileKey,
+            originalFileName: file.name,
+            fileSize: file.size,
+            mimeType: file.type,
+          },
+        });
+        
+        console.info(`[ATS Upload] Uploaded to R2: ${fileKey}`);
+      } catch (r2Error) {
+        console.error("[ATS Upload] R2 upload failed:", r2Error);
+        // Continue without R2 storage
+      }
+    }
+
     // Store resume record
     const resumeRecord = await (prisma as any).aTSResume.create({
       data: {
         userId: user.id,
         fileName: file.name,
-        fileUrl: "", // store URL after upload to cloud if applicable
+        fileUrl, // R2 key or empty string
         fileType: file.type.includes("pdf") ? "pdf" : "docx",
         fileSize: file.size,
         rawText: sanitizedText,
@@ -231,6 +262,7 @@ export async function POST(request: NextRequest) {
           parsedEmail: scores.parsedData.email,
           parsedPhone: scores.parsedData.phone,
           missingSections: scores.parsedData.missingSections,
+          r2FileKey: fileKey, // Store R2 key in parsed data for reference
         },
       },
     });

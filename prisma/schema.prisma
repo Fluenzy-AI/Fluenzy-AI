@@ -157,6 +157,9 @@ model users {
   billingCycle     String?  // monthly, annual
   lastUsageReset   DateTime? // Track when usage was last reset
   
+  // Storage quota for R2 uploads (bytes)
+  storageUsed      Int      @default(0)
+  
   disabled         Boolean  @default(false)
   sessions         Session[]
   lessonProgress   LessonProgress[]
@@ -176,6 +179,7 @@ model users {
   atsResumes       ATSResume[]
   atsAnalyses      ATSAnalysis[]
   atsRankings      ATSRanking[]
+  fileRecords      FileRecord[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -2093,4 +2097,28 @@ model CandidateAssessmentSession {
   @@index([candidateId])
   @@index([sessionToken])
   @@index([status])
+}
+
+// ─── R2 File Storage ────────────────────────────────────────────────────────
+// Stores metadata for files uploaded to Cloudflare R2
+
+model FileRecord {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String?  @db.ObjectId
+  user             users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId        String?  @db.ObjectId
+  fileType         String   // "resume" | "certificate" | "offer-letter" | "profile-cert" | "audit-pdf" | "job-resume" | "payment-receipt" | "ats-resume"
+  fileKey          String   // R2 object key (the storage path)
+  originalFileName String
+  fileSize         Int      // bytes
+  mimeType         String
+  jobSlug          String?  // for job-resume type
+  metadata         Json?    // optional additional metadata
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([fileType])
+  @@index([fileKey])
 }

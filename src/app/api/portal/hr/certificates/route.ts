@@ -122,17 +122,50 @@ export async function POST(req: NextRequest) {
     // Generate PDF
     const pdfBuffer = await generateCertificatePdfBuffer(certData);
 
-    // Save PDF to filesystem (or upload to S3 in production)
-    const fs = require("fs");
-    const path = require("path");
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "certificates");
-    if (!fs.existsSync(uploadsDir)) {
-      fs.mkdirSync(uploadsDir, { recursive: true });
-    }
+    // Upload PDF to R2 storage
+    let pdfUrl: string;
+    let fileKey: string | null = null;
     const pdfFileName = `${certificateNumber}.pdf`;
-    const pdfPath = path.join(uploadsDir, pdfFileName);
-    fs.writeFileSync(pdfPath, pdfBuffer);
-    const pdfUrl = `/uploads/certificates/${pdfFileName}`;
+    
+    try {
+      const { uploadPdfToR2 } = await import("@/lib/r2-service");
+      const { isR2Configured: checkR2 } = await import("@/lib/r2");
+      
+      if (checkR2()) {
+        fileKey = await uploadPdfToR2(
+          "certificate",
+          certificateNumber,
+          Buffer.from(pdfBuffer),
+          pdfFileName
+        );
+        pdfUrl = fileKey; // Store the R2 key, we'll generate signed URL when needed
+        console.info(`[CERTIFICATE] Uploaded to R2: ${fileKey}`);
+      } else {
+        // Fallback to filesystem if R2 not configured
+        const fs = require("fs");
+        const path = require("path");
+        const uploadsDir = path.join(process.cwd(), "public", "uploads", "certificates");
+        if (!fs.existsSync(uploadsDir)) {
+          fs.mkdirSync(uploadsDir, { recursive: true });
+        }
+        const pdfPath = path.join(uploadsDir, pdfFileName);
+        fs.writeFileSync(pdfPath, pdfBuffer);
+        pdfUrl = `/uploads/certificates/${pdfFileName}`;
+        console.info(`[CERTIFICATE] Saved to filesystem: ${pdfUrl}`);
+      }
+    } catch (r2Error) {
+      console.error("[CERTIFICATE] R2 upload failed, falling back to filesystem:", r2Error);
+      // Fallback to filesystem
+      const fs = require("fs");
+      const path = require("path");
+      const uploadsDir = path.join(process.cwd(), "public", "uploads", "certificates");
+      if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir, { recursive: true });
+      }
+      const pdfPath = path.join(uploadsDir, pdfFileName);
+      fs.writeFileSync(pdfPath, pdfBuffer);
+      pdfUrl = `/uploads/certificates/${pdfFileName}`;
+    }
 
     // Create certificate record in database
     const certificate = await prisma.certificate.create({
@@ -150,6 +183,20 @@ export async function POST(req: NextRequest) {
         emailSentAt: sendEmail ? new Date() : null,
       },
     });
+
+    // Create FileRecord if uploaded to R2
+    if (fileKey) {
+      await prisma.fileRecord.create({
+        data: {
+          fileType: "certificate",
+          fileKey,
+          originalFileName: `${certificateNumber}.pdf`,
+          fileSize: pdfBuffer.length,
+          mimeType: "application/pdf",
+          metadata: { certificateId: certificate.id, type },
+        },
+      });
+    }
 
     // Send email if requested
     if (sendEmail && candidateEmail) {

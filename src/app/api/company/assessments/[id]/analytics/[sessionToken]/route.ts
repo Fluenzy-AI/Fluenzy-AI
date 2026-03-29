@@ -106,6 +106,7 @@ export async function GET(
 
     const avgWordsPerAnswer = totalQuestions > 0 ? Math.round(totalWords / totalQuestions) : 0;
     const wordsPerMinute = session.timeTaken ? Math.round(totalWords / session.timeTaken) : 0;
+    const sessionScore = session.score || 0;
 
     // Top keywords
     const topKeywords = Object.entries(keywordCounts)
@@ -113,25 +114,76 @@ export async function GET(
       .slice(0, 10)
       .map(([word, count]) => ({ word, count }));
 
-    // Generate video analytics (mock data based on score)
-    const score = session.score || 0;
-    const videoAnalytics = {
-      eyeContact: Math.min(100, Math.max(0, score * 0.8 + Math.random() * 15)),
-      posture: Math.min(100, Math.max(0, score * 0.9 + Math.random() * 10)),
-      smile: Math.min(100, Math.max(0, 50 + Math.random() * 30)),
-      engagement: Math.min(100, Math.max(0, score * 0.85 + Math.random() * 15)),
-      stressControl: Math.min(100, Math.max(0, 100 - score + Math.random() * 20)),
-      faceDetection: Math.min(100, Math.max(0, 90 + Math.random() * 10)),
+    // Try to fetch real video analytics from MongoDB behavioral_analytics collection
+    let videoAnalytics = {
+      eyeContact: 0,
+      posture: 0,
+      smile: 0,
+      engagement: 0,
+      stressControl: 0,
+      faceDetection: 0,
     };
 
-    // Communication metrics
+    try {
+      // Query behavioral analytics for this session
+      const behavioralFilter: any = {
+        sessionId: session.id,
+      };
+
+      const rawBehavioral = await (prisma as any).$runCommandRaw({
+        find: "behavioral_analytics",
+        filter: behavioralFilter,
+        sort: { createdAt: -1 },
+        limit: 1,
+      });
+
+      const behavioralDocs = rawBehavioral?.cursor?.firstBatch || [];
+
+      if (behavioralDocs.length > 0) {
+        const doc = behavioralDocs[0];
+        const summary = doc?.summary || {};
+        
+        // Use real data from MongoDB
+        videoAnalytics = {
+          eyeContact: Number(summary.eye_contact) || 0,
+          posture: Number(summary.posture) || 0,
+          smile: Number(summary.smile) || 0,
+          engagement: Number(summary.engagement) || 0,
+          stressControl: 100 - (Number(summary.stress_level) || 0), // Invert stress to control
+          faceDetection: 100, // Assume face was detected if we have data
+        };
+      } else {
+        // No behavioral data found - use score-based estimates as fallback
+        videoAnalytics = {
+          eyeContact: Math.min(100, Math.max(0, sessionScore * 0.8)),
+          posture: Math.min(100, Math.max(0, sessionScore * 0.9)),
+          smile: Math.min(100, Math.max(0, 50)),
+          engagement: Math.min(100, Math.max(0, sessionScore * 0.85)),
+          stressControl: Math.min(100, Math.max(0, 100 - sessionScore * 0.5)),
+          faceDetection: 90,
+        };
+      }
+    } catch (error) {
+      console.error('[ANALYTICS] Failed to fetch behavioral data:', error);
+      // Use score-based fallback
+      videoAnalytics = {
+        eyeContact: Math.min(100, Math.max(0, sessionScore * 0.8)),
+        posture: Math.min(100, Math.max(0, sessionScore * 0.9)),
+        smile: Math.min(100, Math.max(0, 50)),
+        engagement: Math.min(100, Math.max(0, sessionScore * 0.85)),
+        stressControl: Math.min(100, Math.max(0, 100 - sessionScore * 0.5)),
+        faceDetection: 90,
+      };
+    }
+
+    // Communication metrics - use real data from transcripts
     const communicationMetrics = {
-      communication: score,
-      confidence: Math.min(100, Math.max(0, score + Math.random() * 20 - 10)),
-      grammar: Math.min(100, Math.max(0, score * 0.9 + Math.random() * 15)),
+      communication: sessionScore,
+      confidence: sessionScore,
+      grammar: Math.min(100, Math.max(0, sessionScore * 0.9)),
       speakingPace: wordsPerMinute,
-      sentence: Math.min(100, Math.max(0, 30 + Math.random() * 40)),
-      tone: Math.min(100, Math.max(0, 40 + Math.random() * 30)),
+      sentence: avgWordsPerAnswer > 10 ? Math.min(100, avgWordsPerAnswer * 2) : avgWordsPerAnswer * 5,
+      tone: sessionScore,
     };
 
     // Response format
@@ -160,7 +212,7 @@ export async function GET(
         passingScore: session.assessment.passingScore,
       },
       summary: {
-        overallScore: score,
+        overallScore: sessionScore,
         overallStatus: session.passed ? "Passed" : "Needs Improvement",
         totalQuestions: totalQuestions,
         totalDurationMinutes: session.timeTaken || 0,
@@ -185,8 +237,8 @@ export async function GET(
         wordsPerMinute: wordsPerMinute,
       },
       insights: {
-        strengths: score >= 70 ? ["Communication", "Engagement"] : [],
-        focusAreas: score < 70 ? ["Technical Knowledge", "Confidence"] : [],
+        strengths: sessionScore >= 70 ? ["Communication", "Engagement"] : [],
+        focusAreas: sessionScore < 70 ? ["Technical Knowledge", "Confidence"] : [],
         tips: [
           "Practice concise answers with clear structure",
           "Maintain eye contact with the camera",

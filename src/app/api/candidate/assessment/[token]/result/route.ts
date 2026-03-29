@@ -63,16 +63,69 @@ export async function GET(
       }
     }
 
-    // Mock video analytics (in production, this would come from the actual video analysis)
-    // For now, generate reasonable values based on score
-    const videoAnalytics = {
-      confidence: Math.min(100, Math.max(0, session.score || 0 + Math.random() * 20 - 10)),
-      eyeContact: Math.min(100, Math.max(0, (session.score || 0) * 0.8 + Math.random() * 15)),
-      posture: Math.min(100, Math.max(0, (session.score || 0) * 0.9 + Math.random() * 10)),
-      smile: Math.min(100, Math.max(0, 50 + Math.random() * 30)),
-      engagement: Math.min(100, Math.max(0, (session.score || 0) * 0.85 + Math.random() * 15)),
-      stressLevel: Math.min(100, Math.max(0, 100 - (session.score || 0) + Math.random() * 20)),
+    // Try to fetch real video analytics from MongoDB behavioral_analytics collection
+    let videoAnalytics = {
+      confidence: 0,
+      eyeContact: 0,
+      posture: 0,
+      smile: 0,
+      engagement: 0,
+      stressLevel: 0,
     };
+
+    try {
+      // Query behavioral analytics for this session
+      const behavioralFilter: any = {
+        sessionId: session.id,
+      };
+
+      const rawBehavioral = await (prisma as any).$runCommandRaw({
+        find: "behavioral_analytics",
+        filter: behavioralFilter,
+        sort: { createdAt: -1 },
+        limit: 1,
+      });
+
+      const behavioralDocs = rawBehavioral?.cursor?.firstBatch || [];
+
+      if (behavioralDocs.length > 0) {
+        const doc = behavioralDocs[0];
+        const summary = doc?.summary || {};
+        
+        // Use real data from MongoDB
+        videoAnalytics = {
+          confidence: Number(summary.confidence) || session.score || 0,
+          eyeContact: Number(summary.eye_contact) || 0,
+          posture: Number(summary.posture) || 0,
+          smile: Number(summary.smile) || 0,
+          engagement: Number(summary.engagement) || 0,
+          stressLevel: Number(summary.stress_level) || 0,
+        };
+      } else {
+        // No behavioral data found - use score-based estimates as fallback
+        const score = session.score || 0;
+        videoAnalytics = {
+          confidence: score,
+          eyeContact: Math.min(100, Math.max(0, score * 0.8)),
+          posture: Math.min(100, Math.max(0, score * 0.9)),
+          smile: Math.min(100, Math.max(0, 50)),
+          engagement: Math.min(100, Math.max(0, score * 0.85)),
+          stressLevel: Math.min(100, Math.max(0, 100 - score)),
+        };
+      }
+    } catch (error) {
+      console.error('[RESULT] Failed to fetch behavioral data:', error);
+      // Use score-based fallback
+      const score = session.score || 0;
+      videoAnalytics = {
+        confidence: score,
+        eyeContact: Math.min(100, Math.max(0, score * 0.8)),
+        posture: Math.min(100, Math.max(0, score * 0.9)),
+        smile: Math.min(100, Math.max(0, 50)),
+        engagement: Math.min(100, Math.max(0, score * 0.85)),
+        stressLevel: Math.min(100, Math.max(0, 100 - score)),
+      };
+    }
 
     // Build response
     const result = {

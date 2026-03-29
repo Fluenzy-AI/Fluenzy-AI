@@ -1,0 +1,154 @@
+/**
+ * R2 Storage Service
+ * Provides upload, download (signed URL), and delete operations for Cloudflare R2
+ */
+
+import {
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl as awsGetSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { r2Client, R2_BUCKET, isR2Configured } from "./r2";
+import { v4 as uuidv4 } from "uuid";
+
+export type FileType =
+  | "resume"
+  | "certificate"
+  | "offer-letter"
+  | "profile-cert"
+  | "audit-pdf"
+  | "job-resume"
+  | "payment-receipt"
+  | "ats-resume";
+
+/**
+ * Build a unique file key for R2 storage
+ */
+export function buildFileKey(
+  fileType: FileType,
+  id: string,
+  originalName?: string,
+  jobSlug?: string
+): string {
+  const uid = uuidv4();
+  const ext = originalName?.split(".").pop()?.toLowerCase() || "pdf";
+
+  const prefixMap: Record<FileType, string> = {
+    resume: `resumes/${id}_${uid}.${ext}`,
+    certificate: `certificates/${id}_${uid}.pdf`,
+    "offer-letter": `offer-letters/${id}_${uid}.pdf`,
+    "profile-cert": `profile-certs/${id}_${uid}.pdf`,
+    "audit-pdf": `audit-pdfs/${id}_${uid}.pdf`,
+    "job-resume": `job-resumes/${id}_${jobSlug || "apply"}_${uid}.pdf`,
+    "payment-receipt": `receipts/${id}_${uid}.pdf`,
+    "ats-resume": `ats-resumes/${id}_${uid}.${ext}`,
+  };
+
+  return prefixMap[fileType] ?? `misc/${id}_${uid}.${ext}`;
+}
+
+/**
+ * Upload a file buffer to R2
+ */
+export async function uploadToR2(
+  fileKey: string,
+  buffer: Buffer,
+  mimeType: string
+): Promise<string> {
+  if (!isR2Configured()) {
+    throw new Error("R2 is not configured. Check environment variables.");
+  }
+
+  await r2Client.send(
+    new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: fileKey,
+      Body: buffer,
+      ContentType: mimeType,
+    })
+  );
+
+  console.info(`[R2] Uploaded: ${fileKey} (${buffer.length} bytes)`);
+  return fileKey;
+}
+
+/**
+ * Generate a pre-signed URL for downloading a file
+ * Default expiration: 5 minutes (300 seconds)
+ */
+export async function getSignedUrl(
+  fileKey: string,
+  expiresInSeconds: number = 300
+): Promise<string> {
+  if (!isR2Configured()) {
+    throw new Error("R2 is not configured. Check environment variables.");
+  }
+
+  const command = new GetObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: fileKey,
+  });
+
+  const url = await awsGetSignedUrl(r2Client, command, {
+    expiresIn: expiresInSeconds,
+  });
+
+  return url;
+}
+
+/**
+ * Delete a file from R2
+ */
+export async function deleteFromR2(fileKey: string): Promise<void> {
+  if (!isR2Configured()) {
+    throw new Error("R2 is not configured. Check environment variables.");
+  }
+
+  await r2Client.send(
+    new DeleteObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: fileKey,
+    })
+  );
+
+  console.info(`[R2] Deleted: ${fileKey}`);
+}
+
+/**
+ * Check if a file exists in R2
+ */
+export async function fileExistsInR2(fileKey: string): Promise<boolean> {
+  if (!isR2Configured()) {
+    return false;
+  }
+
+  try {
+    await r2Client.send(
+      new HeadObjectCommand({
+        Bucket: R2_BUCKET,
+        Key: fileKey,
+      })
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Upload PDF buffer and return the file key
+ * Convenience wrapper for PDF uploads
+ */
+export async function uploadPdfToR2(
+  fileType: FileType,
+  id: string,
+  pdfBuffer: Buffer,
+  originalName?: string,
+  jobSlug?: string
+): Promise<string> {
+  const fileKey = buildFileKey(fileType, id, originalName, jobSlug);
+  await uploadToR2(fileKey, pdfBuffer, "application/pdf");
+  return fileKey;
+}

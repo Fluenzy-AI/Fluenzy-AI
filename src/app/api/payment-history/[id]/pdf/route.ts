@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { htmlToPdf } from "@/lib/pdf-browser";
 import { buildInvoiceHtml, titleCase } from "@/lib/invoice-html";
+import { uploadPdfToR2, getSignedUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -46,6 +48,44 @@ export async function GET(
       `FLZ-${status.toUpperCase().slice(0, 3)}-${payment.id.slice(-6).toUpperCase()}`;
     const filename = `FluenzyAI_${titleCase(status).replace(/ /g, "_")}_${invoiceNumber}.pdf`;
 
+    // Check if redirect=true query param is set - return signed URL instead of PDF
+    const url = new URL(request.url);
+    const redirect = url.searchParams.get("redirect") === "true";
+    
+    if (redirect && isR2Configured()) {
+      try {
+        // Upload to R2 and return signed URL
+        const fileKey = await uploadPdfToR2(
+          "payment-receipt",
+          `${user.id}_${payment.id}`,
+          pdfBuffer,
+          filename
+        );
+        
+        // Create FileRecord
+        await prisma.fileRecord.create({
+          data: {
+            userId: user.id,
+            fileType: "payment-receipt",
+            fileKey,
+            originalFileName: filename,
+            fileSize: pdfBuffer.byteLength,
+            mimeType: "application/pdf",
+            metadata: { paymentId: payment.id, invoiceNumber },
+          },
+        });
+
+        const signedUrl = await getSignedUrl(fileKey, 300);
+        console.info(`[PAYMENT_PDF] Uploaded to R2: ${fileKey}`);
+        
+        return NextResponse.json({ url: signedUrl, expiresIn: 300 });
+      } catch (r2Error) {
+        console.error("[PAYMENT_PDF] R2 upload failed:", r2Error);
+        // Fall through to direct PDF response
+      }
+    }
+
+    // Return PDF directly (default behavior)
     return new NextResponse(pdfBuffer as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/pdf",

@@ -4,10 +4,13 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
+import { uploadPdfToR2, getSignedUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 export const runtime = "nodejs";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const STORAGE_LIMIT = 100 * 1024 * 1024; // 100MB per user
 
 const sanitizeFileName = (name: string) => name.replace(/[^a-z0-9._-]/gi, "_");
 
@@ -41,24 +44,70 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Only PDF files are allowed" }, { status: 400 });
     }
 
+    // Check storage quota
+    const storageUsed = user.storageUsed || 0;
+    if (storageUsed + file.size > STORAGE_LIMIT) {
+      return NextResponse.json({ error: "Storage limit reached (100 MB)" }, { status: 413 });
+    }
+
     const safeName = sanitizeFileName(file.name || "resume.pdf");
-    const uniqueName = `${Date.now()}-${safeName}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "resumes", user.id.toString());
-
-    await mkdir(uploadDir, { recursive: true });
-
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filePath = path.join(uploadDir, uniqueName);
-    await writeFile(filePath, buffer);
+    
+    let fileUrl = "";
+    let fileKey: string | null = null;
 
-    // Normalize URL to use forward slashes
-    const fileUrl = `/uploads/resumes/${user.id}/${uniqueName}`;
+    // Try R2 first
+    if (isR2Configured()) {
+      try {
+        fileKey = await uploadPdfToR2("resume", user.id, buffer, safeName);
+        
+        // Create FileRecord
+        await prisma.fileRecord.create({
+          data: {
+            userId: user.id,
+            fileType: "resume",
+            fileKey,
+            originalFileName: safeName,
+            fileSize: file.size,
+            mimeType: "application/pdf",
+          },
+        });
+
+        // Update user storage quota
+        await prisma.users.update({
+          where: { id: user.id },
+          data: { storageUsed: { increment: file.size } },
+        });
+
+        // Generate signed URL for immediate use
+        fileUrl = await getSignedUrl(fileKey, 3600);
+        console.info(`[PROFILE_RESUME] Uploaded to R2: ${fileKey}`);
+      } catch (r2Error) {
+        console.error("[PROFILE_RESUME] R2 upload failed, falling back to filesystem:", r2Error);
+        fileKey = null;
+        fileUrl = "";
+      }
+    }
+
+    // Fallback to filesystem if R2 failed or not configured
+    if (!fileKey || !fileUrl) {
+      const uniqueName = `${Date.now()}-${safeName}`;
+      const uploadDir = path.join(process.cwd(), "public", "uploads", "resumes", user.id.toString());
+
+      await mkdir(uploadDir, { recursive: true });
+
+      const filePath = path.join(uploadDir, uniqueName);
+      await writeFile(filePath, buffer);
+
+      // Normalize URL to use forward slashes
+      fileUrl = `/uploads/resumes/${user.id}/${uniqueName}`;
+    }
 
     const resume = await (prisma as any).resume.create({
       data: {
         userId: user.id,
         fileName: safeName,
-        fileUrl,
+        fileUrl: fileKey || fileUrl, // Store R2 key or filesystem URL
       },
     });
 
@@ -67,8 +116,9 @@ export async function POST(request: Request) {
       resume: {
         id: resume.id,
         fileName: resume.fileName,
-        fileUrl: resume.fileUrl,
+        fileUrl: fileUrl, // Return the accessible URL (signed or filesystem)
         uploadedAt: resume.uploadedAt,
+        isR2: !!fileKey,
       },
     });
   } catch (error) {
@@ -98,14 +148,31 @@ export async function GET() {
       take: 5,
     });
 
-    return NextResponse.json({
-      resumes: resumes.map((resume: any) => ({
-        id: resume.id,
-        fileName: resume.fileName,
-        fileUrl: resume.fileUrl,
-        uploadedAt: resume.uploadedAt,
-      })),
-    });
+    // Generate signed URLs for R2 files
+    const resumesWithUrls = await Promise.all(
+      resumes.map(async (resume: any) => {
+        let fileUrl = resume.fileUrl;
+        const isR2File = fileUrl && !fileUrl.startsWith("/") && !fileUrl.startsWith("http");
+        
+        if (isR2File && isR2Configured()) {
+          try {
+            fileUrl = await getSignedUrl(resume.fileUrl, 3600);
+          } catch (e) {
+            console.error(`[PROFILE_RESUME] Failed to get signed URL for ${resume.fileUrl}:`, e);
+          }
+        }
+        
+        return {
+          id: resume.id,
+          fileName: resume.fileName,
+          fileUrl,
+          uploadedAt: resume.uploadedAt,
+          isR2: isR2File,
+        };
+      })
+    );
+
+    return NextResponse.json({ resumes: resumesWithUrls });
   } catch (error) {
     console.error("Resume fetch error:", error);
     return NextResponse.json({ error: "Failed to load resumes" }, { status: 500 });
