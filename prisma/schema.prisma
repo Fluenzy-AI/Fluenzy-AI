@@ -1730,6 +1730,7 @@ enum AssessmentType {
   AI_INTERVIEW
   VOICE
   GD
+  CORPORATE_VOICE
 }
 
 enum AutoApplyStatus {
@@ -1963,11 +1964,13 @@ model Assessment {
   title           String
   description     String?
   type            AssessmentType @default(MCQ)
+  subType         String?        // for CORPORATE_VOICE: read_aloud, listen_repeat, etc.
   duration        Int            @default(30)
   passingScore    Int            @default(60)
 
   questions       Json
   isActive        Boolean        @default(true)
+  aiGenerated     Boolean        @default(false)  // Track if questions were AI-generated
 
   createdBy       String
   createdAt       DateTime       @default(now())
@@ -1977,6 +1980,7 @@ model Assessment {
   sessions        CandidateAssessmentSession[]
 
   @@index([companyId])
+  @@index([type])
 }
 
 model AssessmentResult {
@@ -1990,11 +1994,20 @@ model AssessmentResult {
   timeTaken       Int
   answers         Json
 
+  // Enhanced tracking
+  breakdown       Json?      // per-question scores
+  aiFeedback      String?    // Gemini-generated feedback
+  transcript      String?    // for voice/GD/AI interviews
+  flagged         Boolean    @default(false)  // anti-cheat flag
+  cheatingEvents  Json?      // tab switches, copy-paste, etc.
+  videoMetrics    Json?      // AI video analysis data
+
   startedAt       DateTime
   completedAt     DateTime   @default(now())
 
   @@index([assessmentId])
   @@index([candidateId])
+  @@index([passed])
 }
 
 // ─── HR Portal Assessments ─────────────────────────────────────────────────────

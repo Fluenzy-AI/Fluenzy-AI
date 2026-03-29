@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireCompanyRoles } from "@/lib/company-auth";
+import { z } from "zod";
+
+const CreateAssessmentSchema = z.object({
+  type: z.enum(["MCQ", "CODING", "AI_INTERVIEW", "VOICE", "GD", "CORPORATE_VOICE"]),
+  subType: z.string().optional(), // for CORPORATE_VOICE: read_aloud, listen_repeat, etc.
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  description: z.string().optional(),
+  duration: z.number().min(5).max(180).default(30),
+  passingScore: z.number().min(0).max(100).default(70),
+  questions: z.array(z.any()).optional(), // For MCQ, CODING questions
+  aiGenerated: z.boolean().default(false),
+  // AI generation params (optional)
+  aiParams: z.object({
+    topic: z.string(),
+    difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
+    count: z.number().min(1).max(50).default(10)
+  }).optional()
+});
 
 /**
  * GET /api/company/assessments
@@ -14,27 +32,48 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const type = searchParams.get("type");
+    const search = searchParams.get("search") || "";
+
+    // Build query filters
+    const where: any = {
+      companyId: authResult.company.id,
+    };
+    
+    if (type) {
+      where.type = type;
+    }
+    
+    if (search) {
+      where.OR = [
+        { title: { contains: search, mode: "insensitive" } },
+        { description: { contains: search, mode: "insensitive" } }
+      ];
+    }
+
     // Get all assessments for this company
     const assessments = await prisma.assessment.findMany({
-      where: {
-        companyId: authResult.company.id,
-      },
+      where,
       orderBy: {
         createdAt: "desc",
       },
       select: {
         id: true,
         type: true,
+        subType: true,
         title: true,
         description: true,
         questions: true,
         duration: true,
         passingScore: true,
         isActive: true,
+        aiGenerated: true,
         createdAt: true,
         _count: {
           select: {
             results: true,
+            sessions: true,
           },
         },
       },
@@ -44,14 +83,16 @@ export async function GET(req: NextRequest) {
     const formattedAssessments = assessments.map((assessment) => ({
       id: assessment.id,
       type: assessment.type,
+      subType: assessment.subType,
       title: assessment.title,
       description: assessment.description,
-      questions: Array.isArray(assessment.questions) ? assessment.questions.length : 0,
+      questionsCount: Array.isArray(assessment.questions) ? assessment.questions.length : 0,
       duration: assessment.duration,
       passPercentage: assessment.passingScore || 70,
-      assigned: assessment._count.results,
-      completed: assessment._count.results, // In a real app, filter by completed status
+      totalAttempts: assessment._count.results,
+      sessionsCount: assessment._count.sessions,
       isActive: assessment.isActive,
+      aiGenerated: assessment.aiGenerated,
       createdAt: assessment.createdAt.toISOString(),
     }));
 
@@ -75,32 +116,37 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const {
-      type,
-      title,
-      duration,
-      passPercentage,
-      description,
-      questions,
-      codingProblem,
-      codingLanguage,
-    } = body;
+    const parsed = CreateAssessmentSchema.safeParse(body);
 
-    // Validate required fields
-    if (!type || !title || !duration || passPercentage === undefined) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Validation failed", details: parsed.error.flatten() },
+        { status: 400 }
+      );
+    }
+
+    const data = parsed.data;
+
+    // If AI generation is requested, questions will be generated later via AI API
+    let questions = data.questions || [];
+    
+    // For non-MCQ types, questions can be empty initially
+    if (!["MCQ", "CODING"].includes(data.type)) {
+      questions = [];
     }
 
     // Create assessment
     const assessment = await prisma.assessment.create({
       data: {
-        type,
-        title,
-        description,
-        duration,
-        passingScore: passPercentage,
+        type: data.type,
+        subType: data.subType,
+        title: data.title,
+        description: data.description,
+        duration: data.duration,
+        passingScore: data.passingScore,
         companyId: authResult.company.id,
-        questions: type === "MCQ" ? questions : [],
+        questions: questions,
+        aiGenerated: data.aiGenerated,
         createdBy: authResult.member.id,
       },
     });
@@ -110,9 +156,11 @@ export async function POST(req: NextRequest) {
       assessment: {
         id: assessment.id,
         type: assessment.type,
+        subType: assessment.subType,
         title: assessment.title,
+        aiGenerated: assessment.aiGenerated,
       },
-    });
+    }, { status: 201 });
   } catch (error) {
     console.error("[COMPANY_ASSESSMENTS_POST]", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -104,6 +104,30 @@ export async function GET(
       })
     );
 
+    // Transform certification URLs to signed URLs (similar to resumes)
+    const certificationsWithSignedUrls = await Promise.all(
+      profile.certifications.map(async (cert: any) => {
+        let imageUrl = cert.imageUrl;
+        let credentialUrl = cert.credentialUrl;
+        
+        // Convert imageUrl if it's an R2 key or filesystem path
+        if (imageUrl) {
+          imageUrl = await getPublicFileUrl(imageUrl);
+        }
+        
+        // Convert credentialUrl if it's an R2 key or filesystem path  
+        if (credentialUrl) {
+          credentialUrl = await getPublicFileUrl(credentialUrl);
+        }
+        
+        return {
+          ...cert,
+          imageUrl,
+          credentialUrl,
+        };
+      })
+    );
+
     return NextResponse.json({
       profile: {
         username: profile.username,
@@ -122,7 +146,7 @@ export async function GET(
         skills: allowed.skills ? profile.skills : [],
         experiences: allowed.experience ? profile.experiences : [],
         educations: allowed.education ? profile.educations : [],
-        certifications: allowed.certifications ? profile.certifications : [],
+        certifications: allowed.certifications ? certificationsWithSignedUrls : [],
         projects: allowed.projects ? profile.projects : [],
         courses: allowed.courses ? profile.courses : [],
         languages: allowed.languages ? profile.languages : [],
