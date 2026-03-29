@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, writeFile, unlink } from "fs/promises";
 import path from "path";
-import { uploadPdfToR2, getSignedUrl } from "@/lib/r2-service";
+import { uploadPdfToR2, getSignedUrl, deleteFromR2 } from "@/lib/r2-service";
 import { isR2Configured } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -31,6 +31,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
+    const replaceMode = formData.get("replace") === "true"; // New: replace mode
 
     if (!file) {
       return NextResponse.json({ error: "Resume file is required" }, { status: 400 });
@@ -42,6 +43,61 @@ export async function POST(request: Request) {
 
     if (file.type !== "application/pdf" && !file.name.toLowerCase().endsWith(".pdf")) {
       return NextResponse.json({ error: "Only PDF files are allowed" }, { status: 400 });
+    }
+
+    // **NEW: In replace mode, delete all existing resumes**
+    if (replaceMode) {
+      const existingResumes = await (prisma as any).resume.findMany({
+        where: { userId: user.id },
+      });
+
+      for (const oldResume of existingResumes) {
+        // Delete from R2 or filesystem
+        const isR2File = oldResume.fileUrl && !oldResume.fileUrl.startsWith("/");
+        
+        if (isR2File && isR2Configured()) {
+          try {
+            await deleteFromR2(oldResume.fileUrl);
+            console.info(`[PROFILE_RESUME] Deleted from R2: ${oldResume.fileUrl}`);
+          } catch (error) {
+            console.error(`[PROFILE_RESUME] Failed to delete from R2: ${oldResume.fileUrl}`, error);
+          }
+        } else if (oldResume.fileUrl && oldResume.fileUrl.startsWith("/")) {
+          // Filesystem file
+          try {
+            const localPath = path.join(process.cwd(), "public", oldResume.fileUrl.replace(/^\/+/, ""));
+            await unlink(localPath);
+            console.info(`[PROFILE_RESUME] Deleted from filesystem: ${localPath}`);
+          } catch (error) {
+            console.error(`[PROFILE_RESUME] Failed to delete from filesystem: ${oldResume.fileUrl}`, error);
+          }
+        }
+
+        // Delete FileRecord if exists
+        if (isR2File) {
+          await prisma.fileRecord.deleteMany({
+            where: {
+              userId: user.id,
+              fileKey: oldResume.fileUrl,
+            },
+          });
+        }
+
+        // Decrease storage usage
+        if (oldResume.fileSize) {
+          await prisma.users.update({
+            where: { id: user.id },
+            data: { storageUsed: { decrement: oldResume.fileSize } },
+          });
+        }
+      }
+
+      // Delete all resume records
+      await (prisma as any).resume.deleteMany({
+        where: { userId: user.id },
+      });
+
+      console.info(`[PROFILE_RESUME] Deleted ${existingResumes.length} old resume(s) for user ${user.id}`);
     }
 
     // Check storage quota

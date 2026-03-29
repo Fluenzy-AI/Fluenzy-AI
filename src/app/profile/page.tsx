@@ -159,7 +159,7 @@ export default function ProfilePage() {
     ? `${normalizedBaseUrl}/u/${profile.username}`
     : `/u/${profile.username}`;
 
-  const uploadResume = async () => {
+  const uploadResume = async (replaceExisting = false) => {
     if (!resumeFile) return;
     setResumeUploading(true);
     setResumeError(null);
@@ -167,6 +167,7 @@ export default function ProfilePage() {
     try {
       const body = new FormData();
       body.append("file", resumeFile);
+      body.append("replace", replaceExisting ? "true" : "false");
 
       const res = await fetch("/api/profile/resume", {
         method: "POST",
@@ -738,9 +739,26 @@ export default function ProfilePage() {
                     onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
                     className="h-9 text-sm bg-slate-800/50 border-slate-700/50"
                   />
-                  <Button size="sm" className="h-9 gap-1 shrink-0" onClick={uploadResume} disabled={!resumeFile || resumeUploading}>
-                    <Upload className="h-3 w-3" /> {resumeUploading ? "..." : "Upload"}
-                  </Button>
+                  {resumes?.length > 0 ? (
+                    <Button 
+                      size="sm" 
+                      className="h-9 gap-1 shrink-0 bg-amber-500/90 hover:bg-amber-500 text-slate-950" 
+                      onClick={() => uploadResume(true)} 
+                      disabled={!resumeFile || resumeUploading}
+                      title="Replace existing resume(s) with new one"
+                    >
+                      <Upload className="h-3 w-3" /> {resumeUploading ? "..." : "Replace"}
+                    </Button>
+                  ) : (
+                    <Button 
+                      size="sm" 
+                      className="h-9 gap-1 shrink-0" 
+                      onClick={() => uploadResume(false)} 
+                      disabled={!resumeFile || resumeUploading}
+                    >
+                      <Upload className="h-3 w-3" /> {resumeUploading ? "..." : "Upload"}
+                    </Button>
+                  )}
                 </div>
                 {resumeError && <p className="text-xs text-red-400">{resumeError}</p>}
                 {resumes?.length ? (
