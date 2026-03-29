@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,13 +13,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { toast } from "sonner";
 import {
   CalendarDays, Copy, Download, FileText, Pencil, Trash2,
   User, Camera, Globe, Github, Linkedin, ExternalLink, Code2,
   Briefcase, GraduationCap, Award, FolderKanban, BookOpen,
   Languages, CreditCard, Upload, Link2, Eye, EyeOff,
   Shield, TrendingUp, Zap, CheckCircle2, Plus, MapPin,
-  Star, Activity
+  Star, Activity, Loader2, AlertCircle, Save
 } from "lucide-react";
 import Link from "next/link";
 
@@ -98,6 +99,39 @@ export default function ProfilePage() {
   const [usernameError, setUsernameError] = useState<string | null>(null);
   const [usernameSuggestions, setUsernameSuggestions] = useState<string[]>([]);
 
+  // Local form states for controlled forms
+  const [basicInfoForm, setBasicInfoForm] = useState({
+    name: "",
+    username: "",
+    headline: "",
+    bio: "",
+    openToWork: false,
+  });
+  const [socialLinksForm, setSocialLinksForm] = useState({
+    github: "",
+    linkedin: "",
+    portfolio: "",
+    leetcode: "",
+  });
+  const [publicProfileForm, setPublicProfileForm] = useState({
+    publicProfileEnabled: false,
+    publicSections: {} as Record<string, boolean>,
+  });
+
+  // Saving states
+  const [savingBasicInfo, setSavingBasicInfo] = useState(false);
+  const [savingSocialLinks, setSavingSocialLinks] = useState(false);
+  const [savingPublicProfile, setSavingPublicProfile] = useState(false);
+
+  // Dirty states
+  const [basicInfoDirty, setBasicInfoDirty] = useState(false);
+  const [socialLinksDirty, setSocialLinksDirty] = useState(false);
+  const [publicProfileDirty, setPublicProfileDirty] = useState(false);
+
+  // Navigation guard state
+  const [showUnsavedDialog, setShowUnsavedDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/");
@@ -123,6 +157,98 @@ export default function ProfilePage() {
       fetchProfile();
     }
   }, [session]);
+
+  // Populate local form states from server data
+  useEffect(() => {
+    if (profileData) {
+      const { user, profile } = profileData;
+      setBasicInfoForm({
+        name: user.name || "",
+        username: profile.username || "",
+        headline: profile.headline || "",
+        bio: profile.bio || "",
+        openToWork: profile.openToWork || false,
+      });
+      setSocialLinksForm({
+        github: profile.socialLinks?.github || "",
+        linkedin: profile.socialLinks?.linkedin || "",
+        portfolio: profile.socialLinks?.portfolio || "",
+        leetcode: profile.socialLinks?.leetcode || "",
+      });
+      setPublicProfileForm({
+        publicProfileEnabled: profile.publicProfileEnabled || false,
+        publicSections: profile.publicSections || {},
+      });
+    }
+  }, [profileData]);
+
+  // Track dirty state for Basic Info
+  useEffect(() => {
+    if (!profileData) return;
+    const { user, profile } = profileData;
+    const isDirty =
+      basicInfoForm.name !== (user.name || "") ||
+      basicInfoForm.username !== (profile.username || "") ||
+      basicInfoForm.headline !== (profile.headline || "") ||
+      basicInfoForm.bio !== (profile.bio || "") ||
+      basicInfoForm.openToWork !== (profile.openToWork || false);
+    setBasicInfoDirty(isDirty);
+  }, [basicInfoForm, profileData]);
+
+  // Track dirty state for Social Links
+  useEffect(() => {
+    if (!profileData) return;
+    const { profile } = profileData;
+    const isDirty =
+      socialLinksForm.github !== (profile.socialLinks?.github || "") ||
+      socialLinksForm.linkedin !== (profile.socialLinks?.linkedin || "") ||
+      socialLinksForm.portfolio !== (profile.socialLinks?.portfolio || "") ||
+      socialLinksForm.leetcode !== (profile.socialLinks?.leetcode || "");
+    setSocialLinksDirty(isDirty);
+  }, [socialLinksForm, profileData]);
+
+  // Track dirty state for Public Profile
+  useEffect(() => {
+    if (!profileData) return;
+    const { profile } = profileData;
+    const isDirty =
+      publicProfileForm.publicProfileEnabled !== (profile.publicProfileEnabled || false) ||
+      JSON.stringify(publicProfileForm.publicSections) !== JSON.stringify(profile.publicSections || {});
+    setPublicProfileDirty(isDirty);
+  }, [publicProfileForm, profileData]);
+
+  // Navigation guard
+  useEffect(() => {
+    const anyDirty = basicInfoDirty || socialLinksDirty || publicProfileDirty;
+    if (!anyDirty) return;
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [basicInfoDirty, socialLinksDirty, publicProfileDirty]);
+
+  // Keyboard shortcut (Ctrl/Cmd + S)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+        e.preventDefault();
+        if (basicInfoDirty) {
+          handleSaveBasicInfo();
+        } else if (socialLinksDirty) {
+          handleSaveSocialLinks();
+        } else if (publicProfileDirty) {
+          handleSavePublicProfile();
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [basicInfoDirty, socialLinksDirty, publicProfileDirty, basicInfoForm, socialLinksForm, publicProfileForm]);
 
   const activityMap = profileData?.activity ?? {};
 
@@ -368,6 +494,141 @@ export default function ProfilePage() {
     }
   };
 
+  // Save handlers for controlled forms
+  const handleSaveBasicInfo = async () => {
+    if (!profileData) return;
+    setSavingBasicInfo(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: basicInfoForm.username,
+          headline: basicInfoForm.headline,
+          bio: basicInfoForm.bio,
+          openToWork: basicInfoForm.openToWork,
+          name: basicInfoForm.name,
+          // Preserve other fields
+          socialLinks: profileData.profile.socialLinks,
+          publicProfileEnabled: profileData.profile.publicProfileEnabled,
+          publicSections: profileData.profile.publicSections,
+          image: profileData.user.image,
+        }),
+      });
+      
+      const payload = await res.json().catch(() => null);
+      
+      if (!res.ok) {
+        if (basicInfoForm.username !== profileData.profile.username) {
+          setUsernameError(payload?.error || "Username not available");
+          setUsernameSuggestions(payload?.suggestions || []);
+        }
+        toast.error("Failed to save. Please try again.");
+        console.error("Save error:", payload);
+        return;
+      }
+      
+      // Clear username errors on success
+      setUsernameError(null);
+      setUsernameSuggestions([]);
+      
+      // Refresh profile data
+      const refreshed = await fetch("/api/profile");
+      if (refreshed.ok) {
+        const updatedData = await refreshed.json();
+        setProfileData(updatedData);
+        toast.success("Profile updated successfully ✓");
+      }
+    } catch (error) {
+      console.error("Save basic info error:", error);
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setSavingBasicInfo(false);
+    }
+  };
+
+  const handleSaveSocialLinks = async () => {
+    if (!profileData) return;
+    setSavingSocialLinks(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          socialLinks: socialLinksForm,
+          // Preserve other fields
+          username: profileData.profile.username,
+          headline: profileData.profile.headline,
+          bio: profileData.profile.bio,
+          openToWork: profileData.profile.openToWork,
+          publicProfileEnabled: profileData.profile.publicProfileEnabled,
+          publicSections: profileData.profile.publicSections,
+          name: profileData.user.name,
+          image: profileData.user.image,
+        }),
+      });
+      
+      if (!res.ok) {
+        toast.error("Failed to save. Please try again.");
+        return;
+      }
+      
+      // Refresh profile data
+      const refreshed = await fetch("/api/profile");
+      if (refreshed.ok) {
+        const updatedData = await refreshed.json();
+        setProfileData(updatedData);
+        toast.success("Social links updated successfully ✓");
+      }
+    } catch (error) {
+      console.error("Save social links error:", error);
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setSavingSocialLinks(false);
+    }
+  };
+
+  const handleSavePublicProfile = async () => {
+    if (!profileData) return;
+    setSavingPublicProfile(true);
+    try {
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          publicProfileEnabled: publicProfileForm.publicProfileEnabled,
+          publicSections: publicProfileForm.publicSections,
+          // Preserve other fields
+          username: profileData.profile.username,
+          headline: profileData.profile.headline,
+          bio: profileData.profile.bio,
+          socialLinks: profileData.profile.socialLinks,
+          openToWork: profileData.profile.openToWork,
+          name: profileData.user.name,
+          image: profileData.user.image,
+        }),
+      });
+      
+      if (!res.ok) {
+        toast.error("Failed to save. Please try again.");
+        return;
+      }
+      
+      // Refresh profile data
+      const refreshed = await fetch("/api/profile");
+      if (refreshed.ok) {
+        const updatedData = await refreshed.json();
+        setProfileData(updatedData);
+        toast.success("Public profile settings updated successfully ✓");
+      }
+    } catch (error) {
+      console.error("Save public profile error:", error);
+      toast.error("Failed to save. Please try again.");
+    } finally {
+      setSavingPublicProfile(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-6xl space-y-8">
@@ -497,8 +758,16 @@ export default function ProfilePage() {
             {/* Basic Info Card */}
             <Card className="border-slate-700/50 bg-slate-900/60">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <User className="h-4 w-4 text-purple-400" /> Basic Information
+                <CardTitle className="text-base flex items-center gap-2 justify-between">
+                  <span className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-purple-400" /> Basic Information
+                  </span>
+                  {basicInfoDirty && (
+                    <Badge variant="outline" className="text-xs text-amber-400 border-amber-400/30 gap-1.5">
+                      <AlertCircle className="h-3 w-3" />
+                      Unsaved changes
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -506,23 +775,29 @@ export default function ProfilePage() {
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Full Name</label>
                     <Input
-                      value={user.name || ""}
-                      onChange={(e) => updateProfile({ name: e.target.value })}
+                      value={basicInfoForm.name}
+                      onChange={(e) => setBasicInfoForm({ ...basicInfoForm, name: e.target.value })}
                       className="bg-slate-800/50 border-slate-700/50 h-9"
                     />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Username</label>
                     <Input
-                      value={profile.username}
-                      onChange={(e) => updateProfile({ username: e.target.value })}
+                      value={basicInfoForm.username}
+                      onChange={(e) => setBasicInfoForm({ ...basicInfoForm, username: e.target.value })}
                       className="bg-slate-800/50 border-slate-700/50 h-9"
                     />
                     {usernameError && <p className="text-xs text-red-400">{usernameError}</p>}
                     {usernameSuggestions.length > 0 && (
                       <div className="flex flex-wrap gap-1.5 mt-1.5">
                         {usernameSuggestions.map((s) => (
-                          <Button key={s} size="sm" variant="outline" className="h-6 text-[10px] px-2" onClick={() => updateProfile({ username: s })}>
+                          <Button 
+                            key={s} 
+                            size="sm" 
+                            variant="outline" 
+                            className="h-6 text-[10px] px-2" 
+                            onClick={() => setBasicInfoForm({ ...basicInfoForm, username: s })}
+                          >
                             {s}
                           </Button>
                         ))}
@@ -534,8 +809,8 @@ export default function ProfilePage() {
                   <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">Headline</label>
                   <Input
                     placeholder="e.g. Full-Stack Developer | AI Enthusiast"
-                    value={profile.headline || ""}
-                    onChange={(e) => updateProfile({ headline: e.target.value })}
+                    value={basicInfoForm.headline}
+                    onChange={(e) => setBasicInfoForm({ ...basicInfoForm, headline: e.target.value })}
                     className="bg-slate-800/50 border-slate-700/50 h-9"
                   />
                 </div>
@@ -543,8 +818,8 @@ export default function ProfilePage() {
                   <label className="text-xs font-medium text-slate-400 uppercase tracking-wider">About</label>
                   <Textarea
                     placeholder="Write a short bio about yourself..."
-                    value={profile.bio || ""}
-                    onChange={(e) => updateProfile({ bio: e.target.value })}
+                    value={basicInfoForm.bio}
+                    onChange={(e) => setBasicInfoForm({ ...basicInfoForm, bio: e.target.value })}
                     className="bg-slate-800/50 border-slate-700/50 min-h-[80px] resize-y"
                   />
                 </div>
@@ -554,21 +829,50 @@ export default function ProfilePage() {
                     <span className="text-sm font-medium text-slate-200">Open to Work</span>
                   </div>
                   <Switch
-                    checked={profile.openToWork}
-                    onCheckedChange={(checked) => updateProfile({ openToWork: checked })}
+                    checked={basicInfoForm.openToWork}
+                    onCheckedChange={(checked) => setBasicInfoForm({ ...basicInfoForm, openToWork: checked })}
                   />
                 </div>
+                {basicInfoDirty && (
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      onClick={handleSaveBasicInfo}
+                      disabled={savingBasicInfo}
+                      className="bg-purple-600 hover:bg-purple-700 text-white gap-2"
+                    >
+                      {savingBasicInfo ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Social Links Card */}
             <Card className="border-slate-700/50 bg-slate-900/60">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Link2 className="h-4 w-4 text-blue-400" /> Social Links
+                <CardTitle className="text-base flex items-center gap-2 justify-between">
+                  <span className="flex items-center gap-2">
+                    <Link2 className="h-4 w-4 text-blue-400" /> Social Links
+                  </span>
+                  {socialLinksDirty && (
+                    <Badge variant="outline" className="text-xs text-amber-400 border-amber-400/30 gap-1.5">
+                      <AlertCircle className="h-3 w-3" />
+                      Unsaved changes
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-4">
                 <div className="grid sm:grid-cols-2 gap-3">
                   {[
                     { key: "github", icon: Github, label: "GitHub", placeholder: "https://github.com/username", color: "text-slate-300" },
@@ -582,23 +886,52 @@ export default function ProfilePage() {
                       </label>
                       <Input
                         placeholder={link.placeholder}
-                        value={(profile.socialLinks as any)?.[link.key] || ""}
+                        value={(socialLinksForm as any)[link.key] || ""}
                         onChange={(e) =>
-                          updateProfile({ socialLinks: { ...profile.socialLinks, [link.key]: e.target.value } })
+                          setSocialLinksForm({ ...socialLinksForm, [link.key]: e.target.value })
                         }
                         className="bg-slate-800/50 border-slate-700/50 h-9 text-sm"
                       />
                     </div>
                   ))}
                 </div>
+                {socialLinksDirty && (
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      onClick={handleSaveSocialLinks}
+                      disabled={savingSocialLinks}
+                      className="bg-blue-600 hover:bg-blue-700 text-white gap-2"
+                    >
+                      {savingSocialLinks ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Public Profile URL Card */}
             <Card className="border-slate-700/50 bg-slate-900/60">
               <CardHeader className="pb-4">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Globe className="h-4 w-4 text-cyan-400" /> Public Profile
+                <CardTitle className="text-base flex items-center gap-2 justify-between">
+                  <span className="flex items-center gap-2">
+                    <Globe className="h-4 w-4 text-cyan-400" /> Public Profile
+                  </span>
+                  {publicProfileDirty && (
+                    <Badge variant="outline" className="text-xs text-amber-400 border-amber-400/30 gap-1.5">
+                      <AlertCircle className="h-3 w-3" />
+                      Unsaved changes
+                    </Badge>
+                  )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -613,15 +946,15 @@ export default function ProfilePage() {
                 </div>
                 <div className="flex items-center justify-between rounded-lg bg-slate-800/30 px-4 py-3">
                   <div className="flex items-center gap-2">
-                    {profile.publicProfileEnabled ? <Eye className="h-4 w-4 text-blue-400" /> : <EyeOff className="h-4 w-4 text-slate-500" />}
+                    {publicProfileForm.publicProfileEnabled ? <Eye className="h-4 w-4 text-blue-400" /> : <EyeOff className="h-4 w-4 text-slate-500" />}
                     <span className="text-sm font-medium text-slate-200">Profile Visible to Public</span>
                   </div>
                   <Switch
-                    checked={profile.publicProfileEnabled}
-                    onCheckedChange={(checked) => updateProfile({ publicProfileEnabled: checked })}
+                    checked={publicProfileForm.publicProfileEnabled}
+                    onCheckedChange={(checked) => setPublicProfileForm({ ...publicProfileForm, publicProfileEnabled: checked })}
                   />
                 </div>
-                {profile.publicProfileEnabled && (
+                {publicProfileForm.publicProfileEnabled && (
                   <div>
                     <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-2">Visible Sections</p>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -636,14 +969,17 @@ export default function ProfilePage() {
                         { key: "analyticsReport", label: "Analytics", icon: Activity },
                       ].map((item) => (
                         <label key={item.key} className={`flex items-center gap-2 rounded-lg border px-3 py-2 cursor-pointer transition-colors text-xs ${
-                          profile.publicSections?.[item.key]
+                          publicProfileForm.publicSections?.[item.key]
                             ? 'border-purple-500/30 bg-purple-500/5 text-slate-200'
                             : 'border-slate-700/50 bg-slate-800/30 text-slate-400'
                         }`}>
                           <Checkbox
-                            checked={Boolean(profile.publicSections?.[item.key])}
+                            checked={Boolean(publicProfileForm.publicSections?.[item.key])}
                             onCheckedChange={(checked) =>
-                              updateProfile({ publicSections: { ...profile.publicSections, [item.key]: Boolean(checked) } })
+                              setPublicProfileForm({ 
+                                ...publicProfileForm, 
+                                publicSections: { ...publicProfileForm.publicSections, [item.key]: Boolean(checked) } 
+                              })
                             }
                             className="h-3.5 w-3.5"
                           />
@@ -652,6 +988,27 @@ export default function ProfilePage() {
                         </label>
                       ))}
                     </div>
+                  </div>
+                )}
+                {publicProfileDirty && (
+                  <div className="flex justify-end pt-2">
+                    <Button
+                      onClick={handleSavePublicProfile}
+                      disabled={savingPublicProfile}
+                      className="bg-cyan-600 hover:bg-cyan-700 text-white gap-2"
+                    >
+                      {savingPublicProfile ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4" />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
               </CardContent>

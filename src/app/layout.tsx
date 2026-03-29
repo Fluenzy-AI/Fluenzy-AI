@@ -6,6 +6,7 @@ import LayoutWrapper from "../components/LayoutWrapper";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import LoginTracker from "@/components/LoginTracker";
 import PWARegister from "@/components/PWARegister";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.fluenzyai.app"),
@@ -185,6 +186,7 @@ export default function RootLayout({
                 {children}
               </LayoutWrapper>
             </Suspense>
+            <Toaster />
           </Provider>
         </ThemeProvider>
       </body>
