@@ -276,11 +276,48 @@ export default function GDAssessmentPlayer({
           }
         });
 
-        // Join channel
+        // Validate channel name (Agora 64-byte limit)
+        let validChannel = agoraConfig.channel;
+        let validToken = agoraConfig.token;
+        
+        if (validChannel.length > 64) {
+          console.warn(`Channel name too long (${validChannel.length} chars), requesting new credentials`);
+          
+          // Generate a short channel name
+          const timestamp = Date.now();
+          const randomSuffix = Math.random().toString(36).substring(2, 7);
+          validChannel = `gd_${timestamp}_${randomSuffix}`;
+          
+          try {
+            // Request new Agora token for the short channel
+            const tokenResponse = await fetch('/api/gd/token', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                channelName: validChannel,
+                uid: agoraConfig.uid,
+                role: 'publisher',
+              }),
+            });
+            
+            if (tokenResponse.ok) {
+              const tokenData = await tokenResponse.json();
+              validToken = tokenData.token;
+              console.log(`Using new channel: ${validChannel} with fresh token`);
+            } else {
+              throw new Error('Failed to get new Agora token');
+            }
+          } catch (tokenError) {
+            console.error('Token generation failed:', tokenError);
+            throw new Error('Unable to join discussion. Please refresh and try again.');
+          }
+        }
+
+        // Join channel with validated credentials
         await agoraClient.join(
           agoraConfig.appId,
-          agoraConfig.channel,
-          agoraConfig.token,
+          validChannel,
+          validToken,
           agoraConfig.uid
         );
 

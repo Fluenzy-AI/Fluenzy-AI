@@ -220,7 +220,10 @@ export async function POST(
       // Generate fresh Agora token if needed
       let agoraData = null;
       if ((session.assessment.type === "VOICE" || session.assessment.type === "GD") && isAgoraConfigured()) {
-        const channel = session.agoraChannel || `assessment_${session.assessmentId}_${session.id}_${Date.now()}`;
+        // Create a short channel name (Agora limit: 64 bytes)
+        // Use first 8 chars of session ID + timestamp to ensure uniqueness
+        const shortSessionId = session.id.substring(0, 8);
+        const channel = session.agoraChannel || `gd_${shortSessionId}_${Date.now()}`;
         const uid = session.agoraUid || Math.floor(Math.random() * 100000) + 1;
         
         try {

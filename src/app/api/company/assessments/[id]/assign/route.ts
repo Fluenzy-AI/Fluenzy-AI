@@ -91,7 +91,10 @@ export async function POST(
 
         if (assessment.type === "VOICE" || assessment.type === "GD") {
           if (isAgoraConfigured()) {
-            agoraChannel = `assessment_${id}_${application.id}_${Date.now()}`;
+            // Create a short channel name (Agora limit: 64 bytes)
+            // Use first 8 chars of application ID + timestamp
+            const shortAppId = application.id.substring(0, 8);
+            agoraChannel = `gd_${shortAppId}_${Date.now()}`;
             agoraUid = Math.floor(Math.random() * 100000) + 1;
             try {
               const tokenResult = await generateGDToken(agoraChannel, agoraUid, "publisher");

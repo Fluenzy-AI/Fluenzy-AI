@@ -13,7 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import {
   CalendarDays, Copy, Download, FileText, Pencil, Trash2,
   User, Camera, Globe, Github, Linkedin, ExternalLink, Code2,
@@ -1712,6 +1712,7 @@ export default function ProfilePage() {
           </div>
         </DialogContent>
       </Dialog>
+      <Toaster richColors position="top-right" />
     </div>
   );
 }
