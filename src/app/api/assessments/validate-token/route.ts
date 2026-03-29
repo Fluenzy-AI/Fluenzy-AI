@@ -41,7 +41,8 @@ export async function POST(req: NextRequest) {
               }
             }
           }
-        }
+        },
+        application: true,
       }
     });
 
@@ -76,8 +77,8 @@ export async function POST(req: NextRequest) {
       passingScore: session.assessment.passingScore,
       questions: sanitizeQuestions(session.assessment.questions, session.assessment.type),
       company: session.assessment.company,
-      candidateEmail: session.candidateEmail,
-      candidateName: session.candidateName,
+      candidateEmail: session.application?.email || "Unknown",
+      candidateName: session.application?.name || "Unknown",
       status: session.status,
       startedAt: session.startedAt?.toISOString(),
       expiresAt: session.expiresAt?.toISOString(),

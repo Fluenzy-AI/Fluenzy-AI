@@ -602,6 +602,7 @@ import { notFound } from "next/navigation";
 import path from "path";
 import { stat } from "fs/promises";
 import prisma from "@/lib/prisma";
+import { getPublicFileUrl } from "@/lib/file-url-helper";
 import PublicProfileClient, { PublicProfileData } from "./PublicProfileClient";
 
 export const dynamic = "force-dynamic";
@@ -683,10 +684,14 @@ const getPublicProfile = async (username: string): Promise<PublicProfileData | n
       } catch (error) {
         fileSize = null;
       }
+      
+      // Transform URL to public/signed URL
+      const publicFileUrl = await getPublicFileUrl(resume.fileUrl);
+      
       return {
         id: resume.id,
         fileName: resume.fileName,
-        fileUrl: resume.fileUrl,
+        fileUrl: publicFileUrl || resume.fileUrl,
         uploadedAt: resume.uploadedAt,
         fileSize,
       };
@@ -711,7 +716,25 @@ const getPublicProfile = async (username: string): Promise<PublicProfileData | n
       skills: allowed.skills ? profile.skills : [],
       experiences: allowed.experience ? profile.experiences : [],
       educations: allowed.education ? profile.educations : [],
-      certifications: allowed.certifications ? profile.certifications : [],
+      certifications: allowed.certifications 
+        ? await Promise.all(profile.certifications.map(async (cert: any) => {
+            let imageUrl = cert.imageUrl;
+            let credentialUrl = cert.credentialUrl;
+            
+            if (imageUrl) {
+              imageUrl = await getPublicFileUrl(imageUrl);
+            }
+            if (credentialUrl) {
+              credentialUrl = await getPublicFileUrl(credentialUrl);
+            }
+            
+            return {
+              ...cert,
+              imageUrl: imageUrl || cert.imageUrl,
+              credentialUrl: credentialUrl || cert.credentialUrl,
+            };
+          }))
+        : [],
       projects: allowed.projects ? profile.projects : [],
       courses: allowed.courses ? profile.courses : [],
       languages: allowed.languages ? profile.languages : [],

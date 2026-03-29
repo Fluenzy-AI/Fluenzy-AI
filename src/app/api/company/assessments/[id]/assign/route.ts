@@ -176,6 +176,7 @@ export async function POST(
             AI_INTERVIEW: "AI-Powered Interview",
             VOICE: "Voice Interview",
             GD: "Group Discussion",
+            CORPORATE_VOICE: "Corporate Voice Assessment",
           }[assessment.type] || "Assessment";
 
           await transporter.sendMail({

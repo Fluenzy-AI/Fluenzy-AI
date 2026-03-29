@@ -563,12 +563,24 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         </Card>
 
         <Dialog open={Boolean(preview)} onOpenChange={() => setPreview(null)}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-5xl max-h-[90vh] overflow-auto">
             <DialogHeader>
               <DialogTitle>{preview?.title}</DialogTitle>
             </DialogHeader>
             {preview?.url ? (
-              <iframe title={preview.title} src={preview.url} className="w-full h-[70vh] rounded-md" />
+              preview.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                <img 
+                  src={preview.url} 
+                  alt={preview.title} 
+                  className="w-full max-h-[70vh] object-contain rounded-md" 
+                />
+              ) : (
+                <iframe 
+                  title={preview.title} 
+                  src={preview.url} 
+                  className="w-full h-[70vh] rounded-md" 
+                />
+              )
             ) : null}
           </DialogContent>
         </Dialog>
