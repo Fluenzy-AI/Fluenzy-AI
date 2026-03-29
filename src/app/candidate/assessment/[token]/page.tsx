@@ -45,6 +45,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { GoogleGenAI, Modality } from "@google/genai";
+import dynamic from "next/dynamic";
+
+// Dynamically import GD and Voice players to avoid SSR issues with Agora
+const GDAssessmentPlayer = dynamic(
+  () => import("@/components/assessments/candidate/GDAssessmentPlayer"),
+  { ssr: false, loading: () => <div className="flex items-center justify-center min-h-[600px]"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div> }
+);
+
+const VoiceAssessmentPlayer = dynamic(
+  () => import("@/components/assessments/candidate/VoiceAssessmentPlayer"),
+  { ssr: false, loading: () => <div className="flex items-center justify-center min-h-[600px]"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div> }
+);
 
 interface Question {
   id: string;
@@ -86,6 +98,12 @@ interface AssessmentData {
     channel: string;
     token: string;
     uid: number;
+  };
+  gdRoomId?: string;
+  gdTopic?: string;
+  voiceConfig?: {
+    audioOnly: boolean;
+    categories: string[];
   };
 }
 
@@ -1323,7 +1341,111 @@ Begin the interview now with a warm greeting.`;
     );
   }
 
-  // For Voice Interview, GD - Show coming soon placeholder
+  // ============= GROUP DISCUSSION Interface =============
+  if (assessment.type === "GD" && hasStarted && assessmentData?.agora) {
+    const handleGDComplete = async (result: any) => {
+      try {
+        setIsSubmitting(true);
+        
+        const response = await fetch(`/api/candidate/assessment/${token}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "submit",
+            gdTranscript: JSON.stringify(result.transcript),
+            score: result.participationScore,
+            feedback: result.aiFeedback,
+            interviewData: {
+              aggregateScore: result.participationScore / 100,
+              transcripts: result.transcript,
+            },
+          }),
+        });
+
+        if (response.ok) {
+          router.push(`/candidate/assessment/${token}/result`);
+        } else {
+          const data = await response.json();
+          setError(data.error || "Failed to submit assessment");
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to submit assessment");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <GDAssessmentPlayer
+          assessmentTitle={assessment.title}
+          assessmentId={assessment.id}
+          topic={assessmentData.gdTopic || "General Discussion"}
+          duration={assessment.duration}
+          agoraConfig={assessmentData.agora}
+          participantName={candidate.name}
+          userId={candidate.email}
+          onComplete={handleGDComplete}
+          onError={(error) => setError(error)}
+        />
+      </div>
+    );
+  }
+
+  // ============= VOICE INTERVIEW Interface =============
+  if (assessment.type === "VOICE" && hasStarted && assessmentData?.agora) {
+    const handleVoiceComplete = async (result: any) => {
+      try {
+        setIsSubmitting(true);
+        
+        const response = await fetch(`/api/candidate/assessment/${token}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "submit",
+            aiTranscript: JSON.stringify(result.transcript),
+            score: result.scores.overall,
+            feedback: result.aiFeedback,
+            interviewData: {
+              aggregateScore: result.scores.overall / 100,
+              transcripts: result.transcript,
+            },
+          }),
+        });
+
+        if (response.ok) {
+          router.push(`/candidate/assessment/${token}/result`);
+        } else {
+          const data = await response.json();
+          setError(data.error || "Failed to submit assessment");
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to submit assessment");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <VoiceAssessmentPlayer
+          assessmentTitle={assessment.title}
+          assessmentId={assessment.id}
+          jobRole={candidate.jobTitle || "Professional"}
+          duration={assessment.duration}
+          categories={assessmentData.voiceConfig?.categories || ["Technical", "Behavioral"]}
+          agoraConfig={assessmentData.agora}
+          candidateName={candidate.name}
+          userId={candidate.email}
+          audioOnly={assessmentData.voiceConfig?.audioOnly || false}
+          onComplete={handleVoiceComplete}
+          onError={(error) => setError(error)}
+        />
+      </div>
+    );
+  }
+
+  // For other types not yet implemented - Show coming soon placeholder
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <Card className="max-w-md w-full bg-slate-800 border-slate-700">

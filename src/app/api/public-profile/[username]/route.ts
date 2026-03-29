@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { stat } from "fs/promises";
 import path from "path";
+import { getPublicFileUrl } from "@/lib/file-url-helper";
 
 const toIstDateKey = (date: Date) => {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -80,17 +81,23 @@ export async function GET(
     const resumesWithSize = await Promise.all(
       resumes.map(async (resume: any) => {
         let fileSize: number | null = null;
-        try {
-          const localPath = path.join(process.cwd(), "public", resume.fileUrl.replace(/^\/+/, ""));
-          const stats = await stat(localPath);
-          fileSize = stats.size;
-        } catch (error) {
-          fileSize = null;
+        const publicUrl = await getPublicFileUrl(resume.fileUrl);
+        
+        // Try to get file size from filesystem (for local files only)
+        if (resume.fileUrl && resume.fileUrl.startsWith('/')) {
+          try {
+            const localPath = path.join(process.cwd(), "public", resume.fileUrl.replace(/^\/+/, ""));
+            const stats = await stat(localPath);
+            fileSize = stats.size;
+          } catch (error) {
+            fileSize = null;
+          }
         }
+        
         return {
           id: resume.id,
           fileName: resume.fileName,
-          fileUrl: resume.fileUrl,
+          fileUrl: publicUrl, // Use public URL instead of raw fileUrl
           uploadedAt: resume.uploadedAt,
           fileSize,
         };
