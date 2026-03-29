@@ -1969,6 +1969,7 @@ model Assessment {
   passingScore    Int            @default(60)
 
   questions       Json
+  config          Json?          // Type-specific config (GD topic, Voice categories, Corporate Voice passages, etc.)
   isActive        Boolean        @default(true)
   aiGenerated     Boolean        @default(false)  // Track if questions were AI-generated
 

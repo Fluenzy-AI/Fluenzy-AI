@@ -102,7 +102,7 @@ export async function GET(
       response.questions = session.assessment.questions;
     }
 
-    // For Voice/GD, include Agora credentials
+    // For Voice/GD, include Agora credentials and config
     if (session.assessment.type === "VOICE" || session.assessment.type === "GD") {
       if (session.agoraChannel && isAgoraConfigured()) {
         response.agora = {
@@ -114,6 +114,39 @@ export async function GET(
       }
       if (session.gdRoomId) {
         response.gdRoomId = session.gdRoomId;
+      }
+      
+      // Extract GD topic and Voice config from assessment config
+      const config = session.assessment.config as Record<string, any> | null;
+      if (config) {
+        if (session.assessment.type === "GD" && config.topic) {
+          response.gdTopic = config.topic;
+        }
+        if (session.assessment.type === "VOICE") {
+          response.voiceConfig = {
+            audioOnly: config.audioOnly || false,
+            categories: config.categories || ["Technical", "Behavioral"],
+          };
+        }
+      }
+    }
+    
+    // For Corporate Voice, include config
+    if (session.assessment.type === "CORPORATE_VOICE") {
+      const config = session.assessment.config as Record<string, any> | null;
+      if (config) {
+        response.corporateVoiceConfig = {
+          subType: config.subType || "read_aloud",
+          passages: config.passages,
+          audioPrompts: config.audioPrompts,
+          comprehensionAudio: config.comprehensionAudio,
+          comprehensionQuestions: config.comprehensionQuestions,
+          conversationTopic: config.conversationTopic,
+          extemporaneousTopic: config.extemporaneousTopic,
+          prepTime: config.prepTime,
+          summarizePassage: config.summarizePassage,
+          duration: config.duration,
+        };
       }
     }
 
@@ -211,7 +244,8 @@ export async function POST(
         }
       }
 
-      return NextResponse.json({
+      // Build response
+      const responseData: any = {
         success: true,
         message: "Assessment started",
         session: {
@@ -223,7 +257,37 @@ export async function POST(
           ? updatedSession.assessment.questions
           : undefined,
         agora: agoraData,
-      });
+      };
+      
+      // Add GD topic, Voice config, and Corporate Voice config
+      const config = session.assessment.config as Record<string, any> | null;
+      if (config) {
+        if (session.assessment.type === "GD" && config.topic) {
+          responseData.gdTopic = config.topic;
+        }
+        if (session.assessment.type === "VOICE") {
+          responseData.voiceConfig = {
+            audioOnly: config.audioOnly || false,
+            categories: config.categories || ["Technical", "Behavioral"],
+          };
+        }
+        if (session.assessment.type === "CORPORATE_VOICE") {
+          responseData.corporateVoiceConfig = {
+            subType: config.subType || "read_aloud",
+            passages: config.passages,
+            audioPrompts: config.audioPrompts,
+            comprehensionAudio: config.comprehensionAudio,
+            comprehensionQuestions: config.comprehensionQuestions,
+            conversationTopic: config.conversationTopic,
+            extemporaneousTopic: config.extemporaneousTopic,
+            prepTime: config.prepTime,
+            summarizePassage: config.summarizePassage,
+            duration: config.duration,
+          };
+        }
+      }
+
+      return NextResponse.json(responseData);
     }
 
     if (action === "submit") {

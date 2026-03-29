@@ -7,7 +7,7 @@ const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 const model = genAI?.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 interface VoiceEvaluationRequest {
-  type: "read_aloud" | "listen_repeat" | "interview_response" | "extemporaneous" | "listen_summarize" | "final_evaluation";
+  type: "read_aloud" | "listen_repeat" | "interview_response" | "extemporaneous" | "listen_summarize" | "conversation" | "final_evaluation";
   transcript?: string;
   originalText?: string;
   question?: string;
@@ -42,6 +42,8 @@ export async function POST(req: NextRequest) {
         return evaluateExtemporaneous(body);
       case "listen_summarize":
         return evaluateListenSummarize(body);
+      case "conversation":
+        return evaluateConversation(body);
       case "final_evaluation":
         return evaluateFinalInterview(body);
       default:
@@ -511,4 +513,77 @@ function calculateSimilarity(text1: string, text2: string): number {
   const maxLength = Math.max(words1.length, words2.length);
   
   return maxLength > 0 ? Math.round((matches / maxLength) * 100) : 0;
+}
+
+async function evaluateConversation(body: VoiceEvaluationRequest) {
+  const { transcript, topic } = body;
+
+  if (!transcript) {
+    return NextResponse.json({
+      scores: { communication: 0, professionalism: 0, confidence: 0, clarity: 0 },
+      overallScore: 0,
+      feedback: "No conversation transcript provided.",
+    });
+  }
+
+  const wordCount = transcript.split(/\s+/).length;
+  const baseScore = Math.min(100, Math.max(40, 50 + wordCount * 0.5));
+
+  if (!model) {
+    return NextResponse.json({
+      scores: {
+        communication: baseScore,
+        professionalism: baseScore,
+        confidence: baseScore,
+        clarity: baseScore,
+      },
+      overallScore: baseScore,
+      passed: baseScore >= 70,
+      feedback: "Conversation evaluated.",
+    });
+  }
+
+  const prompt = `Evaluate this corporate conversation between an AI and a candidate on the topic: "${topic || "Professional communication"}"
+
+CONVERSATION TRANSCRIPT:
+${transcript}
+
+Evaluate the candidate's performance and return JSON:
+{
+  "scores": {
+    "communication": <0-100, ability to convey ideas clearly>,
+    "professionalism": <0-100, business-appropriate language and tone>,
+    "confidence": <0-100, assertive but not aggressive>,
+    "clarity": <0-100, structured and coherent responses>,
+    "adaptability": <0-100, responds appropriately to conversation flow>
+  },
+  "overallScore": <0-100>,
+  "passed": <true/false>,
+  "feedback": "<detailed constructive feedback on conversation skills>",
+  "highlights": ["<strength 1>", "<strength 2>"],
+  "improvements": ["<area to improve 1>", "<area to improve 2>"]
+}
+
+Respond ONLY with valid JSON.`;
+
+  try {
+    const result = await model.generateContent(prompt);
+    const responseText = result.response.text();
+    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) throw new Error("No JSON in response");
+    return NextResponse.json(JSON.parse(jsonMatch[0]));
+  } catch (error) {
+    return NextResponse.json({
+      scores: {
+        communication: baseScore,
+        professionalism: baseScore,
+        confidence: baseScore,
+        clarity: baseScore,
+      },
+      overallScore: baseScore,
+      passed: baseScore >= 70,
+      feedback: "Conversation skills evaluated.",
+    });
+  }
 }

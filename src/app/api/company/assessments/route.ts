@@ -10,14 +10,30 @@ const CreateAssessmentSchema = z.object({
   description: z.string().optional(),
   duration: z.number().min(5).max(180).default(30),
   passingScore: z.number().min(0).max(100).default(70),
+  passPercentage: z.number().min(0).max(100).optional(), // alias for passingScore
   questions: z.array(z.any()).optional(), // For MCQ, CODING questions
   aiGenerated: z.boolean().default(false),
+  // GD config
+  gdTopic: z.string().optional(),
+  // Voice config
+  voiceAudioOnly: z.boolean().optional(),
+  voiceCategories: z.array(z.string()).optional(),
+  // Corporate Voice config
+  corporateVoiceConfig: z.object({
+    passages: z.array(z.string()).optional(),
+    audioPrompts: z.array(z.string()).optional(),
+    conversationTopic: z.string().optional(),
+    extemporaneousTopic: z.string().optional(),
+    prepTime: z.number().optional(),
+    summarizePassage: z.string().optional(),
+  }).optional(),
   // AI generation params (optional)
   aiParams: z.object({
     topic: z.string(),
     difficulty: z.enum(["easy", "medium", "hard"]).default("medium"),
     count: z.number().min(1).max(50).default(10)
-  }).optional()
+  }).optional(),
+  jobId: z.string().optional(),
 });
 
 /**
@@ -135,6 +151,25 @@ export async function POST(req: NextRequest) {
       questions = [];
     }
 
+    // Build config object for assessment types that need it
+    let config: Record<string, any> = {};
+    
+    if (data.type === "GD" && data.gdTopic) {
+      config.topic = data.gdTopic;
+    }
+    
+    if (data.type === "VOICE") {
+      config.audioOnly = data.voiceAudioOnly || false;
+      config.categories = data.voiceCategories || ["Technical", "Behavioral"];
+    }
+    
+    if (data.type === "CORPORATE_VOICE" && data.corporateVoiceConfig) {
+      config = {
+        ...data.corporateVoiceConfig,
+        subType: data.subType,
+      };
+    }
+
     // Create assessment
     const assessment = await prisma.assessment.create({
       data: {
@@ -143,9 +178,10 @@ export async function POST(req: NextRequest) {
         title: data.title,
         description: data.description,
         duration: data.duration,
-        passingScore: data.passingScore,
+        passingScore: data.passingScore || data.passPercentage || 70,
         companyId: authResult.company.id,
         questions: questions,
+        config: Object.keys(config).length > 0 ? config : undefined,
         aiGenerated: data.aiGenerated,
         createdBy: authResult.member.id,
       },

@@ -43,7 +43,8 @@ interface Question {
 }
 
 interface AssessmentForm {
-  type: "MCQ" | "CODING" | "AI_INTERVIEW" | "VOICE" | "GD" | "";
+  type: "MCQ" | "CODING" | "AI_INTERVIEW" | "VOICE" | "GD" | "CORPORATE_VOICE" | "";
+  subType?: string; // For Corporate Voice sub-types
   title: string;
   jobId: string;
   duration: number;
@@ -52,6 +53,20 @@ interface AssessmentForm {
   questions: Question[];
   codingProblem?: string;
   codingLanguage?: string;
+  // GD config
+  gdTopic?: string;
+  // Voice config
+  voiceAudioOnly?: boolean;
+  voiceCategories?: string[];
+  // Corporate Voice config
+  corporateVoiceConfig?: {
+    passages?: string[];
+    audioPrompts?: string[];
+    conversationTopic?: string;
+    extemporaneousTopic?: string;
+    prepTime?: number;
+    summarizePassage?: string;
+  };
 }
 
 const assessmentTypes = [
@@ -60,6 +75,16 @@ const assessmentTypes = [
   { id: "AI_INTERVIEW", label: "AI Interview", icon: Mic, desc: "AI-powered interview" },
   { id: "VOICE", label: "Voice Interview", icon: Video, desc: "Audio/video interview" },
   { id: "GD", label: "Group Discussion", icon: UsersIcon, desc: "Group discussion round" },
+  { id: "CORPORATE_VOICE", label: "Corporate Voice", icon: Mic, desc: "Voice assessment with 6 sub-types" },
+];
+
+const corporateVoiceSubTypes = [
+  { id: "read_aloud", label: "Read Aloud", desc: "Candidate reads text passages aloud" },
+  { id: "listen_repeat", label: "Listen & Repeat", desc: "Candidate repeats audio prompts" },
+  { id: "comprehension", label: "Comprehension", desc: "Listen and answer questions" },
+  { id: "conversation", label: "Conversation", desc: "AI conducts professional conversation" },
+  { id: "extemporaneous", label: "Extemporaneous", desc: "Impromptu speaking on a topic" },
+  { id: "listen_summarize", label: "Listen & Summarize", desc: "Listen and summarize content" },
 ];
 
 export default function NewAssessmentPage() {
@@ -603,6 +628,197 @@ export default function NewAssessmentPage() {
                       rows={6}
                       className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
                     />
+                  </div>
+                )}
+                
+                {form.type === "GD" && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Discussion Topic
+                    </label>
+                    <input
+                      type="text"
+                      value={form.gdTopic || ""}
+                      onChange={(e) =>
+                        setForm((prev) => ({
+                          ...prev,
+                          gdTopic: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., The impact of AI on the workforce"
+                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                    />
+                  </div>
+                )}
+
+                {form.type === "CORPORATE_VOICE" && (
+                  <div className="space-y-6">
+                    {/* Sub-type selection */}
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-3">
+                        Select Assessment Sub-Type
+                      </label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {corporateVoiceSubTypes.map((subType) => (
+                          <div
+                            key={subType.id}
+                            onClick={() =>
+                              setForm((prev) => ({
+                                ...prev,
+                                subType: subType.id,
+                              }))
+                            }
+                            className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                              form.subType === subType.id
+                                ? "bg-purple-500/10 border-purple-500"
+                                : "bg-slate-700/50 border-slate-600 hover:border-slate-500"
+                            }`}
+                          >
+                            <h4 className="font-medium text-white">{subType.label}</h4>
+                            <p className="text-xs text-slate-400 mt-1">{subType.desc}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Sub-type specific configuration */}
+                    {form.subType === "read_aloud" && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Text Passages (one per line)
+                        </label>
+                        <textarea
+                          value={form.corporateVoiceConfig?.passages?.join("\n") || ""}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              corporateVoiceConfig: {
+                                ...prev.corporateVoiceConfig,
+                                passages: e.target.value.split("\n").filter(Boolean),
+                              },
+                            }))
+                          }
+                          placeholder="Enter text passages for candidates to read aloud. Each line will be a separate passage."
+                          rows={6}
+                          className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    )}
+
+                    {form.subType === "listen_repeat" && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Audio Phrases (one per line)
+                        </label>
+                        <textarea
+                          value={form.corporateVoiceConfig?.audioPrompts?.join("\n") || ""}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              corporateVoiceConfig: {
+                                ...prev.corporateVoiceConfig,
+                                audioPrompts: e.target.value.split("\n").filter(Boolean),
+                              },
+                            }))
+                          }
+                          placeholder="Enter phrases that will be spoken for candidates to repeat. Each line will be a separate phrase."
+                          rows={6}
+                          className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    )}
+
+                    {form.subType === "conversation" && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Conversation Topic
+                        </label>
+                        <input
+                          type="text"
+                          value={form.corporateVoiceConfig?.conversationTopic || ""}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              corporateVoiceConfig: {
+                                ...prev.corporateVoiceConfig,
+                                conversationTopic: e.target.value,
+                              },
+                            }))
+                          }
+                          placeholder="e.g., Handling difficult client situations"
+                          className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    )}
+
+                    {form.subType === "extemporaneous" && (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">
+                            Speaking Topic
+                          </label>
+                          <input
+                            type="text"
+                            value={form.corporateVoiceConfig?.extemporaneousTopic || ""}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                corporateVoiceConfig: {
+                                  ...prev.corporateVoiceConfig,
+                                  extemporaneousTopic: e.target.value,
+                                },
+                              }))
+                            }
+                            placeholder="e.g., The future of remote work"
+                            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-slate-300 mb-2">
+                            Preparation Time (seconds)
+                          </label>
+                          <input
+                            type="number"
+                            value={form.corporateVoiceConfig?.prepTime || 30}
+                            onChange={(e) =>
+                              setForm((prev) => ({
+                                ...prev,
+                                corporateVoiceConfig: {
+                                  ...prev.corporateVoiceConfig,
+                                  prepTime: parseInt(e.target.value),
+                                },
+                              }))
+                            }
+                            min="0"
+                            max="120"
+                            className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white focus:outline-none focus:border-indigo-500"
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {form.subType === "listen_summarize" && (
+                      <div>
+                        <label className="block text-sm font-medium text-slate-300 mb-2">
+                          Passage to Summarize
+                        </label>
+                        <textarea
+                          value={form.corporateVoiceConfig?.summarizePassage || ""}
+                          onChange={(e) =>
+                            setForm((prev) => ({
+                              ...prev,
+                              corporateVoiceConfig: {
+                                ...prev.corporateVoiceConfig,
+                                summarizePassage: e.target.value,
+                              },
+                            }))
+                          }
+                          placeholder="Enter the passage that will be spoken to the candidate. They will need to summarize it in their own words."
+                          rows={6}
+                          className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                        />
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

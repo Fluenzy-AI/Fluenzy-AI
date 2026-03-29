@@ -58,6 +58,11 @@ const VoiceAssessmentPlayer = dynamic(
   { ssr: false, loading: () => <div className="flex items-center justify-center min-h-[600px]"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div> }
 );
 
+const CorporateVoicePlayer = dynamic(
+  () => import("@/components/assessments/candidate/CorporateVoicePlayer"),
+  { ssr: false, loading: () => <div className="flex items-center justify-center min-h-[600px]"><Loader2 className="w-8 h-8 animate-spin text-purple-500" /></div> }
+);
+
 interface Question {
   id: string;
   text: string;
@@ -105,6 +110,22 @@ interface AssessmentData {
     audioOnly: boolean;
     categories: string[];
   };
+  corporateVoiceConfig?: {
+    subType: "read_aloud" | "listen_repeat" | "comprehension" | "conversation" | "extemporaneous" | "listen_summarize";
+    passages?: string[];
+    audioPrompts?: string[];
+    comprehensionAudio?: string;
+    comprehensionQuestions?: Array<{
+      question: string;
+      options: string[];
+      correctIndex: number;
+    }>;
+    conversationTopic?: string;
+    extemporaneousTopic?: string;
+    prepTime?: number;
+    summarizePassage?: string;
+    duration?: number;
+  };
 }
 
 const assessmentTypeIcons: Record<string, any> = {
@@ -113,6 +134,7 @@ const assessmentTypeIcons: Record<string, any> = {
   AI_INTERVIEW: Mic,
   VOICE: Video,
   GD: Users,
+  CORPORATE_VOICE: Mic,
 };
 
 const assessmentTypeLabels: Record<string, string> = {
@@ -121,6 +143,7 @@ const assessmentTypeLabels: Record<string, string> = {
   AI_INTERVIEW: "AI Interview",
   VOICE: "Voice Interview",
   GD: "Group Discussion",
+  CORPORATE_VOICE: "Corporate Voice Assessment",
 };
 
 export default function CandidateAssessmentPage() {
@@ -263,6 +286,23 @@ export default function CandidateAssessmentPage() {
       if (data.questions) {
         setQuestions(data.questions);
       }
+      
+      // Update assessmentData with Agora credentials and config for Voice/GD/Corporate Voice
+      if (assessmentData) {
+        setAssessmentData({
+          ...assessmentData,
+          agora: data.agora || assessmentData.agora,
+          gdTopic: data.gdTopic || assessmentData.gdTopic,
+          voiceConfig: data.voiceConfig || assessmentData.voiceConfig,
+          corporateVoiceConfig: data.corporateVoiceConfig || assessmentData.corporateVoiceConfig,
+          session: {
+            ...assessmentData.session,
+            status: "IN_PROGRESS",
+            startedAt: data.session?.startedAt || new Date().toISOString(),
+          },
+        });
+      }
+      
       setHasStarted(true);
       setTimeRemaining(assessmentData!.assessment.duration * 60);
     } catch (err: any) {
@@ -1439,6 +1479,55 @@ Begin the interview now with a warm greeting.`;
           userId={candidate.email}
           audioOnly={assessmentData.voiceConfig?.audioOnly || false}
           onComplete={handleVoiceComplete}
+          onError={(error) => setError(error)}
+        />
+      </div>
+    );
+  }
+
+  // ============= CORPORATE VOICE Interface =============
+  if (assessment.type === "CORPORATE_VOICE" && hasStarted && assessmentData?.corporateVoiceConfig) {
+    const handleCorporateVoiceComplete = async (result: any) => {
+      try {
+        setIsSubmitting(true);
+        
+        const response = await fetch(`/api/candidate/assessment/${token}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "submit",
+            aiTranscript: result.transcript,
+            score: result.scores.overall,
+            feedback: result.aiFeedback,
+            interviewData: {
+              aggregateScore: result.scores.overall / 100,
+              transcripts: [{ question: "Assessment", answer: result.transcript }],
+            },
+          }),
+        });
+
+        if (response.ok) {
+          router.push(`/candidate/assessment/${token}/result`);
+        } else {
+          const data = await response.json();
+          setError(data.error || "Failed to submit assessment");
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to submit assessment");
+      } finally {
+        setIsSubmitting(false);
+      }
+    };
+
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <CorporateVoicePlayer
+          assessmentTitle={assessment.title}
+          assessmentId={assessment.id}
+          config={assessmentData.corporateVoiceConfig}
+          duration={assessment.duration}
+          candidateName={candidate.name}
+          onComplete={handleCorporateVoiceComplete}
           onError={(error) => setError(error)}
         />
       </div>
