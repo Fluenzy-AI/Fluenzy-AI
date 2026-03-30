@@ -842,7 +842,7 @@ export default function GDAssessmentPlayer({
 
   if (isConnecting) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[600px] bg-gradient-to-b from-gray-900 to-black rounded-xl p-8">
+      <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-b from-gray-900 to-black p-8">
         <Loader2 className="w-12 h-12 text-purple-500 animate-spin mb-4" />
         <h3 className="text-xl font-semibold text-white mb-2">Joining Discussion Room</h3>
         <p className="text-gray-400">Setting up your audio and video...</p>
@@ -851,9 +851,9 @@ export default function GDAssessmentPlayer({
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)] min-h-[700px] bg-gradient-to-b from-gray-900 to-black rounded-xl overflow-hidden">
+    <div className="flex flex-col h-screen max-h-screen bg-gradient-to-b from-gray-900 to-black">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 bg-gray-900/80 border-b border-gray-800">
+      <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 bg-gray-900/80 border-b border-gray-800">
         <div className="flex items-center gap-4">
           <div>
             <h2 className="text-lg font-semibold text-white">{assessmentTitle}</h2>
@@ -885,12 +885,12 @@ export default function GDAssessmentPlayer({
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden relative">
+      <div className="flex flex-1 overflow-hidden relative min-h-0">
         {/* Video grid */}
-        <div className={cn("flex-1 p-4", showChat ? "w-2/3" : "w-full")}>
+        <div className={cn("flex-1 p-4 flex flex-col", showChat ? "w-2/3" : "w-full")}>
           <div
             className={cn(
-              "grid gap-4 h-full",
+              "grid gap-4 flex-1 w-full",
               participants.length <= 2
                 ? "grid-cols-2"
                 : participants.length <= 4
@@ -1148,7 +1148,7 @@ export default function GDAssessmentPlayer({
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-center gap-4 px-6 py-4 bg-gray-900/80 border-t border-gray-800">
+      <div className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-4 bg-gray-900/95 backdrop-blur-sm border-t border-gray-800 z-50">
         <Button
           variant={isMuted ? "destructive" : "outline"}
           size="lg"
