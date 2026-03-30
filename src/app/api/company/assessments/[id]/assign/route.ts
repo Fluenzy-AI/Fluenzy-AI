@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { requireCompanyRoles } from "@/lib/company-auth";
 import { generateGDToken, isAgoraConfigured } from "@/lib/agoraToken";
 import crypto from "crypto";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendAssessmentEmail } from "@/lib/brevo-mail";
 
 /**
  * POST /api/company/assessments/[id]/assign
@@ -191,12 +191,6 @@ export async function POST(
     let emailsFailed = 0;
 
     if (sendInviteEmail) {
-      const transporter = createEmailTransporter({
-        user: process.env.HR_EMAIL_USER,
-        pass: process.env.HR_EMAIL_PASS,
-        label: "ASSESSMENT-INVITE"
-      });
-
       for (let i = 0; i < sessions.length; i++) {
         const session = sessions[i];
         const application = applications[i];
@@ -213,8 +207,7 @@ export async function POST(
             CORPORATE_VOICE: "Corporate Voice Assessment",
           }[assessment.type] || "Assessment";
 
-          await transporter.sendMail({
-            from: `"${authResult.company.name}" <${process.env.HR_EMAIL_USER}>`,
+          const result = await sendAssessmentEmail({
             to: application.email,
             subject: `You're Invited: ${assessment.title} - ${typeLabel}`,
             html: `
@@ -253,6 +246,10 @@ export async function POST(
               </div>
             `,
           });
+
+          if (!result.success) {
+            throw new Error(result.error);
+          }
 
           // Update session to mark email as sent
           await prisma.candidateAssessmentSession.update({

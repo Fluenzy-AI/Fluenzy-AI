@@ -1,20 +1,4 @@
-import { createEmailTransporter } from "@/lib/email-transporter";
-
-function createTransporter() {
-  return createEmailTransporter({
-    user: process.env.SIGNUP_OTP_EMAIL_USER,
-    pass: process.env.SIGNUP_OTP_EMAIL_PASS,
-    label: "COLLEGE-GENERIC"
-  });
-}
-
-function createCollegeTransporter() {
-  return createEmailTransporter({
-    user: process.env.College_EMAIL_USER,
-    pass: process.env.College_EMAIL_PASS,
-    label: "COLLEGE-ACTIVATION"
-  });
-}
+import { sendBillingEmail, sendOTPEmail, sendNotificationEmail } from "@/lib/brevo-mail";
 
 const PLAN_COLORS: Record<string, string> = {
   Free: "#10b981",
@@ -45,7 +29,6 @@ export async function sendStudentActivationEmail({
   validTill: Date;
   invoiceId: string;
 }) {
-  const transporter = createCollegeTransporter();
   const planColor = PLAN_COLORS[plan] ?? "#6366f1";
   const planLabel = PLAN_LABELS[plan] ?? plan;
   const validTillStr = validTill.toLocaleDateString("en-IN", {
@@ -57,8 +40,7 @@ export async function sendStudentActivationEmail({
 
   const sendPromises = studentEmails.map((email) => {
     const studentName = email.split("@")[0].replace(/[._]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-    return transporter.sendMail({
-      from: `"${collegeName} via Fluenzy AI" <${process.env.College_EMAIL_USER}>`,
+    return sendNotificationEmail({
       to: email,
       subject: `Your Fluenzy AI Access is Active – ${collegeName}`,
       html: `
@@ -140,9 +122,7 @@ export async function sendStudentActivationEmail({
 }
 
 export async function sendCollegeOtpEmail(email: string, otp: string, collegeName?: string) {
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"Fluenzy AI - College Portal" <${process.env.SIGNUP_OTP_EMAIL_USER}>`,
+  await sendOTPEmail({
     to: email,
     subject: "Verify Your College Admin Account – Fluenzy AI",
     html: `
@@ -172,10 +152,8 @@ export async function sendStudentInviteEmail(
   tempPassword: string,
   inviteToken: string
 ) {
-  const transporter = createTransporter();
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL}/college/student-onboard?token=${inviteToken}`;
-  await transporter.sendMail({
-    from: `"Fluenzy AI – ${collegeName}" <${process.env.SIGNUP_OTP_EMAIL_USER}>`,
+  await sendNotificationEmail({
     to: email,
     subject: `Welcome to Fluenzy AI – Your college has provided you access!`,
     html: `
@@ -489,7 +467,6 @@ export async function sendStudentReceiptEmails({
   invoiceId: string;
   seats: number;
 }) {
-  const transporter = createCollegeTransporter();
   const planColor = PLAN_COLORS[plan] ?? "#6366f1";
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "https://fluenzyai.app"}/login`;
 
@@ -510,8 +487,7 @@ export async function sendStudentReceiptEmails({
       });
       const pdfBuffer = await generatePdfFromHtml(html);
 
-      await transporter.sendMail({
-        from: `"${collegeName} via Fluenzy AI" <${process.env.College_EMAIL_USER}>`,
+      await sendBillingEmail({
         to: s.email,
         subject: `Your ${plan} Plan Receipt – Activated by ${collegeName}`,
         html: `
@@ -588,7 +564,6 @@ export async function sendAdminBulkReceiptEmail({
   invoiceId: string;
   students: Array<{ email: string; name?: string }>;
 }) {
-  const transporter = createCollegeTransporter();
   const planColor = PLAN_COLORS[plan] ?? "#6366f1";
 
   const receiptHtml = buildAdminBulkReceiptHtml({
@@ -599,8 +574,7 @@ export async function sendAdminBulkReceiptEmail({
     students.map((s) => ({ ...s, plan, validTill, invoiceId }))
   );
 
-  await transporter.sendMail({
-    from: `"Fluenzy AI – College Portal" <${process.env.College_EMAIL_USER}>`,
+  await sendBillingEmail({
     to: adminEmail,
     subject: `Purchase Confirmed: ${students.length} Students Activated – ${collegeName}`,
     html: `
@@ -661,9 +635,7 @@ export async function sendCollegeApprovalEmail(
   approved: boolean,
   reason?: string
 ) {
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"Fluenzy AI – Partner Program" <${process.env.SIGNUP_OTP_EMAIL_USER}>`,
+  await sendNotificationEmail({
     to: email,
     subject: approved
       ? `🎉 Your College Partnership Application is Approved – ${collegeName}`

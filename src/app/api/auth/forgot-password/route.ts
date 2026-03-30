@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendOTPEmail } from "@/lib/brevo-mail";
 
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_REQUESTS_PER_10_MIN = 3;
@@ -88,19 +88,21 @@ export async function POST(req: NextRequest) {
     });
 
     // ── Send password reset email ─────────────────────────────────────────────
-    const transporter = createEmailTransporter({
-      user: process.env.forgotpassword_EMAIL_USER,
-      pass: process.env.forgotpassword_EMAIL_PASS,
-      label: "FORGOT-PASSWORD"
-    });
     const firstName = user.name?.split(" ")[0] || "User";
 
-    await transporter.sendMail({
-      from: `"Fluenzy AI" <${process.env.forgotpassword_EMAIL_USER}>`,
+    const result = await sendOTPEmail({
       to: normalizedEmail,
       subject: "Fluenzy AI – Password Reset Code",
       html: buildPasswordResetEmail(firstName, otp, OTP_EXPIRY_MINUTES),
     });
+
+    if (!result.success) {
+      console.error("[FORGOT-PASSWORD] Email send failed:", result.error);
+      return NextResponse.json(
+        { error: "Failed to send reset code. Please try again." },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -109,8 +111,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("[FORGOT-PASSWORD] Error:", error?.message || error);
-    console.error("[FORGOT-PASSWORD] Error code:", error?.code);
-    console.error("[FORGOT-PASSWORD] Error command:", error?.command);
     return NextResponse.json(
       { error: "Something went wrong. Please try again later." },
       { status: 500 }

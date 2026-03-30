@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import crypto from "crypto";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendOTPEmail } from "@/lib/brevo-mail";
 
 const OTP_EXPIRY_MINUTES = 5;
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -12,15 +12,6 @@ function generateSecureOtp(): string {
   const randomNumber = randomBytes.readUInt32BE(0);
   const otp = (randomNumber % 900000) + 100000;
   return otp.toString();
-}
-
-// ── SMTP transporter for password reset emails ────────────────────────────────
-function createTransporter() {
-  return createEmailTransporter({
-    user: process.env.forgotpassword_EMAIL_USER,
-    pass: process.env.forgotpassword_EMAIL_PASS,
-    label: "RESEND-RESET-OTP"
-  });
 }
 
 export async function POST(req: NextRequest) {
@@ -100,14 +91,16 @@ export async function POST(req: NextRequest) {
 
     // ── Send new OTP email ────────────────────────────────────────────────────
     const firstName = user.name?.split(" ")[0] || "User";
-    const transporter = createTransporter();
 
-    await transporter.sendMail({
-      from: `"Fluenzy AI" <${process.env.forgotpassword_EMAIL_USER}>`,
+    const result = await sendOTPEmail({
       to: normalizedEmail,
       subject: "Fluenzy AI – New Password Reset Code",
       html: buildResendOtpEmail(firstName, otp, OTP_EXPIRY_MINUTES),
     });
+    
+    if (!result.success) {
+      throw new Error(result.error || "Failed to send OTP email");
+    }
 
     return NextResponse.json({
       success: true,

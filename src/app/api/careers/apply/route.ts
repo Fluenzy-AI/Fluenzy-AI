@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendHREmail } from "@/lib/brevo-mail";
 
 // ── Simple in-memory rate limiter ──────────────────────────────────────────
 const rateMap = new Map<string, { count: number; reset: number }>();
@@ -48,21 +48,10 @@ async function sendEmails(
   job: { title: string; department: string },
   applicant: { name: string; email: string; resumeUrl: string; experience: string }
 ) {
-  const user = process.env.HR_EMAIL_USER;
-  const pass = process.env.HR_EMAIL_PASS;
-  const hrEmail = process.env.HR_NOTIFICATION_EMAIL || user;
-
-  if (!user || !pass) return;
-
-  const transporter = createEmailTransporter({
-    user,
-    pass,
-    label: "CAREERS-APPLY"
-  });
+  const hrEmail = process.env.HR_NOTIFICATION_EMAIL || process.env.HR_FROM;
 
   // Candidate confirmation
-  await transporter.sendMail({
-    from: `"Fluenzy AI Careers" <${user}>`,
+  await sendHREmail({
     to: applicant.email,
     subject: `Application Received – ${job.title} | Fluenzy AI`,
     html: `
@@ -84,24 +73,25 @@ async function sendEmails(
   });
 
   // HR notification
-  await transporter.sendMail({
-    from: `"Fluenzy AI Careers Bot" <${user}>`,
-    to: hrEmail!,
-    subject: `New Application: ${job.title} – ${applicant.name}`,
-    html: `
-      <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px">
-        <h2>New Job Application</h2>
-        <table style="width:100%;border-collapse:collapse">
-          <tr><td style="padding:8px;color:#666;width:140px">Position</td><td style="padding:8px;font-weight:600">${job.title}</td></tr>
-          <tr><td style="padding:8px;color:#666">Applicant</td><td style="padding:8px">${applicant.name}</td></tr>
-          <tr><td style="padding:8px;color:#666">Email</td><td style="padding:8px">${applicant.email}</td></tr>
-          <tr><td style="padding:8px;color:#666">Experience</td><td style="padding:8px">${applicant.experience}</td></tr>
-          <tr><td style="padding:8px;color:#666">Resume</td><td style="padding:8px"><a href="${applicant.resumeUrl}">Download Resume</a></td></tr>
-        </table>
-        <p style="margin-top:24px"><a href="${process.env.NEXT_PUBLIC_APP_URL}/portal/hr/job-applications" style="background:#6366f1;color:white;padding:10px 20px;border-radius:8px;text-decoration:none">View in HR Portal</a></p>
-      </div>
-    `,
-  });
+  if (hrEmail) {
+    await sendHREmail({
+      to: hrEmail,
+      subject: `New Application: ${job.title} – ${applicant.name}`,
+      html: `
+        <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:32px">
+          <h2>New Job Application</h2>
+          <table style="width:100%;border-collapse:collapse">
+            <tr><td style="padding:8px;color:#666;width:140px">Position</td><td style="padding:8px;font-weight:600">${job.title}</td></tr>
+            <tr><td style="padding:8px;color:#666">Applicant</td><td style="padding:8px">${applicant.name}</td></tr>
+            <tr><td style="padding:8px;color:#666">Email</td><td style="padding:8px">${applicant.email}</td></tr>
+            <tr><td style="padding:8px;color:#666">Experience</td><td style="padding:8px">${applicant.experience}</td></tr>
+            <tr><td style="padding:8px;color:#666">Resume</td><td style="padding:8px"><a href="${applicant.resumeUrl}">Download Resume</a></td></tr>
+          </table>
+          <p style="margin-top:24px"><a href="${process.env.NEXT_PUBLIC_APP_URL}/portal/hr/job-applications" style="background:#6366f1;color:white;padding:10px 20px;border-radius:8px;text-decoration:none">View in HR Portal</a></p>
+        </div>
+      `,
+    });
+  }
 }
 
 // ── Handler ────────────────────────────────────────────────────────────────

@@ -12,8 +12,7 @@
 import prisma from "@/lib/prisma";
 import { htmlToPdf } from "@/lib/pdf-browser";
 import { buildInvoiceHtml, buildInvoiceEmailBody, titleCase } from "@/lib/invoice-html";
-import { createEmailTransporter } from "@/lib/email-transporter";
-import type { SendMailOptions } from "nodemailer";
+import { sendBillingEmail } from "@/lib/brevo-mail";
 
 export async function autoSendInvoiceEmail(
   paymentHistoryId: string,
@@ -65,15 +64,8 @@ export async function autoSendInvoiceEmail(
     console.error("[AUTO_INVOICE_EMAIL] PDF generation failed (email will be sent without attachment):", err);
   }
 
-  // 5. Send email
-  const transporter = createEmailTransporter({
-    user: process.env.Payment_EMAIL_USER,
-    pass: process.env.Payment_EMAIL_PASS,
-    label: "PAYMENT-INVOICE"
-  });
-
-  const mailOptions: SendMailOptions = {
-    from: `"Fluenzy AI" <${process.env.Payment_EMAIL_USER}>`,
+  // 5. Send email via Brevo
+  const result = await sendBillingEmail({
     to: user.email,
     subject: `Your Fluenzy AI Invoice – ${invoiceNumber}`,
     html: buildInvoiceEmailBody({
@@ -82,19 +74,20 @@ export async function autoSendInvoiceEmail(
       plan: payment.plan,
       status,
     }),
-  };
+    attachments: pdfBuffer
+      ? [
+          {
+            filename,
+            content: pdfBuffer,
+            contentType: "application/pdf",
+          },
+        ]
+      : undefined,
+  });
 
-  if (pdfBuffer) {
-    mailOptions.attachments = [
-      {
-        filename,
-        content: pdfBuffer,
-        contentType: "application/pdf",
-      },
-    ];
+  if (!result.success) {
+    throw new Error(result.error || "Failed to send invoice email");
   }
-
-  await transporter.sendMail(mailOptions);
 
   console.log(
     `[AUTO_INVOICE_EMAIL] Sent invoice ${invoiceNumber} to ${user.email}` +

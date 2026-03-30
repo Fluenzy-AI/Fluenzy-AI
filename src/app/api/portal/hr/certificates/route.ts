@@ -194,15 +194,9 @@ export async function POST(req: NextRequest) {
     // Send email if requested
     if (sendEmail && candidateEmail) {
       try {
-        const { createEmailTransporter } = await import("@/lib/email-transporter");
-        const transporter = createEmailTransporter({
-          user: process.env.HR_EMAIL_USER,
-          pass: process.env.HR_EMAIL_PASS,
-          label: "HR-CERTIFICATE"
-        });
+        const { sendCertificateEmail } = await import("@/lib/brevo-mail");
 
-        await transporter.sendMail({
-          from: `"Fluenzy AI HR" <${process.env.HR_EMAIL_USER}>`,
+        const result = await sendCertificateEmail({
           to: candidateEmail,
           subject: `Your ${type.toLowerCase()} certificate from Fluenzy AI`,
           html: `
@@ -225,11 +219,15 @@ export async function POST(req: NextRequest) {
           ],
         });
         
-        // Update certificate email sent status
-        await prisma.certificate.update({
-          where: { id: certificate.id },
-          data: { sentViaEmail: true, emailSentAt: new Date() },
-        });
+        if (result.success) {
+          // Update certificate email sent status
+          await prisma.certificate.update({
+            where: { id: certificate.id },
+            data: { sentViaEmail: true, emailSentAt: new Date() },
+          });
+        } else {
+          throw new Error(result.error);
+        }
       } catch (emailErr) {
         console.error("[Certificate Email send error]", emailErr);
         // Update to reflect email was not sent

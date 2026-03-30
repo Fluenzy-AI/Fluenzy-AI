@@ -2,18 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendAdminEmail } from "@/lib/brevo-mail";
 
 const MAX_RECIPIENTS = 200;
-
-// ─── SMTP transporter using env credentials ──────────────────────────────────
-function createTransporter() {
-  return createEmailTransporter({
-    user: process.env.SUPERADMIN_EMAIL_MANAGEMENT,
-    pass: process.env.SUPERADMIN_PASSWORD_MANAGEMENT,
-    label: "SUPERADMIN"
-  });
-}
 
 // ─── Input sanitisation – prevent header injection ────────────────────────────
 function sanitise(value: string): string {
@@ -92,12 +83,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No valid recipients found" }, { status: 400 });
     }
 
-    // ── Send email via SMTP ───────────────────────────────────────────────────
-    const transporter = createTransporter();
-
-    await transporter.sendMail({
-      from: `"Fluenzy AI Admin" <${process.env.SUPERADMIN_EMAIL_MANAGEMENT}>`,
-      to: recipientEmails.join(", "),
+    // ── Send email via Brevo ───────────────────────────────────────────────
+    const emailResult = await sendAdminEmail({
+      to: recipientEmails,
       subject,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -113,6 +101,10 @@ export async function POST(req: NextRequest) {
         </div>
       `,
     });
+
+    if (!emailResult.success) {
+      throw new Error(emailResult.error || "Failed to send email");
+    }
 
     // ── Persist email log ─────────────────────────────────────────────────────
     await prisma.emailLog.create({

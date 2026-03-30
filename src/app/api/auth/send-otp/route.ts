@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { createEmailTransporter, sendEmail } from "@/lib/email-transporter";
+import { sendOTPEmail } from "@/lib/brevo-mail";
 
 const OTP_EXPIRY_MINUTES = 5;
 
@@ -20,15 +20,6 @@ function isStrongPassword(password: string): boolean {
   return /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/.test(
     password
   );
-}
-
-// ── SMTP transporter ──────────────────────────────────────────────────────────
-function createTransporter() {
-  return createEmailTransporter({
-    user: process.env.SIGNUP_OTP_EMAIL_USER,
-    pass: process.env.SIGNUP_OTP_EMAIL_PASS,
-    label: "SIGNUP-OTP",
-  });
 }
 
 export async function POST(req: NextRequest) {
@@ -116,17 +107,11 @@ export async function POST(req: NextRequest) {
     });
 
     // ── Send OTP email ────────────────────────────────────────────────────────
-    const transporter = createTransporter();
-    const emailResult = await sendEmail(
-      transporter,
-      {
-        from: `"Fluenzy AI" <${process.env.SIGNUP_OTP_EMAIL_USER}>`,
-        to: email,
-        subject: "Fluenzy AI – Verify Your Account",
-        html: buildOtpEmail(firstName.trim(), otp, OTP_EXPIRY_MINUTES),
-      },
-      "SIGNUP-OTP"
-    );
+    const emailResult = await sendOTPEmail({
+      to: email,
+      subject: "Fluenzy AI – Verify Your Account",
+      html: buildOtpEmail(firstName.trim(), otp, OTP_EXPIRY_MINUTES),
+    });
 
     if (!emailResult.success) {
       return NextResponse.json(

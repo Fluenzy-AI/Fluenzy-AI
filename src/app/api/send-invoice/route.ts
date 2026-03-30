@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { htmlToPdf } from "@/lib/pdf-browser";
 import { buildInvoiceHtml, buildInvoiceEmailBody } from "@/lib/invoice-html";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendBillingEmail } from "@/lib/brevo-mail";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,15 +54,8 @@ export async function POST(request: NextRequest) {
       `FLZ-${status.toUpperCase().slice(0, 3)}-${payment.id.slice(-6).toUpperCase()}`;
     const filename = `FluenzyAI_Invoice_${invoiceNumber}.pdf`;
 
-    // Send email with PDF attachment
-    const transporter = createEmailTransporter({
-      user: process.env.Payment_EMAIL_USER,
-      pass: process.env.Payment_EMAIL_PASS,
-      label: "SEND-INVOICE"
-    });
-
-    await transporter.sendMail({
-      from: `"Fluenzy AI" <${process.env.Payment_EMAIL_USER}>`,
+    // Send email with PDF attachment via Brevo
+    const emailResult = await sendBillingEmail({
       to: user.email,
       subject: `Your Fluenzy AI Invoice - ${invoiceNumber}`,
       html: buildInvoiceEmailBody({
@@ -79,6 +72,10 @@ export async function POST(request: NextRequest) {
         },
       ],
     });
+
+    if (!emailResult.success) {
+      throw new Error(emailResult.error || "Failed to send email");
+    }
 
     return NextResponse.json({
       success: true,

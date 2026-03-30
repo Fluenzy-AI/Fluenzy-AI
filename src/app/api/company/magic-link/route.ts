@@ -11,7 +11,7 @@ import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
 import { z } from "zod";
 import { isWorkEmail } from "@/lib/company-auth";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendNotificationEmail } from "@/lib/brevo-mail";
 
 const MagicLinkSchema = z.object({
   email: z.string().email(),
@@ -117,15 +117,8 @@ export async function POST(req: NextRequest) {
     // Build magic link URL
     const magicLinkUrl = `${BASE_URL}/company/verify-magic-link?token=${magicToken}`;
 
-    // Send email
-    const transporter = createEmailTransporter({
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-      label: "MAGIC-LINK"
-    });
-
-    await transporter.sendMail({
-      from: `"Fluenzy AI" <${process.env.EMAIL_USER}>`,
+    // Send email via Brevo
+    await sendNotificationEmail({
       to: lowerEmail,
       subject: "Sign in to Fluenzy AI Company Portal",
       html: `
@@ -152,7 +145,6 @@ export async function POST(req: NextRequest) {
           </p>
         </div>
       `,
-      text: `Sign in to Fluenzy AI Company Portal\n\nHello ${member.name},\n\nClick the link below to securely sign in:\n${magicLinkUrl}\n\nThis link expires in 15 minutes.`,
     });
 
     return NextResponse.json({

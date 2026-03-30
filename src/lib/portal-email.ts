@@ -1,13 +1,11 @@
 /**
  * Portal Email Service
- * HR emails use HR_EMAIL_USER / HR_EMAIL_PASS
- * Admin emails use ADMIN_EMAIL_USER / ADMIN_EMAIL_PASS
- * Super Admin emails fall back to EMAIL_USER / EMAIL_PASS
+ * Uses centralized Brevo SMTP for all portal emails
+ * HR emails use HR context, Admin emails use ADMIN context
  */
 
-import { Transporter } from "nodemailer";
 import { prisma } from "@/lib/prisma";
-import { createEmailTransporter } from "./email-transporter";
+import { sendBrevoEmail, sendBulkEmails, type EmailContext } from "@/lib/brevo-mail";
 
 export type EmailRole = "HR" | "ADMIN" | "SUPER_ADMIN";
 
@@ -27,31 +25,17 @@ interface BulkEmailOptions extends Omit<SendEmailOptions, "to"> {
   recipients: string[];
 }
 
-// ── Transporter factory ─────────────────────────────────────────────────────
+// ── Map role to email context ─────────────────────────────────────────────────
 
-function createTransporter(role: EmailRole): Transporter {
-  let user: string | undefined;
-  let pass: string | undefined;
-  let label: string;
-
+function roleToContext(role: EmailRole): EmailContext {
   switch (role) {
     case "HR":
-      user = process.env.HR_EMAIL_USER;
-      pass = process.env.HR_EMAIL_PASS;
-      label = "HR-PORTAL";
-      break;
+      return "HR";
     case "ADMIN":
-      user = process.env.ADMIN_EMAIL_USER;
-      pass = process.env.ADMIN_EMAIL_PASS;
-      label = "ADMIN-PORTAL";
-      break;
+      return "ADMIN";
     default:
-      user = process.env.SUPERADMIN_EMAIL_MANAGEMENT || process.env.EMAIL_USER;
-      pass = process.env.SUPERADMIN_PASSWORD_MANAGEMENT || process.env.EMAIL_PASS;
-      label = "SUPERADMIN-PORTAL";
+      return "ADMIN";
   }
-
-  return createEmailTransporter({ user, pass, label });
 }
 
 // ── Core send function ──────────────────────────────────────────────────────
@@ -70,6 +54,7 @@ export async function sendPortalEmail(options: SendEmailOptions): Promise<{ succ
   } = options;
 
   const recipients = Array.isArray(to) ? to : [to];
+  const context = roleToContext(senderRole);
 
   // Create log entry in PENDING state
   let logId: string | undefined;
@@ -91,22 +76,23 @@ export async function sendPortalEmail(options: SendEmailOptions): Promise<{ succ
   }
 
   try {
-    const transporter = createTransporter(senderRole);
-    const fromEmail =
-      senderRole === "HR"
-        ? process.env.HR_EMAIL_USER
-        : senderRole === "ADMIN"
-        ? process.env.ADMIN_EMAIL_USER
-        : process.env.EMAIL_USER;
-
-    await transporter.sendMail({
-      from: `"Fluenzy AI" <${fromEmail}>`,
-      to: recipients.join(", "),
+    const result = await sendBrevoEmail({
+      context,
+      to: recipients,
       subject,
       html,
       text,
-      attachments,
+      attachments: attachments?.map(a => ({
+        filename: a.filename,
+        path: a.path,
+        content: a.content as string | Buffer | undefined,
+        contentType: a.contentType,
+      })),
     });
+
+    if (!result.success) {
+      throw new Error(result.error);
+    }
 
     // Update all logs to SENT
     await prisma.portalEmailLog.updateMany({

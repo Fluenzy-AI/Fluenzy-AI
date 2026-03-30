@@ -1,19 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendOTPEmail } from "@/lib/brevo-mail";
 
 const OTP_EXPIRY_MINUTES = 5;
 
 function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
-}
-
-function createTransporter() {
-  return createEmailTransporter({
-    user: process.env.SIGNUP_OTP_EMAIL_USER,
-    pass: process.env.SIGNUP_OTP_EMAIL_PASS,
-    label: "RESEND-SIGNUP-OTP"
-  });
 }
 
 export async function POST(req: NextRequest) {
@@ -71,9 +63,7 @@ export async function POST(req: NextRequest) {
 
     // ── Send new OTP ──────────────────────────────────────────────────────────
     const firstName = (lastOtp.pendingName ?? "").split(" ")[0] || "User";
-    const transporter = createTransporter();
-    await transporter.sendMail({
-      from: `"Fluenzy AI" <${process.env.SIGNUP_OTP_EMAIL_USER}>`,
+    await sendOTPEmail({
       to: email,
       subject: "Fluenzy AI – New Verification Code",
       html: buildOtpEmail(firstName, otp, OTP_EXPIRY_MINUTES),

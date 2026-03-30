@@ -8,22 +8,12 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { isWorkEmail, generateOtp, generateUniqueCompanySlug, extractDomain } from "@/lib/company-auth";
-import { createEmailTransporter } from "@/lib/email-transporter";
+import { sendOTPEmail } from "@/lib/brevo-mail";
 
 const OTP_EXPIRY_MINUTES = 10;
 
-function createTransporter() {
-  return createEmailTransporter({
-    user: process.env.SIGNUP_OTP_EMAIL_USER,
-    pass: process.env.SIGNUP_OTP_EMAIL_PASS,
-    label: "COMPANY-SIGNUP-OTP"
-  });
-}
-
 async function sendCompanyOtpEmail(email: string, otp: string, companyName: string) {
-  const transporter = createTransporter();
-  await transporter.sendMail({
-    from: `"Fluenzy AI - Career Portal" <${process.env.SIGNUP_OTP_EMAIL_USER}>`,
+  await sendOTPEmail({
     to: email,
     subject: "Verify Your Company Account – Fluenzy AI",
     html: `
