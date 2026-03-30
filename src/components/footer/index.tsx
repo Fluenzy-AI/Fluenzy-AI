@@ -63,8 +63,8 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/history" className="text-muted-foreground hover:text-primary transition-colors text-sm">
-                  History
+                <Link href="/hirelens" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                  HireLens Device
                 </Link>
               </li>
               <li>
@@ -139,7 +139,7 @@ const Footer = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-muted-foreground hover:text-primary transition-colors text-sm">
+                <Link href="/faqs" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                   FAQs
                 </Link>
               </li>
