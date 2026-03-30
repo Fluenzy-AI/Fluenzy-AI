@@ -1218,75 +1218,110 @@ export default function GDAssessmentPlayer({
       </div>
 
       {/* Controls */}
-      <div className="flex-shrink-0 flex items-center justify-center gap-4 px-6 py-4 bg-gray-900/95 backdrop-blur-sm border-t border-gray-800 z-50">
-        <Button
-          variant={isMuted ? "destructive" : "outline"}
+      <div className="flex-shrink-0 flex items-center justify-center gap-3 px-6 py-4 bg-gray-900/95 backdrop-blur-sm border-t border-gray-800 z-50">
+        {/* Mic Button */}
+        <div className="flex flex-col items-center gap-1">
+          <Button
+            variant={isMuted ? "destructive" : "default"}
+            size="lg"
+            className={cn(
+              "rounded-full w-14 h-14 flex items-center justify-center transition-all",
+              isMuted 
+                ? "bg-red-600 hover:bg-red-500 text-white" 
+                : "bg-slate-700 hover:bg-slate-600 text-white border-slate-600"
+            )}
+            onClick={toggleMute}
+          >
+            {isMuted ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
+          </Button>
+          <span className="text-xs text-gray-400">{isMuted ? "Muted" : "Mic"}</span>
+        </div>
+
+        {/* Camera Button */}
+        <div className="flex flex-col items-center gap-1">
+          <Button
+            variant={isVideoOff ? "destructive" : "default"}
+            size="lg"
+            className={cn(
+              "rounded-full w-14 h-14 flex items-center justify-center transition-all",
+              isVideoOff 
+                ? "bg-red-600 hover:bg-red-500 text-white" 
+                : "bg-slate-700 hover:bg-slate-600 text-white border-slate-600"
+            )}
+            onClick={toggleVideo}
+          >
+            {isVideoOff ? <VideoOff className="w-5 h-5" /> : <Video className="w-5 h-5" />}
+          </Button>
+          <span className="text-xs text-gray-400">{isVideoOff ? "Camera Off" : "Camera"}</span>
+        </div>
+
+        {/* Raise Hand Button */}
+        <div className="flex flex-col items-center gap-1">
+          <Button
+            variant="default"
+            size="lg"
+            className={cn(
+              "rounded-full w-14 h-14 flex items-center justify-center transition-all",
+              handRaised 
+                ? "bg-yellow-600 hover:bg-yellow-500 text-white" 
+                : "bg-slate-700 hover:bg-slate-600 text-white border-slate-600"
+            )}
+            onClick={() => setHandRaised(!handRaised)}
+          >
+            <Hand className="w-5 h-5" />
+          </Button>
+          <span className="text-xs text-gray-400">{handRaised ? "Hand Up" : "Raise"}</span>
+        </div>
+
+        {/* Chat Button */}
+        <div className="flex flex-col items-center gap-1">
+          <Button
+            variant="default"
+            size="lg"
+            className={cn(
+              "rounded-full w-14 h-14 flex items-center justify-center transition-all",
+              showChat 
+                ? "bg-blue-600 hover:bg-blue-500 text-white" 
+                : "bg-slate-700 hover:bg-slate-600 text-white border-slate-600"
+            )}
+            onClick={() => setShowChat(!showChat)}
+          >
+            <MessageSquare className="w-5 h-5" />
+          </Button>
+          <span className="text-xs text-gray-400">Chat</span>
+        </div>
+
+        {/* AI Analysis Button */}
+        <div className="flex flex-col items-center gap-1">
+          <Button
+            variant="default"
+            size="lg"
+            className={cn(
+              "rounded-full w-14 h-14 flex items-center justify-center transition-all relative",
+              showMetrics 
+                ? "bg-green-600 hover:bg-green-500 text-white" 
+                : "bg-slate-700 hover:bg-slate-600 text-white border-slate-600"
+            )}
+            onClick={() => setShowMetrics(!showMetrics)}
+          >
+            <Activity className="w-5 h-5" />
+            {wsConnected && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-gray-900 animate-pulse" />
+            )}
+          </Button>
+          <span className="text-xs text-gray-400">AI Analysis</span>
+        </div>
+
+        <div className="w-px h-14 bg-gray-700 mx-2" />
+
+        {/* End Discussion Button */}
+        <Button 
+          variant="destructive" 
           size="lg"
-          className={cn(
-            "rounded-full w-14 h-14 flex items-center justify-center",
-            !isMuted && "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
-          )}
-          onClick={toggleMute}
-          title={isMuted ? "Unmute" : "Mute"}
+          className="px-6 h-12 font-semibold"
+          onClick={handleEndDiscussion}
         >
-          {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
-        </Button>
-
-        <Button
-          variant={isVideoOff ? "destructive" : "outline"}
-          size="lg"
-          className={cn(
-            "rounded-full w-14 h-14 flex items-center justify-center",
-            !isVideoOff && "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
-          )}
-          onClick={toggleVideo}
-          title={isVideoOff ? "Turn on camera" : "Turn off camera"}
-        >
-          {isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
-        </Button>
-
-        <Button
-          variant={handRaised ? "default" : "outline"}
-          size="lg"
-          className={cn(
-            "rounded-full w-14 h-14 flex items-center justify-center",
-            handRaised ? "bg-yellow-600 hover:bg-yellow-500 text-white" : "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
-          )}
-          onClick={() => setHandRaised(!handRaised)}
-          title={handRaised ? "Lower hand" : "Raise hand"}
-        >
-          <Hand className="w-6 h-6" />
-        </Button>
-
-        <Button
-          variant={showChat ? "default" : "outline"}
-          size="lg"
-          className={cn(
-            "rounded-full w-14 h-14 flex items-center justify-center",
-            showChat ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
-          )}
-          onClick={() => setShowChat(!showChat)}
-          title={showChat ? "Hide chat" : "Show chat"}
-        >
-          <MessageSquare className="w-6 h-6" />
-        </Button>
-
-        <Button
-          variant={showMetrics ? "default" : "outline"}
-          size="lg"
-          className={cn(
-            "rounded-full w-14 h-14 flex items-center justify-center",
-            showMetrics ? "bg-green-600 hover:bg-green-500 text-white" : "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
-          )}
-          onClick={() => setShowMetrics(!showMetrics)}
-          title={showMetrics ? "Hide AI Analysis" : "Show AI Analysis"}
-        >
-          <Activity className="w-6 h-6" />
-        </Button>
-
-        <div className="w-px h-10 bg-gray-700 mx-2" />
-
-        <Button variant="destructive" size="lg" onClick={handleEndDiscussion}>
+          <X className="w-5 h-5 mr-2" />
           End Discussion
         </Button>
       </div>
