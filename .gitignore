@@ -23,6 +23,7 @@ yarn/*
 # misc
 .DS_Store
 *.pem
+Thumbs.db
 
 # debug
 npm-debug.log*
@@ -30,9 +31,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files
 .env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.test
 
 # vercel
 .vercel
@@ -41,38 +46,65 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# Prisma generated
 /src/generated/prisma
 
+# Stripe/Razorpay test files
 stripe_setup.md
-
-.env
-.env.local
-
 /razorpay-test
 
 # ML Models (downloaded weights)
-yolov8n.pt
 *.pt
 *.pth
 *.ckpt
 *.h5
+*.onnx
 
 # Temporary files
 src/tmpclaude*
 *.tmp
+*.temp
+*.bak
 
 # Uploaded files (user generated content)
 public/uploads/
 
 # Random test images
 pixora-*.jpg
+*.log
 
-# Sensitive assets - never commit founder/admin signatures to repo
+# Sensitive assets - never commit signatures
 public/image/founder_signature.jpg
 public/image/admin_signature.jpg
 
-# Package lock (optional - uncomment if you want to ignore)
-# package-lock.json
+# Build/deployment logs
+build.log
+*.log
 
-# Prisma migrations - optional
-# prisma/migrations/
+# Implementation notes (not needed in repo)
+IMPLEMENTATION_COMPLETE.md
+IMPLEMENTATION_SUMMARY.txt
+DEPLOYMENT_FIX_CHECKLIST.md
+GO_LIVE_CHECKLIST.md
+QUICK_SETUP.md
+ALL_PDFS_LIFETIME_ACCESS.md
+
+# Python
+.python-version
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Package lock (keep for reproducible builds)
+# package-lock.json
