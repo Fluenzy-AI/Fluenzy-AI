@@ -62,20 +62,42 @@ export async function uploadToR2(
   mimeType: string
 ): Promise<string> {
   if (!isR2Configured()) {
+    console.error("[R2] Not configured! Missing env vars:", {
+      hasEndpoint: !!process.env.R2_ENDPOINT,
+      hasAccessKey: !!process.env.R2_ACCESS_KEY_ID,
+      hasSecretKey: !!process.env.R2_SECRET_ACCESS_KEY,
+      hasBucket: !!process.env.R2_BUCKET_NAME,
+      bucketName: process.env.R2_BUCKET_NAME,
+    });
     throw new Error("R2 is not configured. Check environment variables.");
   }
 
-  await r2Client.send(
-    new PutObjectCommand({
-      Bucket: R2_BUCKET,
-      Key: fileKey,
-      Body: buffer,
-      ContentType: mimeType,
-    })
-  );
+  console.info(`[R2] Uploading to bucket: ${R2_BUCKET}, key: ${fileKey}`);
+  
+  try {
+    await r2Client.send(
+      new PutObjectCommand({
+        Bucket: R2_BUCKET,
+        Key: fileKey,
+        Body: buffer,
+        ContentType: mimeType,
+      })
+    );
 
-  console.info(`[R2] Uploaded: ${fileKey} (${buffer.length} bytes)`);
-  return fileKey;
+    console.info(`[R2] Upload SUCCESS: ${fileKey} (${buffer.length} bytes)`);
+    return fileKey;
+  } catch (error: unknown) {
+    const err = error as Error & { Code?: string; $metadata?: { httpStatusCode?: number } };
+    console.error(`[R2] Upload FAILED:`, {
+      fileKey,
+      bucket: R2_BUCKET,
+      errorName: err.name,
+      errorMessage: err.message,
+      errorCode: err.Code,
+      httpStatus: err.$metadata?.httpStatusCode,
+    });
+    throw error;
+  }
 }
 
 /**
