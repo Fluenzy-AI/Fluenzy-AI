@@ -440,6 +440,26 @@ export default function GDAssessmentPlayer({
           setVideoMetrics(metrics);
           metricsTimelineRef.current.push(metrics);
           isProcessingFrame.current = false;
+        } else if (data.type === 'behavioral_result') {
+          // Backend sends behavioral_result instead of analysis
+          console.log("📊 Full behavioral_result object:", JSON.stringify(data, null, 2));
+          
+          // Try multiple possible data structures
+          const metricsData = data.metrics || data.behavioral_result || data.result || data;
+          
+          const metrics: VideoMetrics = {
+            confidence: metricsData.confidence || metricsData.Confidence || 0,
+            eyeContact: metricsData.eye_contact || metricsData.eyeContact || metricsData.EyeContact || 0,
+            posture: metricsData.posture || metricsData.Posture || 0,
+            smile: metricsData.smile || metricsData.Smile || 0,
+            stressLevel: metricsData.stress_level || metricsData.stressLevel || metricsData.StressLevel || 0,
+            engagement: metricsData.engagement || metricsData.Engagement || 0,
+          };
+          
+          console.log("📊 Parsed metrics from behavioral_result:", metrics);
+          setVideoMetrics(metrics);
+          metricsTimelineRef.current.push(metrics);
+          isProcessingFrame.current = false;
         } else if (data.type === 'busy') {
           console.log("⏳ Backend busy");
           isProcessingFrame.current = false;
@@ -450,6 +470,7 @@ export default function GDAssessmentPlayer({
           isProcessingFrame.current = false;
         } else {
           console.warn("⚠️ Unknown message type:", data.type);
+          console.log("Full unknown message:", JSON.stringify(data, null, 2));
         }
       } catch (e) {
         console.error("❌ Error parsing video analysis message:", e, event.data);
