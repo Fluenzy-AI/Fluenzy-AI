@@ -55,6 +55,7 @@ interface AssessmentForm {
   codingLanguage?: string;
   // GD config
   gdTopic?: string;
+  gdMaxCandidates?: number; // Max candidates per GD room
   // Voice config
   voiceAudioOnly?: boolean;
   voiceCategories?: string[];
@@ -99,6 +100,7 @@ export default function NewAssessmentPage() {
     passPercentage: 70,
     description: "",
     questions: [],
+    gdMaxCandidates: 10, // Default: 10 candidates per GD room
   });
 
   React.useEffect(() => {
@@ -632,23 +634,47 @@ export default function NewAssessmentPage() {
                 )}
                 
                 {form.type === "GD" && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-2">
-                      Discussion Topic
-                    </label>
-                    <input
-                      type="text"
-                      value={form.gdTopic || ""}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          gdTopic: e.target.value,
-                        }))
-                      }
-                      placeholder="e.g., The impact of AI on the workforce"
-                      className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
-                    />
-                  </div>
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Discussion Topic
+                      </label>
+                      <input
+                        type="text"
+                        value={form.gdTopic || ""}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            gdTopic: e.target.value,
+                          }))
+                        }
+                        placeholder="e.g., The impact of AI on the workforce"
+                        className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-300 mb-2">
+                        Max Candidates Per GD Room
+                      </label>
+                      <input
+                        type="number"
+                        min={2}
+                        max={50}
+                        value={form.gdMaxCandidates || 10}
+                        onChange={(e) =>
+                          setForm((prev) => ({
+                            ...prev,
+                            gdMaxCandidates: parseInt(e.target.value) || 10,
+                          }))
+                        }
+                        placeholder="10"
+                        className="w-full px-4 py-2 bg-slate-700/50 border border-slate-600 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                      />
+                      <p className="text-xs text-slate-400 mt-1">
+                        Candidates will be grouped automatically. E.g., 50 candidates with max 10 = 5 separate GD rooms.
+                      </p>
+                    </div>
+                  </>
                 )}
 
                 {form.type === "CORPORATE_VOICE" && (

@@ -191,17 +191,30 @@ export default function GDAssessmentPlayer({
   // Refs
   const messageEndRef = useRef<HTMLDivElement>(null);
   const speechStartTime = useRef<number | null>(null);
+  const isInitialized = useRef(false);
 
   // Initialize Agora
   useEffect(() => {
+    // Prevent double initialization in React StrictMode
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+    
+    let agoraClient: IAgoraRTCClient | null = null;
+    let localAudio: IMicrophoneAudioTrack | null = null;
+    let localVideo: ICameraVideoTrack | null = null;
+    let isCancelled = false;
+    
     const initAgora = async () => {
       try {
-        const agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+        agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
         setClient(agoraClient);
+        
+        // Store reference for event handlers
+        const client = agoraClient;
 
         // Handle remote users
-        agoraClient.on("user-published", async (user, mediaType) => {
-          await agoraClient.subscribe(user, mediaType);
+        client.on("user-published", async (user, mediaType) => {
+          await client.subscribe(user, mediaType);
           setRemoteUsers((prev) => new Map(prev).set(user.uid, user));
           
           // Update participants
@@ -231,7 +244,7 @@ export default function GDAssessmentPlayer({
           });
         });
 
-        agoraClient.on("user-unpublished", (user, mediaType) => {
+        client.on("user-unpublished", (user, mediaType) => {
           if (mediaType === "video") {
             setRemoteUsers((prev) => {
               const updated = new Map(prev);
@@ -244,7 +257,7 @@ export default function GDAssessmentPlayer({
           }
         });
 
-        agoraClient.on("user-left", (user) => {
+        client.on("user-left", (user) => {
           setRemoteUsers((prev) => {
             const updated = new Map(prev);
             updated.delete(user.uid);
@@ -254,8 +267,8 @@ export default function GDAssessmentPlayer({
         });
 
         // Volume indicator for active speaker
-        agoraClient.enableAudioVolumeIndicator();
-        agoraClient.on("volume-indicator", (volumes) => {
+        client.enableAudioVolumeIndicator();
+        client.on("volume-indicator", (volumes) => {
           const speaking = volumes.find((v) => v.level > 5);
           if (speaking) {
             setActiveSpeaker(speaking.uid);
@@ -277,63 +290,56 @@ export default function GDAssessmentPlayer({
         });
 
         // Validate channel name (Agora 64-byte limit)
-        let validChannel = agoraConfig.channel;
-        let validToken = agoraConfig.token;
-        
-        if (validChannel.length > 64) {
-          console.warn(`Channel name too long (${validChannel.length} chars), requesting new credentials`);
-          
-          // Generate a short channel name
-          const timestamp = Date.now();
-          const randomSuffix = Math.random().toString(36).substring(2, 7);
-          validChannel = `gd_${timestamp}_${randomSuffix}`;
-          
-          try {
-            // Request new Agora token for the short channel
-            const tokenResponse = await fetch('/api/gd/token', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                channelName: validChannel,
-                uid: agoraConfig.uid,
-                role: 'publisher',
-              }),
-            });
-            
-            if (tokenResponse.ok) {
-              const tokenData = await tokenResponse.json();
-              validToken = tokenData.token;
-              console.log(`Using new channel: ${validChannel} with fresh token`);
-            } else {
-              throw new Error('Failed to get new Agora token');
-            }
-          } catch (tokenError) {
-            console.error('Token generation failed:', tokenError);
-            throw new Error('Unable to join discussion. Please refresh and try again.');
-          }
+        // The backend should have already provided a valid channel, but double-check
+        if (agoraConfig.channel.length > 64) {
+          console.error(`Channel name too long (${agoraConfig.channel.length} chars). Backend should have regenerated.`);
+          throw new Error("Invalid channel configuration. Please refresh the page to get a new session.");
         }
+        
+        if (isCancelled) return;
+
+        // Generate a unique UID for this session to avoid conflicts
+        // Use timestamp + random to ensure uniqueness across page refreshes
+        const uniqueUid = Math.floor(Date.now() % 100000) + Math.floor(Math.random() * 10000);
+        console.log(`[GD] Joining channel: ${agoraConfig.channel}, UID: ${uniqueUid}`);
 
         // Join channel with validated credentials
-        await agoraClient.join(
+        await client.join(
           agoraConfig.appId,
-          validChannel,
-          validToken,
-          agoraConfig.uid
+          agoraConfig.channel,
+          agoraConfig.token,
+          uniqueUid // Use fresh UID instead of stored one
         );
+        
+        if (isCancelled) {
+          await client.leave();
+          return;
+        }
 
         // Create and publish tracks
         const [audioTrack, videoTrack] = await AgoraRTC.createMicrophoneAndCameraTracks();
+        localAudio = audioTrack;
+        localVideo = videoTrack;
         setLocalAudioTrack(audioTrack);
         setLocalVideoTrack(videoTrack);
         
-        await agoraClient.publish([audioTrack, videoTrack]);
+        if (isCancelled) {
+          audioTrack.stop();
+          audioTrack.close();
+          videoTrack.stop();
+          videoTrack.close();
+          await client.leave();
+          return;
+        }
+        
+        await client.publish([audioTrack, videoTrack]);
 
         // Add local participant
         setParticipants([
           {
             id: userId,
             name: participantName,
-            uid: agoraConfig.uid,
+            uid: uniqueUid,
             isLocal: true,
             hasVideo: true,
             hasAudio: true,
@@ -349,14 +355,18 @@ export default function GDAssessmentPlayer({
 
         // Start discussion after 10 seconds
         setTimeout(() => {
-          setPhase("discussion");
-          addSystemMessage("The discussion has begun! Share your thoughts on the topic.");
+          if (!isCancelled) {
+            setPhase("discussion");
+            addSystemMessage("The discussion has begun! Share your thoughts on the topic.");
+          }
         }, 10000);
 
       } catch (error) {
         console.error("Failed to initialize Agora:", error);
-        setIsConnecting(false);
-        onError?.(`Failed to join discussion: ${error}`);
+        if (!isCancelled) {
+          setIsConnecting(false);
+          onError?.(`Failed to join discussion: ${error}`);
+        }
       }
     };
 
@@ -364,15 +374,16 @@ export default function GDAssessmentPlayer({
 
     // Cleanup
     return () => {
-      if (localAudioTrack) {
-        localAudioTrack.stop();
-        localAudioTrack.close();
+      isCancelled = true;
+      if (localAudio) {
+        localAudio.stop();
+        localAudio.close();
       }
-      if (localVideoTrack) {
-        localVideoTrack.stop();
-        localVideoTrack.close();
+      if (localVideo) {
+        localVideo.stop();
+        localVideo.close();
       }
-      client?.leave();
+      agoraClient?.leave().catch(console.error);
     };
   }, []);
 

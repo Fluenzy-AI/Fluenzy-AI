@@ -104,13 +104,45 @@ export async function GET(
 
     // For Voice/GD, include Agora credentials and config
     if (session.assessment.type === "VOICE" || session.assessment.type === "GD") {
-      if (session.agoraChannel && isAgoraConfigured()) {
-        response.agora = {
-          appId: getAgoraAppId(),
-          channel: session.agoraChannel,
-          token: session.agoraToken,
-          uid: session.agoraUid,
-        };
+      if (isAgoraConfigured()) {
+        // Check if we need to regenerate channel (too long or missing)
+        let channel = session.agoraChannel || "";
+        let token = session.agoraToken || "";
+        let uid = session.agoraUid || Math.floor(Math.random() * 100000) + 1;
+        
+        // Regenerate if channel is missing or too long (64-byte Agora limit)
+        if (!channel || channel.length > 64) {
+          console.log(`[Assessment GET] Channel invalid/too long (${channel.length}), regenerating...`);
+          const shortSessionId = session.id.substring(0, 8);
+          channel = `gd_${shortSessionId}_${Date.now()}`;
+          
+          try {
+            const tokenResult = await generateGDToken(channel, uid, "publisher");
+            token = tokenResult.token;
+            
+            // Update session with new credentials
+            await prisma.candidateAssessmentSession.update({
+              where: { id: session.id },
+              data: {
+                agoraChannel: channel,
+                agoraToken: token,
+                agoraUid: uid,
+              },
+            });
+            console.log(`[Assessment GET] New channel: ${channel} (${channel.length} bytes)`);
+          } catch (error) {
+            console.error("[Assessment GET] Failed to regenerate Agora token:", error);
+          }
+        }
+        
+        if (channel && token) {
+          response.agora = {
+            appId: getAgoraAppId(),
+            channel,
+            token,
+            uid,
+          };
+        }
       }
       if (session.gdRoomId) {
         response.gdRoomId = session.gdRoomId;
@@ -221,9 +253,19 @@ export async function POST(
       let agoraData = null;
       if ((session.assessment.type === "VOICE" || session.assessment.type === "GD") && isAgoraConfigured()) {
         // Create a short channel name (Agora limit: 64 bytes)
-        // Use first 8 chars of session ID + timestamp to ensure uniqueness
-        const shortSessionId = session.id.substring(0, 8);
-        const channel = session.agoraChannel || `gd_${shortSessionId}_${Date.now()}`;
+        // Always generate a new channel name if the existing one is too long
+        let channel = session.agoraChannel || "";
+        
+        // Validate channel name length and regenerate if invalid
+        if (!channel || channel.length > 64) {
+          if (channel.length > 64) {
+            console.warn(`[Assessment] Existing channel too long (${channel.length} bytes), generating new one`);
+          }
+          const shortSessionId = session.id.substring(0, 8);
+          channel = `gd_${shortSessionId}_${Date.now()}`;
+          console.log(`[Assessment] New channel: ${channel} (${channel.length} bytes)`);
+        }
+        
         const uid = session.agoraUid || Math.floor(Math.random() * 100000) + 1;
         
         try {

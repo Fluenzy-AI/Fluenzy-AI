@@ -15,6 +15,7 @@ const CreateAssessmentSchema = z.object({
   aiGenerated: z.boolean().default(false),
   // GD config
   gdTopic: z.string().optional(),
+  gdMaxCandidates: z.number().min(2).max(50).optional(),
   // Voice config
   voiceAudioOnly: z.boolean().optional(),
   voiceCategories: z.array(z.string()).optional(),
@@ -154,8 +155,12 @@ export async function POST(req: NextRequest) {
     // Build config object for assessment types that need it
     let config: Record<string, any> = {};
     
-    if (data.type === "GD" && data.gdTopic) {
-      config.topic = data.gdTopic;
+    if (data.type === "GD") {
+      if (data.gdTopic) {
+        config.topic = data.gdTopic;
+      }
+      // Store max candidates per GD room (default: 10)
+      config.maxCandidates = data.gdMaxCandidates || 10;
     }
     
     if (data.type === "VOICE") {

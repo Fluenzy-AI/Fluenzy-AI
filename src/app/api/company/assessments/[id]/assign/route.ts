@@ -78,6 +78,33 @@ export async function POST(
     expiresAt.setDate(expiresAt.getDate() + expiryDays);
 
     // Create assessment sessions for each application
+    // For GD assessments, group candidates into shared rooms
+    let gdGroups: string[][] = [];
+    let gdGroupChannels: Map<string, { channel: string; roomId: string }> = new Map();
+    
+    if (assessment.type === "GD") {
+      // Get max candidates per GD from config (default: 10)
+      const config = assessment.config as Record<string, any> | null;
+      const maxPerGD = config?.maxCandidates || 10;
+      
+      // Split applications into groups
+      for (let i = 0; i < applications.length; i += maxPerGD) {
+        const groupApps = applications.slice(i, i + maxPerGD).map(a => a.id);
+        const groupIndex = Math.floor(i / maxPerGD);
+        gdGroups.push(groupApps);
+        
+        // Create shared channel for this group
+        const shortAssessmentId = id.substring(0, 8);
+        const channel = `gd_${shortAssessmentId}_g${groupIndex}_${Date.now()}`;
+        const roomId = `gd_${id}_g${groupIndex}_${Date.now()}`;
+        
+        groupApps.forEach(appId => {
+          gdGroupChannels.set(appId, { channel, roomId });
+        });
+      }
+      console.log(`[GD Assign] Created ${gdGroups.length} GD groups for ${applications.length} candidates (max ${config?.maxCandidates || 10} per GD)`);
+    }
+    
     const sessions = await Promise.all(
       applications.map(async (application) => {
         // Generate unique session token
@@ -89,12 +116,12 @@ export async function POST(
         let agoraUid: number | null = null;
         let gdRoomId: string | null = null;
 
-        if (assessment.type === "VOICE" || assessment.type === "GD") {
-          if (isAgoraConfigured()) {
-            // Create a short channel name (Agora limit: 64 bytes)
-            // Use first 8 chars of application ID + timestamp
-            const shortAppId = application.id.substring(0, 8);
-            agoraChannel = `gd_${shortAppId}_${Date.now()}`;
+        if (assessment.type === "GD" && isAgoraConfigured()) {
+          // Use shared channel from group
+          const groupData = gdGroupChannels.get(application.id);
+          if (groupData) {
+            agoraChannel = groupData.channel;
+            gdRoomId = groupData.roomId;
             agoraUid = Math.floor(Math.random() * 100000) + 1;
             try {
               const tokenResult = await generateGDToken(agoraChannel, agoraUid, "publisher");
@@ -103,8 +130,16 @@ export async function POST(
               console.error("Failed to generate Agora token:", error);
             }
           }
-          if (assessment.type === "GD") {
-            gdRoomId = `gd_${id}_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        } else if (assessment.type === "VOICE" && isAgoraConfigured()) {
+          // Voice assessments get individual channels
+          const shortAppId = application.id.substring(0, 8);
+          agoraChannel = `voice_${shortAppId}_${Date.now()}`;
+          agoraUid = Math.floor(Math.random() * 100000) + 1;
+          try {
+            const tokenResult = await generateGDToken(agoraChannel, agoraUid, "publisher");
+            agoraToken = tokenResult.token;
+          } catch (error) {
+            console.error("Failed to generate Agora token:", error);
           }
         }
 
