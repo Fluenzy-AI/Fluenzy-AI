@@ -110,11 +110,16 @@ export async function GET(
         let token = session.agoraToken || "";
         let uid = session.agoraUid || Math.floor(Math.random() * 100000) + 1;
         
-        // Regenerate if channel is missing or too long (64-byte Agora limit)
-        if (!channel || channel.length > 64) {
-          console.log(`[Assessment GET] Channel invalid/too long (${channel.length}), regenerating...`);
+        // Regenerate if:
+        // 1. Channel is missing or too long (64-byte Agora limit)
+        // 2. Token is missing or appears invalid (too short - valid tokens are 200+ chars)
+        const needsRegeneration = !channel || channel.length > 64 || !token || token.length < 100;
+        
+        if (needsRegeneration) {
+          console.log(`[Assessment GET] Credentials need regeneration - channel: ${channel?.length || 0} chars, token: ${token?.length || 0} chars`);
           const shortSessionId = session.id.substring(0, 8);
           channel = `gd_${shortSessionId}_${Date.now()}`;
+          uid = Math.floor(Math.random() * 100000) + 1; // Fresh UID too
           
           try {
             const tokenResult = await generateGDToken(channel, uid, "publisher");
@@ -129,7 +134,7 @@ export async function GET(
                 agoraUid: uid,
               },
             });
-            console.log(`[Assessment GET] New channel: ${channel} (${channel.length} bytes)`);
+            console.log(`[Assessment GET] New channel: ${channel} (${channel.length} bytes), uid: ${uid}`);
           } catch (error) {
             console.error("[Assessment GET] Failed to regenerate Agora token:", error);
           }

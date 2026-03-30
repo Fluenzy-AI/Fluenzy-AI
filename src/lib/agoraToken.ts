@@ -44,26 +44,35 @@ export async function generateGDToken(
   // Ensure uid is a non-negative integer
   const accountUid = Math.abs(uid) >>> 0;
   
-  // Set expiration time
-  const currentTime = Math.floor(Date.now() / 1000);
-  const tokenExpiration = currentTime + TOKEN_EXPIRATION;
-
   // Define privileges based on role
   const rtcRole = role === 'publisher' ? RtcRole.PUBLISHER : RtcRole.SUBSCRIBER;
 
-  // Build the token
+  // Token expiration (in seconds from now, NOT absolute timestamp)
+  const tokenExpireInSeconds = TOKEN_EXPIRATION;
+  // Privilege expiration (same as token expiration)
+  const privilegeExpireInSeconds = TOKEN_EXPIRATION;
+
+  console.log(`[Agora Token] Generating token for channel: ${channelName}, uid: ${accountUid}, role: ${role}`);
+
+  // Build the token with both tokenExpire and privilegeExpire
+  // agora-token v2.x requires both parameters as seconds from now
   const token = RtcTokenBuilder.buildTokenWithUid(
     APP_ID,
     APP_CERTIFICATE,
     channelName,
     accountUid,
     rtcRole,
-    tokenExpiration
+    tokenExpireInSeconds,
+    privilegeExpireInSeconds
   );
+
+  const expiresAt = Math.floor(Date.now() / 1000) + TOKEN_EXPIRATION;
+
+  console.log(`[Agora Token] Token generated successfully, expires at: ${new Date(expiresAt * 1000).toISOString()}`);
 
   return {
     token,
-    expiresAt: tokenExpiration,
+    expiresAt,
     appId: APP_ID
   };
 }

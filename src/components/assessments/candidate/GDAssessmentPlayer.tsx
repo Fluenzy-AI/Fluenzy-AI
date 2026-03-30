@@ -298,17 +298,17 @@ export default function GDAssessmentPlayer({
         
         if (isCancelled) return;
 
-        // Generate a unique UID for this session to avoid conflicts
-        // Use timestamp + random to ensure uniqueness across page refreshes
-        const uniqueUid = Math.floor(Date.now() % 100000) + Math.floor(Math.random() * 10000);
-        console.log(`[GD] Joining channel: ${agoraConfig.channel}, UID: ${uniqueUid}`);
+        // IMPORTANT: Use the UID that the token was generated for
+        // Agora tokens are bound to specific UIDs - using a different UID will cause auth failure
+        const tokenUid = agoraConfig.uid;
+        console.log(`[GD] Joining channel: ${agoraConfig.channel}, UID: ${tokenUid}`);
 
-        // Join channel with validated credentials
+        // Join channel with the UID that matches the token
         await client.join(
           agoraConfig.appId,
           agoraConfig.channel,
           agoraConfig.token,
-          uniqueUid // Use fresh UID instead of stored one
+          tokenUid // Must match the UID the token was generated for
         );
         
         if (isCancelled) {
@@ -334,12 +334,12 @@ export default function GDAssessmentPlayer({
         
         await client.publish([audioTrack, videoTrack]);
 
-        // Add local participant
+        // Add local participant with the UID we joined with
         setParticipants([
           {
             id: userId,
             name: participantName,
-            uid: uniqueUid,
+            uid: tokenUid,
             isLocal: true,
             hasVideo: true,
             hasAudio: true,
