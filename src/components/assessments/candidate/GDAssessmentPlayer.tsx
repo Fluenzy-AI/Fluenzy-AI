@@ -26,12 +26,29 @@ import {
   Hand,
   X,
   CheckCircle2,
+  Activity,
+  Eye,
+  Smile,
+  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+
+// Video Analysis Configuration
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "wss://techsevaweb.onrender.com";
+
+// Video Analysis Metrics Interface
+interface VideoMetrics {
+  confidence: number;
+  eyeContact: number;
+  posture: number;
+  smile: number;
+  stressLevel: number;
+  engagement: number;
+}
 
 // Types
 interface GDMessage {
@@ -89,6 +106,15 @@ interface GDResultData {
     overall: number;
   };
   aiFeedback?: string;
+  videoMetrics?: {
+    confidence: number;
+    eyeContact: number;
+    posture: number;
+    smile: number;
+    stressLevel: number;
+    engagement: number;
+    overallBehavioralScore: number;
+  };
 }
 
 // Video Player Component
@@ -190,6 +216,7 @@ export default function GDAssessmentPlayer({
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [handRaised, setHandRaised] = useState(false);
   const [showChat, setShowChat] = useState(true);
+  const [showMetrics, setShowMetrics] = useState(true);
   
   // GD state
   const [timeRemaining, setTimeRemaining] = useState(duration * 60);
@@ -201,10 +228,269 @@ export default function GDAssessmentPlayer({
   const [myTalkTime, setMyTalkTime] = useState(0);
   const [totalTalkTime, setTotalTalkTime] = useState(0);
 
+  // Video Analysis State
+  const [videoMetrics, setVideoMetrics] = useState<VideoMetrics>({
+    confidence: 0,
+    eyeContact: 0,
+    posture: 0,
+    smile: 0,
+    stressLevel: 0,
+    engagement: 0,
+  });
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
+
   // Refs
   const messageEndRef = useRef<HTMLDivElement>(null);
   const speechStartTime = useRef<number | null>(null);
   const isInitialized = useRef(false);
+  
+  // Video Analysis Refs
+  const wsRef = useRef<WebSocket | null>(null);
+  const analysisVideoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const frameIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const metricsTimelineRef = useRef<VideoMetrics[]>([]);
+  const isProcessingFrame = useRef(false);
+  const frameCountRef = useRef(0);
+
+  // Video Analysis Functions
+  const getVideoAnalysisWsUrl = useCallback(() => {
+    const sessionId = `gd_${assessmentId}_${userId}`;
+    const envBase = (WS_URL || '').trim().replace(/\/+$/, '');
+    if (envBase.endsWith('/ws/behavioral')) return `${envBase}/${sessionId}`;
+    if (envBase.endsWith('/ws')) return `${envBase}/behavioral/${sessionId}`;
+    return `${envBase}/ws/behavioral/${sessionId}`;
+  }, [assessmentId, userId]);
+
+  // Setup hidden video element for frame capture
+  useEffect(() => {
+    if (!localVideoTrack || isVideoOff) return;
+
+    const mediaStreamTrack = localVideoTrack.getMediaStreamTrack();
+    if (!mediaStreamTrack) return;
+
+    // Create or get hidden video element
+    if (!analysisVideoRef.current) {
+      const video = document.createElement('video');
+      video.muted = true;
+      video.playsInline = true;
+      video.autoplay = true;
+      video.style.position = 'absolute';
+      video.style.visibility = 'hidden';
+      video.style.pointerEvents = 'none';
+      video.style.width = '1px';
+      video.style.height = '1px';
+      document.body.appendChild(video);
+      analysisVideoRef.current = video;
+    }
+
+    const video = analysisVideoRef.current;
+    video.srcObject = new MediaStream([mediaStreamTrack]);
+    video.play().catch(console.error);
+
+    return () => {
+      if (analysisVideoRef.current) {
+        analysisVideoRef.current.srcObject = null;
+      }
+    };
+  }, [localVideoTrack, isVideoOff]);
+
+  const captureAndSendFrame = useCallback(() => {
+    if (!analysisVideoRef.current || !wsRef.current || isVideoOff) return;
+    if (wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (isProcessingFrame.current) {
+      // Skip if still processing
+      return;
+    }
+
+    const video = analysisVideoRef.current;
+    if (video.readyState < 2) return; // Not ready
+
+    try {
+      // Get or create canvas
+      if (!canvasRef.current) {
+        canvasRef.current = document.createElement('canvas');
+      }
+
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      // Downscale for analysis
+      const videoWidth = video.videoWidth || 640;
+      const videoHeight = video.videoHeight || 480;
+      const maxWidth = 320;
+      const maxHeight = 240;
+      
+      const ratio = Math.min(maxWidth / videoWidth, maxHeight / videoHeight);
+      const newWidth = Math.round(videoWidth * ratio);
+      const newHeight = Math.round(videoHeight * ratio);
+
+      canvas.width = newWidth;
+      canvas.height = newHeight;
+      ctx.drawImage(video, 0, 0, newWidth, newHeight);
+
+      const imageData = canvas.toDataURL('image/jpeg', 0.6);
+      
+      isProcessingFrame.current = true;
+      frameCountRef.current += 1;
+
+      wsRef.current.send(JSON.stringify({
+        type: 'frame',
+        image: imageData,
+        frame_id: frameCountRef.current,
+        timestamp: Date.now(),
+        resolution: { width: newWidth, height: newHeight }
+      }));
+
+      console.log(`📤 GD Frame ${frameCountRef.current} sent (${newWidth}x${newHeight})`);
+    } catch (error) {
+      console.error("Error capturing frame:", error);
+      isProcessingFrame.current = false;
+    }
+  }, [isVideoOff]);
+
+  const connectVideoAnalysis = useCallback(() => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) return;
+
+    const wsUrl = getVideoAnalysisWsUrl();
+    console.log("🎥 Connecting to video analysis:", wsUrl);
+
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log("✅ Video analysis WebSocket connected");
+      setWsConnected(true);
+      setIsAnalyzing(true);
+
+      // Start frame capture interval (2 FPS)
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current);
+      }
+      frameIntervalRef.current = setInterval(() => {
+        captureAndSendFrame();
+      }, 500);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        
+        if (data.type === 'analysis' && data.metrics) {
+          const metrics: VideoMetrics = {
+            confidence: data.metrics.confidence || 0,
+            eyeContact: data.metrics.eye_contact || 0,
+            posture: data.metrics.posture || 0,
+            smile: data.metrics.smile || 0,
+            stressLevel: data.metrics.stress_level || 0,
+            engagement: data.metrics.engagement || 0,
+          };
+          
+          setVideoMetrics(metrics);
+          metricsTimelineRef.current.push(metrics);
+          isProcessingFrame.current = false;
+        } else if (data.type === 'busy') {
+          isProcessingFrame.current = false;
+        } else if (data.type === 'connected') {
+          console.log("🎉 Video analysis session started:", data.message);
+        } else if (data.type === 'error') {
+          console.error("Video analysis error:", data.message);
+          isProcessingFrame.current = false;
+        }
+      } catch (e) {
+        console.error("Error parsing video analysis message:", e);
+        isProcessingFrame.current = false;
+      }
+    };
+
+    ws.onclose = (e) => {
+      console.log("🔌 Video analysis WebSocket closed:", e.code, e.reason);
+      setWsConnected(false);
+      setIsAnalyzing(false);
+      
+      if (frameIntervalRef.current) {
+        clearInterval(frameIntervalRef.current);
+        frameIntervalRef.current = null;
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error("❌ Video analysis WebSocket error:", err);
+    };
+
+    wsRef.current = ws;
+  }, [captureAndSendFrame, getVideoAnalysisWsUrl]);
+
+  const disconnectVideoAnalysis = useCallback(() => {
+    if (frameIntervalRef.current) {
+      clearInterval(frameIntervalRef.current);
+      frameIntervalRef.current = null;
+    }
+    
+    if (wsRef.current) {
+      wsRef.current.close();
+      wsRef.current = null;
+    }
+
+    // Cleanup hidden video element
+    if (analysisVideoRef.current) {
+      analysisVideoRef.current.srcObject = null;
+      analysisVideoRef.current.remove();
+      analysisVideoRef.current = null;
+    }
+    
+    setIsAnalyzing(false);
+    setWsConnected(false);
+  }, []);
+
+  const calculateAverageMetrics = useCallback(() => {
+    const timeline = metricsTimelineRef.current;
+    if (timeline.length === 0) return null;
+
+    const avg = (key: keyof VideoMetrics) =>
+      timeline.reduce((sum, m) => sum + m[key], 0) / timeline.length;
+
+    const avgMetrics = {
+      confidence: Math.round(avg('confidence')),
+      eyeContact: Math.round(avg('eyeContact')),
+      posture: Math.round(avg('posture')),
+      smile: Math.round(avg('smile')),
+      stressLevel: Math.round(avg('stressLevel')),
+      engagement: Math.round(avg('engagement')),
+      overallBehavioralScore: 0,
+    };
+
+    // Calculate overall score (weighted average)
+    avgMetrics.overallBehavioralScore = Math.round(
+      avgMetrics.confidence * 0.2 +
+      avgMetrics.eyeContact * 0.2 +
+      avgMetrics.posture * 0.15 +
+      avgMetrics.smile * 0.1 +
+      avgMetrics.engagement * 0.25 +
+      (100 - avgMetrics.stressLevel) * 0.1 // Inverse stress level
+    );
+
+    return avgMetrics;
+  }, []);
+
+  // Start video analysis when joined
+  useEffect(() => {
+    if (joined && localVideoTrack && !isVideoOff) {
+      // Wait a bit for tracks to stabilize
+      const timeout = setTimeout(() => {
+        connectVideoAnalysis();
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [joined, localVideoTrack, isVideoOff, connectVideoAnalysis]);
+
+  // Cleanup video analysis on unmount
+  useEffect(() => {
+    return () => {
+      disconnectVideoAnalysis();
+    };
+  }, [disconnectVideoAnalysis]);
 
   // Initialize Agora
   useEffect(() => {
@@ -475,6 +761,12 @@ export default function GDAssessmentPlayer({
   };
 
   const handleEndDiscussion = async () => {
+    // Stop video analysis first
+    disconnectVideoAnalysis();
+
+    // Calculate video metrics
+    const avgVideoMetrics = calculateAverageMetrics();
+
     // Calculate results
     const result: GDResultData = {
       transcript: messages,
@@ -482,6 +774,7 @@ export default function GDAssessmentPlayer({
       participationScore: calculateParticipationScore(),
       messagesCount: messages.filter((m) => m.participantId === userId).length,
       talkTimePercent: totalTalkTime > 0 ? Math.round((myTalkTime / totalTalkTime) * 100) : 0,
+      videoMetrics: avgVideoMetrics || undefined,
     };
 
     // Get AI evaluation
@@ -499,6 +792,7 @@ export default function GDAssessmentPlayer({
           topic,
           userId,
           participantName,
+          videoMetrics: avgVideoMetrics,
         }),
       });
 
@@ -591,7 +885,7 @@ export default function GDAssessmentPlayer({
       </div>
 
       {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         {/* Video grid */}
         <div className={cn("flex-1 p-4", showChat ? "w-2/3" : "w-full")}>
           <div
@@ -716,6 +1010,141 @@ export default function GDAssessmentPlayer({
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Video Analysis Metrics Panel */}
+        <AnimatePresence>
+          {showMetrics && isAnalyzing && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: 20 }}
+              className="absolute right-4 top-20 w-64 bg-gray-900/95 backdrop-blur-sm border border-gray-700 rounded-xl p-4 shadow-xl z-20"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-green-400" />
+                  AI Video Analysis
+                </h4>
+                <div className={cn(
+                  "w-2 h-2 rounded-full",
+                  wsConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+                )} />
+              </div>
+
+              <div className="space-y-3">
+                {/* Confidence */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1">
+                      <TrendingUp className="w-3 h-3" />
+                      Confidence
+                    </span>
+                    <span className="text-white font-medium">{videoMetrics.confidence}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-blue-500 to-blue-400 transition-all duration-500"
+                      style={{ width: `${videoMetrics.confidence}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Eye Contact */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1">
+                      <Eye className="w-3 h-3" />
+                      Eye Contact
+                    </span>
+                    <span className="text-white font-medium">{videoMetrics.eyeContact}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-purple-500 to-purple-400 transition-all duration-500"
+                      style={{ width: `${videoMetrics.eyeContact}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Posture */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400">Posture</span>
+                    <span className="text-white font-medium">{videoMetrics.posture}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-green-500 to-green-400 transition-all duration-500"
+                      style={{ width: `${videoMetrics.posture}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Smile */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 flex items-center gap-1">
+                      <Smile className="w-3 h-3" />
+                      Smile
+                    </span>
+                    <span className="text-white font-medium">{videoMetrics.smile}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-yellow-500 to-yellow-400 transition-all duration-500"
+                      style={{ width: `${videoMetrics.smile}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Engagement */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400">Engagement</span>
+                    <span className="text-white font-medium">{videoMetrics.engagement}%</span>
+                  </div>
+                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-cyan-500 to-cyan-400 transition-all duration-500"
+                      style={{ width: `${videoMetrics.engagement}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Stress Level */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400">Stress Level</span>
+                    <span className={cn(
+                      "font-medium",
+                      videoMetrics.stressLevel > 70 ? "text-red-400" : 
+                      videoMetrics.stressLevel > 40 ? "text-yellow-400" : "text-green-400"
+                    )}>
+                      {videoMetrics.stressLevel}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
+                    <div 
+                      className={cn(
+                        "h-full transition-all duration-500",
+                        videoMetrics.stressLevel > 70 ? "bg-gradient-to-r from-red-500 to-red-400" : 
+                        videoMetrics.stressLevel > 40 ? "bg-gradient-to-r from-yellow-500 to-yellow-400" : 
+                        "bg-gradient-to-r from-green-500 to-green-400"
+                      )}
+                      style={{ width: `${videoMetrics.stressLevel}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-3 pt-3 border-t border-gray-700">
+                <p className="text-xs text-gray-500 text-center">
+                  Real-time behavioral analysis
+                </p>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Controls */}
@@ -770,6 +1199,19 @@ export default function GDAssessmentPlayer({
           title={showChat ? "Hide chat" : "Show chat"}
         >
           <MessageSquare className="w-6 h-6" />
+        </Button>
+
+        <Button
+          variant={showMetrics ? "default" : "outline"}
+          size="lg"
+          className={cn(
+            "rounded-full w-14 h-14 flex items-center justify-center",
+            showMetrics ? "bg-green-600 hover:bg-green-500 text-white" : "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
+          )}
+          onClick={() => setShowMetrics(!showMetrics)}
+          title={showMetrics ? "Hide AI Analysis" : "Show AI Analysis"}
+        >
+          <Activity className="w-6 h-6" />
         </Button>
 
         <div className="w-px h-10 bg-gray-700 mx-2" />
