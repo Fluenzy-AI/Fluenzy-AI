@@ -9,10 +9,11 @@
  *     .catch((err) => console.error("[AUTO_INVOICE_EMAIL]", err));
  */
 
-import nodemailer from "nodemailer";
 import prisma from "@/lib/prisma";
 import { htmlToPdf } from "@/lib/pdf-browser";
 import { buildInvoiceHtml, buildInvoiceEmailBody, titleCase } from "@/lib/invoice-html";
+import { createEmailTransporter } from "@/lib/email-transporter";
+import type { SendMailOptions } from "nodemailer";
 
 export async function autoSendInvoiceEmail(
   paymentHistoryId: string,
@@ -65,17 +66,13 @@ export async function autoSendInvoiceEmail(
   }
 
   // 5. Send email
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.Payment_EMAIL_USER,
-      pass: process.env.Payment_EMAIL_PASS,
-    },
+  const transporter = createEmailTransporter({
+    user: process.env.Payment_EMAIL_USER,
+    pass: process.env.Payment_EMAIL_PASS,
+    label: "PAYMENT-INVOICE"
   });
 
-  const mailOptions: nodemailer.SendMailOptions = {
+  const mailOptions: SendMailOptions = {
     from: `"Fluenzy AI" <${process.env.Payment_EMAIL_USER}>`,
     to: user.email,
     subject: `Your Fluenzy AI Invoice – ${invoiceNumber}`,

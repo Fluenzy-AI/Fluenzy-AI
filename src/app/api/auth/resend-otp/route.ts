@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import nodemailer from "nodemailer";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 const OTP_EXPIRY_MINUTES = 5;
 
@@ -9,14 +9,10 @@ function generateOtp(): string {
 }
 
 function createTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SIGNUP_OTP_EMAIL_USER,
-      pass: process.env.SIGNUP_OTP_EMAIL_PASS,
-    },
+  return createEmailTransporter({
+    user: process.env.SIGNUP_OTP_EMAIL_USER,
+    pass: process.env.SIGNUP_OTP_EMAIL_PASS,
+    label: "RESEND-SIGNUP-OTP"
   });
 }
 

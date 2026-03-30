@@ -9,7 +9,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import nodemailer from "nodemailer";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 // ── Simple in-memory rate limiter ──────────────────────────────────────────
 const rateMap = new Map<string, { count: number; reset: number }>();
@@ -54,11 +54,10 @@ async function sendEmails(
 
   if (!user || !pass) return;
 
-  const transporter = nodemailer.createTransport({
-    host: process.env.HR_EMAIL_HOST || "smtp.gmail.com",
-    port: Number(process.env.HR_EMAIL_PORT || 587),
-    secure: false,
-    auth: { user, pass },
+  const transporter = createEmailTransporter({
+    user,
+    pass,
+    label: "CAREERS-APPLY"
   });
 
   // Candidate confirmation

@@ -1,26 +1,18 @@
-import nodemailer from "nodemailer";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 function createTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SIGNUP_OTP_EMAIL_USER,
-      pass: process.env.SIGNUP_OTP_EMAIL_PASS,
-    },
+  return createEmailTransporter({
+    user: process.env.SIGNUP_OTP_EMAIL_USER,
+    pass: process.env.SIGNUP_OTP_EMAIL_PASS,
+    label: "COLLEGE-GENERIC"
   });
 }
 
 function createCollegeTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.College_EMAIL_USER,
-      pass: process.env.College_EMAIL_PASS,
-    },
+  return createEmailTransporter({
+    user: process.env.College_EMAIL_USER,
+    pass: process.env.College_EMAIL_PASS,
+    label: "COLLEGE-ACTIVATION"
   });
 }
 

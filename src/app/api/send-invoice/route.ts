@@ -2,9 +2,9 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import nodemailer from "nodemailer";
 import { htmlToPdf } from "@/lib/pdf-browser";
 import { buildInvoiceHtml, buildInvoiceEmailBody } from "@/lib/invoice-html";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -55,14 +55,10 @@ export async function POST(request: NextRequest) {
     const filename = `FluenzyAI_Invoice_${invoiceNumber}.pdf`;
 
     // Send email with PDF attachment
-    const transporter = nodemailer.createTransport({
-      host: "smtp.gmail.com",
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.Payment_EMAIL_USER,
-        pass: process.env.Payment_EMAIL_PASS,
-      },
+    const transporter = createEmailTransporter({
+      user: process.env.Payment_EMAIL_USER,
+      pass: process.env.Payment_EMAIL_PASS,
+      label: "SEND-INVOICE"
     });
 
     await transporter.sendMail({

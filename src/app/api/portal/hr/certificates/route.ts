@@ -194,13 +194,11 @@ export async function POST(req: NextRequest) {
     // Send email if requested
     if (sendEmail && candidateEmail) {
       try {
-        const nodemailer = require("nodemailer");
-        const transporter = nodemailer.createTransport({
-          service: "gmail",
-          auth: {
-            user: process.env.HR_EMAIL_USER,
-            pass: process.env.HR_EMAIL_PASS,
-          },
+        const { createEmailTransporter } = await import("@/lib/email-transporter");
+        const transporter = createEmailTransporter({
+          user: process.env.HR_EMAIL_USER,
+          pass: process.env.HR_EMAIL_PASS,
+          label: "HR-CERTIFICATE"
         });
 
         await transporter.sendMail({

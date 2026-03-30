@@ -3,7 +3,7 @@ import prisma from "@/lib/prisma";
 import { requireCompanyRoles } from "@/lib/company-auth";
 import { generateGDToken, isAgoraConfigured } from "@/lib/agoraToken";
 import crypto from "crypto";
-import nodemailer from "nodemailer";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 /**
  * POST /api/company/assessments/[id]/assign
@@ -191,14 +191,10 @@ export async function POST(
     let emailsFailed = 0;
 
     if (sendInviteEmail) {
-      const transporter = nodemailer.createTransport({
-        host: process.env.HR_EMAIL_HOST || "smtp.gmail.com",
-        port: parseInt(process.env.HR_EMAIL_PORT || "587"),
-        secure: false,
-        auth: {
-          user: process.env.HR_EMAIL_USER,
-          pass: process.env.HR_EMAIL_PASS,
-        },
+      const transporter = createEmailTransporter({
+        user: process.env.HR_EMAIL_USER,
+        pass: process.env.HR_EMAIL_PASS,
+        label: "ASSESSMENT-INVITE"
       });
 
       for (let i = 0; i < sessions.length; i++) {

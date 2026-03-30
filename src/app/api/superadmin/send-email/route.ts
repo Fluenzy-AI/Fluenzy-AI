@@ -2,20 +2,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import nodemailer from "nodemailer";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 const MAX_RECIPIENTS = 200;
 
 // ─── SMTP transporter using env credentials ──────────────────────────────────
 function createTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // TLS
-    auth: {
-      user: process.env.SUPERADMIN_EMAIL_MANAGEMENT,
-      pass: process.env.SUPERADMIN_PASSWORD_MANAGEMENT,
-    },
+  return createEmailTransporter({
+    user: process.env.SUPERADMIN_EMAIL_MANAGEMENT,
+    pass: process.env.SUPERADMIN_PASSWORD_MANAGEMENT,
+    label: "SUPERADMIN"
   });
 }
 

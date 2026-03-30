@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import nodemailer from "nodemailer";
 import crypto from "crypto";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 const OTP_EXPIRY_MINUTES = 5;
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -16,14 +16,10 @@ function generateSecureOtp(): string {
 
 // ── SMTP transporter for password reset emails ────────────────────────────────
 function createTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.forgotpassword_EMAIL_USER,
-      pass: process.env.forgotpassword_EMAIL_PASS,
-    },
+  return createEmailTransporter({
+    user: process.env.forgotpassword_EMAIL_USER,
+    pass: process.env.forgotpassword_EMAIL_PASS,
+    label: "RESEND-RESET-OTP"
   });
 }
 

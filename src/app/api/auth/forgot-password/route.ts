@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import nodemailer from "nodemailer";
 import crypto from "crypto";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 const OTP_EXPIRY_MINUTES = 5;
 const MAX_REQUESTS_PER_10_MIN = 3;
@@ -17,19 +17,6 @@ function generateSecureOtp(): string {
 // ── Basic email regex ─────────────────────────────────────────────────────────
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-// ── SMTP transporter for password reset emails ────────────────────────────────
-function createTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.forgotpassword_EMAIL_USER,
-      pass: process.env.forgotpassword_EMAIL_PASS,
-    },
-  });
 }
 
 export async function POST(req: NextRequest) {
@@ -101,7 +88,11 @@ export async function POST(req: NextRequest) {
     });
 
     // ── Send password reset email ─────────────────────────────────────────────
-    const transporter = createTransporter();
+    const transporter = createEmailTransporter({
+      user: process.env.forgotpassword_EMAIL_USER,
+      pass: process.env.forgotpassword_EMAIL_PASS,
+      label: "FORGOT-PASSWORD"
+    });
     const firstName = user.name?.split(" ")[0] || "User";
 
     await transporter.sendMail({
@@ -117,7 +108,9 @@ export async function POST(req: NextRequest) {
       email: normalizedEmail, // Return for frontend use
     });
   } catch (error: any) {
-    console.error("[forgot-password] Error:", error);
+    console.error("[FORGOT-PASSWORD] Error:", error?.message || error);
+    console.error("[FORGOT-PASSWORD] Error code:", error?.code);
+    console.error("[FORGOT-PASSWORD] Error command:", error?.command);
     return NextResponse.json(
       { error: "Something went wrong. Please try again later." },
       { status: 500 }

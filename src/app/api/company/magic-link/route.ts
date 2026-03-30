@@ -9,9 +9,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
 import { z } from "zod";
 import { isWorkEmail } from "@/lib/company-auth";
+import { createEmailTransporter } from "@/lib/email-transporter";
 
 const MagicLinkSchema = z.object({
   email: z.string().email(),
@@ -118,12 +118,10 @@ export async function POST(req: NextRequest) {
     const magicLinkUrl = `${BASE_URL}/company/verify-magic-link?token=${magicToken}`;
 
     // Send email
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
+    const transporter = createEmailTransporter({
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+      label: "MAGIC-LINK"
     });
 
     await transporter.sendMail({
