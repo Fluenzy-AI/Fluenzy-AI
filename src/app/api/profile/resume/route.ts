@@ -140,24 +140,18 @@ export async function POST(request: Request) {
         fileUrl = getPublicUrl(fileKey) || "";
         console.info(`[PROFILE_RESUME] Uploaded to R2: ${fileKey}, CDN URL: ${fileUrl}`);
       } catch (r2Error) {
-        console.error("[PROFILE_RESUME] R2 upload failed, falling back to filesystem:", r2Error);
-        fileKey = null;
-        fileUrl = "";
+        console.error("[PROFILE_RESUME] R2 upload failed:", r2Error);
+        return NextResponse.json(
+          { error: "Failed to upload resume to storage. Please try again." },
+          { status: 500 }
+        );
       }
-    }
-
-    // Fallback to filesystem if R2 failed or not configured
-    if (!fileKey || !fileUrl) {
-      const uniqueName = `${Date.now()}-${safeName}`;
-      const uploadDir = path.join(process.cwd(), "public", "uploads", "resumes", user.id.toString());
-
-      await mkdir(uploadDir, { recursive: true });
-
-      const filePath = path.join(uploadDir, uniqueName);
-      await writeFile(filePath, buffer);
-
-      // Normalize URL to use forward slashes
-      fileUrl = `/uploads/resumes/${user.id}/${uniqueName}`;
+    } else {
+      console.error("[PROFILE_RESUME] R2 not configured!");
+      return NextResponse.json(
+        { error: "File storage is not configured. Contact support." },
+        { status: 503 }
+      );
     }
 
     const resume = await (prisma as any).resume.create({
