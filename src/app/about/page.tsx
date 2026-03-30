@@ -713,8 +713,7 @@ export default function AboutPage() {
           <div className="relative">
             {/* Timeline line */}
             <div
-              className="absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2
-                         bg-gradient-to-b from-purple-500 via-blue-500 to-purple-500/20"
+              className="absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2 bg-gradient-to-b from-purple-500 via-blue-500 to-purple-500/20"
             />
 
             <div className="space-y-12">
@@ -743,8 +742,7 @@ export default function AboutPage() {
             </h2>
           </motion.div>
 
-          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide 
-                          lg:grid lg:grid-cols-5 lg:overflow-visible">
+          <div className="flex gap-6 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide lg:grid lg:grid-cols-5 lg:overflow-visible">
             {users.map((user, i) => (
               <UserCard key={i} {...user} index={i} />
             ))}
