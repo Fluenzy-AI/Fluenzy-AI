@@ -707,37 +707,53 @@ export default function GDAssessmentPlayer({
       {/* Controls */}
       <div className="flex items-center justify-center gap-4 px-6 py-4 bg-gray-900/80 border-t border-gray-800">
         <Button
-          variant={isMuted ? "destructive" : "secondary"}
+          variant={isMuted ? "destructive" : "outline"}
           size="lg"
-          className="rounded-full w-14 h-14"
+          className={cn(
+            "rounded-full w-14 h-14 flex items-center justify-center",
+            !isMuted && "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
+          )}
           onClick={toggleMute}
+          title={isMuted ? "Unmute" : "Mute"}
         >
           {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
         </Button>
 
         <Button
-          variant={isVideoOff ? "destructive" : "secondary"}
+          variant={isVideoOff ? "destructive" : "outline"}
           size="lg"
-          className="rounded-full w-14 h-14"
+          className={cn(
+            "rounded-full w-14 h-14 flex items-center justify-center",
+            !isVideoOff && "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
+          )}
           onClick={toggleVideo}
+          title={isVideoOff ? "Turn on camera" : "Turn off camera"}
         >
           {isVideoOff ? <VideoOff className="w-6 h-6" /> : <Video className="w-6 h-6" />}
         </Button>
 
         <Button
-          variant={handRaised ? "default" : "secondary"}
+          variant={handRaised ? "default" : "outline"}
           size="lg"
-          className="rounded-full w-14 h-14"
+          className={cn(
+            "rounded-full w-14 h-14 flex items-center justify-center",
+            handRaised ? "bg-yellow-600 hover:bg-yellow-500 text-white" : "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
+          )}
           onClick={() => setHandRaised(!handRaised)}
+          title={handRaised ? "Lower hand" : "Raise hand"}
         >
-          <Hand className={cn("w-6 h-6", handRaised && "text-yellow-400")} />
+          <Hand className="w-6 h-6" />
         </Button>
 
         <Button
-          variant={showChat ? "default" : "secondary"}
+          variant={showChat ? "default" : "outline"}
           size="lg"
-          className="rounded-full w-14 h-14"
+          className={cn(
+            "rounded-full w-14 h-14 flex items-center justify-center",
+            showChat ? "bg-blue-600 hover:bg-blue-500 text-white" : "bg-slate-700 hover:bg-slate-600 border-slate-600 text-white"
+          )}
           onClick={() => setShowChat(!showChat)}
+          title={showChat ? "Hide chat" : "Show chat"}
         >
           <MessageSquare className="w-6 h-6" />
         </Button>
