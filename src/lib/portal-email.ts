@@ -5,8 +5,9 @@
  * Super Admin emails fall back to EMAIL_USER / EMAIL_PASS
  */
 
-import nodemailer, { Transporter } from "nodemailer";
+import { Transporter } from "nodemailer";
 import { prisma } from "@/lib/prisma";
+import { createEmailTransporter } from "./email-transporter";
 
 export type EmailRole = "HR" | "ADMIN" | "SUPER_ADMIN";
 
@@ -29,30 +30,28 @@ interface BulkEmailOptions extends Omit<SendEmailOptions, "to"> {
 // ── Transporter factory ─────────────────────────────────────────────────────
 
 function createTransporter(role: EmailRole): Transporter {
-  let user: string;
-  let pass: string;
+  let user: string | undefined;
+  let pass: string | undefined;
+  let label: string;
 
   switch (role) {
     case "HR":
-      user = process.env.HR_EMAIL_USER!;
-      pass = process.env.HR_EMAIL_PASS!;
+      user = process.env.HR_EMAIL_USER;
+      pass = process.env.HR_EMAIL_PASS;
+      label = "HR-PORTAL";
       break;
     case "ADMIN":
-      user = process.env.ADMIN_EMAIL_USER!;
-      pass = process.env.ADMIN_EMAIL_PASS!;
+      user = process.env.ADMIN_EMAIL_USER;
+      pass = process.env.ADMIN_EMAIL_PASS;
+      label = "ADMIN-PORTAL";
       break;
     default:
-      user = process.env.SUPERADMIN_EMAIL_MANAGEMENT || process.env.EMAIL_USER!;
-      pass = process.env.SUPERADMIN_PASSWORD_MANAGEMENT || process.env.EMAIL_PASS!;
+      user = process.env.SUPERADMIN_EMAIL_MANAGEMENT || process.env.EMAIL_USER;
+      pass = process.env.SUPERADMIN_PASSWORD_MANAGEMENT || process.env.EMAIL_PASS;
+      label = "SUPERADMIN-PORTAL";
   }
 
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: { user, pass },
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 100,
-  });
+  return createEmailTransporter({ user, pass, label });
 }
 
 // ── Core send function ──────────────────────────────────────────────────────

@@ -25,9 +25,19 @@ export async function POST(req: NextRequest) {
 
   try {
     const body = await req.json();
+    console.log("[HR_SEND_EMAIL] Request body:", JSON.stringify(body, null, 2));
+    
     const parsed = SendEmailSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: "Validation failed", details: parsed.error.flatten() }, { status: 400 });
+      console.error("[HR_SEND_EMAIL] Validation failed:", parsed.error.flatten());
+      return NextResponse.json(
+        { 
+          error: "Validation failed", 
+          details: parsed.error.flatten(),
+          received: body 
+        }, 
+        { status: 400 }
+      );
     }
 
     const { to, subject, html, text, templateId, isBulk } = parsed.data;
