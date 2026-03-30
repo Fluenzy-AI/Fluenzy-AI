@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { getCandidateFromRequest, calcProfileCompletion } from "@/lib/candidate-auth";
+import { getPublicUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 const UpdateSchema = z.object({
   phone: z.string().optional(),
@@ -25,7 +27,19 @@ export async function GET(req: NextRequest) {
 
   const profile = await prisma.candidateProfile.findUnique({ where: { candidateId: session.id } });
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-  return NextResponse.json({ profile });
+  
+  // Convert R2 key to CDN URL for lifetime access
+  let resumeUrl = profile.resumeUrl;
+  if (resumeUrl && !resumeUrl.startsWith('http') && !resumeUrl.startsWith('/') && isR2Configured()) {
+    resumeUrl = getPublicUrl(resumeUrl) || resumeUrl;
+  }
+  
+  return NextResponse.json({ 
+    profile: {
+      ...profile,
+      resumeUrl,
+    }
+  });
 }
 
 export async function PUT(req: NextRequest) {

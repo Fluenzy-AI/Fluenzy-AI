@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { requireCompanyRoles } from "@/lib/company-auth";
+import { getPublicUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 /**
  * GET /api/company/applications
@@ -68,23 +70,31 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Format the response
-    const formattedApplications = applications.map((app) => ({
-      id: app.id,
-      name: app.name,
-      email: app.email,
-      phone: app.phone,
-      resumeUrl: app.resumeUrl,
-      jobTitle: app.job.title,
-      jobId: app.job.id,
-      status: app.status,
-      createdAt: app.createdAt.toISOString(),
-      isAutoApplied: app.isAutoApplied,
-      fluenzyScore: app.fluenzyScore,
-      confidenceScore: app.confidenceScore,
-      experience: app.experience,
-      skills: app.candidate?.profile?.skills || [],
-    }));
+    // Format the response with CDN URLs for lifetime access
+    const formattedApplications = applications.map((app) => {
+      // Convert R2 keys to CDN URLs
+      let resumeUrl = app.resumeUrl;
+      if (resumeUrl && !resumeUrl.startsWith('http') && !resumeUrl.startsWith('/') && isR2Configured()) {
+        resumeUrl = getPublicUrl(resumeUrl) || resumeUrl;
+      }
+      
+      return {
+        id: app.id,
+        name: app.name,
+        email: app.email,
+        phone: app.phone,
+        resumeUrl,
+        jobTitle: app.job.title,
+        jobId: app.job.id,
+        status: app.status,
+        createdAt: app.createdAt.toISOString(),
+        isAutoApplied: app.isAutoApplied,
+        fluenzyScore: app.fluenzyScore,
+        confidenceScore: app.confidenceScore,
+        experience: app.experience,
+        skills: app.candidate?.profile?.skills || [],
+      };
+    });
 
     return NextResponse.json({
       applications: formattedApplications,

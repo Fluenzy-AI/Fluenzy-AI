@@ -1,6 +1,6 @@
 /**
- * Files API - Get signed URL for R2 files
- * GET /api/files/[id] - Get signed URL for a file by FileRecord ID
+ * Files API - Get URL for R2 files
+ * GET /api/files/[id] - Get CDN URL for a file by FileRecord ID
  * DELETE /api/files/[id] - Delete a file from R2
  */
 
@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { getSignedUrl, deleteFromR2 } from "@/lib/r2-service";
+import { getPublicUrl, deleteFromR2 } from "@/lib/r2-service";
 import { isR2Configured } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -57,15 +57,14 @@ export async function GET(
       );
     }
 
-    // Generate signed URL (5 minutes expiry)
-    const expiresIn = 300;
-    const url = await getSignedUrl(fileRecord.fileKey, expiresIn);
+    // Generate lifetime CDN URL instead of signed URL
+    const url = getPublicUrl(fileRecord.fileKey);
 
-    console.info(`[FILES_API] Signed URL generated for file ${id} by user ${user.id}`);
+    console.info(`[FILES_API] CDN URL generated for file ${id} by user ${user.id}`);
 
     return NextResponse.json({
       url,
-      expiresIn,
+      expiresIn: null, // null = never expires (lifetime CDN URL)
       fileName: fileRecord.originalFileName,
       fileType: fileRecord.fileType,
       fileSize: fileRecord.fileSize,

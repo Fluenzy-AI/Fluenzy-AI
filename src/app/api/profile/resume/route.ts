@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { mkdir, writeFile, unlink } from "fs/promises";
 import path from "path";
-import { uploadPdfToR2, getSignedUrl, deleteFromR2 } from "@/lib/r2-service";
+import { uploadPdfToR2, getPublicUrl, deleteFromR2 } from "@/lib/r2-service";
 import { isR2Configured } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -126,6 +126,7 @@ export async function POST(request: Request) {
             originalFileName: safeName,
             fileSize: file.size,
             mimeType: "application/pdf",
+            isPublic: true, // Profile resumes are public
           },
         });
 
@@ -135,9 +136,9 @@ export async function POST(request: Request) {
           data: { storageUsed: { increment: file.size } },
         });
 
-        // Generate signed URL for immediate use
-        fileUrl = await getSignedUrl(fileKey, 3600);
-        console.info(`[PROFILE_RESUME] Uploaded to R2: ${fileKey}`);
+        // Get lifetime CDN URL for immediate use
+        fileUrl = getPublicUrl(fileKey) || "";
+        console.info(`[PROFILE_RESUME] Uploaded to R2: ${fileKey}, CDN URL: ${fileUrl}`);
       } catch (r2Error) {
         console.error("[PROFILE_RESUME] R2 upload failed, falling back to filesystem:", r2Error);
         fileKey = null;
@@ -204,29 +205,27 @@ export async function GET() {
       take: 5,
     });
 
-    // Generate signed URLs for R2 files
-    const resumesWithUrls = await Promise.all(
-      resumes.map(async (resume: any) => {
-        let fileUrl = resume.fileUrl;
-        const isR2File = fileUrl && !fileUrl.startsWith("/") && !fileUrl.startsWith("http");
-        
-        if (isR2File && isR2Configured()) {
-          try {
-            fileUrl = await getSignedUrl(resume.fileUrl, 3600);
-          } catch (e) {
-            console.error(`[PROFILE_RESUME] Failed to get signed URL for ${resume.fileUrl}:`, e);
-          }
+    // Generate lifetime CDN URLs for R2 files
+    const resumesWithUrls = resumes.map((resume: any) => {
+      let fileUrl = resume.fileUrl;
+      const isR2File = fileUrl && !fileUrl.startsWith("/") && !fileUrl.startsWith("http");
+      
+      if (isR2File && isR2Configured()) {
+        // Use lifetime CDN URL instead of signed URL
+        const cdnFileUrl = getPublicUrl(resume.fileUrl);
+        if (cdnFileUrl) {
+          fileUrl = cdnFileUrl;
         }
-        
-        return {
-          id: resume.id,
-          fileName: resume.fileName,
-          fileUrl,
-          uploadedAt: resume.uploadedAt,
-          isR2: isR2File,
-        };
-      })
-    );
+      }
+      
+      return {
+        id: resume.id,
+        fileName: resume.fileName,
+        fileUrl,
+        uploadedAt: resume.uploadedAt,
+        isR2: isR2File,
+      };
+    });
 
     return NextResponse.json({ resumes: resumesWithUrls });
   } catch (error) {

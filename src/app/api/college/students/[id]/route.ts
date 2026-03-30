@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getCollegeAdminFromRequest } from "@/lib/collegeAuth";
+import { getPublicUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 // ─── GET /api/college/students/[id] ─────────────────────────────────────────
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -118,11 +120,18 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
           sessionDuration: l.sessionDuration, ip: l.ip, location: l.location,
           deviceType: l.deviceType, os: l.os, browser: l.browser, status: l.status,
         })),
-        interviewGuides: (interviewGuides as any[]).map((g: any) => ({
-          id: g.id, targetRole: g.targetRole, targetCompany: g.targetCompany,
-          experienceLevel: g.experienceLevel, communicationLevel: g.communicationLevel,
-          jobDescription: g.jobDescription, pdfUrl: g.pdfUrl, createdAt: g.createdAt,
-        })),
+        interviewGuides: (interviewGuides as any[]).map((g: any) => {
+          // Convert R2 key to CDN URL for lifetime access
+          let pdfUrl = g.pdfUrl;
+          if (pdfUrl && !pdfUrl.startsWith('http') && !pdfUrl.startsWith('/') && isR2Configured()) {
+            pdfUrl = getPublicUrl(pdfUrl) || pdfUrl;
+          }
+          return {
+            id: g.id, targetRole: g.targetRole, targetCompany: g.targetCompany,
+            experienceLevel: g.experienceLevel, communicationLevel: g.communicationLevel,
+            jobDescription: g.jobDescription, pdfUrl, createdAt: g.createdAt,
+          };
+        }),
         englishLearning: {
           sessions: engSessions.length, totalTimeSpent: timeOf(engSessions),
           completionPercentage: englishLessons.length ? (englishCompleted / englishLessons.length) * 100 : 0,

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { cdnUrl } from "@/lib/cdn";
 
 // Initialize R2 client
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -22,7 +22,7 @@ const r2Client = R2_ACCOUNT_ID && R2_ACCESS_KEY_ID && R2_SECRET_ACCESS_KEY
 
 /**
  * GET /profile-certs/[filename]
- * Serves certificate PDF files from R2 or redirects to signed URL
+ * Serves certificate PDF files from R2 - uses lifetime CDN URLs
  */
 export async function GET(
   request: NextRequest,
@@ -47,16 +47,18 @@ export async function GET(
 
       for (const key of possibleKeys) {
         try {
-          const command = new GetObjectCommand({
+          // Check if file exists
+          await r2Client.send(new GetObjectCommand({
             Bucket: R2_BUCKET_NAME,
             Key: key,
-          });
+          }));
 
-          const signedUrl = await getSignedUrl(r2Client, command, { 
-            expiresIn: 3600 
-          });
-
-          return NextResponse.redirect(signedUrl);
+          // File exists! Redirect to lifetime CDN URL
+          const publicUrl = cdnUrl(key);
+          if (publicUrl) {
+            console.info(`[PROFILE_CERT] Redirecting to CDN: ${key} -> ${publicUrl}`);
+            return NextResponse.redirect(publicUrl, 302);
+          }
         } catch (error) {
           // Continue to next key
         }

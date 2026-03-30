@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { htmlToPdf } from "@/lib/pdf-browser";
 import { buildInvoiceHtml, titleCase } from "@/lib/invoice-html";
-import { uploadPdfToR2, getSignedUrl } from "@/lib/r2-service";
+import { uploadPdfToR2, getPublicUrl } from "@/lib/r2-service";
 import { isR2Configured } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -71,14 +71,16 @@ export async function GET(
             originalFileName: filename,
             fileSize: pdfBuffer.byteLength,
             mimeType: "application/pdf",
+            isPublic: true, // Receipts use CDN for lifetime access
             metadata: { paymentId: payment.id, invoiceNumber },
           },
         });
 
-        const signedUrl = await getSignedUrl(fileKey, 300);
-        console.info(`[PAYMENT_PDF] Uploaded to R2: ${fileKey}`);
+        // Use lifetime CDN URL instead of signed URL
+        const cdnFileUrl = getPublicUrl(fileKey);
+        console.info(`[PAYMENT_PDF] Uploaded to R2: ${fileKey}, CDN URL: ${cdnFileUrl}`);
         
-        return NextResponse.json({ url: signedUrl, expiresIn: 300 });
+        return NextResponse.json({ url: cdnFileUrl, expiresIn: null }); // null = never expires
       } catch (r2Error) {
         console.error("[PAYMENT_PDF] R2 upload failed:", r2Error);
         // Fall through to direct PDF response

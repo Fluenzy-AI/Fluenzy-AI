@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getPublicUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 export async function GET(
   request: NextRequest,
@@ -166,7 +168,9 @@ export async function GET(
       },
       resume: latestResume ? {
         fileName: latestResume.fileName,
-        fileUrl: latestResume.fileUrl,
+        fileUrl: latestResume.fileUrl && !latestResume.fileUrl.startsWith('http') && !latestResume.fileUrl.startsWith('/') && isR2Configured() 
+          ? (getPublicUrl(latestResume.fileUrl) || latestResume.fileUrl) 
+          : latestResume.fileUrl,
         uploadedAt: latestResume.uploadedAt,
       } : null,
 
@@ -192,7 +196,9 @@ export async function GET(
         experienceLevel: g.experienceLevel,
         communicationLevel: g.communicationLevel,
         jobDescription: g.jobDescription,
-        pdfUrl: g.pdfUrl,
+        pdfUrl: g.pdfUrl && !g.pdfUrl.startsWith('http') && !g.pdfUrl.startsWith('/') && isR2Configured()
+          ? (getPublicUrl(g.pdfUrl) || g.pdfUrl)
+          : g.pdfUrl,
         createdAt: g.createdAt,
       })),
 

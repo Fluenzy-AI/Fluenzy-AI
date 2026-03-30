@@ -8,6 +8,8 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import { getCandidateFromRequest } from "@/lib/candidate-auth";
 import prisma from "@/lib/prisma";
+import { getPublicUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 export async function GET(
   req: NextRequest,
@@ -94,6 +96,12 @@ export async function GET(
     // Format the application
     const isFluenzyJob = oldApplication._isFluenzyJob === true;
     
+    // Convert R2 key to CDN URL for lifetime access
+    let resumeUrl = oldApplication.resumeUrl || null;
+    if (resumeUrl && !resumeUrl.startsWith('http') && !resumeUrl.startsWith('/') && isR2Configured()) {
+      resumeUrl = getPublicUrl(resumeUrl) || resumeUrl;
+    }
+    
     const formattedApplication = {
       id: oldApplication.id,
       jobId: oldApplication.jobId,
@@ -105,7 +113,7 @@ export async function GET(
       phone: oldApplication.phone,
       experience: oldApplication.experience,
       coverLetter: oldApplication.coverLetter || null,
-      resumeUrl: oldApplication.resumeUrl || null,
+      resumeUrl,
       resumeName: oldApplication.resumeName || 'Resume.pdf',
       linkedin: oldApplication.linkedin || null,
       portfolio: oldApplication.portfolio || null,

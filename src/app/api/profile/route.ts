@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { getPublicUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 const toIstDateKey = (date: Date) => {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -232,12 +234,19 @@ export async function GET() {
         languages: ensuredProfile.languages,
       },
       activity,
-      resumes: resumes.map((resume: any) => ({
-        id: resume.id,
-        fileName: resume.fileName,
-        fileUrl: resume.fileUrl,
-        uploadedAt: resume.uploadedAt,
-      })),
+      resumes: resumes.map((resume: any) => {
+        // Convert R2 key to CDN URL for lifetime access
+        let fileUrl = resume.fileUrl;
+        if (fileUrl && !fileUrl.startsWith('http') && !fileUrl.startsWith('/') && isR2Configured()) {
+          fileUrl = getPublicUrl(fileUrl) || fileUrl;
+        }
+        return {
+          id: resume.id,
+          fileName: resume.fileName,
+          fileUrl,
+          uploadedAt: resume.uploadedAt,
+        };
+      }),
       payments: payments.map((payment: any) => ({
         id: payment.id,
         date: payment.date,

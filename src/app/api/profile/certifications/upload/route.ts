@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { mkdir, writeFile } from "fs/promises";
 import path from "path";
-import { uploadPdfToR2, getSignedUrl } from "@/lib/r2-service";
+import { uploadPdfToR2, getPublicUrl } from "@/lib/r2-service";
 import { isR2Configured } from "@/lib/r2";
 
 export const runtime = "nodejs";
@@ -74,6 +74,7 @@ export async function POST(request: Request) {
             originalFileName: file.name || safeName,
             fileSize: file.size,
             mimeType: file.type,
+            isPublic: true, // Profile certificates are public
           },
         });
 
@@ -83,10 +84,10 @@ export async function POST(request: Request) {
           data: { storageUsed: { increment: file.size } },
         });
 
-        // Return signed URL for immediate use
-        fileUrl = await getSignedUrl(fileKey, 3600); // 1 hour for initial display
+        // Return lifetime CDN URL for immediate use
+        fileUrl = getPublicUrl(fileKey) || "";
         
-        console.info(`[PROFILE_CERT] Uploaded to R2: ${fileKey}`);
+        console.info(`[PROFILE_CERT] Uploaded to R2: ${fileKey}, CDN URL: ${fileUrl}`);
         
         return NextResponse.json({
           success: true,

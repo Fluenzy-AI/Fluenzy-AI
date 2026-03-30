@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPortalAuthFromRequest } from "@/lib/portal-auth";
+import { getPublicUrl } from "@/lib/r2-service";
+import { isR2Configured } from "@/lib/r2";
 
 export async function GET(
   req: NextRequest,
@@ -33,6 +35,12 @@ export async function GET(
       return NextResponse.json({ error: "Certificate not found" }, { status: 404 });
     }
 
+    // Convert R2 key to CDN URL for lifetime access
+    let pdfUrl = certificate.pdfUrl;
+    if (pdfUrl && !pdfUrl.startsWith('http') && !pdfUrl.startsWith('/') && isR2Configured()) {
+      pdfUrl = getPublicUrl(pdfUrl) || pdfUrl;
+    }
+
     return NextResponse.json({
       certificate: {
         id: certificate.id,
@@ -40,7 +48,7 @@ export async function GET(
         type: certificate.type,
         status: certificate.status,
         data: certificate.data,
-        pdfUrl: certificate.pdfUrl,
+        pdfUrl,
         qrCodeDataUrl: certificate.qrCodeDataUrl,
         issuedBy: certificate.issuedBy,
         issuedAt: certificate.issuedAt,
