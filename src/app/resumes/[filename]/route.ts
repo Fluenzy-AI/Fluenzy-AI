@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { cdnUrl } from "@/lib/cdn";
 
 // Initialize R2 client
 const R2_ACCOUNT_ID = process.env.R2_ACCOUNT_ID;
@@ -55,18 +55,18 @@ export async function GET(
 
       for (const fileKey of possibleKeys) {
         try {
-          // Generate signed URL that redirects to R2
-          const command = new GetObjectCommand({
+          // Check if file exists in R2
+          await r2Client.send(new GetObjectCommand({
             Bucket: R2_BUCKET_NAME,
             Key: fileKey,
-          });
+          }));
 
-          const signedUrl = await getSignedUrl(r2Client, command, {
-            expiresIn: 3600, // 1 hour
-          });
-
-          // Redirect to the signed URL
-          return NextResponse.redirect(signedUrl, 302);
+          // File exists! Redirect to lifetime CDN URL
+          const publicUrl = cdnUrl(fileKey);
+          if (publicUrl) {
+            console.info(`[RESUME_SERVE] Redirecting to CDN: ${fileKey} -> ${publicUrl}`);
+            return NextResponse.redirect(publicUrl, 302);
+          }
         } catch (r2Error: any) {
           // If NoSuchKey, try next key format
           if (r2Error.name === 'NoSuchKey' || r2Error.$metadata?.httpStatusCode === 404) {

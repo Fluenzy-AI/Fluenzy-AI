@@ -1,6 +1,6 @@
 import { getSignedUrl as getR2SignedUrl } from "@/lib/r2-service";
 import { isR2Configured } from "@/lib/r2";
-import { R2_CONFIG } from "@/lib/r2-config";
+import { cdnUrl } from "@/lib/cdn";
 
 /**
  * Converts a stored fileUrl/fileKey to a publicly accessible URL
@@ -10,7 +10,7 @@ import { R2_CONFIG } from "@/lib/r2-config";
  *   - Filesystem path: "/uploads/resumes/userId/file.pdf"
  *   - Already a full URL: "https://..."
  * @param options - Configuration options
- *   - usePublicCDN: Whether to use public CDN (for public profiles)
+ *   - usePublicCDN: Whether to use public CDN (for public profiles) - DEFAULT TRUE
  *   - expiresInSeconds: Expiration time for signed URLs (default: 1 hour)
  * 
  * @returns Public URL that can be used to access the file
@@ -21,7 +21,8 @@ export async function getPublicFileUrl(
 ): Promise<string | null> {
   if (!fileUrl) return null;
   
-  const { usePublicCDN = false, expiresInSeconds = 3600 } = options || {};
+  // DEFAULT: Use public CDN for better performance
+  const { usePublicCDN = true, expiresInSeconds = 3600 } = options || {};
   
   // Already a full URL (http/https)
   if (fileUrl.startsWith('http://') || fileUrl.startsWith('https://')) {
@@ -32,9 +33,9 @@ export async function getPublicFileUrl(
   const isR2File = !fileUrl.startsWith('/');
   
   if (isR2File && isR2Configured()) {
-    // For public profile files, use proxy endpoint for lifetime access
+    // For public profile files, use direct CDN URL for lifetime access
     if (usePublicCDN) {
-      return `/api/public-file?key=${encodeURIComponent(fileUrl)}`;
+      return cdnUrl(fileUrl);
     }
     
     try {

@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPortalAuthFromRequest } from "@/lib/portal-auth";
+import { getPublicFileUrl } from "@/lib/file-url-helper";
 import {
   generateCertificateNumber,
   validateCertificateData,
@@ -193,10 +194,14 @@ export async function POST(req: NextRequest) {
           originalFileName: `${certificateNumber}.pdf`,
           fileSize: pdfBuffer.length,
           mimeType: "application/pdf",
+          isPublic: true, // Certificates are public
           metadata: { certificateId: certificate.id, type },
         },
       });
     }
+
+    // Generate lifetime CDN URL for response (if R2 key exists)
+    const publicPdfUrl = fileKey ? await getPublicFileUrl(fileKey, { usePublicCDN: true }) : pdfUrl;
 
     // Send email if requested
     if (sendEmail && candidateEmail) {
@@ -256,7 +261,7 @@ export async function POST(req: NextRequest) {
         certificateNumber: certificate.certificateNumber,
         type: certificate.type,
         status: certificate.status,
-        pdfUrl: certificate.pdfUrl,
+        pdfUrl: publicPdfUrl, // Return CDN URL for lifetime access
         verificationUrl,
       },
     });
@@ -307,8 +312,8 @@ export async function GET(req: NextRequest) {
       prisma.certificate.count({ where }),
     ]);
 
-    return NextResponse.json({
-      certificates: certificates.map((cert) => ({
+    const certificatesWithUrls = await Promise.all(
+      certificates.map(async (cert) => ({
         id: cert.id,
         certificateNumber: cert.certificateNumber,
         type: cert.type,
@@ -326,10 +331,14 @@ export async function GET(req: NextRequest) {
         department: (cert.data as any)?.department,
         issuedAt: cert.issuedAt,
         issuedBy: cert.issuedBy,
-        pdfUrl: cert.pdfUrl,
+        pdfUrl: await getPublicFileUrl(cert.pdfUrl, { usePublicCDN: true }), // Convert to CDN URL for lifetime access
         sentViaEmail: cert.sentViaEmail,
         revokedAt: cert.revokedAt,
-      })),
+      }))
+    );
+
+    return NextResponse.json({
+      certificates: certificatesWithUrls,
       total,
       page,
       pages: Math.ceil(total / limit),

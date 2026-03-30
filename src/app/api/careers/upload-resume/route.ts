@@ -12,7 +12,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { prisma } from "@/lib/prisma";
 import { getCandidateFromRequest, calcProfileCompletion } from "@/lib/candidate-auth";
-import { uploadPdfToR2, getSignedUrl } from "@/lib/r2-service";
+import { uploadPdfToR2, getPublicUrl } from "@/lib/r2-service";
 import { isR2Configured } from "@/lib/r2";
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -71,14 +71,15 @@ export async function POST(req: NextRequest) {
               originalFileName: file.name,
               fileSize: file.size,
               mimeType: "application/pdf",
+              isPublic: true, // Job resumes are public
               metadata: { candidateId: candidateSession.id },
             },
           });
         }
 
-        // Generate signed URL for immediate use (1 hour)
-        fileUrl = await getSignedUrl(fileKey, 3600);
-        console.info(`[CAREERS_RESUME] Uploaded to R2: ${fileKey}`);
+        // Get public CDN URL for lifetime access
+        fileUrl = getPublicUrl(fileKey) || "";
+        console.info(`[CAREERS_RESUME] Uploaded to R2: ${fileKey}, CDN URL: ${fileUrl}`);
       } catch (r2Error) {
         console.error("[CAREERS_RESUME] R2 upload failed, falling back to filesystem:", r2Error);
         fileKey = null;

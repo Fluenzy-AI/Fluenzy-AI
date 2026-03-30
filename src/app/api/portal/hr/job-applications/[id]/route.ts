@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPortalAuthFromRequest } from "@/lib/portal-auth";
+import { getPublicFileUrl } from "@/lib/file-url-helper";
 import { z } from "zod";
 
 const UpdateSchema = z.object({
@@ -26,7 +27,14 @@ export async function GET(_req: NextRequest, { params }: Params) {
     include: { job: true },
   });
   if (!app) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json({ application: app });
+  
+  // Convert resumeUrl from fileKey to CDN URL for lifetime access
+  const appWithCdnUrl = {
+    ...app,
+    resumeUrl: app.resumeUrl ? await getPublicFileUrl(app.resumeUrl, { usePublicCDN: true }) : null,
+  };
+  
+  return NextResponse.json({ application: appWithCdnUrl });
 }
 
 export async function PATCH(req: NextRequest, { params }: Params) {

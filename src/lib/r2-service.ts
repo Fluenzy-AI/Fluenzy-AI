@@ -1,6 +1,9 @@
 /**
  * R2 Storage Service
- * Provides upload, download (signed URL), and delete operations for Cloudflare R2
+ * Provides upload, download (CDN/signed URL), and delete operations for Cloudflare R2
+ * 
+ * IMPORTANT: For public files (resumes, certificates, etc), use getPublicUrl() which returns
+ * lifetime CDN URLs. Only use getSignedUrl() for truly private/temporary access.
  */
 
 import {
@@ -12,6 +15,7 @@ import {
 import { getSignedUrl as awsGetSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { r2Client, R2_BUCKET, isR2Configured } from "./r2";
 import { v4 as uuidv4 } from "uuid";
+import { cdnUrl } from "./cdn";
 
 export type FileType =
   | "resume"
@@ -75,8 +79,26 @@ export async function uploadToR2(
 }
 
 /**
- * Generate a pre-signed URL for downloading a file
+ * Get public CDN URL for a file (LIFETIME ACCESS - recommended for public files)
+ * 
+ * Use this for:
+ * - Job application resumes
+ * - Public profile resumes/certificates
+ * - Any file that should be publicly accessible long-term
+ * 
+ * @param fileKey - R2 file key (e.g., "resumes/userId/uuid.pdf")
+ * @returns Lifetime CDN URL or null if invalid
+ */
+export function getPublicUrl(fileKey: string): string | null {
+  return cdnUrl(fileKey);
+}
+
+/**
+ * Generate a pre-signed URL for downloading a file (TEMPORARY ACCESS)
  * Default expiration: 5 minutes (300 seconds)
+ * 
+ * IMPORTANT: Only use this for truly private/temporary files.
+ * For public files (resumes, certificates), use getPublicUrl() instead.
  */
 export async function getSignedUrl(
   fileKey: string,

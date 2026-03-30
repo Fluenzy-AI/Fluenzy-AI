@@ -6,6 +6,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getPortalAuthFromRequest } from "@/lib/portal-auth";
+import { getPublicFileUrl } from "@/lib/file-url-helper";
 
 export async function GET(req: NextRequest) {
   const decoded = getPortalAuthFromRequest(req);
@@ -57,5 +58,13 @@ export async function GET(req: NextRequest) {
     orderBy: { createdAt: "desc" },
   });
 
-  return NextResponse.json({ applications, total, page, stats, jobs });
+  // Convert resumeUrl from fileKey to CDN URL for lifetime access
+  const applicationsWithCdnUrls = await Promise.all(
+    applications.map(async (app) => ({
+      ...app,
+      resumeUrl: app.resumeUrl ? await getPublicFileUrl(app.resumeUrl, { usePublicCDN: true }) : null,
+    }))
+  );
+
+  return NextResponse.json({ applications: applicationsWithCdnUrls, total, page, stats, jobs });
 }

@@ -82,12 +82,8 @@ export async function GET(
       resumes.map(async (resume: any) => {
         let fileSize: number | null = null;
         
-        // Create lifetime proxy URL for resume
-        let publicUrl = resume.fileUrl;
-        if (publicUrl && !publicUrl.startsWith('http')) {
-          // Use proxy endpoint for R2 files or filesystem paths
-          publicUrl = `/api/public-file?key=${encodeURIComponent(resume.fileUrl)}`;
-        }
+        // For public profiles, use CDN URL for lifetime access
+        const publicUrl = await getPublicFileUrl(resume.fileUrl, { usePublicCDN: true });
         
         // Try to get file size from filesystem (for local files only)
         if (resume.fileUrl && resume.fileUrl.startsWith('/')) {
@@ -103,28 +99,24 @@ export async function GET(
         return {
           id: resume.id,
           fileName: resume.fileName,
-          fileUrl: publicUrl, // Use proxy URL for lifetime access
+          fileUrl: publicUrl, // CDN URL - lifetime access
           uploadedAt: resume.uploadedAt,
           fileSize,
         };
       })
     );
 
-    // Transform certification URLs to use proxy endpoints (lifetime access)
+    // Transform certification URLs to use CDN (lifetime access for public profiles)
     const certificationsWithSignedUrls = await Promise.all(
       profile.certifications.map(async (cert: any) => {
-        let imageUrl = cert.imageUrl;
-        let credentialUrl = cert.credentialUrl;
+        // For public profiles, use CDN URL for lifetime access
+        const imageUrl = cert.imageUrl 
+          ? await getPublicFileUrl(cert.imageUrl, { usePublicCDN: true })
+          : null;
         
-        // Convert imageUrl to proxy URL if it's an R2 key or filesystem path
-        if (imageUrl && !imageUrl.startsWith('http')) {
-          imageUrl = `/api/public-file?key=${encodeURIComponent(cert.imageUrl)}`;
-        }
-        
-        // Convert credentialUrl to proxy URL if it's an R2 key or filesystem path  
-        if (credentialUrl && !credentialUrl.startsWith('http')) {
-          credentialUrl = `/api/public-file?key=${encodeURIComponent(cert.credentialUrl)}`;
-        }
+        const credentialUrl = cert.credentialUrl
+          ? await getPublicFileUrl(cert.credentialUrl, { usePublicCDN: true })
+          : null;
         
         return {
           ...cert,

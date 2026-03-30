@@ -2115,24 +2115,39 @@ model CandidateAssessmentSession {
 
 // ─── R2 File Storage ────────────────────────────────────────────────────────
 // Stores metadata for files uploaded to Cloudflare R2
+// Production-ready with lifetime CDN URLs, soft delete, and access control
 
 model FileRecord {
-  id               String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String?  @db.ObjectId
-  user             users?   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  companyId        String?  @db.ObjectId
-  fileType         String   // "resume" | "certificate" | "offer-letter" | "profile-cert" | "audit-pdf" | "job-resume" | "payment-receipt" | "ats-resume"
-  fileKey          String   // R2 object key (the storage path)
-  originalFileName String
-  fileSize         Int      // bytes
-  mimeType         String
-  jobSlug          String?  // for job-resume type
-  metadata         Json?    // optional additional metadata
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String?   @db.ObjectId
+  user             users?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  companyId        String?   @db.ObjectId
+  
+  // File metadata
+  fileType         String    // "resume" | "certificate" | "offer-letter" | "profile-cert" | "audit-pdf" | "job-resume" | "payment-receipt" | "ats-resume"
+  fileKey          String    // R2 object key (NEVER store full URL, only the key)
+  originalFileName String    // Original filename for download dialog
+  fileSize         Int       // bytes
+  mimeType         String    // MIME type (e.g., "application/pdf")
+  
+  // Access control
+  isPublic         Boolean   @default(true)   // Public visibility (for public profiles)
+  isDeleted        Boolean   @default(false)  // Soft delete flag
+  deletedAt        DateTime? // When file was soft deleted
+  deletedBy        String?   @db.ObjectId     // Who deleted it (for audit)
+  
+  // Optional metadata
+  jobSlug          String?   // for job-resume type
+  metadata         Json?     // optional additional metadata
+  
+  // Timestamps
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
   @@index([userId])
   @@index([companyId])
   @@index([fileType])
   @@index([fileKey])
+  @@index([userId, fileType, isDeleted])  // Optimized for user file queries
+  @@index([isPublic, isDeleted])          // Optimized for public file queries
 }
