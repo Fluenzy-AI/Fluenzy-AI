@@ -6,6 +6,8 @@ import AgoraRTC, {
   ICameraVideoTrack,
   IMicrophoneAudioTrack,
   IAgoraRTCRemoteUser,
+  IRemoteAudioTrack,
+  IRemoteVideoTrack,
   UID,
 } from "agora-rtc-sdk-ng";
 import { motion, AnimatePresence } from "framer-motion";
@@ -91,8 +93,8 @@ interface GDResultData {
 
 // Video Player Component
 const VideoPlayer: React.FC<{
-  videoTrack?: ICameraVideoTrack;
-  audioTrack?: IMicrophoneAudioTrack;
+  videoTrack?: ICameraVideoTrack | IRemoteVideoTrack;
+  audioTrack?: IMicrophoneAudioTrack | IRemoteAudioTrack;
   participant: GDParticipant;
   isLocal?: boolean;
   isSpeaking?: boolean;
@@ -107,6 +109,17 @@ const VideoPlayer: React.FC<{
       };
     }
   }, [videoTrack]);
+
+  // Play remote audio track (local audio should not be played back to avoid echo)
+  useEffect(() => {
+    if (audioTrack && !isLocal) {
+      console.log(`[GD] Playing remote audio for ${participant.name}`);
+      audioTrack.play();
+      return () => {
+        audioTrack.stop();
+      };
+    }
+  }, [audioTrack, isLocal, participant.name]);
 
   return (
     <div
@@ -620,7 +633,8 @@ export default function GDAssessmentPlayer({
               return (
                 <VideoPlayer
                   key={user.uid}
-                  videoTrack={user.videoTrack as ICameraVideoTrack | undefined}
+                  videoTrack={user.videoTrack}
+                  audioTrack={user.audioTrack}
                   participant={participant}
                   isSpeaking={activeSpeaker === user.uid}
                 />
