@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import nodemailer from "nodemailer";
+import { createEmailTransporter, sendEmail } from "@/lib/email-transporter";
 
 const OTP_EXPIRY_MINUTES = 5;
 
@@ -24,14 +24,10 @@ function isStrongPassword(password: string): boolean {
 
 // ── SMTP transporter ──────────────────────────────────────────────────────────
 function createTransporter() {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.SIGNUP_OTP_EMAIL_USER,
-      pass: process.env.SIGNUP_OTP_EMAIL_PASS,
-    },
+  return createEmailTransporter({
+    user: process.env.SIGNUP_OTP_EMAIL_USER,
+    pass: process.env.SIGNUP_OTP_EMAIL_PASS,
+    label: "SIGNUP-OTP",
   });
 }
 
@@ -121,12 +117,23 @@ export async function POST(req: NextRequest) {
 
     // ── Send OTP email ────────────────────────────────────────────────────────
     const transporter = createTransporter();
-    await transporter.sendMail({
-      from: `"Fluenzy AI" <${process.env.SIGNUP_OTP_EMAIL_USER}>`,
-      to: email,
-      subject: "Fluenzy AI – Verify Your Account",
-      html: buildOtpEmail(firstName.trim(), otp, OTP_EXPIRY_MINUTES),
-    });
+    const emailResult = await sendEmail(
+      transporter,
+      {
+        from: `"Fluenzy AI" <${process.env.SIGNUP_OTP_EMAIL_USER}>`,
+        to: email,
+        subject: "Fluenzy AI – Verify Your Account",
+        html: buildOtpEmail(firstName.trim(), otp, OTP_EXPIRY_MINUTES),
+      },
+      "SIGNUP-OTP"
+    );
+
+    if (!emailResult.success) {
+      return NextResponse.json(
+        { error: emailResult.error || "Failed to send OTP email" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -134,7 +141,7 @@ export async function POST(req: NextRequest) {
       email: email.toLowerCase(),
     });
   } catch (error: any) {
-    console.error("[send-otp] Error:", error);
+    console.error("[send-otp] Unexpected error:", error);
     return NextResponse.json(
       { error: "Failed to send OTP. Please try again." },
       { status: 500 }
