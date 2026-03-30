@@ -8,10 +8,11 @@ import { isR2Configured } from "@/lib/r2";
  *   - R2 key: "resumes/userId_timestamp.pdf"
  *   - Filesystem path: "/uploads/resumes/userId/file.pdf"
  *   - Already a full URL: "https://..."
+ * @param expiresInSeconds - Optional expiration time in seconds (default: 7 days)
  * 
  * @returns Public URL that can be used to access the file
  */
-export async function getPublicFileUrl(fileUrl: string | null | undefined): Promise<string | null> {
+export async function getPublicFileUrl(fileUrl: string | null | undefined, expiresInSeconds: number = 604800): Promise<string | null> {
   if (!fileUrl) return null;
   
   // Already a full URL (http/https)
@@ -24,8 +25,8 @@ export async function getPublicFileUrl(fileUrl: string | null | undefined): Prom
   
   if (isR2File && isR2Configured()) {
     try {
-      // Generate signed URL from R2
-      const signedUrl = await getR2SignedUrl(fileUrl, 3600); // 1 hour expiry
+      // Generate signed URL from R2 with configurable expiry (default: 7 days for public profiles)
+      const signedUrl = await getR2SignedUrl(fileUrl, expiresInSeconds);
       return signedUrl;
     } catch (error) {
       console.error(`[FILE_URL] Failed to get R2 signed URL for ${fileUrl}:`, error);
@@ -55,6 +56,6 @@ export async function getPublicFileUrl(fileUrl: string | null | undefined): Prom
 /**
  * Batch version of getPublicFileUrl for better performance
  */
-export async function getPublicFileUrls(fileUrls: (string | null | undefined)[]): Promise<(string | null)[]> {
-  return Promise.all(fileUrls.map(url => getPublicFileUrl(url)));
+export async function getPublicFileUrls(fileUrls: (string | null | undefined)[], expiresInSeconds?: number): Promise<(string | null)[]> {
+  return Promise.all(fileUrls.map(url => getPublicFileUrl(url, expiresInSeconds)));
 }

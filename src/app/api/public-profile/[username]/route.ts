@@ -81,7 +81,13 @@ export async function GET(
     const resumesWithSize = await Promise.all(
       resumes.map(async (resume: any) => {
         let fileSize: number | null = null;
-        const publicUrl = await getPublicFileUrl(resume.fileUrl);
+        
+        // Create lifetime proxy URL for resume
+        let publicUrl = resume.fileUrl;
+        if (publicUrl && !publicUrl.startsWith('http')) {
+          // Use proxy endpoint for R2 files or filesystem paths
+          publicUrl = `/api/public-file?key=${encodeURIComponent(resume.fileUrl)}`;
+        }
         
         // Try to get file size from filesystem (for local files only)
         if (resume.fileUrl && resume.fileUrl.startsWith('/')) {
@@ -97,27 +103,27 @@ export async function GET(
         return {
           id: resume.id,
           fileName: resume.fileName,
-          fileUrl: publicUrl, // Use public URL instead of raw fileUrl
+          fileUrl: publicUrl, // Use proxy URL for lifetime access
           uploadedAt: resume.uploadedAt,
           fileSize,
         };
       })
     );
 
-    // Transform certification URLs to signed URLs (similar to resumes)
+    // Transform certification URLs to use proxy endpoints (lifetime access)
     const certificationsWithSignedUrls = await Promise.all(
       profile.certifications.map(async (cert: any) => {
         let imageUrl = cert.imageUrl;
         let credentialUrl = cert.credentialUrl;
         
-        // Convert imageUrl if it's an R2 key or filesystem path
-        if (imageUrl) {
-          imageUrl = await getPublicFileUrl(imageUrl);
+        // Convert imageUrl to proxy URL if it's an R2 key or filesystem path
+        if (imageUrl && !imageUrl.startsWith('http')) {
+          imageUrl = `/api/public-file?key=${encodeURIComponent(cert.imageUrl)}`;
         }
         
-        // Convert credentialUrl if it's an R2 key or filesystem path  
-        if (credentialUrl) {
-          credentialUrl = await getPublicFileUrl(credentialUrl);
+        // Convert credentialUrl to proxy URL if it's an R2 key or filesystem path  
+        if (credentialUrl && !credentialUrl.startsWith('http')) {
+          credentialUrl = `/api/public-file?key=${encodeURIComponent(cert.credentialUrl)}`;
         }
         
         return {
