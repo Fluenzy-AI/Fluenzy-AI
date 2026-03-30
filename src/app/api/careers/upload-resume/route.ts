@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     let fileKey: string | null = null;
     const candidateSession = getCandidateFromRequest(req);
 
-    // Try R2 first, fallback to filesystem
+    // Try R2 first - no fallback (Render has ephemeral filesystem)
     if (isR2Configured()) {
       try {
         const candidateId = candidateSession?.id || "anonymous";
@@ -81,24 +81,18 @@ export async function POST(req: NextRequest) {
         fileUrl = getPublicUrl(fileKey) || "";
         console.info(`[CAREERS_RESUME] Uploaded to R2: ${fileKey}, CDN URL: ${fileUrl}`);
       } catch (r2Error) {
-        console.error("[CAREERS_RESUME] R2 upload failed, falling back to filesystem:", r2Error);
-        fileKey = null;
-        fileUrl = "";
+        console.error("[CAREERS_RESUME] R2 upload failed:", r2Error);
+        return NextResponse.json(
+          { error: "Failed to upload resume. Please try again." },
+          { status: 500 }
+        );
       }
-    }
-
-    // Fallback to filesystem if R2 failed or not configured
-    if (!fileKey || !fileUrl) {
-      const timestamp = Date.now();
-      const random = Math.random().toString(36).slice(2, 8);
-      const fileName = `resume_${timestamp}_${random}_${originalName}`;
-
-      await mkdir(UPLOAD_DIR, { recursive: true });
-      const filePath = path.join(UPLOAD_DIR, fileName);
-      await writeFile(filePath, buffer);
-
-      // Normalize URL to always use forward slashes
-      fileUrl = `/uploads/resumes/${fileName}`;
+    } else {
+      console.error("[CAREERS_RESUME] R2 not configured!");
+      return NextResponse.json(
+        { error: "File storage is not configured. Contact support." },
+        { status: 503 }
+      );
     }
 
     // If candidate is logged in, persist resume immediately so refresh does not lose it.

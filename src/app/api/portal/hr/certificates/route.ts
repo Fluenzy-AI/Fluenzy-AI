@@ -139,33 +139,21 @@ export async function POST(req: NextRequest) {
           Buffer.from(pdfBuffer),
           pdfFileName
         );
-        pdfUrl = fileKey; // Store the R2 key, we'll generate signed URL when needed
+        pdfUrl = fileKey; // Store the R2 key
         console.info(`[CERTIFICATE] Uploaded to R2: ${fileKey}`);
       } else {
-        // Fallback to filesystem if R2 not configured
-        const fs = require("fs");
-        const path = require("path");
-        const uploadsDir = path.join(process.cwd(), "public", "uploads", "certificates");
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-        const pdfPath = path.join(uploadsDir, pdfFileName);
-        fs.writeFileSync(pdfPath, pdfBuffer);
-        pdfUrl = `/uploads/certificates/${pdfFileName}`;
-        console.info(`[CERTIFICATE] Saved to filesystem: ${pdfUrl}`);
+        console.error("[CERTIFICATE] R2 not configured!");
+        return NextResponse.json(
+          { error: "File storage is not configured. Contact support." },
+          { status: 503 }
+        );
       }
     } catch (r2Error) {
-      console.error("[CERTIFICATE] R2 upload failed, falling back to filesystem:", r2Error);
-      // Fallback to filesystem
-      const fs = require("fs");
-      const path = require("path");
-      const uploadsDir = path.join(process.cwd(), "public", "uploads", "certificates");
-      if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir, { recursive: true });
-      }
-      const pdfPath = path.join(uploadsDir, pdfFileName);
-      fs.writeFileSync(pdfPath, pdfBuffer);
-      pdfUrl = `/uploads/certificates/${pdfFileName}`;
+      console.error("[CERTIFICATE] R2 upload failed:", r2Error);
+      return NextResponse.json(
+        { error: "Failed to upload certificate. Please try again." },
+        { status: 500 }
+      );
     }
 
     // Create certificate record in database

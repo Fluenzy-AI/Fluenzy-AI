@@ -60,7 +60,7 @@ export async function POST(request: Request) {
     let fileUrl: string;
     let fileKey: string | null = null;
 
-    // Try R2 first, fallback to filesystem
+    // Try R2 - no fallback (Render has ephemeral filesystem)
     if (isR2Configured()) {
       try {
         fileKey = await uploadPdfToR2("profile-cert", user.id, buffer, safeName);
@@ -95,22 +95,19 @@ export async function POST(request: Request) {
           fileKey, // Return key for future reference
         });
       } catch (r2Error) {
-        console.error("[PROFILE_CERT] R2 upload failed, falling back to filesystem:", r2Error);
+        console.error("[PROFILE_CERT] R2 upload failed:", r2Error);
+        return NextResponse.json(
+          { error: "Failed to upload certificate. Please try again." },
+          { status: 500 }
+        );
       }
+    } else {
+      console.error("[PROFILE_CERT] R2 not configured!");
+      return NextResponse.json(
+        { error: "File storage is not configured. Contact support." },
+        { status: 503 }
+      );
     }
-
-    // Fallback to filesystem
-    const uniqueName = `${Date.now()}-${safeName}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "certificates", user.id.toString());
-    await mkdir(uploadDir, { recursive: true });
-    const filePath = path.join(uploadDir, uniqueName);
-    await writeFile(filePath, buffer);
-    fileUrl = `/uploads/certificates/${user.id}/${uniqueName}`;
-
-    return NextResponse.json({
-      success: true,
-      imageUrl: fileUrl,
-    });
   } catch (error) {
     console.error("Certificate image upload error:", error);
     return NextResponse.json({ error: "Failed to upload certificate image" }, { status: 500 });
