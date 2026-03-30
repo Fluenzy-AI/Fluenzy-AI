@@ -265,10 +265,18 @@ export default function GDAssessmentPlayer({
 
   // Setup hidden video element for frame capture
   useEffect(() => {
-    if (!localVideoTrack || isVideoOff) return;
+    if (!localVideoTrack || isVideoOff) {
+      console.log("⏭️ Skipping video setup:", { hasTrack: !!localVideoTrack, isVideoOff });
+      return;
+    }
 
     const mediaStreamTrack = localVideoTrack.getMediaStreamTrack();
-    if (!mediaStreamTrack) return;
+    if (!mediaStreamTrack) {
+      console.error("❌ No media stream track from Agora");
+      return;
+    }
+
+    console.log("🎥 Setting up hidden video element for analysis");
 
     // Create or get hidden video element
     if (!analysisVideoRef.current) {
@@ -283,11 +291,30 @@ export default function GDAssessmentPlayer({
       video.style.height = '1px';
       document.body.appendChild(video);
       analysisVideoRef.current = video;
+      console.log("✅ Created hidden video element");
     }
 
     const video = analysisVideoRef.current;
-    video.srcObject = new MediaStream([mediaStreamTrack]);
-    video.play().catch(console.error);
+    const stream = new MediaStream([mediaStreamTrack]);
+    video.srcObject = stream;
+    
+    video.onloadedmetadata = () => {
+      console.log(`✅ Video metadata loaded: ${video.videoWidth}x${video.videoHeight}`);
+    };
+    
+    video.oncanplay = () => {
+      console.log("✅ Video can play");
+    };
+    
+    video.onerror = (e) => {
+      console.error("❌ Video error:", e);
+    };
+    
+    video.play().then(() => {
+      console.log("✅ Video playing");
+    }).catch((err) => {
+      console.error("❌ Video play failed:", err);
+    });
 
     return () => {
       if (analysisVideoRef.current) {
@@ -297,15 +324,28 @@ export default function GDAssessmentPlayer({
   }, [localVideoTrack, isVideoOff]);
 
   const captureAndSendFrame = useCallback(() => {
-    if (!analysisVideoRef.current || !wsRef.current || isVideoOff) return;
-    if (wsRef.current.readyState !== WebSocket.OPEN) return;
+    if (!analysisVideoRef.current || !wsRef.current || isVideoOff) {
+      console.log("⏭️ Skipping frame:", {
+        hasVideo: !!analysisVideoRef.current,
+        hasWS: !!wsRef.current,
+        isVideoOff
+      });
+      return;
+    }
+    if (wsRef.current.readyState !== WebSocket.OPEN) {
+      console.log("⏭️ WS not open:", wsRef.current.readyState);
+      return;
+    }
     if (isProcessingFrame.current) {
-      // Skip if still processing
+      console.log("⏳ Still processing previous frame");
       return;
     }
 
     const video = analysisVideoRef.current;
-    if (video.readyState < 2) return; // Not ready
+    if (video.readyState < 2) {
+      console.log("⏭️ Video not ready:", video.readyState);
+      return;
+    }
 
     try {
       // Get or create canvas
@@ -315,11 +355,17 @@ export default function GDAssessmentPlayer({
 
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
-      if (!ctx) return;
+      if (!ctx) {
+        console.error("❌ No canvas context");
+        return;
+      }
 
       // Downscale for analysis
       const videoWidth = video.videoWidth || 640;
       const videoHeight = video.videoHeight || 480;
+      
+      console.log(`📹 Video dimensions: ${videoWidth}x${videoHeight}`);
+      
       const maxWidth = 320;
       const maxHeight = 240;
       
@@ -336,17 +382,19 @@ export default function GDAssessmentPlayer({
       isProcessingFrame.current = true;
       frameCountRef.current += 1;
 
-      wsRef.current.send(JSON.stringify({
+      const payload = {
         type: 'frame',
         image: imageData,
         frame_id: frameCountRef.current,
         timestamp: Date.now(),
         resolution: { width: newWidth, height: newHeight }
-      }));
+      };
 
-      console.log(`📤 GD Frame ${frameCountRef.current} sent (${newWidth}x${newHeight})`);
+      wsRef.current.send(JSON.stringify(payload));
+
+      console.log(`📤 GD Frame ${frameCountRef.current} sent (${newWidth}x${newHeight}), size: ${Math.round(imageData.length / 1024)}KB`);
     } catch (error) {
-      console.error("Error capturing frame:", error);
+      console.error("❌ Error capturing frame:", error);
       isProcessingFrame.current = false;
     }
   }, [isVideoOff]);
@@ -376,6 +424,7 @@ export default function GDAssessmentPlayer({
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        console.log("📥 Received WS message:", data.type, data);
         
         if (data.type === 'analysis' && data.metrics) {
           const metrics: VideoMetrics = {
@@ -387,31 +436,52 @@ export default function GDAssessmentPlayer({
             engagement: data.metrics.engagement || 0,
           };
           
+          console.log("📊 Metrics updated:", metrics);
           setVideoMetrics(metrics);
           metricsTimelineRef.current.push(metrics);
           isProcessingFrame.current = false;
         } else if (data.type === 'busy') {
+          console.log("⏳ Backend busy");
           isProcessingFrame.current = false;
         } else if (data.type === 'connected') {
           console.log("🎉 Video analysis session started:", data.message);
         } else if (data.type === 'error') {
-          console.error("Video analysis error:", data.message);
+          console.error("❌ Video analysis error:", data.message);
           isProcessingFrame.current = false;
+        } else {
+          console.warn("⚠️ Unknown message type:", data.type);
         }
       } catch (e) {
-        console.error("Error parsing video analysis message:", e);
+        console.error("❌ Error parsing video analysis message:", e, event.data);
         isProcessingFrame.current = false;
       }
     };
 
     ws.onclose = (e) => {
       console.log("🔌 Video analysis WebSocket closed:", e.code, e.reason);
+      console.log("Close event details:", { 
+        wasClean: e.wasClean, 
+        code: e.code, 
+        reason: e.reason || "No reason provided" 
+      });
+      
       setWsConnected(false);
       setIsAnalyzing(false);
       
       if (frameIntervalRef.current) {
         clearInterval(frameIntervalRef.current);
         frameIntervalRef.current = null;
+      }
+
+      // Auto-reconnect on abnormal closure (1006) if still joined
+      if (e.code === 1006 && joined) {
+        console.log("🔄 Attempting auto-reconnect in 3 seconds...");
+        setTimeout(() => {
+          if (joined && !wsRef.current) {
+            console.log("🔄 Reconnecting...");
+            connectVideoAnalysis();
+          }
+        }, 3000);
       }
     };
 
@@ -420,7 +490,7 @@ export default function GDAssessmentPlayer({
     };
 
     wsRef.current = ws;
-  }, [captureAndSendFrame, getVideoAnalysisWsUrl]);
+  }, [captureAndSendFrame, getVideoAnalysisWsUrl, joined]);
 
   const disconnectVideoAnalysis = useCallback(() => {
     if (frameIntervalRef.current) {
