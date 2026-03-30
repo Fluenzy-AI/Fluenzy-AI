@@ -32,7 +32,37 @@ export async function GET(
     });
     if (!payment) return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
 
-    // Build HTML & render PDF via shared helpers
+    const status = (payment.status as string) || "paid";
+    const receipt = payment.receipt as { invoiceNumber?: string } | null;
+    const invoiceNumber =
+      receipt?.invoiceNumber ||
+      payment.invoiceId ||
+      `FLZ-${status.toUpperCase().slice(0, 3)}-${payment.id.slice(-6).toUpperCase()}`;
+    const filename = `FluenzyAI_${titleCase(status).replace(/ /g, "_")}_${invoiceNumber}.pdf`;
+
+    // Generate expected fileKey for cache lookup
+    const expectedFileKey = `payment-receipt/${user.id}_${payment.id}/${filename}`.replace(/\s+/g, "_");
+
+    // Check if PDF already cached in R2
+    const existingFile = await prisma.fileRecord.findFirst({
+      where: {
+        userId: user.id,
+        fileType: "payment-receipt",
+        fileKey: { contains: `${user.id}_${payment.id}` },
+      },
+    });
+
+    if (existingFile?.fileKey) {
+      const cdnUrl = getPublicUrl(existingFile.fileKey);
+      if (cdnUrl) {
+        console.info(`[PAYMENT_PDF] Cache hit: ${cdnUrl}`);
+        // Redirect to CDN for fast download
+        return NextResponse.redirect(cdnUrl);
+      }
+    }
+
+    // Generate PDF (cache miss)
+    console.info(`[PAYMENT_PDF] Cache miss, generating PDF...`);
     const html = buildInvoiceHtml(payment, {
       name: user.name,
       email: user.email,
@@ -40,21 +70,9 @@ export async function GET(
     });
     const pdfBuffer = await htmlToPdf(html);
 
-    const status        = (payment.status as string) || "paid";
-    const receipt       = payment.receipt as { invoiceNumber?: string } | null;
-    const invoiceNumber =
-      receipt?.invoiceNumber ||
-      payment.invoiceId ||
-      `FLZ-${status.toUpperCase().slice(0, 3)}-${payment.id.slice(-6).toUpperCase()}`;
-    const filename = `FluenzyAI_${titleCase(status).replace(/ /g, "_")}_${invoiceNumber}.pdf`;
-
-    // Check if redirect=true query param is set - return signed URL instead of PDF
-    const url = new URL(request.url);
-    const redirect = url.searchParams.get("redirect") === "true";
-    
-    if (redirect && isR2Configured()) {
+    // Upload to R2 for caching (if configured)
+    if (isR2Configured()) {
       try {
-        // Upload to R2 and return signed URL
         const fileKey = await uploadPdfToR2(
           "payment-receipt",
           `${user.id}_${payment.id}`,
@@ -62,7 +80,7 @@ export async function GET(
           filename
         );
         
-        // Create FileRecord
+        // Create FileRecord for caching
         await prisma.fileRecord.create({
           data: {
             userId: user.id,
@@ -71,23 +89,25 @@ export async function GET(
             originalFileName: filename,
             fileSize: pdfBuffer.byteLength,
             mimeType: "application/pdf",
-            isPublic: true, // Receipts use CDN for lifetime access
+            isPublic: true,
             metadata: { paymentId: payment.id, invoiceNumber },
           },
         });
 
-        // Use lifetime CDN URL instead of signed URL
         const cdnFileUrl = getPublicUrl(fileKey);
-        console.info(`[PAYMENT_PDF] Uploaded to R2: ${fileKey}, CDN URL: ${cdnFileUrl}`);
+        console.info(`[PAYMENT_PDF] Cached to R2: ${cdnFileUrl}`);
         
-        return NextResponse.json({ url: cdnFileUrl, expiresIn: null }); // null = never expires
+        // Redirect to CDN
+        if (cdnFileUrl) {
+          return NextResponse.redirect(cdnFileUrl);
+        }
       } catch (r2Error) {
         console.error("[PAYMENT_PDF] R2 upload failed:", r2Error);
         // Fall through to direct PDF response
       }
     }
 
-    // Return PDF directly (default behavior)
+    // Return PDF directly (fallback)
     return new NextResponse(pdfBuffer as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/pdf",
