@@ -16,7 +16,7 @@ const CreateStaffSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(8),
-  role: z.enum(["ADMIN", "HR"]),
+  role: z.enum(["ADMIN", "HR", "MARKETING_ADMIN"]),
   department: z.string().optional(),
   phone: z.string().optional(),
   permissions: z.record(z.string(), z.boolean()).optional(),
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   const limit = parseInt(searchParams.get("limit") || "20");
 
   const where = {
-    ...(role ? { role: role as "ADMIN" | "HR" } : {}),
+    ...(role ? { role: role as "ADMIN" | "HR" | "MARKETING_ADMIN" } : {}),
     ...(status ? { status: status as "ACTIVE" | "INACTIVE" | "SUSPENDED" | "LOCKED" } : {}),
   };
 

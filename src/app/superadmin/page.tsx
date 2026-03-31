@@ -1908,6 +1908,7 @@ export default function SuperAdminDashboard() {
                           className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500">
                           <option value="HR">HR</option>
                           <option value="ADMIN">Admin</option>
+                          <option value="MARKETING_ADMIN">Marketing Admin</option>
                         </select>
                       </div>
                       <div>

@@ -102,6 +102,12 @@ export default function MarketingDashboard() {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Segment users modal state
+  const [selectedSegment, setSelectedSegment] = useState<Segment | null>(null);
+  const [segmentUsers, setSegmentUsers] = useState<any[]>([]);
+  const [loadingSegmentUsers, setLoadingSegmentUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<any | null>(null);
+
   // Campaign form state
   const [campaignForm, setCampaignForm] = useState({
     name: "",
@@ -170,6 +176,27 @@ export default function MarketingDashboard() {
       }
     } catch (error) {
       console.error("Triggers fetch error:", error);
+    }
+  };
+
+  // Fetch users in a segment
+  const fetchSegmentUsers = async (segment: Segment) => {
+    setSelectedSegment(segment);
+    setLoadingSegmentUsers(true);
+    try {
+      const res = await fetch("/api/admin/marketing/segments/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ segmentType: segment.type, fullList: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSegmentUsers(data.users || []);
+      }
+    } catch (error) {
+      console.error("Segment users fetch error:", error);
+    } finally {
+      setLoadingSegmentUsers(false);
     }
   };
 
@@ -525,13 +552,29 @@ export default function MarketingDashboard() {
         <TabsContent value="segments" className="space-y-6 mt-6">
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {segments.map((segment) => (
-              <Card key={segment.id} className="bg-[#0d1220] border-[#1e2a40] hover:border-violet-500/50 transition-colors cursor-pointer">
+              <Card 
+                key={segment.id} 
+                className="bg-[#0d1220] border-[#1e2a40] hover:border-violet-500/50 transition-colors cursor-pointer"
+                onClick={() => fetchSegmentUsers(segment)}
+              >
                 <CardContent className="pt-6">
                   <div className="text-center">
                     <Users className="w-8 h-8 mx-auto text-violet-500 mb-2" />
                     <p className="text-white font-medium">{segment.name}</p>
                     <p className="text-2xl font-bold text-violet-400">{segment.count.toLocaleString()}</p>
                     <p className="text-xs text-slate-400 mt-1">users</p>
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="mt-3 border-violet-500/50 text-violet-400 hover:bg-violet-500/10"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fetchSegmentUsers(segment);
+                      }}
+                    >
+                      <Eye className="w-3 h-3 mr-1" />
+                      View Users
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -787,6 +830,151 @@ export default function MarketingDashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Segment Users Modal */}
+      <Dialog open={!!selectedSegment} onOpenChange={() => setSelectedSegment(null)}>
+        <DialogContent className="max-w-4xl bg-[#0d1220] border-[#1e2a40] text-white max-h-[85vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-violet-500" />
+              {selectedSegment?.name}
+            </DialogTitle>
+            <DialogDescription className="text-slate-400">
+              {selectedSegment?.count.toLocaleString()} users in this segment
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto">
+            {loadingSegmentUsers ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 animate-spin text-violet-500" />
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-slate-700">
+                    <TableHead className="text-slate-300">Name</TableHead>
+                    <TableHead className="text-slate-300">Email</TableHead>
+                    <TableHead className="text-slate-300">Plan</TableHead>
+                    <TableHead className="text-slate-300">Usage</TableHead>
+                    <TableHead className="text-slate-300">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {segmentUsers.map((user) => (
+                    <TableRow key={user.id} className="border-slate-700/50">
+                      <TableCell className="font-medium text-white">{user.name || "—"}</TableCell>
+                      <TableCell className="text-slate-400">{user.email}</TableCell>
+                      <TableCell>
+                        <Badge className={user.plan === "PRO" ? "bg-violet-500/20 text-violet-400" : "bg-slate-700 text-slate-300"}>
+                          {user.plan || "Free"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-400">
+                        {user.sessionsCount || 0}/{user.sessionLimit || 3}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-violet-500/50 text-violet-400 hover:bg-violet-500/10"
+                          onClick={() => setSelectedUser(user)}
+                        >
+                          <Eye className="w-3 h-3 mr-1" />
+                          View Details
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {segmentUsers.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} className="text-center text-slate-400 py-8">
+                        No users found in this segment
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Details Modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedUser(null)}>
+          <div className="w-full max-w-2xl bg-[#0f172a] border border-slate-700/50 rounded-2xl shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700/50 bg-gradient-to-r from-violet-500/10 to-purple-500/10">
+              <div>
+                <h2 className="text-white font-bold text-lg">{selectedUser.name || "Unknown User"}</h2>
+                <p className="text-slate-400 text-sm">{selectedUser.email}</p>
+              </div>
+              <button onClick={() => setSelectedUser(null)} className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/50 transition-all">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+
+            <div className="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+              {/* Account Info */}
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Account Details</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {[
+                    { label: "Plan", value: selectedUser.plan || "Free" },
+                    { label: "Role", value: selectedUser.role || "User" },
+                    { label: "Sessions", value: `${selectedUser.sessionsCount || 0}/${selectedUser.sessionLimit || 3}` },
+                    { label: "Disabled", value: selectedUser.disabled ? "Yes" : "No" },
+                    { label: "Created", value: selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—" },
+                    { label: "Last Active", value: selectedUser.lastActiveAt ? new Date(selectedUser.lastActiveAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "—" },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-slate-800/50 rounded-xl p-3 border border-slate-700/40">
+                      <p className="text-slate-500 text-xs mb-0.5">{label}</p>
+                      <p className="text-slate-200 text-sm font-medium">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Activity Stats */}
+              <div>
+                <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Activity Stats</p>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: "Total Sessions", value: selectedUser.sessionsCount || 0 },
+                    { label: "HR Sessions", value: selectedUser.hrSessions || 0 },
+                    { label: "GD Sessions", value: selectedUser.gdSessions || 0 },
+                    { label: "Technical", value: selectedUser.technicalSessions || 0 },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="bg-violet-500/10 rounded-xl p-3 border border-violet-500/20 text-center">
+                      <p className="text-2xl font-bold text-violet-400">{value}</p>
+                      <p className="text-slate-400 text-xs">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="flex gap-3 pt-3">
+                <a 
+                  href={`/superadmin/users/${selectedUser.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 py-2.5 rounded-xl bg-violet-600 hover:bg-violet-700 text-white font-semibold text-sm text-center transition-all"
+                >
+                  Full Details
+                </a>
+                <button 
+                  onClick={() => setSelectedUser(null)} 
+                  className="flex-1 py-2.5 rounded-xl border border-slate-600 text-slate-300 hover:text-white text-sm transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

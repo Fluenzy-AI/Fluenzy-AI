@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { segmentEngine } from "@/lib/marketing/segment-engine";
+import prisma from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { filterRules, segmentType, params } = body;
+    const { filterRules, segmentType, params, fullList } = body;
 
     let result;
 
@@ -28,7 +29,11 @@ export async function POST(req: NextRequest) {
           result = await segmentEngine.allUsers();
           break;
         case "inactive":
+        case "inactive_7":
           result = await segmentEngine.inactiveUsers(params?.days || 7);
+          break;
+        case "inactive_30":
+          result = await segmentEngine.inactiveUsers(30);
           break;
         case "new_users":
           result = await segmentEngine.newUsers(params?.days || 7);
@@ -46,7 +51,11 @@ export async function POST(req: NextRequest) {
           result = await segmentEngine.quickSubmit(params?.maxSeconds || 60);
           break;
         case "plan":
+        case "free_plan":
           result = await segmentEngine.planType(params?.plan || "Free");
+          break;
+        case "pro_plan":
+          result = await segmentEngine.planType("Pro");
           break;
         case "feature_not_used":
           result = await segmentEngine.featureNotUsed(params?.module || "english");
@@ -64,9 +73,46 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // If fullList is requested, fetch full user details
+    if (fullList && result.userIds.length > 0) {
+      const users = await prisma.users.findMany({
+        where: { id: { in: result.userIds.slice(0, 100) } }, // Limit to 100 for performance
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          plan: true,
+          disabled: true,
+          usageLimit: true,
+          usageCount: true,
+          hrUsage: true,
+          gdUsage: true,
+          technicalUsage: true,
+          createdAt: true,
+          avatar: true,
+        },
+      });
+
+      // Map to frontend-friendly format
+      const mappedUsers = users.map(u => ({
+        ...u,
+        sessionLimit: u.usageLimit,
+        sessionsCount: u.usageCount,
+        hrSessions: u.hrUsage,
+        gdSessions: u.gdUsage,
+        technicalSessions: u.technicalUsage,
+      }));
+
+      return NextResponse.json({
+        count: result.count,
+        users: mappedUsers,
+      });
+    }
+
     return NextResponse.json({
       count: result.count,
-      previewSample: result.previewSample,
+      users: result.previewSample,
     });
   } catch (error) {
     console.error("Segment preview error:", error);
