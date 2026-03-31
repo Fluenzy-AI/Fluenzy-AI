@@ -61,42 +61,42 @@ export default function InterviewsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-white/5 rounded-xl w-48" />
-        <div className="h-64 bg-white/5 rounded-xl" />
+      <div className="space-y-4 sm:space-y-6 animate-pulse">
+        <div className="h-8 sm:h-10 bg-white/5 rounded-xl w-36 sm:w-48" />
+        <div className="h-48 sm:h-64 bg-white/5 rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">Interviews</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-white">Interviews</h1>
         <p className="text-slate-400 text-sm mt-1">Manage your upcoming interviews</p>
       </div>
 
       {/* Upcoming Interviews */}
       <div className="bg-[#13161E] rounded-xl border border-white/5 overflow-hidden">
-        <div className="p-5 border-b border-white/5">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-violet-400" />
+        <div className="p-4 sm:p-5 border-b border-white/5">
+          <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400 flex-shrink-0" />
             Upcoming Interviews
           </h2>
         </div>
 
         {upcomingInterviews.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-violet-500/10 flex items-center justify-center">
-              <Calendar className="w-8 h-8 text-violet-400" />
+          <div className="p-8 sm:p-12 text-center">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-violet-500/10 flex items-center justify-center">
+              <Calendar className="w-7 h-7 sm:w-8 sm:h-8 text-violet-400" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No upcoming interviews</h3>
-            <p className="text-sm text-slate-400 mb-6">
+            <h3 className="text-base sm:text-lg font-semibold text-white mb-2">No upcoming interviews</h3>
+            <p className="text-sm text-slate-400 mb-4 sm:mb-6 max-w-sm mx-auto">
               When you're scheduled for interviews, they'll appear here
             </p>
             <Link
               href="/candidates/dashboard/applications"
-              className="inline-flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 transition-colors"
+              className="inline-flex items-center gap-2 text-sm text-violet-400 hover:text-violet-300 active:text-violet-500 transition-colors"
             >
               View your applications
               <ChevronRight className="w-4 h-4" />
@@ -116,30 +116,44 @@ export default function InterviewsPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.05 }}
-                  className="p-4 hover:bg-white/[0.02] transition-colors"
+                  className="p-3 sm:p-4 hover:bg-white/[0.02] transition-colors"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/20 flex flex-col items-center justify-center flex-shrink-0">
+                  <div className="flex flex-col sm:flex-row sm:items-start gap-3 sm:gap-4">
+                    {/* Date Box */}
+                    <div className="flex sm:flex-col items-center sm:justify-center gap-2 sm:gap-0 w-full sm:w-12 lg:w-14 h-auto sm:h-12 lg:h-14 rounded-lg sm:rounded-xl bg-gradient-to-br from-indigo-500/20 to-violet-500/20 border border-indigo-500/20 flex-shrink-0 p-2 sm:p-0">
                       <span className="text-xs text-indigo-400 font-medium">
-                        {interviewDate.toLocaleDateString("en-US", { month: "short" })}
+                        {interviewDate.toLocaleDateString("en-US", { weekday: "short", month: "short" })}
                       </span>
-                      <span className="text-lg font-bold text-white">
+                      <span className="text-base sm:text-lg font-bold text-white">
                         {interviewDate.getDate()}
                       </span>
+                      {(isToday || isTomorrow) && (
+                        <span
+                          className={`sm:hidden px-2 py-0.5 rounded-full text-[10px] font-medium ml-auto ${
+                            isToday
+                              ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                              : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
+                          }`}
+                        >
+                          {isToday ? "Today" : "Tomorrow"}
+                        </span>
+                      )}
                     </div>
+                    
+                    {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-medium text-white">
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm sm:text-base text-white truncate">
                             {interview.type} Interview
                           </p>
-                          <p className="text-sm text-slate-400 mt-0.5">
+                          <p className="text-sm text-slate-400 mt-0.5 truncate">
                             {interview.application.job.title}
                           </p>
                         </div>
                         {(isToday || isTomorrow) && (
                           <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                            className={`hidden sm:inline-flex px-2 py-1 rounded-full text-xs font-medium flex-shrink-0 ${
                               isToday
                                 ? "bg-red-500/10 text-red-400 border border-red-500/20"
                                 : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
@@ -149,20 +163,20 @@ export default function InterviewsPage() {
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-wrap items-center gap-3 mt-3 text-xs text-slate-500">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 sm:mt-3 text-xs text-slate-500">
                         <span className="flex items-center gap-1">
-                          <Clock className="w-3 h-3" />
+                          <Clock className="w-3 h-3 flex-shrink-0" />
                           {interviewDate.toLocaleTimeString("en-US", {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}
                         </span>
                         <span className="flex items-center gap-1">
-                          <Building className="w-3 h-3" />
-                          {interview.application.job.department}
+                          <Building className="w-3 h-3 flex-shrink-0" />
+                          <span className="truncate">{interview.application.job.department}</span>
                         </span>
                         <span className="flex items-center gap-1">
-                          <Video className="w-3 h-3" />
+                          <Video className="w-3 h-3 flex-shrink-0" />
                           Video Call
                         </span>
                       </div>
@@ -171,7 +185,7 @@ export default function InterviewsPage() {
                           href={interview.meetingLink}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-400 transition-colors"
+                          className="inline-flex items-center gap-2 mt-3 px-3 sm:px-4 py-2 rounded-lg bg-indigo-500 text-white text-sm font-semibold hover:bg-indigo-400 active:bg-indigo-600 transition-colors"
                         >
                           Join Meeting
                           <ExternalLink className="w-4 h-4" />
@@ -180,9 +194,9 @@ export default function InterviewsPage() {
                     </div>
                   </div>
                   {interview.notes && (
-                    <div className="mt-3 ml-[4.5rem] p-3 rounded-lg bg-white/[0.02] border border-white/5">
+                    <div className="mt-3 sm:ml-16 lg:ml-[4.5rem] p-2.5 sm:p-3 rounded-lg bg-white/[0.02] border border-white/5">
                       <p className="text-xs text-slate-500 mb-1 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
+                        <AlertCircle className="w-3 h-3 flex-shrink-0" />
                         Notes from HR
                       </p>
                       <p className="text-sm text-slate-300">{interview.notes}</p>
@@ -198,9 +212,9 @@ export default function InterviewsPage() {
       {/* Past Interviews */}
       {pastInterviews.length > 0 && (
         <div className="bg-[#13161E] rounded-xl border border-white/5 overflow-hidden">
-          <div className="p-5 border-b border-white/5">
-            <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <Clock className="w-5 h-5 text-slate-400" />
+          <div className="p-4 sm:p-5 border-b border-white/5">
+            <h2 className="text-base sm:text-lg font-semibold text-white flex items-center gap-2">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-slate-400 flex-shrink-0" />
               Past Interviews
             </h2>
           </div>
@@ -208,26 +222,26 @@ export default function InterviewsPage() {
             {pastInterviews.map((interview) => {
               const interviewDate = new Date(interview.scheduledAt);
               return (
-                <div key={interview.id} className="p-4 opacity-60">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white/5 flex flex-col items-center justify-center flex-shrink-0">
-                      <span className="text-[10px] text-slate-500">
+                <div key={interview.id} className="p-3 sm:p-4 opacity-60">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-white/5 flex flex-col items-center justify-center flex-shrink-0">
+                      <span className="text-[9px] sm:text-[10px] text-slate-500">
                         {interviewDate.toLocaleDateString("en-US", { month: "short" })}
                       </span>
-                      <span className="text-sm font-bold text-slate-400">
+                      <span className="text-xs sm:text-sm font-bold text-slate-400">
                         {interviewDate.getDate()}
                       </span>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-slate-300">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-300 truncate">
                         {interview.type} Interview
                       </p>
-                      <p className="text-xs text-slate-500 mt-0.5">
+                      <p className="text-xs text-slate-500 mt-0.5 truncate">
                         {interview.application.job.title}
                       </p>
                     </div>
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                      className={`px-2 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-medium flex-shrink-0 ${
                         interview.status === "COMPLETED"
                           ? "bg-emerald-500/10 text-emerald-400"
                           : interview.status === "CANCELLED"

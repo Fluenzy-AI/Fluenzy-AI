@@ -278,22 +278,22 @@ export default function JobDetailPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-8 bg-white/5 rounded-xl w-32" />
-        <div className="h-48 bg-white/5 rounded-xl" />
-        <div className="h-64 bg-white/5 rounded-xl" />
+      <div className="space-y-4 sm:space-y-6 animate-pulse">
+        <div className="h-6 bg-white/5 rounded-xl w-24 sm:w-32" />
+        <div className="h-36 sm:h-48 bg-white/5 rounded-xl" />
+        <div className="h-48 sm:h-64 bg-white/5 rounded-xl" />
       </div>
     );
   }
 
   if (!job) {
     return (
-      <div className="text-center py-12">
-        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
-          <Briefcase className="w-8 h-8 text-red-400" />
+      <div className="text-center py-8 sm:py-12">
+        <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
+          <Briefcase className="w-7 h-7 sm:w-8 sm:h-8 text-red-400" />
         </div>
-        <h2 className="text-xl font-bold text-white mb-2">Job Not Found</h2>
-        <p className="text-slate-400 text-sm mb-6">
+        <h2 className="text-lg sm:text-xl font-bold text-white mb-2">Job Not Found</h2>
+        <p className="text-slate-400 text-sm mb-6 px-4">
           This job posting may have been removed or is no longer available
         </p>
         <Link
@@ -312,27 +312,27 @@ export default function JobDetailPage() {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="text-center py-12"
+        className="text-center py-8 sm:py-12 px-4"
       >
-        <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
-          <CheckCircle className="w-10 h-10 text-emerald-400" />
+        <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-4 sm:mb-6 rounded-full bg-emerald-500/10 flex items-center justify-center">
+          <CheckCircle className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400" />
         </div>
-        <h2 className="text-2xl font-bold text-white mb-3">Application Submitted! 🎉</h2>
-        <p className="text-slate-400 text-sm mb-8 max-w-md mx-auto">
+        <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Application Submitted! 🎉</h2>
+        <p className="text-slate-400 text-sm mb-6 sm:mb-8 max-w-md mx-auto">
           Your application for <span className="text-white font-medium">{job.title}</span> has been
           received. Our team will review it and get back to you soon.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link
             href="/candidates/dashboard/applications"
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full bg-violet-500 text-white text-sm font-semibold hover:bg-violet-400 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl bg-violet-500 text-white text-sm font-semibold hover:bg-violet-400 active:bg-violet-600 transition-colors"
           >
             Track Application
             <ChevronRight className="w-4 h-4" />
           </Link>
           <Link
             href="/candidates/dashboard/careers"
-            className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full border border-white/10 text-white text-sm font-medium hover:bg-white/5 transition-colors"
+            className="inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl border border-white/10 text-white text-sm font-medium hover:bg-white/5 active:bg-white/10 transition-colors"
           >
             Browse More Jobs
           </Link>
@@ -342,69 +342,76 @@ export default function JobDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Back Button */}
       <Link
         href="/candidates/dashboard/careers"
-        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white transition-colors"
+        className="inline-flex items-center gap-2 text-sm text-slate-400 hover:text-white active:text-violet-400 transition-colors py-1"
       >
         <ArrowLeft className="w-4 h-4" />
         All open positions
       </Link>
 
       {/* Job Header */}
-      <div className="bg-[#13161E] rounded-xl border border-white/5 p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                {job.employmentType.replace("_", " ")}
-              </span>
-              <span className="px-3 py-1 rounded-full text-xs font-medium bg-violet-500/10 text-violet-400 border border-violet-500/20">
-                {job.department}
-              </span>
-            </div>
-            <h1 className="text-2xl font-bold text-white mb-3">{job.title}</h1>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="flex items-center gap-2 text-slate-400">
-                <Building className="w-4 h-4" />
-                <span>Fluenzy AI</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-400">
-                <MapPin className="w-4 h-4" />
-                <span>{job.location}</span>
-              </div>
-              <div className="flex items-center gap-2 text-slate-400">
-                <Users className="w-4 h-4" />
-                <span>{job.experienceLevel}</span>
-              </div>
-              {job.salaryRange && (
-                <div className="flex items-center gap-2 text-slate-400">
-                  <IndianRupee className="w-4 h-4" />
-                  <span>{job.salaryRange}</span>
-                </div>
-              )}
-            </div>
-            <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-              <Calendar className="w-3 h-3" />
-              Posted {new Date(job.postedAt).toLocaleDateString("en-IN", {
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
+      <div className="bg-[#13161E] rounded-xl border border-white/5 p-4 sm:p-6">
+        <div className="flex flex-col gap-4">
+          {/* Tags */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              {job.employmentType.replace("_", " ")}
+            </span>
+            <span className="px-2.5 sm:px-3 py-1 rounded-full text-xs font-medium bg-violet-500/10 text-violet-400 border border-violet-500/20">
+              {job.department}
+            </span>
           </div>
-          <div className="flex flex-col gap-3">
+          
+          {/* Title */}
+          <h1 className="text-xl sm:text-2xl font-bold text-white">{job.title}</h1>
+          
+          {/* Meta Info */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm">
+            <div className="flex items-center gap-2 text-slate-400">
+              <Building className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">Fluenzy AI</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-400">
+              <MapPin className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{job.location}</span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-400">
+              <Users className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{job.experienceLevel}</span>
+            </div>
+            {job.salaryRange && (
+              <div className="flex items-center gap-2 text-slate-400">
+                <IndianRupee className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">{job.salaryRange}</span>
+              </div>
+            )}
+          </div>
+          
+          {/* Posted Date */}
+          <p className="text-xs text-slate-500 flex items-center gap-1">
+            <Calendar className="w-3 h-3 flex-shrink-0" />
+            Posted {new Date(job.postedAt).toLocaleDateString("en-IN", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
+          </p>
+          
+          {/* Apply Button - Full width on mobile */}
+          <div className="pt-2">
             {!alreadyApplied ? (
               <button
                 onClick={() => setShowApplicationForm(true)}
-                className="px-8 py-3 rounded-xl bg-violet-500 text-white font-semibold hover:bg-violet-400 transition-colors"
+                className="w-full sm:w-auto px-6 sm:px-8 py-3 rounded-xl bg-violet-500 text-white font-semibold hover:bg-violet-400 active:bg-violet-600 transition-colors"
               >
                 Apply Now →
               </button>
             ) : (
-              <div className="px-8 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-center">
-                <CheckCircle className="w-5 h-5 mx-auto mb-1" />
+              <div className="flex items-center justify-center gap-2 w-full sm:w-auto px-6 sm:px-8 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <CheckCircle className="w-5 h-5" />
                 <span className="text-sm font-medium">Applied</span>
               </div>
             )}
@@ -413,30 +420,30 @@ export default function JobDetailPage() {
       </div>
 
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 sm:space-y-6">
           {/* About the Role */}
-          <div className="bg-[#13161E] rounded-xl border border-white/5 p-6">
-            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-              <Target className="w-5 h-5 text-violet-400" />
+          <div className="bg-[#13161E] rounded-xl border border-white/5 p-4 sm:p-6">
+            <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+              <Target className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400 flex-shrink-0" />
               About this Role
             </h2>
-            <p className="text-slate-300 leading-relaxed">{job.description}</p>
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed">{job.description}</p>
           </div>
 
           {/* Responsibilities */}
           {job.responsibilities && job.responsibilities.length > 0 && (
-            <div className="bg-[#13161E] rounded-xl border border-white/5 p-6">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Briefcase className="w-5 h-5 text-violet-400" />
+            <div className="bg-[#13161E] rounded-xl border border-white/5 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <Briefcase className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400 flex-shrink-0" />
                 Key Responsibilities
               </h2>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5 sm:space-y-3">
                 {job.responsibilities.map((responsibility, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
                     <span className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2 flex-shrink-0" />
-                    {responsibility}
+                    <span className="flex-1 min-w-0">{responsibility}</span>
                   </li>
                 ))}
               </ul>
@@ -445,16 +452,16 @@ export default function JobDetailPage() {
 
           {/* Requirements */}
           {job.requirements && job.requirements.length > 0 && (
-            <div className="bg-[#13161E] rounded-xl border border-white/5 p-6">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Award className="w-5 h-5 text-violet-400" />
+            <div className="bg-[#13161E] rounded-xl border border-white/5 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <Award className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400 flex-shrink-0" />
                 Requirements
               </h2>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5 sm:space-y-3">
                 {job.requirements.map((requirement, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
                     <CheckCircle className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
-                    {requirement}
+                    <span className="flex-1 min-w-0">{requirement}</span>
                   </li>
                 ))}
               </ul>
@@ -463,16 +470,16 @@ export default function JobDetailPage() {
 
           {/* Benefits */}
           {job.benefits && job.benefits.length > 0 && (
-            <div className="bg-[#13161E] rounded-xl border border-white/5 p-6">
-              <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                <Heart className="w-5 h-5 text-violet-400" />
+            <div className="bg-[#13161E] rounded-xl border border-white/5 p-4 sm:p-6">
+              <h2 className="text-base sm:text-lg font-semibold text-white mb-3 sm:mb-4 flex items-center gap-2">
+                <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-violet-400 flex-shrink-0" />
                 What We Offer
               </h2>
-              <ul className="space-y-3">
+              <ul className="space-y-2.5 sm:space-y-3">
                 {job.benefits.map((benefit, i) => (
                   <li key={i} className="flex items-start gap-3 text-sm text-slate-300">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mt-2 flex-shrink-0" />
-                    {benefit}
+                    <span className="flex-1 min-w-0">{benefit}</span>
                   </li>
                 ))}
               </ul>
@@ -480,31 +487,31 @@ export default function JobDetailPage() {
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <div className="bg-[#13161E] rounded-xl border border-white/5 p-6">
-            <h3 className="text-sm font-semibold text-white mb-4">Job Summary</h3>
-            <div className="space-y-3 text-sm">
+        {/* Sidebar - Shows on top on mobile via order */}
+        <div className="space-y-4 sm:space-y-6 order-first lg:order-none">
+          <div className="bg-[#13161E] rounded-xl border border-white/5 p-4 sm:p-6">
+            <h3 className="text-sm font-semibold text-white mb-3 sm:mb-4">Job Summary</h3>
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-3 text-sm">
               <div>
                 <label className="text-xs text-slate-500 block">Department</label>
-                <p className="text-white">{job.department}</p>
+                <p className="text-white truncate">{job.department}</p>
               </div>
               <div>
                 <label className="text-xs text-slate-500 block">Location</label>
-                <p className="text-white">{job.location}</p>
+                <p className="text-white truncate">{job.location}</p>
               </div>
               <div>
                 <label className="text-xs text-slate-500 block">Type</label>
-                <p className="text-white">{job.employmentType.replace("_", " ")}</p>
+                <p className="text-white truncate">{job.employmentType.replace("_", " ")}</p>
               </div>
               <div>
                 <label className="text-xs text-slate-500 block">Experience</label>
-                <p className="text-white">{job.experienceLevel}</p>
+                <p className="text-white truncate">{job.experienceLevel}</p>
               </div>
               {job.salaryRange && (
                 <div>
                   <label className="text-xs text-slate-500 block">Salary</label>
-                  <p className="text-white">{job.salaryRange}</p>
+                  <p className="text-white truncate">{job.salaryRange}</p>
                 </div>
               )}
               <div>
@@ -520,15 +527,15 @@ export default function JobDetailPage() {
             </div>
           </div>
 
-          <div className="bg-[#13161E] rounded-xl border border-white/5 p-6 text-center">
-            <Globe className="w-8 h-8 text-violet-400 mx-auto mb-3" />
-            <h3 className="text-sm font-semibold text-white mb-2">Questions?</h3>
-            <p className="text-xs text-slate-400 mb-4">
+          <div className="bg-[#13161E] rounded-xl border border-white/5 p-4 sm:p-6 text-center">
+            <Globe className="w-7 h-7 sm:w-8 sm:h-8 text-violet-400 mx-auto mb-2 sm:mb-3" />
+            <h3 className="text-sm font-semibold text-white mb-1 sm:mb-2">Questions?</h3>
+            <p className="text-xs text-slate-400 mb-3 sm:mb-4">
               Have questions about this role or our company culture?
             </p>
             <a
               href="mailto:careers@fluenzyai.app"
-              className="text-sm text-violet-400 hover:text-violet-300 transition-colors"
+              className="text-sm text-violet-400 hover:text-violet-300 active:text-violet-500 transition-colors break-all"
             >
               careers@fluenzyai.app
             </a>
@@ -539,18 +546,18 @@ export default function JobDetailPage() {
       {/* Application Form Modal */}
       <AnimatePresence>
         {showApplicationForm && (
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-[#13161E] border border-white/10 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="bg-[#13161E] border-t sm:border border-white/10 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto"
             >
-              <div className="p-6 border-b border-white/5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h2 className="text-lg font-semibold text-white">Apply for this Role</h2>
-                    <p className="text-sm text-slate-400 mt-0.5">
+              <div className="sticky top-0 z-10 p-4 sm:p-6 border-b border-white/5 bg-[#13161E]">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-base sm:text-lg font-semibold text-white">Apply for this Role</h2>
+                    <p className="text-sm text-slate-400 mt-0.5 truncate">
                       {job.title} • {job.department}
                     </p>
                   </div>
@@ -559,20 +566,20 @@ export default function JobDetailPage() {
                       setShowApplicationForm(false);
                       router.push('/candidates/dashboard');
                     }}
-                    className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 transition-colors"
+                    className="p-2 rounded-lg text-slate-500 hover:text-white hover:bg-white/5 active:bg-white/10 transition-colors flex-shrink-0"
                   >
                     ✕
                   </button>
                 </div>
               </div>
 
-              <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5 sm:space-y-6">
                 {/* Personal Information */}
                 <div>
-                  <h3 className="text-sm font-semibold text-white mb-4">Personal Information</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <h3 className="text-sm font-semibold text-white mb-3 sm:mb-4">Personal Information</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                     <div>
-                      <label className="text-xs text-slate-400 block mb-2">
+                      <label className="text-xs text-slate-400 block mb-1.5 sm:mb-2">
                         Full Name <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -581,11 +588,11 @@ export default function JobDetailPage() {
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         required
                         placeholder="Enter your full name"
-                        className="w-full bg-[#0A0C10] border border-white/5 text-white rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50"
+                        className="w-full bg-[#0A0C10] border border-white/5 text-white rounded-xl px-3 sm:px-4 py-2.5 text-sm placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
                       />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-400 block mb-2">
+                      <label className="text-xs text-slate-400 block mb-1.5 sm:mb-2">
                         Email Address <span className="text-red-400">*</span>
                       </label>
                       <input
@@ -594,7 +601,7 @@ export default function JobDetailPage() {
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                         required
                         placeholder="your.email@example.com"
-                        className="w-full bg-[#0A0C10] border border-white/5 text-white rounded-xl px-4 py-2.5 text-sm placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50"
+                        className="w-full bg-[#0A0C10] border border-white/5 text-white rounded-xl px-3 sm:px-4 py-2.5 text-sm placeholder:text-slate-600 focus:outline-none focus:border-violet-500/50 transition-colors"
                       />
                     </div>
                     <div>

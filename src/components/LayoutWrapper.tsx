@@ -180,6 +180,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isSuperAdminPage = pathname.startsWith('/superadmin');
   const isCollegePage = pathname.startsWith('/college');
   const isPortalPage = pathname.startsWith('/portal');
+  const isCandidatePage = pathname.startsWith('/candidates');
+
+  // ── Candidate Portal: completely separate layout (has its own CandidatePortalLayout) ──
+  if (isCandidatePage) {
+    return <>{children}</>;
+  }
 
   // ── Super Admin: completely separate clean layout ──────────────────────────
   if (isSuperAdminPage) {

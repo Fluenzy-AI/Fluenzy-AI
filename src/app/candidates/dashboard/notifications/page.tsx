@@ -88,19 +88,19 @@ export default function NotificationsPage() {
 
   if (loading) {
     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="h-10 bg-white/5 rounded-xl w-48" />
-        <div className="h-96 bg-white/5 rounded-xl" />
+      <div className="space-y-4 sm:space-y-6 animate-pulse">
+        <div className="h-8 sm:h-10 bg-white/5 rounded-xl w-36 sm:w-48" />
+        <div className="h-72 sm:h-96 bg-white/5 rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Notifications</h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-white">Notifications</h1>
           <p className="text-slate-400 text-sm mt-1">
             {unreadCount > 0 ? `${unreadCount} unread notifications` : "All caught up!"}
           </p>
@@ -108,7 +108,7 @@ export default function NotificationsPage() {
         {unreadCount > 0 && (
           <button
             onClick={markAllAsRead}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-violet-400 hover:bg-violet-500/10 transition-colors"
+            className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-violet-400 hover:bg-violet-500/10 active:bg-violet-500/20 transition-colors w-full sm:w-auto"
           >
             <CheckCheck className="w-4 h-4" />
             Mark all read
@@ -119,12 +119,12 @@ export default function NotificationsPage() {
       {/* Notifications List */}
       <div className="bg-[#13161E] rounded-xl border border-white/5 overflow-hidden">
         {notifications.length === 0 ? (
-          <div className="p-12 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-violet-500/10 flex items-center justify-center">
-              <Bell className="w-8 h-8 text-violet-400" />
+          <div className="p-8 sm:p-12 text-center">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-4 rounded-full bg-violet-500/10 flex items-center justify-center">
+              <Bell className="w-7 h-7 sm:w-8 sm:h-8 text-violet-400" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No notifications</h3>
-            <p className="text-sm text-slate-400">
+            <h3 className="text-base sm:text-lg font-semibold text-white mb-2">No notifications</h3>
+            <p className="text-sm text-slate-400 max-w-sm mx-auto">
               When there are updates on your applications, you'll see them here
             </p>
           </div>
@@ -140,18 +140,18 @@ export default function NotificationsPage() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.03 }}
-                  className={`p-4 hover:bg-white/[0.02] transition-colors ${
+                  className={`p-3 sm:p-4 hover:bg-white/[0.02] active:bg-white/[0.04] transition-colors ${
                     !notification.read ? "bg-violet-500/5" : ""
                   }`}
                 >
-                  <div className="flex items-start gap-4">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${config.bgColor}`}>
-                      <Icon className={`w-5 h-5 ${config.color}`} />
+                  <div className="flex items-start gap-3 sm:gap-4">
+                    <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center flex-shrink-0 ${config.bgColor}`}>
+                      <Icon className={`w-4 h-4 sm:w-5 sm:h-5 ${config.color}`} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className={`text-sm font-medium ${notification.read ? "text-slate-300" : "text-white"}`}>
+                        <div className="min-w-0 flex-1">
+                          <p className={`text-sm font-medium truncate ${notification.read ? "text-slate-300" : "text-white"}`}>
                             {notification.title}
                           </p>
                           <p className="text-sm text-slate-500 mt-0.5 line-clamp-2">
@@ -159,11 +159,11 @@ export default function NotificationsPage() {
                           </p>
                         </div>
                         {!notification.read && (
-                          <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0 mt-2" />
+                          <span className="w-2 h-2 rounded-full bg-violet-500 flex-shrink-0 mt-1.5" />
                         )}
                       </div>
-                      <div className="flex items-center gap-3 mt-3">
-                        <span className="text-xs text-slate-600">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 sm:mt-3">
+                        <span className="text-[10px] sm:text-xs text-slate-600">
                           {new Date(notification.createdAt).toLocaleDateString("en-IN", {
                             month: "short",
                             day: "numeric",
@@ -174,7 +174,7 @@ export default function NotificationsPage() {
                         {notification.linkUrl && (
                           <Link
                             href={notification.linkUrl}
-                            className="text-xs text-violet-400 hover:text-violet-300 transition-colors flex items-center gap-1"
+                            className="text-[10px] sm:text-xs text-violet-400 hover:text-violet-300 active:text-violet-500 transition-colors flex items-center gap-1"
                           >
                             View
                             <ChevronRight className="w-3 h-3" />
@@ -183,7 +183,7 @@ export default function NotificationsPage() {
                         {!notification.read && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="text-xs text-slate-500 hover:text-white transition-colors flex items-center gap-1"
+                            className="text-[10px] sm:text-xs text-slate-500 hover:text-white active:text-slate-300 transition-colors flex items-center gap-1"
                           >
                             <Check className="w-3 h-3" />
                             Mark read
@@ -191,7 +191,7 @@ export default function NotificationsPage() {
                         )}
                         <button
                           onClick={() => deleteNotification(notification.id)}
-                          className="text-xs text-slate-600 hover:text-red-400 transition-colors flex items-center gap-1 ml-auto"
+                          className="text-[10px] sm:text-xs text-slate-600 hover:text-red-400 active:text-red-500 transition-colors flex items-center gap-1 ml-auto"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
