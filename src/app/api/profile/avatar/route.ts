@@ -2,15 +2,23 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
-import { mkdir, writeFile } from "fs/promises";
-import path from "path";
+import { uploadToR2, getPublicUrl, deleteFromR2 } from "@/lib/r2-service";
+import { v4 as uuidv4 } from "uuid";
 
 export const runtime = "nodejs";
 
 const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
 
-const sanitizeFileName = (name: string) => name.replace(/[^a-z0-9._-]/gi, "_");
+const getExtension = (mimeType: string): string => {
+  const map: Record<string, string> = {
+    "image/png": "png",
+    "image/jpeg": "jpg",
+    "image/jpg": "jpg",
+    "image/webp": "webp",
+  };
+  return map[mimeType] || "jpg";
+};
 
 export async function POST(request: Request) {
   try {
@@ -42,26 +50,44 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "File size must be under 3MB" }, { status: 400 });
     }
 
-    const safeName = sanitizeFileName(file.name || "avatar");
-    const uniqueName = `${Date.now()}-${safeName}`;
-    const uploadDir = path.join(process.cwd(), "public", "uploads", "avatars", user.id.toString());
+    // Build unique file key for R2
+    const ext = getExtension(file.type);
+    const fileKey = `avatars/${user.id}/${uuidv4()}.${ext}`;
 
-    await mkdir(uploadDir, { recursive: true });
-
+    // Upload to R2
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filePath = path.join(uploadDir, uniqueName);
-    await writeFile(filePath, buffer);
+    await uploadToR2(fileKey, buffer, file.type);
 
-    const fileUrl = `/uploads/avatars/${user.id}/${uniqueName}`;
+    // Get public CDN URL
+    const cdnUrl = getPublicUrl(fileKey);
+    if (!cdnUrl) {
+      throw new Error("Failed to generate CDN URL");
+    }
 
+    // Delete old avatar from R2 if it exists and is an R2 URL
+    const oldAvatar = user.avatar;
+    if (oldAvatar && oldAvatar.includes("cdn.fluenzyai.app")) {
+      try {
+        // Extract key from CDN URL: https://cdn.fluenzyai.app/avatars/... -> avatars/...
+        const oldKey = oldAvatar.replace("https://cdn.fluenzyai.app/", "");
+        await deleteFromR2(oldKey);
+        console.log("[Avatar] Deleted old avatar:", oldKey);
+      } catch (e) {
+        console.warn("[Avatar] Failed to delete old avatar (may not exist):", e);
+      }
+    }
+
+    // Update database with new CDN URL
     await prisma.users.update({
       where: { id: user.id },
-      data: { avatar: fileUrl },
+      data: { avatar: cdnUrl },
     });
+
+    console.log(`[Avatar] Uploaded for user ${user.id}: ${cdnUrl}`);
 
     return NextResponse.json({
       success: true,
-      imageUrl: fileUrl,
+      imageUrl: cdnUrl,
     });
   } catch (error) {
     console.error("Avatar upload error:", error);

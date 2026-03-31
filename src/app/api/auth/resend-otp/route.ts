@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendOTPEmail } from "@/lib/brevo-mail";
+import { buildOtpEmailTemplate } from "@/lib/email-templates";
 
 const OTP_EXPIRY_MINUTES = 5;
 
@@ -66,7 +67,12 @@ export async function POST(req: NextRequest) {
     await sendOTPEmail({
       to: email,
       subject: "Fluenzy AI – New Verification Code",
-      html: buildOtpEmail(firstName, otp, OTP_EXPIRY_MINUTES),
+      html: buildOtpEmailTemplate({
+        name: firstName,
+        otp,
+        expiryMinutes: OTP_EXPIRY_MINUTES,
+        type: "signup",
+      }),
     });
 
     return NextResponse.json({ success: true, message: "New OTP sent successfully." });
@@ -74,36 +80,4 @@ export async function POST(req: NextRequest) {
     console.error("[resend-otp] Error:", error);
     return NextResponse.json({ error: "Failed to resend OTP." }, { status: 500 });
   }
-}
-
-function buildOtpEmail(name: string, otp: string, expiryMinutes: number): string {
-  const digitBoxes = otp
-    .split("")
-    .map(
-      (d) =>
-        `<span style="display:inline-block;width:48px;height:56px;line-height:56px;text-align:center;font-size:28px;font-weight:700;background:#1e1b4b;border:2px solid #7c3aed;border-radius:10px;color:#c4b5fd;margin:0 4px;">${d}</span>`
-    )
-    .join("");
-
-  return `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#0f0a1e;font-family:Arial,sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0f0a1e;padding:40px 16px;">
-    <tr><td align="center">
-      <table width="100%" style="max-width:520px;background:linear-gradient(135deg,#1a1035,#0d0a2e);border-radius:20px;border:1px solid rgba(124,58,237,0.3);overflow:hidden;">
-        <tr><td style="background:linear-gradient(135deg,#7c3aed,#4f46e5);padding:28px 40px;text-align:center;">
-          <p style="margin:0;font-size:26px;font-weight:800;color:#fff;">Fluenzy AI</p>
-          <p style="margin:6px 0 0;font-size:13px;color:rgba(255,255,255,0.75);">New Verification Code</p>
-        </td></tr>
-        <tr><td style="padding:36px 40px;">
-          <p style="margin:0 0 8px;font-size:20px;font-weight:700;color:#e2e8f0;">Hey ${name} 👋</p>
-          <p style="margin:0 0 24px;font-size:14px;color:#94a3b8;">Here's your new verification code:</p>
-          <div style="text-align:center;margin:0 0 24px;">${digitBoxes}</div>
-          <p style="margin:0;text-align:center;font-size:13px;color:#94a3b8;">Expires in <strong style="color:#c4b5fd;">${expiryMinutes} minutes</strong></p>
-        </td></tr>
-        <tr><td style="padding:16px 40px 28px;border-top:1px solid rgba(255,255,255,0.06);text-align:center;">
-          <p style="margin:0;font-size:12px;color:#475569;">© 2026 Fluenzy AI</p>
-        </td></tr>
-      </table>
-    </td></tr>
-  </table>
-</body></html>`;
 }

@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "www.fluenzyai.app",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.fluenzyai.app",
+      },
     ],
   },
   poweredByHeader: false,

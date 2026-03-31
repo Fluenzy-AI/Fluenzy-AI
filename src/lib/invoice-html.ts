@@ -151,7 +151,7 @@ export function buildInvoiceHtml(
     .container { padding: 20px 24px; }
     .header { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:12px; border-bottom:2px solid #e2e8f0; }
     .logo { display:flex; align-items:center; gap:12px; }
-    .logo-badge { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#4f46e5,#7c3aed); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:20px; line-height:44px; text-align:center; }
+    .logo-badge { width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg,#4f46e5,#7c3aed); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:20px; line-height:44px; text-align:center; object-fit:contain; }
     .company h1 { font-size:18pt; margin:0 0 2px; }
     .company p { margin:2px 0; color:#475569; font-size:9.5pt; }
     .doc-type { text-align:right; }
@@ -177,7 +177,7 @@ export function buildInvoiceHtml(
 <div class="container">
   <div class="header">
     <div class="logo">
-      <div class="logo-badge">F</div>
+      <img src="https://cdn.fluenzyai.app/email/fluenzy-logo.png" alt="Fluenzy AI" class="logo-badge" onerror="this.outerHTML='<div class=\\'logo-badge\\'>F</div>'"/>
       <div class="company">
         <h1>Fluenzy AI</h1>
         <p>AI Interview &amp; Communication Coach</p>

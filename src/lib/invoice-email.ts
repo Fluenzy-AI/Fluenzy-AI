@@ -11,7 +11,8 @@
 
 import prisma from "@/lib/prisma";
 import { htmlToPdf } from "@/lib/pdf-browser";
-import { buildInvoiceHtml, buildInvoiceEmailBody, titleCase } from "@/lib/invoice-html";
+import { buildInvoiceHtml, titleCase } from "@/lib/invoice-html";
+import { buildInvoiceEmailTemplate } from "@/lib/email-templates";
 import { sendBillingEmail } from "@/lib/brevo-mail";
 
 export async function autoSendInvoiceEmail(
@@ -68,7 +69,7 @@ export async function autoSendInvoiceEmail(
   const result = await sendBillingEmail({
     to: user.email,
     subject: `Your Fluenzy AI Invoice – ${invoiceNumber}`,
-    html: buildInvoiceEmailBody({
+    html: buildInvoiceEmailTemplate({
       userName: user.name,
       invoiceNumber,
       plan: payment.plan,
