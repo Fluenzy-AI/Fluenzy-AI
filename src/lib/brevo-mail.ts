@@ -89,9 +89,17 @@ function getBrevoTransporter(): Transporter {
       user: process.env.SMTP_USER!,
       pass: process.env.SMTP_PASS!,
     },
-    // Enable debug logging in production
-    logger: process.env.NODE_ENV === "production",
-    debug: process.env.NODE_ENV === "production",
+    // Timeouts to prevent hanging
+    connectionTimeout: 30000, // 30 seconds to connect
+    greetingTimeout: 30000, // 30 seconds for greeting
+    socketTimeout: 60000, // 60 seconds for socket
+    // TLS settings
+    tls: {
+      rejectUnauthorized: false, // Allow self-signed certs
+    },
+    // Enable debug logging
+    logger: true,
+    debug: true,
   });
 
   console.log("[BREVO] SMTP transporter created ✓");
