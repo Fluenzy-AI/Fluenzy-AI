@@ -1,14 +1,13 @@
 /**
- * Centralized Brevo Email Service
+ * Centralized Brevo Email Service (API Version)
  * 
- * Single SMTP configuration using Brevo for all email operations.
- * Replaces multiple Gmail-based configurations with domain-based senders.
+ * Uses Brevo's Transactional Email API instead of SMTP.
+ * More reliable on cloud platforms like Render that may block SMTP ports.
  * 
  * @module brevo-mail
  */
 
-import nodemailer from "nodemailer";
-import type { Transporter, SendMailOptions } from "nodemailer";
+import { BrevoClient } from "@getbrevo/brevo";
 
 /**
  * Email context types - determines which sender address to use
@@ -50,148 +49,112 @@ export interface EmailResult {
   error?: string;
 }
 
-/**
- * Brevo SMTP configuration validator
- */
-function validateBrevoConfig(): void {
-  const required = ["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASS"];
-  const missing = required.filter((key) => !process.env[key]);
+// ── Brevo Client Instance (singleton) ─────────────────────────────────────────────
+let _client: BrevoClient | null = null;
 
-  if (missing.length > 0) {
-    throw new Error(
-      `[BREVO] Missing required environment variables: ${missing.join(", ")}`
-    );
+function getBrevoClient(): BrevoClient {
+  if (_client) {
+    return _client;
   }
 
-  console.log("[BREVO] Configuration validated ✓");
-  console.log(`[BREVO] Host: ${process.env.SMTP_HOST}`);
-  console.log(`[BREVO] Port: ${process.env.SMTP_PORT}`);
-  console.log(`[BREVO] User: ${process.env.SMTP_USER}`);
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) {
+    throw new Error("[BREVO] Missing BREVO_API_KEY environment variable");
+  }
+
+  _client = new BrevoClient({ apiKey });
+  console.log("[BREVO-API] Client initialized ✓");
+  return _client;
 }
 
 /**
- * Create single Brevo SMTP transporter (singleton pattern)
+ * Map email context to sender info
  */
-let _transporter: Transporter | null = null;
-
-function getBrevoTransporter(): Transporter {
-  if (_transporter) {
-    return _transporter;
-  }
-
-  validateBrevoConfig();
-
-  _transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST!,
-    port: parseInt(process.env.SMTP_PORT!, 10),
-    secure: false, // Use STARTTLS on port 587
-    auth: {
-      user: process.env.SMTP_USER!,
-      pass: process.env.SMTP_PASS!,
-    },
-    // Timeouts to prevent hanging
-    connectionTimeout: 30000, // 30 seconds to connect
-    greetingTimeout: 30000, // 30 seconds for greeting
-    socketTimeout: 60000, // 60 seconds for socket
-    // TLS settings
-    tls: {
-      rejectUnauthorized: false, // Allow self-signed certs
-    },
-    // Enable debug logging
-    logger: true,
-    debug: true,
-  });
-
-  console.log("[BREVO] SMTP transporter created ✓");
-  return _transporter;
-}
-
-/**
- * Map email context to sender address
- */
-function getSenderAddress(context: EmailContext): string {
-  const contextMap: Record<EmailContext, string> = {
-    DEFAULT: process.env.DEFAULT_FROM || "noreply@fluenzyai.app",
-    OTP: process.env.OTP_FROM || "otp@fluenzyai.app",
-    CERTIFICATE: process.env.CERT_FROM || "certificates@fluenzyai.app",
-    HR: process.env.HR_FROM || "hr@fluenzyai.app",
-    BILLING: process.env.BILLING_FROM || "billing@fluenzyai.app",
-    ASSESSMENT: process.env.ASSESSMENT_FROM || "assessments@fluenzyai.app",
-    ADMIN: process.env.ADMIN_FROM || "admin@fluenzyai.app",
+function getSenderInfo(context: EmailContext): { name: string; email: string } {
+  const senderMap: Record<EmailContext, { name: string; email: string }> = {
+    DEFAULT: { name: "Fluenzy AI", email: process.env.DEFAULT_FROM || "noreply@fluenzyai.app" },
+    OTP: { name: "Fluenzy AI Security", email: process.env.OTP_FROM || "otp@fluenzyai.app" },
+    CERTIFICATE: { name: "Fluenzy AI Certificates", email: process.env.CERT_FROM || "certificates@fluenzyai.app" },
+    HR: { name: "Fluenzy AI HR", email: process.env.HR_FROM || "hr@fluenzyai.app" },
+    BILLING: { name: "Fluenzy AI Billing", email: process.env.BILLING_FROM || "billing@fluenzyai.app" },
+    ASSESSMENT: { name: "Fluenzy AI Assessments", email: process.env.ASSESSMENT_FROM || "assessments@fluenzyai.app" },
+    ADMIN: { name: "Fluenzy AI Admin", email: process.env.ADMIN_FROM || "admin@fluenzyai.app" },
   };
 
-  const sender = contextMap[context];
-  console.log(`[BREVO] Using sender for ${context}: ${sender}`);
+  const sender = senderMap[context];
+  console.log(`[BREVO-API] Using sender: ${sender.name} <${sender.email}>`);
   return sender;
 }
 
 /**
- * Get display name for sender context
+ * Send email using Brevo API
  */
-function getDisplayName(context: EmailContext): string {
-  const displayMap: Record<EmailContext, string> = {
-    DEFAULT: "Fluenzy AI",
-    OTP: "Fluenzy AI Security",
-    CERTIFICATE: "Fluenzy AI Certificates",
-    HR: "Fluenzy AI HR",
-    BILLING: "Fluenzy AI Billing",
-    ASSESSMENT: "Fluenzy AI Assessments",
-    ADMIN: "Fluenzy AI Admin",
-  };
-
-  return displayMap[context];
-}
-
-/**
- * Send email using Brevo SMTP
- * 
- * @param options - Email options with context
- * @returns Promise with send result
- */
-export async function sendBrevoEmail(
-  options: BrevoEmailOptions
-): Promise<EmailResult> {
+export async function sendBrevoEmail(options: BrevoEmailOptions): Promise<EmailResult> {
   const { context, to, subject, html, text, attachments, cc, bcc } = options;
 
   try {
-    const transporter = getBrevoTransporter();
-    const senderEmail = getSenderAddress(context);
-    const displayName = getDisplayName(context);
+    const client = getBrevoClient();
+    const sender = getSenderInfo(context);
 
-    console.log(`[BREVO-${context}] Preparing email...`);
-    console.log(`[BREVO-${context}] To: ${Array.isArray(to) ? to.join(", ") : to}`);
-    console.log(`[BREVO-${context}] Subject: ${subject}`);
+    // Build recipient list
+    const toList = Array.isArray(to) ? to.map(email => ({ email })) : [{ email: to }];
+    
+    console.log(`[BREVO-API] Sending ${context} email...`);
+    console.log(`[BREVO-API] To: ${toList.map(r => r.email).join(", ")}`);
+    console.log(`[BREVO-API] Subject: ${subject}`);
 
-    const mailOptions: SendMailOptions = {
-      from: `"${displayName}" <${senderEmail}>`,
-      to,
+    // Build email request
+    const emailRequest: Parameters<typeof client.transactionalEmails.sendTransacEmail>[0] = {
+      sender,
+      to: toList,
       subject,
-      html,
-      text,
-      attachments,
-      cc,
-      bcc,
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    if (html) emailRequest.htmlContent = html;
+    if (text) emailRequest.textContent = text;
+    
+    // Handle CC
+    if (cc) {
+      emailRequest.cc = Array.isArray(cc) ? cc.map(email => ({ email })) : [{ email: cc }];
+    }
+    
+    // Handle BCC
+    if (bcc) {
+      emailRequest.bcc = Array.isArray(bcc) ? bcc.map(email => ({ email })) : [{ email: bcc }];
+    }
 
-    console.log(`[BREVO-${context}] ✅ Email sent successfully`);
-    console.log(`[BREVO-${context}] Message ID: ${info.messageId}`);
-    console.log(`[BREVO-${context}] Response: ${info.response}`);
+    // Handle attachments
+    if (attachments && attachments.length > 0) {
+      emailRequest.attachment = attachments.map(att => {
+        const content = att.content 
+          ? (Buffer.isBuffer(att.content) 
+              ? att.content.toString("base64") 
+              : Buffer.from(att.content).toString("base64"))
+          : undefined;
+        return {
+          name: att.filename,
+          content,
+        };
+      });
+    }
+
+    // Send email
+    const response = await client.transactionalEmails.sendTransacEmail(emailRequest);
+    
+    console.log(`[BREVO-API] ✅ Email sent successfully`);
+    console.log(`[BREVO-API] Message ID: ${response.messageId || "N/A"}`);
 
     return {
       success: true,
-      messageId: info.messageId,
+      messageId: response.messageId,
     };
   } catch (error: any) {
-    console.error(`[BREVO-${context}] ❌ Failed to send email`);
-    console.error(`[BREVO-${context}] Error:`, error?.message || error);
-    console.error(`[BREVO-${context}] Code:`, error?.code);
-    console.error(`[BREVO-${context}] Command:`, error?.command);
-
+    console.error(`[BREVO-API] ❌ Failed to send email`);
+    console.error(`[BREVO-API] Error:`, error?.body || error?.message || error);
+    
     return {
       success: false,
-      error: error?.message || "Failed to send email",
+      error: error?.body?.message || error?.message || "Failed to send email",
     };
   }
 }
@@ -339,6 +302,6 @@ export async function sendBulkEmails(
     }
   }
 
-  console.log(`[BREVO-BULK] Sent: ${sent}, Failed: ${failed}`);
+  console.log(`[BREVO-API-BULK] Sent: ${sent}, Failed: ${failed}`);
   return { sent, failed, errors };
 }
