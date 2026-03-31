@@ -18,6 +18,7 @@ import { Role } from "@prisma/client";
 import LatestTopicTab from "@/components/LatestTopicTab";
 import EmailManagement from "@/components/EmailManagement";
 import SuperAdminNotifications from "@/components/SuperAdminNotifications";
+import MarketingDashboard from "@/components/MarketingDashboard";
 
 interface Analytics {
   totalUsers: number;
@@ -647,6 +648,7 @@ export default function SuperAdminDashboard() {
     { key: 'college-partners', label: 'College Partners', icon: '🏫' },
     { key: 'college-coupons', label: 'College Coupons', icon: '🎟️' },
     { key: 'portal-staff',    label: 'Portal Staff',    icon: '🏢' },
+    { key: 'marketing',       label: 'Marketing',       icon: '📢' },
   ];
 
   if (status === "loading") return <div>Loading...</div>;
@@ -1966,6 +1968,11 @@ export default function SuperAdminDashboard() {
               </div>
             )}
           </div>
+        )}
+
+        {/* Marketing Section */}
+        {activeSection === 'marketing' && (
+          <MarketingDashboard />
         )}
 
       </div>

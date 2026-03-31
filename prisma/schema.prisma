@@ -15,6 +15,7 @@ enum Role {
   COLLEGE_ADMIN
   PORTAL_ADMIN
   PORTAL_HR
+  MARKETING_ADMIN
 }
 
 // ─── Portal Staff Role ────────────────────────────────────────────────────
@@ -2150,4 +2151,307 @@ model FileRecord {
   @@index([fileKey])
   @@index([userId, fileType, isDeleted])  // Optimized for user file queries
   @@index([isPublic, isDeleted])          // Optimized for public file queries
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Marketing & Communication System (Super Admin)
+// ──────────────────────────────────────────────────────────────────────────────
+
+enum MarketingSenderType {
+  news
+  contact
+  careers
+  support
+}
+
+enum CampaignStatus {
+  draft
+  scheduled
+  sending
+  sent
+  paused
+  cancelled
+}
+
+enum MarketingEmailStatus {
+  queued
+  sent
+  delivered
+  opened
+  clicked
+  bounced
+  unsubscribed
+  failed
+}
+
+enum TriggerConditionType {
+  quick_submit
+  incomplete_module
+  inactive
+  upgrade
+  low_score
+  completion
+  new_signup
+  plan_upgrade
+  plan_downgrade
+}
+
+// Marketing Admin Staff (separate from Portal Staff)
+model MarketingAdmin {
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  email           String   @unique
+  password        String   // bcrypt hashed
+  status          String   @default("ACTIVE") // ACTIVE | INACTIVE | SUSPENDED
+  
+  // Permissions
+  permissions     Json?    // { canCreateCampaigns: true, canManageSegments: true, ... }
+  
+  // Security
+  loginAttempts   Int      @default(0)
+  lockedUntil     DateTime?
+  lastLoginAt     DateTime?
+  lastLoginIp     String?
+  
+  // Created by Super Admin
+  createdBy       String   @db.ObjectId
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  campaigns       MarketingCampaign[]
+
+  @@index([status])
+}
+
+// Email Marketing Campaign
+model MarketingCampaign {
+  id                String            @id @default(auto()) @map("_id") @db.ObjectId
+  name              String
+  subject           String
+  bodyHtml          String
+  bodyText          String?
+  
+  // Sender config
+  senderType        MarketingSenderType
+  
+  // Status & scheduling
+  status            CampaignStatus    @default(draft)
+  scheduledAt       DateTime?
+  sentAt            DateTime?
+  pausedAt          DateTime?
+  
+  // Targeting
+  segmentFilters    Json?             // { rules: [{ type: "inactive", params: { days: 7 } }] }
+  segmentIds        String[]          // Array of segment IDs if using saved segments
+  
+  // Stats
+  totalRecipients   Int               @default(0)
+  totalSent         Int               @default(0)
+  totalDelivered    Int               @default(0)
+  totalOpened       Int               @default(0)
+  totalClicked      Int               @default(0)
+  totalBounced      Int               @default(0)
+  totalUnsubscribed Int               @default(0)
+  totalFailed       Int               @default(0)
+  
+  // AI generated
+  isAiGenerated     Boolean           @default(false)
+  aiPrompt          String?
+  aiTone            String?
+  
+  // Created by
+  createdById       String?           @db.ObjectId
+  createdBy         MarketingAdmin?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdByEmail    String            // Fallback to track creator
+  
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  emailLogs         MarketingEmailLog[]
+
+  @@index([status])
+  @@index([senderType])
+  @@index([createdAt])
+  @@index([scheduledAt])
+}
+
+// Email Log for Marketing Emails
+model MarketingEmailLog {
+  id              String                @id @default(auto()) @map("_id") @db.ObjectId
+  campaignId      String?               @db.ObjectId
+  campaign        MarketingCampaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  
+  // User info
+  userId          String                @db.ObjectId
+  recipientEmail  String
+  recipientName   String?
+  
+  // Email info
+  senderEmail     String
+  subject         String
+  
+  // Status tracking
+  status          MarketingEmailStatus  @default(queued)
+  messageId       String?               // From email provider (Brevo/Resend)
+  
+  // Tracking timestamps
+  queuedAt        DateTime              @default(now())
+  sentAt          DateTime?
+  deliveredAt     DateTime?
+  openedAt        DateTime?
+  clickedAt       DateTime?
+  bouncedAt       DateTime?
+  unsubscribedAt  DateTime?
+  
+  // Error handling
+  bounceReason    String?
+  failureReason   String?
+  retryCount      Int                   @default(0)
+  
+  // Trigger info (if automation-triggered)
+  triggerId       String?               @db.ObjectId
+  triggerName     String?
+  
+  // Metadata
+  metadata        Json?                 // { browser, device, location, etc. }
+  
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  @@index([campaignId])
+  @@index([userId])
+  @@index([recipientEmail])
+  @@index([status])
+  @@index([createdAt])
+  @@index([sentAt])
+  @@index([messageId])
+}
+
+// User Segment (for targeting)
+model UserSegment {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String?
+  
+  // Filter rules (JSON for flexibility)
+  filterRules     Json      // { conditions: [{ field: "plan", operator: "eq", value: "Free" }], logic: "AND" }
+  
+  // Dynamic stats
+  userCount       Int       @default(0)
+  lastSyncedAt    DateTime?
+  
+  // Ownership
+  createdBy       String    // Admin email
+  isSystem        Boolean   @default(false) // System-created segments (e.g., "All Users")
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([name])
+  @@index([isSystem])
+}
+
+// Automation Trigger
+model AutomationTrigger {
+  id              String              @id @default(auto()) @map("_id") @db.ObjectId
+  name            String
+  description     String?
+  
+  // Trigger condition
+  conditionType   TriggerConditionType
+  conditionParams Json?               // { threshold: 0.5, days: 7, maxSeconds: 60 }
+  
+  // Email config
+  senderType      MarketingSenderType
+  emailSubject    String
+  emailBodyHtml   String
+  emailBodyText   String?
+  
+  // Settings
+  isActive        Boolean             @default(false)
+  cooldownHours   Int                 @default(24) // Min hours between triggers per user
+  
+  // Stats
+  totalFired      Int                 @default(0)
+  lastFiredAt     DateTime?
+  
+  // Created by
+  createdBy       String              // Admin email
+  
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  // Track which users received this trigger
+  firedLogs       TriggerFiredLog[]
+
+  @@index([conditionType])
+  @@index([isActive])
+}
+
+// Track when triggers fire for users
+model TriggerFiredLog {
+  id              String            @id @default(auto()) @map("_id") @db.ObjectId
+  triggerId       String            @db.ObjectId
+  trigger         AutomationTrigger @relation(fields: [triggerId], references: [id], onDelete: Cascade)
+  userId          String            @db.ObjectId
+  
+  firedAt         DateTime          @default(now())
+  emailLogId      String?           @db.ObjectId // Reference to MarketingEmailLog
+  
+  // Context at time of trigger
+  contextData     Json?             // { moduleProgress: 0.3, inactiveDays: 8, etc. }
+
+  @@index([triggerId])
+  @@index([userId])
+  @@index([firedAt])
+  @@unique([triggerId, userId, firedAt]) // Prevent duplicate fires
+}
+
+// Email Preferences (user-level unsubscribe)
+model EmailPreferences {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String    @unique @db.ObjectId
+  
+  // Global unsubscribe
+  unsubscribed    Boolean   @default(false)
+  unsubscribedAt  DateTime?
+  
+  // Category-specific preferences
+  categories      Json?     // { news: true, careers: false, support: true }
+  
+  // Consent tracking (GDPR)
+  consentGiven    Boolean   @default(true)
+  consentGivenAt  DateTime?
+  consentSource   String?   // "signup" | "preferences_page" | "email_link"
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([unsubscribed])
+}
+
+// Marketing Analytics Snapshot (daily aggregation)
+model MarketingAnalyticsDaily {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  date            DateTime  @unique // Date only (no time)
+  
+  // Email stats
+  emailsSent      Int       @default(0)
+  emailsDelivered Int       @default(0)
+  emailsOpened    Int       @default(0)
+  emailsClicked   Int       @default(0)
+  emailsBounced   Int       @default(0)
+  unsubscribes    Int       @default(0)
+  
+  // Derived metrics
+  openRate        Float     @default(0)
+  clickRate       Float     @default(0)
+  bounceRate      Float     @default(0)
+  unsubscribeRate Float     @default(0)
+  
+  // Campaign count
+  campaignsSent   Int       @default(0)
+  triggersFired   Int       @default(0)
+  
+  createdAt       DateTime  @default(now())
 }
