@@ -3,7 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { htmlToPdf } from "@/lib/pdf-browser";
-import { buildInvoiceHtml, buildInvoiceEmailBody } from "@/lib/invoice-html";
+import { buildInvoiceHtml } from "@/lib/invoice-html";
+import { buildInvoiceEmailTemplate } from "@/lib/email-templates";
 import { sendBillingEmail } from "@/lib/brevo-mail";
 
 export const runtime = "nodejs";
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
     const emailResult = await sendBillingEmail({
       to: user.email,
       subject: `Your Fluenzy AI Invoice - ${invoiceNumber}`,
-      html: buildInvoiceEmailBody({
+      html: buildInvoiceEmailTemplate({
         userName: user.name,
         invoiceNumber,
         plan: payment.plan,
