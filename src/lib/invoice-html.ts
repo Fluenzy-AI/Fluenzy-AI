@@ -6,6 +6,20 @@
  *  • auto-send after payment
  */
 
+import fs from "fs";
+import path from "path";
+
+// ─── Logo Base64 (embedded for PDF compatibility) ────────────────────────────
+function getLogoBase64(): string {
+  try {
+    const logoPath = path.join(process.cwd(), "public", "favicon", "white-removebg-preview1.png");
+    const buf = fs.readFileSync(logoPath);
+    return `data:image/png;base64,${buf.toString("base64")}`;
+  } catch {
+    return "";
+  }
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export const formatIst = (date: Date) =>
@@ -46,6 +60,7 @@ export function buildInvoiceHtml(
   payment: Record<string, unknown>,
   user: { name?: string | null; email: string; renewalDate?: Date | null }
 ): string {
+  const logoBase64 = getLogoBase64();
   const status      = (payment.status as string) || "paid";
   const statusStyle = STATUS_STYLES[status] || STATUS_STYLES.paid;
 
@@ -177,7 +192,7 @@ export function buildInvoiceHtml(
 <div class="container">
   <div class="header">
     <div class="logo">
-      <img src="https://cdn.fluenzyai.app/email/fluenzy-logo.png" alt="Fluenzy AI" class="logo-badge" onerror="this.outerHTML='<div class=\\'logo-badge\\'>F</div>'"/>
+      ${logoBase64 ? `<img src="${logoBase64}" alt="Fluenzy AI" class="logo-badge"/>` : `<div class="logo-badge">F</div>`}
       <div class="company">
         <h1>Fluenzy AI</h1>
         <p>AI Interview &amp; Communication Coach</p>

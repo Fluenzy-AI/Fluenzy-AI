@@ -1,20 +1,13 @@
 /**
  * Certificate PDF Generation Library
  * Generates professional certificates with QR codes and digital signatures
+ * 
+ * OPTIMIZED: Uses shared browser instance from pdf-browser.ts for fast PDF generation.
  */
 
-import puppeteer from "puppeteer-core";
-import chromium from "@sparticuz/chromium";
 import fs from "fs";
 import path from "path";
-
-// Try to require regular puppeteer as fallback for local development
-let puppeteerLocal: typeof puppeteer | null = null;
-try {
-  puppeteerLocal = require("puppeteer");
-} catch {
-  // puppeteer not available, will use puppeteer-core with chromium
-}
+import { getBrowser, scheduleBrowserClose } from "./pdf-browser";
 
 export interface CertificateData {
   certificateNumber: string;
@@ -2328,37 +2321,39 @@ export function buildCertificateHtml(data: CertificateData): string {
 
 /**
  * Generate Certificate PDF Buffer
+ * OPTIMIZED: Uses shared browser instance for fast generation
  */
 export async function generateCertificatePdfBuffer(data: CertificateData): Promise<Buffer> {
   const html = buildCertificateHtml(data);
-  let browser;
+  const startTime = Date.now();
+  
+  // Use shared browser instance (much faster than launching new browser each time)
+  const browser = await getBrowser();
+  let page = null;
+  
   try {
-    // Try to use local puppeteer first (development), fallback to chromium (production)
-    if (puppeteerLocal && process.env.NODE_ENV !== "production") {
-      browser = await puppeteerLocal.launch({
-        headless: true,
-        args: ["--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage", "--disable-gpu"],
-      });
-    } else {
-      browser = await puppeteer.launch({
-        args: [...chromium.args, "--no-sandbox", "--disable-setuid-sandbox"],
-        defaultViewport: { width: 1920, height: 1080 },
-        executablePath: await chromium.executablePath(),
-        headless: true,
-      });
-    }
+    page = await browser.newPage();
+    page.setDefaultTimeout(15000);
     
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
+    // Use domcontentloaded for faster rendering
+    await page.setContent(html, { waitUntil: "domcontentloaded" });
+    
+    // Small delay for CSS and QR code to render
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
     const pdfBuffer = await page.pdf({
       format: "A4",
       printBackground: true,
       margin: { top: "0", right: "0", bottom: "0", left: "0" },
     });
-    await browser.close();
+    
+    console.log(`[CERT-PDF] Generated in ${Date.now() - startTime}ms`);
     return Buffer.from(pdfBuffer);
-  } catch (err) {
-    if (browser) await browser.close().catch(() => {});
-    throw err;
+  } finally {
+    // Close page but keep browser running for next request
+    if (page) {
+      try { await page.close(); } catch {}
+    }
+    scheduleBrowserClose();
   }
 }

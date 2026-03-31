@@ -120,28 +120,26 @@ export async function POST(req: NextRequest) {
           const pdfBuffer = await generateOfferPdfBuffer(pdfData);
           const fileName = `OfferLetter_${recipientName.replace(/\s+/g, "_")}_${offerLetter.id.slice(-6)}.pdf`;
 
-          const emailHtml = `
-<div style="font-family:sans-serif;max-width:600px;margin:0 auto;">
-  <h2 style="color:#4f46e5;">Fluenzy AI &mdash; Offer Letter</h2>
-  <p>Dear <strong>${recipientName}</strong>,</p>
-  <p>We are delighted to offer you the position of <strong>${rest.position}</strong> at <strong>Fluenzy AI</strong>.</p>
-  <p>Please find your official offer letter attached to this email as a PDF.</p>
-  <table style="background:#f5f3ff;border-radius:8px;padding:16px 20px;margin:16px 0;border-left:4px solid #4f46e5;">
-    <tr><td style="padding:4px 0;"><strong>Position:</strong></td><td style="padding:4px 0 4px 12px;">${rest.position}</td></tr>
-    <tr><td style="padding:4px 0;"><strong>Department:</strong></td><td style="padding:4px 0 4px 12px;">${rest.department}</td></tr>
-    <tr><td style="padding:4px 0;"><strong>${salaryType === "per month" ? "Monthly Stipend / Salary" : "Annual CTC"}:</strong></td><td style="padding:4px 0 4px 12px;">&#8377;${rest.salary.toLocaleString()} ${salaryType === "per month" ? "/ month" : "/ year"}</td></tr>
-    <tr><td style="padding:4px 0;"><strong>Employment Type:</strong></td><td style="padding:4px 0 4px 12px;">${employmentType || "Full-Time, Permanent"}</td></tr>
-    <tr><td style="padding:4px 0;"><strong>Work Location:</strong></td><td style="padding:4px 0 4px 12px;">${workLocation || "India (Remote / Hybrid)"}</td></tr>
-    <tr><td style="padding:4px 0;"><strong>Date of Joining:</strong></td><td style="padding:4px 0 4px 12px;">${new Date(joiningDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</td></tr>
-    ${acceptanceDeadline ? `<tr><td style="padding:4px 0;"><strong>Accept By:</strong></td><td style="padding:4px 0 4px 12px;">${new Date(acceptanceDeadline).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</td></tr>` : ""}
-  </table>
-  <p>Please sign and return the attached offer letter to confirm your acceptance.</p>
-  <p style="margin-top:24px;">Warm regards,<br/><strong>${hrStaff?.name || decoded.email}</strong><br/>HR Team, Fluenzy AI</p>
-</div>`;
+          // Use professional email template
+          const { buildOfferLetterEmail } = await import("@/lib/email-templates");
+          const emailHtml = buildOfferLetterEmail({
+            candidateName: recipientName,
+            position: rest.position,
+            department: rest.department,
+            salary: rest.salary,
+            salaryType: salaryType || "per annum",
+            joiningDate: new Date(joiningDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }),
+            acceptByDate: acceptanceDeadline ? new Date(acceptanceDeadline).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : undefined,
+            workHours: workingHours,
+            workLocation: workLocation || "India (Remote / Hybrid)",
+            probationMonths: probationMonths,
+            employmentType: employmentType || "Full-Time, Permanent",
+            hrName: hrStaff?.name || decoded.email,
+          });
 
           const emailResult = await sendPortalEmail({
             to: recipientEmail,
-            subject: `Offer Letter - ${rest.position} at Fluenzy AI`,
+            subject: `Offer of Employment — ${rest.position} at Fluenzy AI 🎉`,
             html: emailHtml,
             attachments: [{ filename: fileName, content: pdfBuffer, contentType: "application/pdf" }],
             senderRole: "HR",

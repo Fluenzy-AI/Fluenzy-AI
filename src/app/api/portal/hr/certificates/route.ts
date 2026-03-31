@@ -195,21 +195,24 @@ export async function POST(req: NextRequest) {
     if (sendEmail && candidateEmail) {
       try {
         const { sendCertificateEmail } = await import("@/lib/brevo-mail");
+        const { buildCertificateEmailTemplate } = await import("@/lib/email-templates");
+
+        const emailHtml = buildCertificateEmailTemplate({
+          recipientName: candidateName,
+          certificateType: type,
+          certificateNumber,
+          position,
+          department,
+          startDate: startDate ? new Date(startDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : undefined,
+          endDate: endDate ? new Date(endDate).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" }) : undefined,
+          verificationUrl,
+          performanceNote: performanceNotes,
+        });
 
         const result = await sendCertificateEmail({
           to: candidateEmail,
-          subject: `Your ${type.toLowerCase()} certificate from Fluenzy AI`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #4f46e5;">Certificate Generated</h2>
-              <p>Dear ${candidateName},</p>
-              <p>Please find attached your ${type.toLowerCase()} certificate from Fluenzy AI.</p>
-              <p><strong>Certificate Number:</strong> ${certificateNumber}</p>
-              <p>You can verify this certificate anytime at:</p>
-              <p><a href="${verificationUrl}" style="color: #4f46e5;">${verificationUrl}</a></p>
-              <p>Best regards,<br/>Fluenzy AI Team</p>
-            </div>
-          `,
+          subject: `Your ${type.replace(/_/g, " ")} Certificate from Fluenzy AI — ${candidateName}`,
+          html: emailHtml,
           attachments: [
             {
               filename: pdfFileName,
