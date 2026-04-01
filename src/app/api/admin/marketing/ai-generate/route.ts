@@ -4,21 +4,19 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import {
   generateMarketingEmail,
   generateEmailVariations,
   improveEmailContent,
   generateSubjectLines,
 } from "@/lib/marketing/ai-email-generator";
+import { checkMarketingAuth, unauthorizedResponse } from "@/lib/marketing-auth";
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const body = await req.json();

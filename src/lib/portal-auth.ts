@@ -16,7 +16,7 @@ const REFRESH_EXPIRY = "7d";
 export interface PortalTokenPayload {
   staffId: string;
   email: string;
-  role: "ADMIN" | "HR";
+  role: "ADMIN" | "HR" | "MARKETING_ADMIN";
   name: string;
   permissions?: Record<string, boolean>;
 }
@@ -111,7 +111,7 @@ export function getPortalAuthFromRequest(req: NextRequest): DecodedPortalToken |
 
 // ── Route Guards ────────────────────────────────────────────────────────────
 
-export type PortalRole = "ADMIN" | "HR" | "SUPER_ADMIN";
+export type PortalRole = "ADMIN" | "HR" | "MARKETING_ADMIN" | "SUPER_ADMIN";
 
 export function requirePortalRoles(...roles: PortalRole[]) {
   return function (decoded: DecodedPortalToken | null): {

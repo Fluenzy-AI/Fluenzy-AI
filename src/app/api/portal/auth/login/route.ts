@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
     const tokenPayload = {
       staffId: staff.id,
       email: staff.email,
-      role: staff.role as "ADMIN" | "HR",
+      role: staff.role as "ADMIN" | "HR" | "MARKETING_ADMIN",
       name: staff.name,
       permissions: staff.permissions as Record<string, boolean> | undefined,
     };

@@ -5,17 +5,15 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { segmentEngine } from "@/lib/marketing/segment-engine";
+import { checkMarketingAuth, unauthorizedResponse } from "@/lib/marketing-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const searchParams = req.nextUrl.searchParams;
@@ -84,10 +82,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const body = await req.json();
@@ -110,7 +107,7 @@ export async function POST(req: NextRequest) {
         filterRules,
         userCount: result.count,
         lastSyncedAt: new Date(),
-        createdBy: session.user.email || "unknown",
+        createdBy: auth.email || "unknown",
         isSystem: false,
       },
     });

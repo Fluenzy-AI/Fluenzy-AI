@@ -65,6 +65,8 @@ function PortalLoginContent() {
         router.push("/portal/admin");
       } else if (role === "HR") {
         router.push("/portal/hr");
+      } else if (role === "MARKETING_ADMIN") {
+        router.push("/portal/marketing");
       } else {
         router.push("/portal");
       }
@@ -92,7 +94,7 @@ function PortalLoginContent() {
         {/* Card */}
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl">
           <h2 className="text-xl font-semibold text-white mb-1">Sign In</h2>
-          <p className="text-slate-400 text-sm mb-6">For HR & Admin staff only</p>
+          <p className="text-slate-400 text-sm mb-6">For HR, Admin & Marketing staff only</p>
 
           {error && (
             <div className="mb-4 px-4 py-3 bg-red-500/15 border border-red-500/30 rounded-lg text-red-300 text-sm">

@@ -7,19 +7,17 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { checkMarketingAuth, unauthorizedResponse } from "@/lib/marketing-auth";
 
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const { id } = await params;
@@ -59,10 +57,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const { id } = await params;
@@ -123,10 +120,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const { id } = await params;
@@ -159,10 +155,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const { id } = await params;

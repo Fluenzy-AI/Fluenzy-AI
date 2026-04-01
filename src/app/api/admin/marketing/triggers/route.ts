@@ -5,16 +5,14 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { checkMarketingAuth, unauthorizedResponse } from "@/lib/marketing-auth";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const triggers = await prisma.automationTrigger.findMany({
@@ -66,10 +64,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-
-    if (!session?.user || !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const auth = await checkMarketingAuth(req);
+    if (!auth.authorized) {
+      return unauthorizedResponse(auth.error);
     }
 
     const body = await req.json();
@@ -134,7 +131,7 @@ export async function POST(req: NextRequest) {
         emailBodyText: emailBodyText || undefined,
         cooldownHours: cooldownHours || 24,
         isActive: isActive || false,
-        createdBy: session.user.email || "unknown",
+        createdBy: auth.email || "unknown",
       },
     });
 

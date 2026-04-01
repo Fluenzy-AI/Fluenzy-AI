@@ -7,7 +7,7 @@ export interface PortalUser {
   id: string;
   name: string;
   email: string;
-  role: "ADMIN" | "HR";
+  role: "ADMIN" | "HR" | "MARKETING_ADMIN";
   status: string;
   department?: string;
   phone?: string;
@@ -35,7 +35,7 @@ export function PortalAuthProvider({
   requiredRole,
 }: {
   children: React.ReactNode;
-  requiredRole?: "ADMIN" | "HR";
+  requiredRole?: "ADMIN" | "HR" | "MARKETING_ADMIN";
 }) {
   const [user, setUser] = useState<PortalUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,6 +79,7 @@ export function PortalAuthProvider({
     if (!loading && user && requiredRole && user.role !== requiredRole) {
       if (user.role === "ADMIN") router.push("/portal/admin");
       else if (user.role === "HR") router.push("/portal/hr");
+      else if (user.role === "MARKETING_ADMIN") router.push("/portal/marketing");
     }
   }, [user, loading, requiredRole, router]);
 

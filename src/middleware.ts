@@ -11,12 +11,19 @@ export default withAuth(
                       pathname.startsWith("/api/pro");
     const isAdminRoute = pathname.startsWith("/superadmin") ||
                         pathname.startsWith("/api/admin");
+    const isMarketingApiRoute = pathname.startsWith("/api/admin/marketing");
 
     if (isProRoute && token?.plan !== "Pro") {
       return NextResponse.redirect(new URL("/?upgrade=true", req.url));
     }
 
-    if (isAdminRoute && (token?.role as any) !== "SUPER_ADMIN") {
+    // Allow MARKETING_ADMIN access to marketing API routes
+    if (isMarketingApiRoute && !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(token?.role as string)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Block other admin routes for non-SUPER_ADMIN (but not marketing routes which are handled above)
+    if (isAdminRoute && !isMarketingApiRoute && (token?.role as any) !== "SUPER_ADMIN") {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
