@@ -3,7 +3,9 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { calculateInterviewScore } from '@/lib/utils';
-import { incrementModuleUsage } from '@/lib/billing';
+
+// NOTE: incrementModuleUsage is now called in /api/session-start (on interview start)
+// not here. This prevents refresh abuse.
 
 const getDurationMinutes = (
   start?: Date | null,
@@ -100,31 +102,41 @@ export async function POST(request: NextRequest) {
     console.log('[SESSION_SAVED_SUCCESS]', { sessionId: newSession.sessionId, duration, score: score / 100 });
 
     // ============================================================
-    // CRITICAL FIX: Increment module usage AFTER session created
+    // NOTE: Usage is now decremented on SESSION START (not here)
+    // via /api/session-start endpoint. This prevents refresh abuse.
+    // We only save session data here, no usage increment needed.
     // ============================================================
-    console.log('[USAGE_INCREMENT_START]', { userId: user.id, module, sessionId });
-    
-    const usageResult = await incrementModuleUsage(user.id, module as any);
+    console.log('[SESSION_COMPLETE]', { 
+      userId: user.id, 
+      module, 
+      sessionId: newSession.sessionId,
+      note: 'Usage was already decremented on session start'
+    });
 
-    if (!usageResult.success) {
-      console.error('[USAGE_INCREMENT_FAILED]', { 
-        userId: user.id, 
-        module, 
-        error: usageResult.error 
+    // Mark the active session as completed (if tracking is enabled)
+    const sessionToken = sessionId; // Use the sessionId as reference
+    try {
+      await (prisma as any).activeSession.updateMany({
+        where: { 
+          userId: user.id,
+          module,
+          status: 'active'
+        },
+        data: {
+          status: 'completed',
+          endTime: new Date()
+        }
       });
-      // Log error but don't fail - session is already saved and valuable
-    } else {
-      console.log('[USAGE_INCREMENT_SUCCESS]', { 
-        userId: user.id, 
-        module, 
-        newUsage: usageResult.currentUsage,
-        remaining: usageResult.remaining,
-        limitReached: usageResult.remaining === 0
+      console.log('[ACTIVE_SESSION_COMPLETED]', { userId: user.id, module });
+    } catch (dbError) {
+      // If ActiveSession model doesn't exist yet, silently continue
+      console.warn('[ACTIVE_SESSION_UPDATE_SKIPPED]', { 
+        reason: 'Model may not exist yet'
       });
     }
 
     // ============================================================
-    // Return comprehensive response with both session and usage info
+    // Return comprehensive response with session info
     // ============================================================
     return NextResponse.json({
       sessionId: newSession.sessionId,
@@ -137,12 +149,7 @@ export async function POST(request: NextRequest) {
         status: calculatedStatus,
         createdAt: newSession.createdAt
       },
-      usage: {
-        currentUsage: usageResult.success ? usageResult.currentUsage : undefined,
-        remaining: usageResult.success ? usageResult.remaining : undefined,
-        isLimitExceeded: usageResult.success ? usageResult.remaining === 0 : undefined,
-        usageIncrementFailed: !usageResult.success
-      }
+      message: 'Session saved successfully'
     });
   } catch (error) {
     console.error('[SESSION_SAVE_ERROR]', { error, timestamp: new Date().toISOString() });

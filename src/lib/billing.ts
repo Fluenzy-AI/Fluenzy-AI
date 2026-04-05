@@ -428,7 +428,8 @@ export async function getOrCreateMonthlyUsage(userId: string, plan: string): Pro
 export async function validateModuleAccess(
   userId: string, 
   module: ModuleType | string,
-  subFeature?: string // For partial modules like gd
+  subFeature?: string, // For partial modules like gd
+  skipReconciliation?: boolean // OPTIMIZATION: Skip reconciliation for read-only checks
 ): Promise<{
   allowed: boolean;
   currentUsage: number;
@@ -441,8 +442,11 @@ export async function validateModuleAccess(
   isUnlimited: boolean;
   error?: string;
 }> {
-  // FIRST: Reconcile subscription - check for expiry and auto-downgrade
-  const reconciliation = await reconcileSubscription(userId);
+  // OPTIMIZATION: Only reconcile when explicitly needed (not on every read)
+  // Reconciliation is done on: login, payment, and when skipReconciliation is false
+  if (!skipReconciliation) {
+    await reconcileSubscription(userId);
+  }
   
   // Get user with plan info
   const user = await prisma.users.findUnique({
@@ -1087,6 +1091,7 @@ export async function getAllPlansWithLimits() {
  * Get user's current usage breakdown
  */
 export async function getUserUsageBreakdown(userId: string) {
+  // OPTIMIZATION: Fetch user data once with all needed fields
   const user = await prisma.users.findUnique({
     where: { id: userId },
     select: { plan: true, renewalDate: true },
@@ -1096,9 +1101,43 @@ export async function getUserUsageBreakdown(userId: string) {
     return null;
   }
 
-  const planConfig = await getPlanConfig(user.plan as string);
-  const monthlyUsage = await getOrCreateMonthlyUsage(userId, user.plan as string);
-  const { cycleEnd, month, year } = getBillingCycleDates(user.renewalDate);
+  // OPTIMIZATION: Calculate billing cycle dates synchronously (no DB call)
+  const { cycleStart, cycleEnd, month, year } = getBillingCycleDates(user.renewalDate);
+
+  // OPTIMIZATION: Fetch planConfig and monthlyUsage in PARALLEL
+  const [planConfig, existingMonthlyUsage] = await Promise.all([
+    getPlanConfig(user.plan as string),
+    (prisma as any).monthlyUsage.findFirst({
+      where: {
+        userId,
+        billingMonth: month,
+        billingYear: year,
+      },
+    })
+  ]);
+
+  // Create monthlyUsage if doesn't exist (separate call only when needed)
+  let monthlyUsage = existingMonthlyUsage;
+  if (!monthlyUsage) {
+    monthlyUsage = await (prisma as any).monthlyUsage.create({
+      data: {
+        userId,
+        billingMonth: month,
+        billingYear: year,
+        billingCycleStart: cycleStart,
+        billingCycleEnd: cycleEnd,
+        englishUsage: 0,
+        dailyUsage: 0,
+        hrUsage: 0,
+        technicalUsage: 0,
+        companyUsage: 0,
+        mockUsage: 0,
+        gdUsage: 0,
+        interviewGuideUsage: 0,
+        totalUsage: 0,
+      },
+    });
+  }
 
   const usage = {
     english: monthlyUsage.englishUsage || 0,

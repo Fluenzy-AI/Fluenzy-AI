@@ -31,51 +31,41 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get comprehensive usage breakdown
-    const usageData = await getUserUsageBreakdown(user.id);
+    // OPTIMIZATION: Get usage breakdown and plan config in parallel
+    const [usageData, planConfig] = await Promise.all([
+      getUserUsageBreakdown(user.id),
+      getPlanConfig(user.plan as string)
+    ]);
     
     if (!usageData) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get plan pricing for display name
-    const planConfig = await getPlanConfig(user.plan as string);
-
     // Build canUse object with proper unlimited handling
     const canUse: Record<string, boolean> = {};
     const isUnlimited: Record<string, boolean> = {};
     
-    // Check each module's access type
+    // Check each module's access type - OPTIMIZED: no DB calls, just in-memory checks
     const allModuleKeys = [
       'english', 'daily', 'hr', 'technical', 'company', 'mock', 'gdCoach', 'gd', 'interviewGuide',
       'vocabulary', 'latestTopics', 'corporateVoice'
     ];
-    
-    console.log('[TRAINING_USAGE] Checking modules:', allModuleKeys);
     
     for (const key of allModuleKeys) {
       const moduleType = key as ModuleType;
       const accessType = getModuleAccessType(moduleType);
       
       if (accessType === 'unlimited') {
-        // Unlimited modules are always accessible
         canUse[key] = true;
         isUnlimited[key] = true;
-        console.log(`[MODULE_UNLIMITED] ${key} is unlimited`);
       } else if (accessType === 'limited') {
-        // Limited modules depend on remaining count - use from getUserUsageBreakdown
         const remaining = usageData.remaining[key as keyof typeof usageData.remaining];
         canUse[key] = (remaining || 0) > 0;
-        // Also check if returned isUnlimited from usage breakdown
         isUnlimited[key] = usageData.isUnlimited?.[key] || false;
-        console.log(`[MODULE_LIMITED] ${key}: canUse=${canUse[key]}, remaining=${remaining}`);
       } else if (accessType === 'partial') {
-        // Partial modules (like GD) - AI Agents sub-feature is LIMITED
-        // Use the actual remaining count from usage breakdown (gd = AI Agents limit)
         const remaining = usageData.remaining[key as keyof typeof usageData.remaining];
         canUse[key] = (remaining || 0) > 0;
         isUnlimited[key] = false;
-        console.log(`[MODULE_PARTIAL] ${key} AI Agents: canUse=${canUse[key]}, remaining=${remaining}`);
       }
     }
 
@@ -88,15 +78,12 @@ export async function GET(request: NextRequest) {
       billingMonth: usageData.billingMonth,
       billingYear: usageData.billingYear,
       resetAt: usageData.resetAt,
-      // Module-level access with unlimited status
       canUse,
       isUnlimited,
-      // Vocabulary and Latest Topics are always unlimited
       vocabularyUnlimited: true,
       latestTopicsUnlimited: true,
     };
     
-    console.log('[TRAINING_USAGE_RESPONSE] Returning:', response);
     return NextResponse.json(response);
   } catch (error) {
     console.error("Training usage check error:", error);

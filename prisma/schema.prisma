@@ -164,6 +164,7 @@ model users {
   
   disabled         Boolean  @default(false)
   sessions         Session[]
+  activeSessions   ActiveSession[]
   lessonProgress   LessonProgress[]
   hrProgress       HRProgress[]
   gdProgress       GDProgress[]
@@ -340,6 +341,29 @@ model Transcript {
   technicalAccuracyScore  Float?
   perQuestionScore        Float?
   createdAt               DateTime @default(now())
+}
+
+// ==================== ACTIVE SESSION TRACKING ====================
+// Tracks sessions that are currently in progress.
+// Used to prevent refresh abuse - session is decremented when started.
+// Status transitions: active -> completed | abandoned
+
+model ActiveSession {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  sessionToken String   @unique // Unique token for this session
+  userId       String   @db.ObjectId
+  user         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module       String   // e.g., "HR_INTERVIEW", "GD_COACH", etc.
+  lessonId     String?  // Optional lesson ID
+  lessonTitle  String?  // Optional lesson title
+  status       String   @default("active") // active, completed, abandoned
+  startTime    DateTime @default(now())
+  endTime      DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId, status])
+  @@index([userId, module])
 }
 
 model LessonProgress {

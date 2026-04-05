@@ -352,8 +352,44 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
   const startSession = async () => {
     setIsConnecting(true);
     setError(null);
-    onInterviewStart?.();
+    
     try {
+      // ============================================================
+      // CRITICAL: Decrement session BEFORE starting Gemini API
+      // This prevents abuse where users refresh to get unlimited usage
+      // ============================================================
+      console.log('[SESSION_START] Calling /api/session-start to decrement usage...');
+      const startResponse = await fetch('/api/session-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          module: type,
+          lessonId: sessionMeta?.lessonId,
+          lessonTitle: sessionMeta?.lessonTitle
+        })
+      });
+
+      const startData = await startResponse.json();
+
+      if (!startResponse.ok || !startData.success) {
+        console.error('[SESSION_START_FAILED]', startData);
+        setError(startData.error || 'No sessions remaining. Please upgrade your plan.');
+        setIsConnecting(false);
+        return;
+      }
+
+      console.log('[SESSION_START_SUCCESS]', {
+        sessionToken: startData.sessionToken,
+        remaining: startData.remaining,
+        isUnlimited: startData.isUnlimited
+      });
+
+      // Store session token for tracking
+      sessionStorage.setItem('currentSessionToken', startData.sessionToken);
+
+      // Now we can safely start the interview - usage already decremented
+      onInterviewStart?.();
+      
       // Create a new instance with a named parameter for the API key.
       const ai = new GoogleGenAI({ apiKey: process.env.NEXT_PUBLIC_GEMINI_API_KEY });
       inputAudioContextRef.current = new AudioContext({ sampleRate: 16000 });
