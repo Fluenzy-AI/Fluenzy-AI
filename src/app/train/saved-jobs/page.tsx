@@ -122,9 +122,9 @@ export default function SavedJobsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {savedJobs.map((job) => (
+            {savedJobs.map((job, index) => (
               <div 
-                key={job.id}
+                key={`${job.id}_${index}`}
                 className="bg-gray-800/60 border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-all"
               >
                 <div className="flex justify-between items-start gap-4">
