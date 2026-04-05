@@ -17,6 +17,7 @@ import {
   ChevronRight,
   GraduationCap,
   Zap,
+  Bookmark,
 } from "lucide-react";
 
 // Context for sidebar state
@@ -83,6 +84,11 @@ const NAV_ITEMS = [
     href: "/train/job-search",
     label: "AI Job Search",
     icon: Zap,
+  },
+  {
+    href: "/train/saved-jobs",
+    label: "Saved Jobs",
+    icon: Bookmark,
   },
   {
     href: "/jobs",
