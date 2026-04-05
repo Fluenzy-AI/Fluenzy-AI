@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { GoogleGenAI, Modality } from '@google/genai';
+import { GoogleGenAI, Modality, StartSensitivity, EndSensitivity } from '@google/genai';
 import { 
   X, 
   Sparkles,
@@ -114,6 +114,12 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
   const [error, setError] = useState<string | null>(null);
   const [isFinished, setIsFinished] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
+  const [isUserSpeaking, setIsUserSpeaking] = useState(false);
+  
+  // Silence detection refs
+  const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastUserSpeechRef = useRef<number>(Date.now());
+  const silencePromptCountRef = useRef<number>(0);
 
   const isEnglishLearning = type === ModuleType.ENGLISH_LEARNING;
   const isHRInterview = type === ModuleType.HR_INTERVIEW;
@@ -181,6 +187,13 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
   const streamRef = useRef<MediaStream | null>(null);
 
   const cleanup = useCallback(async (saveResults = false) => {
+    // Clear silence detection timer
+    if (silenceTimerRef.current) {
+      clearInterval(silenceTimerRef.current);
+      silenceTimerRef.current = null;
+    }
+    silencePromptCountRef.current = 0;
+    
     if (sessionRef.current) { sessionRef.current.close(); sessionRef.current = null; }
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
     sourcesRef.current.forEach(s => { try { s.stop(); } catch(e) {} });
@@ -188,6 +201,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
     setIsActive(false);
     setIsConnecting(false);
     setIsAiSpeaking(false);
+    setIsUserSpeaking(false);
     onSessionEnd(user);
 
     if (saveResults) {
@@ -462,27 +476,107 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
           systemInstruction: instruction,
           outputAudioTranscription: {},
           inputAudioTranscription: {},
-          thinkingConfig: { thinkingBudget: 24576 } // max budget for 2.5 Flash
+          thinkingConfig: { thinkingBudget: 24576 }, // max budget for 2.5 Flash
+          // Voice Activity Detection settings - prevent AI from interrupting user
+          realtimeInputConfig: {
+            automaticActivityDetection: {
+              disabled: false,
+              // Wait longer before considering user has stopped speaking
+              startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW, // Less sensitive to start detecting speech
+              endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW, // Wait longer before ending turn (prevents interruption)
+              prefixPaddingMs: 500, // 500ms padding before speech starts
+              silenceDurationMs: 1500, // Wait 1.5 seconds of silence before AI responds
+            }
+          }
         },
         callbacks: {
           onopen: () => {
             setIsConnecting(false); setIsActive(true);
             const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
+            
+            // Track user speech activity for silence detection
+            let speechDetected = false;
+            
             scriptProcessor.onaudioprocess = (e) => {
               const inputData = e.inputBuffer.getChannelData(0);
               const int16 = new Int16Array(inputData.length);
-              for (let i = 0; i < inputData.length; i++) int16[i] = inputData[i] * 32768;
+              
+              // Calculate audio level for speech detection
+              let sum = 0;
+              for (let i = 0; i < inputData.length; i++) {
+                int16[i] = inputData[i] * 32768;
+                sum += Math.abs(inputData[i]);
+              }
+              const avgLevel = sum / inputData.length;
+              
+              // Detect if user is speaking (threshold ~0.01 for speech)
+              if (avgLevel > 0.01) {
+                lastUserSpeechRef.current = Date.now();
+                if (!speechDetected) {
+                  speechDetected = true;
+                  setIsUserSpeaking(true);
+                }
+              } else if (speechDetected && Date.now() - lastUserSpeechRef.current > 500) {
+                speechDetected = false;
+                setIsUserSpeaking(false);
+              }
+              
               sessionPromise.then(s => s.sendRealtimeInput({ media: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' } }));
             };
             source.connect(scriptProcessor); scriptProcessor.connect(inputAudioContextRef.current!.destination);
+            
+            // CRITICAL: Send initial text prompt to make AI speak FIRST
+            // This triggers the AI to greet the user immediately
+            sessionPromise.then(s => {
+              const initialPrompt = isGDCoach 
+                ? `Start teaching the chapter "${sessionMeta?.lessonTitle || 'GD Practice'}". Greet the student briefly and begin the lesson immediately. Speak in a friendly, encouraging tone.`
+                : isEnglishLearning
+                ? `Start the English lesson on "${sessionMeta?.lessonTitle || 'English Practice'}". Greet the student warmly and begin teaching. Be encouraging and patient.`
+                : isConversationPractice
+                ? `Start a friendly conversation. Greet me warmly and ask me about my day or start with a casual topic. Be a friendly conversation partner.`
+                : isHRInterview
+                ? `Start the HR interview practice on "${sessionMeta?.lessonTitle || 'HR Interview'}". Greet me professionally and ask your first behavioral question.`
+                : `Start the interview. Greet me professionally and ask your first question based on my profile.`;
+              
+              s.sendRealtimeInput({ text: initialPrompt });
+              console.log('[AI_INITIAL_PROMPT] Sent initial prompt to make AI speak first');
+            });
+            
+            // Start silence detection timer - prompt user if silent for too long
+            silenceTimerRef.current = setInterval(() => {
+              const timeSinceLastSpeech = Date.now() - lastUserSpeechRef.current;
+              const isAiCurrentlySpeaking = sourcesRef.current.size > 0;
+              
+              // If user has been silent for 15+ seconds and AI is not speaking
+              if (timeSinceLastSpeech > 15000 && !isAiCurrentlySpeaking && silencePromptCountRef.current < 3) {
+                silencePromptCountRef.current++;
+                const silencePrompts = [
+                  "I'm here to help. Feel free to share your thoughts or ask any questions.",
+                  "Take your time. When you're ready, you can respond or ask me to continue.",
+                  "I'll wait for you. Just say something when you're ready to continue."
+                ];
+                sessionPromise.then(s => {
+                  s.sendRealtimeInput({ text: silencePrompts[silencePromptCountRef.current - 1] + " Encourage the user gently." });
+                  console.log('[AI_SILENCE_PROMPT] User silent, sending prompt #', silencePromptCountRef.current);
+                });
+                lastUserSpeechRef.current = Date.now(); // Reset timer
+              }
+            }, 5000); // Check every 5 seconds
           },
           onmessage: async (m) => {
             if (m.serverContent?.outputTranscription?.text) currentQA.current.question += m.serverContent.outputTranscription.text;
-            if (m.serverContent?.inputTranscription?.text) currentQA.current.answer += m.serverContent.inputTranscription.text;
+            if (m.serverContent?.inputTranscription?.text) {
+              currentQA.current.answer += m.serverContent.inputTranscription.text;
+              // Reset silence prompt count when user speaks
+              silencePromptCountRef.current = 0;
+              lastUserSpeechRef.current = Date.now();
+            }
             if (m.serverContent?.turnComplete) {
               transcriptHistory.current.push({ ...currentQA.current, timestamp: new Date().toLocaleTimeString() });
               currentQA.current = { question: '', answer: '' };
+              // Reset last speech time when turn completes to give user time to respond
+              lastUserSpeechRef.current = Date.now();
             }
             const data = m.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (data) {
