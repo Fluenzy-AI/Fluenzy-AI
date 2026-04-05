@@ -42,6 +42,7 @@ export async function GET(req: NextRequest) {
         workMode: true,
         resultsCount: true,
         fromCache: true,
+        jobs: true, // Include job results
         createdAt: true,
       },
     });

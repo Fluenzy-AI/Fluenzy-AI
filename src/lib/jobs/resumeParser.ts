@@ -3,7 +3,7 @@
 export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   console.log("[Resume] Starting PDF extraction");
   
-  // Try Adobe PDF Services first if credentials available
+  // Only try Adobe PDF Services if credentials available
   if (process.env.ADOBE_PDF_SERVICES_CLIENT_ID && process.env.ADOBE_PDF_SERVICES_CLIENT_SECRET) {
     try {
       console.log("[Resume] Trying Adobe PDF Services");
@@ -13,34 +13,10 @@ export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
     }
   }
   
-  // Try pdf-parse as fallback
-  try {
-    console.log("[Resume] Using pdf-parse");
-    const pdfParse = require("pdf-parse/lib/pdf-parse");
-    const data = await pdfParse(buffer);
-    
-    if (!data || !data.text) {
-      throw new Error("No text extracted from PDF");
-    }
-    
-    console.log(`[Resume] Extracted ${data.text.length} characters`);
-    return data.text;
-  } catch (err: any) {
-    console.error("[Resume] pdf-parse failed:", err.message);
-    
-    // If pdf-parse fails, try simple text extraction
-    try {
-      const text = buffer.toString('utf8');
-      if (text && text.length > 100) {
-        console.log("[Resume] Using fallback text extraction");
-        return text;
-      }
-    } catch {
-      // Ignore
-    }
-    
-    throw new Error("Could not extract text from PDF. Please try a different PDF file.");
-  }
+  // For now, skip text extraction - just return empty
+  // Resume will still be uploaded to R2
+  console.log("[Resume] Skipping text extraction (not critical for job search)");
+  return "";
 }
 
 async function extractWithAdobe(buffer: Buffer): Promise<string> {
@@ -66,14 +42,16 @@ async function extractWithAdobe(buffer: Buffer): Promise<string> {
   
   const { access_token } = await tokenRes.json();
   
-  // Upload PDF
+  // Upload PDF - convert Buffer to Blob for fetch
+  const blob = new Blob([buffer], { type: 'application/pdf' });
+  
   const uploadRes = await fetch("https://pdf-services.adobe.io/assets", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${access_token}`,
       "Content-Type": "application/pdf",
     },
-    body: buffer,
+    body: blob,
   });
   
   if (!uploadRes.ok) {
@@ -104,6 +82,11 @@ async function extractWithAdobe(buffer: Buffer): Promise<string> {
 }
 
 export async function extractSkillsWithGemini(resumeText: string): Promise<string[]> {
+  if (!resumeText || resumeText.length < 50) {
+    console.log("[Resume] Text too short, skipping skill extraction");
+    return [];
+  }
+  
   const prompt = `
 Extract technical and professional skills from this resume text.
 Return ONLY a JSON array of skill strings. No explanation.

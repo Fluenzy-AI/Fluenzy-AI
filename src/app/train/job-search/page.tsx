@@ -60,6 +60,7 @@ interface SearchHistoryItem {
   jobType: string | null;
   workMode: string | null;
   resultsCount: number;
+  jobs?: JobMatch[]; // Include saved job results
   createdAt: string;
 }
 
@@ -440,6 +441,18 @@ export default function BrowseJobsPage() {
 
   // Re-run a search from history
   const runHistorySearch = (item: SearchHistoryItem) => {
+    // If history item has saved jobs, show them directly
+    if (item.jobs && item.jobs.length > 0) {
+      setJobs(item.jobs);
+      setTotalResults(item.jobs.length);
+      setFromCache(true);
+      setJobPosition(item.query);
+      setShowHistory(false);
+      console.log(`[Frontend] Loaded ${item.jobs.length} jobs from history`);
+      return;
+    }
+    
+    // Otherwise, populate search form and let user re-search
     setJobPosition(item.query);
     
     // Parse job types (could be comma-separated)

@@ -2564,6 +2564,7 @@ model JobSearchHistory {
   workMode     String?
   resultsCount Int      @default(0)
   fromCache    Boolean  @default(false)
+  jobs         Json?    // Store job results for 30 days
   createdAt    DateTime @default(now())
 
   @@index([userId, createdAt])
