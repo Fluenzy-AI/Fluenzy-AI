@@ -91,7 +91,13 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ jobs: saved.map(s => s.jobData) });
+    // Include savedAt date with each job
+    const jobs = saved.map(s => ({
+      ...(s.jobData as object),
+      savedAt: s.createdAt.toISOString(),
+    }));
+
+    return NextResponse.json({ jobs });
   } catch (error) {
     console.error("Get saved jobs error:", error);
     return NextResponse.json({ error: "Failed to get saved jobs" }, { status: 500 });

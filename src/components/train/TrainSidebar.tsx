@@ -36,7 +36,8 @@ import {
   Clock,
   Activity,
   CheckCircle,
-  Award
+  Award,
+  Bookmark
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -170,6 +171,12 @@ export function TrainSidebar() {
       href: '/train/job-search',
       badge: 'New',
       isActive: pathname === '/train/job-search',
+    },
+    {
+      title: 'Saved Jobs',
+      icon: Bookmark,
+      href: '/train/saved-jobs',
+      isActive: pathname === '/train/saved-jobs',
     },
     {
       title: 'Auto-Apply Setup',
