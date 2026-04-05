@@ -166,6 +166,12 @@ export function TrainSidebar() {
   // Job & Career items
   const careerItems: NavigationItem[] = [
     {
+      title: 'Auto-Apply Setup',
+      icon: Settings,
+      href: '/train/auto-apply-setup',
+      isActive: pathname === '/train/auto-apply-setup',
+    },
+    {
       title: 'AI Job Search',
       icon: Zap,
       href: '/train/job-search',
@@ -177,12 +183,6 @@ export function TrainSidebar() {
       icon: Bookmark,
       href: '/train/saved-jobs',
       isActive: pathname === '/train/saved-jobs',
-    },
-    {
-      title: 'Auto-Apply Setup',
-      icon: Settings,
-      href: '/train/auto-apply-setup',
-      isActive: pathname === '/train/auto-apply-setup',
     },
     {
       title: 'My Applications',
