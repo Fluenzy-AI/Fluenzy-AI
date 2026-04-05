@@ -1,7 +1,8 @@
 // src/lib/jobs/resumeParser.ts
-import pdfParse from "pdf-parse";
+import * as pdfParse from "pdf-parse";
 
 export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
+  // @ts-ignore - pdf-parse has typing issues with ESM
   const data = await pdfParse(buffer);
   return data.text;
 }
