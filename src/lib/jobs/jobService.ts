@@ -168,7 +168,7 @@ export async function searchJobs(params: SearchParams): Promise<SearchResult> {
     const stale = await getStaleCachedJobs(cacheKey, params.plan);
     if (stale && stale.length > 0) {
       console.log(`[JobService] Returning stale cache (${stale.length} jobs)`);
-      const matched = await matchJobs(stale, params.userSkills, canUseAIMatching(params.plan));
+      const matched = await matchJobs(stale, params.userSkills, canUseAIMatching(params.plan), params.query);
       return { jobs: matched, fromCache: true, totalFetched: stale.length };
     }
     
@@ -188,8 +188,8 @@ export async function searchJobs(params: SearchParams): Promise<SearchResult> {
     console.log(`[JobService] Remote filter: ${dedupedJobs.length} → ${filteredJobs.length} jobs`);
   }
 
-  // 6. Match with user skills
-  const matched = await matchJobs(filteredJobs, params.userSkills, canUseAIMatching(params.plan));
+  // 6. Match with user skills (pass search query for better matching)
+  const matched = await matchJobs(filteredJobs, params.userSkills, canUseAIMatching(params.plan), params.query);
 
   // 7. Cache results for future requests
   if (matched.length > 0) {

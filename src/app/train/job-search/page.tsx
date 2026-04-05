@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { JobCard } from "@/components/jobs/JobCard";
 import { SessionUsageBar } from "@/components/jobs/SessionUsageBar";
 import { JobMatch, PLAN_LIMITS, UserPlan } from "@/types/jobs";
-import { Search, Loader2, MapPin, Briefcase, Sparkles, Globe, ChevronDown, CheckCircle2, History, AlertCircle, X } from "lucide-react";
+import { Search, Loader2, MapPin, Briefcase, Sparkles, Globe, ChevronDown, CheckCircle2, History, AlertCircle, X, GraduationCap, Award } from "lucide-react";
 
 // Country options with major cities
 const COUNTRIES = [
@@ -25,6 +25,24 @@ const JOB_TYPES = [
   { value: "fulltime", label: "Full-time" },
   { value: "parttime", label: "Part-time" },
   { value: "contract", label: "Contract / Freelance" },
+];
+
+// Experience Level options
+const EXPERIENCE_LEVELS = [
+  { value: "internship", label: "Internship / Apprentice" },
+  { value: "entry", label: "Entry-level (0–2 years)" },
+  { value: "mid", label: "Mid-level (2–5 years)" },
+  { value: "senior", label: "Senior / Advanced (5+ years)" },
+  { value: "director", label: "Director / Leadership" },
+];
+
+// Education options
+const EDUCATION_LEVELS = [
+  { value: "pursuing", label: "Currently pursuing a degree" },
+  { value: "associate", label: "Associate degree" },
+  { value: "bachelor", label: "Bachelor's degree" },
+  { value: "master", label: "Master's degree" },
+  { value: "doctorate", label: "Doctorate (Ph.D.)" },
 ];
 
 interface SessionInfo {
@@ -51,13 +69,19 @@ export default function BrowseJobsPage() {
   // Step 1: Job Position
   const [jobPosition, setJobPosition] = useState("");
   
-  // Step 2: Job Type
-  const [jobType, setJobType] = useState("");
+  // Step 2: Job Type (multi-select)
+  const [selectedJobTypes, setSelectedJobTypes] = useState<string[]>([]);
   
-  // Step 3: Location
+  // Step 3: Location (multi-city)
   const [country, setCountry] = useState("");
-  const [city, setCity] = useState("");
+  const [selectedCities, setSelectedCities] = useState<string[]>([]);
   const [isRemote, setIsRemote] = useState(false);
+  
+  // Step 4: Experience Level (multi-select)
+  const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
+  
+  // Step 5: Education (multi-select)
+  const [selectedEducation, setSelectedEducation] = useState<string[]>([]);
   
   const [jobs, setJobs] = useState<JobMatch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -81,9 +105,9 @@ export default function BrowseJobsPage() {
   const selectedCountry = COUNTRIES.find(c => c.code === country);
   const availableCities = selectedCountry?.cities || [];
 
-  // Reset city and remote when country changes
+  // Reset cities and remote when country changes
   useEffect(() => {
-    setCity("");
+    setSelectedCities([]);
     setIsRemote(false);
   }, [country]);
 
@@ -136,19 +160,19 @@ export default function BrowseJobsPage() {
     }
   };
 
-  // Derive experience level from job type (internship = internship, fulltime/etc = all)
-  const getExperienceLevel = () => {
-    if (jobType === "internship") return "internship";
-    return "all";
+  // Derive experience level from selections
+  const getExperienceLevelParam = () => {
+    if (selectedExperience.length === 0) return "";
+    return selectedExperience.join(",");
   };
 
   // Check if form is valid for search
   const canSearch = () => {
     if (!jobPosition.trim()) return false;
-    if (!jobType) return false;
+    if (selectedJobTypes.length === 0) return false;
     if (!country && !isRemote) return false;
     // If country selected but no city and not remote
-    if (country && !city && !isRemote) return false;
+    if (country && selectedCities.length === 0 && !isRemote) return false;
     return true;
   };
 
@@ -156,19 +180,70 @@ export default function BrowseJobsPage() {
   const getSearchSummary = () => {
     const parts = [];
     if (jobPosition) parts.push(jobPosition);
-    if (jobType) {
-      const typeLabel = JOB_TYPES.find(t => t.value === jobType)?.label || jobType;
-      parts.push(`(${typeLabel})`);
+    
+    // Job types
+    if (selectedJobTypes.length > 0) {
+      const typeLabels = selectedJobTypes.map(t => 
+        JOB_TYPES.find(jt => jt.value === t)?.label || t
+      );
+      if (typeLabels.length <= 2) {
+        parts.push(`(${typeLabels.join(" / ")})`);
+      } else {
+        parts.push(`(${typeLabels.length} job types)`);
+      }
     }
+    
+    // Location
     if (isRemote) {
       parts.push("Remote");
       if (country) {
         parts.push(`in ${selectedCountry?.name || country}`);
       }
-    } else if (city && country) {
-      parts.push(`in ${city}, ${selectedCountry?.name}`);
+    } else if (selectedCities.length > 0 && country) {
+      if (selectedCities.length === 1) {
+        parts.push(`in ${selectedCities[0]}, ${selectedCountry?.name}`);
+      } else {
+        parts.push(`in ${selectedCities.length} cities, ${selectedCountry?.name}`);
+      }
     }
+    
     return parts.join(" ");
+  };
+
+  // Toggle multi-select for job types
+  const toggleJobType = (value: string) => {
+    setSelectedJobTypes(prev => 
+      prev.includes(value) 
+        ? prev.filter(t => t !== value)
+        : [...prev, value]
+    );
+  };
+
+  // Toggle multi-select for cities
+  const toggleCity = (city: string) => {
+    setSelectedCities(prev => 
+      prev.includes(city) 
+        ? prev.filter(c => c !== city)
+        : [...prev, city]
+    );
+  };
+
+  // Toggle multi-select for experience
+  const toggleExperience = (value: string) => {
+    setSelectedExperience(prev => 
+      prev.includes(value) 
+        ? prev.filter(e => e !== value)
+        : [...prev, value]
+    );
+  };
+
+  // Toggle multi-select for education
+  const toggleEducation = (value: string) => {
+    setSelectedEducation(prev => 
+      prev.includes(value) 
+        ? prev.filter(e => e !== value)
+        : [...prev, value]
+    );
   };
 
   // Fetch jobs with structured filters
@@ -195,7 +270,7 @@ export default function BrowseJobsPage() {
     try {
       const params = new URLSearchParams({ query: jobPosition.trim() });
       
-      // Build location string
+      // Build location string (multiple cities)
       let locationStr = "";
       if (isRemote) {
         if (country) {
@@ -203,21 +278,29 @@ export default function BrowseJobsPage() {
         } else {
           locationStr = "remote";
         }
-      } else if (city && country) {
-        locationStr = `${city}, ${selectedCountry?.name || country}`;
+      } else if (selectedCities.length > 0 && country) {
+        // Use all selected cities in query
+        locationStr = selectedCities.map(c => `${c}, ${selectedCountry?.name || country}`).join(" OR ");
+        // For API, just use first city but make query broader
+        locationStr = `${selectedCities[0]}, ${selectedCountry?.name || country}`;
       }
       
       if (locationStr) params.set("location", locationStr);
       
-      // Add job type
-      if (jobType) {
-        params.set("job_type", jobType);
+      // Add job types (use first for API, but search will be broader)
+      if (selectedJobTypes.length > 0) {
+        params.set("job_type", selectedJobTypes.join(","));
       }
       
-      // Add experience level based on job type
-      const expLevel = getExperienceLevel();
-      if (expLevel && expLevel !== "all") {
+      // Add experience levels
+      const expLevel = getExperienceLevelParam();
+      if (expLevel) {
         params.set("experience_level", expLevel);
+      }
+      
+      // Add education levels
+      if (selectedEducation.length > 0) {
+        params.set("education", selectedEducation.join(","));
       }
       
       // Add work mode
@@ -273,9 +356,10 @@ export default function BrowseJobsPage() {
   const runHistorySearch = (item: SearchHistoryItem) => {
     setJobPosition(item.query);
     
-    // Parse job type
+    // Parse job types (could be comma-separated)
     if (item.jobType) {
-      setJobType(item.jobType);
+      const types = item.jobType.split(",").map(t => t.trim());
+      setSelectedJobTypes(types);
     }
     
     // Parse location
@@ -300,7 +384,7 @@ export default function BrowseJobsPage() {
             if (c.name.toLowerCase() === countryName.toLowerCase()) {
               setCountry(c.code);
               if (c.cities.includes(cityName)) {
-                setCity(cityName);
+                setSelectedCities([cityName]);
               }
               break;
             }
@@ -486,19 +570,19 @@ export default function BrowseJobsPage() {
               )}
             </div>
 
-            {/* Step 2: Job Type */}
+            {/* Step 2: Job Type (Multi-select) */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-white font-medium">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-xs font-bold">2</span>
-                What type of job?
+                What type of job? <span className="text-xs text-gray-400 font-normal">(select multiple)</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {JOB_TYPES.map((type) => (
                   <button
                     key={type.value}
-                    onClick={() => setJobType(type.value)}
+                    onClick={() => toggleJobType(type.value)}
                     className={`px-4 py-3 rounded-xl border transition-all text-sm font-medium ${
-                      jobType === type.value
+                      selectedJobTypes.includes(type.value)
                         ? "bg-blue-600 border-blue-500 text-white"
                         : "bg-gray-700/50 border-gray-600 text-gray-300 hover:border-gray-500 hover:bg-gray-700"
                     }`}
@@ -507,15 +591,15 @@ export default function BrowseJobsPage() {
                   </button>
                 ))}
               </div>
-              {jobType && (
+              {selectedJobTypes.length > 0 && (
                 <div className="flex items-center gap-1 text-green-400 text-sm">
                   <CheckCircle2 className="h-4 w-4" />
-                  <span>{JOB_TYPES.find(t => t.value === jobType)?.label} selected</span>
+                  <span>{selectedJobTypes.map(t => JOB_TYPES.find(jt => jt.value === t)?.label).join(", ")} selected</span>
                 </div>
               )}
             </div>
 
-            {/* Step 3: Location */}
+            {/* Step 3: Location (Multi-city) */}
             <div className="space-y-3">
               <label className="flex items-center gap-2 text-white font-medium">
                 <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-xs font-bold">3</span>
@@ -552,7 +636,7 @@ export default function BrowseJobsPage() {
                   <button
                     onClick={() => {
                       setIsRemote(!isRemote);
-                      if (!isRemote) setCity("");
+                      if (!isRemote) setSelectedCities([]);
                     }}
                     className={`w-full px-4 py-3 rounded-xl border transition-all flex items-center justify-center gap-2 font-medium ${
                       isRemote
@@ -565,37 +649,114 @@ export default function BrowseJobsPage() {
                     {isRemote && <CheckCircle2 className="h-5 w-5 ml-1" />}
                   </button>
 
-                  {/* City Selection - Only if not remote and cities available */}
+                  {/* City Selection - Multi-select grid */}
                   {!isRemote && availableCities.length > 0 && (
-                    <div className="relative">
-                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <select
-                        value={city}
-                        onChange={(e) => setCity(e.target.value)}
-                        className="w-full bg-gray-700/50 border border-gray-600 rounded-xl pl-12 pr-4 py-3.5 text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                      >
-                        <option value="">Select a city</option>
+                    <div className="space-y-2">
+                      <p className="text-gray-400 text-xs">Select cities <span className="text-blue-400">(max 6)</span>:</p>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                         {availableCities.map((c) => (
-                          <option key={c} value={c}>
+                          <button
+                            key={c}
+                            onClick={() => {
+                              if (selectedCities.includes(c)) {
+                                toggleCity(c);
+                              } else if (selectedCities.length < 6) {
+                                toggleCity(c);
+                              }
+                            }}
+                            disabled={!selectedCities.includes(c) && selectedCities.length >= 6}
+                            className={`px-3 py-2 rounded-lg border transition-all text-sm ${
+                              selectedCities.includes(c)
+                                ? "bg-blue-600 border-blue-500 text-white"
+                                : selectedCities.length >= 6
+                                ? "bg-gray-800/50 border-gray-700 text-gray-500 cursor-not-allowed"
+                                : "bg-gray-700/50 border-gray-600 text-gray-300 hover:border-gray-500 hover:bg-gray-700"
+                            }`}
+                          >
+                            <MapPin className="h-3 w-3 inline mr-1" />
                             {c}
-                          </option>
+                          </button>
                         ))}
-                      </select>
-                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+                      </div>
+                      {selectedCities.length > 0 && (
+                        <p className="text-xs text-gray-500">{selectedCities.length}/6 cities selected</p>
+                      )}
                     </div>
                   )}
                 </div>
               )}
 
               {/* Location confirmation */}
-              {(city || isRemote) && (
+              {(selectedCities.length > 0 || isRemote) && (
                 <div className="flex items-center gap-1 text-green-400 text-sm">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>
                     {isRemote
                       ? `Remote work${country ? ` in ${selectedCountry?.name}` : ""}`
-                      : `${city}, ${selectedCountry?.name}`}
+                      : selectedCities.length === 1 
+                        ? `${selectedCities[0]}, ${selectedCountry?.name}`
+                        : `${selectedCities.length} cities in ${selectedCountry?.name}`}
                   </span>
+                </div>
+              )}
+            </div>
+
+            {/* Step 4: Experience Level (Multi-select) - Optional */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-white font-medium">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-600 text-xs font-bold">4</span>
+                Experience Level <span className="text-xs text-gray-400 font-normal">(optional)</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                {EXPERIENCE_LEVELS.map((exp) => (
+                  <button
+                    key={exp.value}
+                    onClick={() => toggleExperience(exp.value)}
+                    className={`px-3 py-2 rounded-lg border transition-all text-xs font-medium ${
+                      selectedExperience.includes(exp.value)
+                        ? "bg-green-600 border-green-500 text-white"
+                        : "bg-gray-700/50 border-gray-600 text-gray-300 hover:border-gray-500 hover:bg-gray-700"
+                    }`}
+                  >
+                    <Award className="h-3 w-3 inline mr-1" />
+                    {exp.label}
+                  </button>
+                ))}
+              </div>
+              {selectedExperience.length > 0 && (
+                <div className="flex items-center gap-1 text-green-400 text-sm">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>{selectedExperience.length} level(s) selected</span>
+                </div>
+              )}
+            </div>
+
+            {/* Step 5: Education (Multi-select) - Optional */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-white font-medium">
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-600 text-xs font-bold">5</span>
+                Education <span className="text-xs text-gray-400 font-normal">(optional)</span>
+              </label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+                {EDUCATION_LEVELS.map((edu) => (
+                  <button
+                    key={edu.value}
+                    onClick={() => toggleEducation(edu.value)}
+                    className={`px-3 py-2 rounded-lg border transition-all text-xs font-medium ${
+                      selectedEducation.includes(edu.value)
+                        ? "bg-purple-600 border-purple-500 text-white"
+                        : "bg-gray-700/50 border-gray-600 text-gray-300 hover:border-gray-500 hover:bg-gray-700"
+                    }`}
+                  >
+                    <GraduationCap className="h-3 w-3 inline mr-1" />
+                    {edu.label}
+                  </button>
+                ))}
+              </div>
+              {selectedEducation.length > 0 && (
+                <div className="flex items-center gap-1 text-purple-400 text-sm">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>{selectedEducation.length} education level(s) selected</span>
                 </div>
               )}
             </div>
@@ -636,9 +797,9 @@ export default function BrowseJobsPage() {
             {!canSearch() && (
               <p className="text-center text-gray-500 text-sm">
                 {!jobPosition ? "Enter a job position to start" :
-                 !jobType ? "Select a job type" :
+                 selectedJobTypes.length === 0 ? "Select at least one job type" :
                  !country ? "Select a country" :
-                 !city && !isRemote ? "Select a city or choose remote" : ""}
+                 selectedCities.length === 0 && !isRemote ? "Select a city or choose remote" : ""}
               </p>
             )}
           </div>

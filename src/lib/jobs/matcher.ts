@@ -2,13 +2,52 @@
 import { Job, JobMatch } from "@/types/jobs";
 
 /**
- * Free tier: keyword matching with proper missing skills calculation
+ * Calculate base match score when no user skills available
+ * Uses job title, description, and search query matching
  */
-export function keywordMatch(job: Job, userSkills: string[]): JobMatch {
+function calculateBaseMatch(job: Job, searchQuery?: string): number {
+  // Base score - job exists and has required fields
+  let score = 50;
+  
+  // Bonus for complete job data
+  if (job.title) score += 5;
+  if (job.company) score += 5;
+  if (job.location) score += 5;
+  if (job.description && job.description.length > 100) score += 10;
+  if (job.applyLink) score += 5;
+  if (job.salary) score += 5;
+  
+  // If search query provided, check relevance
+  if (searchQuery) {
+    const searchTerms = searchQuery.toLowerCase().split(/\s+/);
+    const jobText = `${job.title} ${job.company} ${job.description}`.toLowerCase();
+    
+    let matchedTerms = 0;
+    for (const term of searchTerms) {
+      if (term.length >= 3 && jobText.includes(term)) {
+        matchedTerms++;
+      }
+    }
+    
+    // Add score based on matched terms
+    const termMatchRatio = searchTerms.length > 0 ? matchedTerms / searchTerms.length : 0;
+    score += Math.round(termMatchRatio * 15);
+  }
+  
+  return Math.min(score, 100);
+}
+
+/**
+ * Free tier: keyword matching with proper missing skills calculation
+ * Enhanced to provide meaningful scores even without user skills
+ */
+export function keywordMatch(job: Job, userSkills: string[], searchQuery?: string): JobMatch {
+  // If no user skills, calculate base match from job quality
   if (userSkills.length === 0) {
+    const baseScore = calculateBaseMatch(job, searchQuery);
     return { 
       ...job, 
-      matchScore: 0, 
+      matchScore: baseScore, 
       matchedSkills: [], 
       missingSkills: [] 
     };
@@ -37,11 +76,13 @@ export function keywordMatch(job: Job, userSkills: string[]): JobMatch {
 /**
  * Paid tier: Gemini AI matching with improved timeout and error handling
  */
-export async function geminiMatch(job: Job, userSkills: string[]): Promise<JobMatch> {
+export async function geminiMatch(job: Job, userSkills: string[], searchQuery?: string): Promise<JobMatch> {
   if (userSkills.length === 0) {
+    // Use base matching when no skills
+    const baseScore = calculateBaseMatch(job, searchQuery);
     return { 
       ...job, 
-      matchScore: 0, 
+      matchScore: baseScore, 
       matchedSkills: [], 
       missingSkills: [] 
     };
@@ -116,7 +157,7 @@ Return ONLY valid JSON (no markdown, no explanation):
     }
     
     // Graceful fallback to keyword matching
-    return keywordMatch(job, userSkills);
+    return keywordMatch(job, userSkills, searchQuery);
   }
 }
 
@@ -126,7 +167,8 @@ Return ONLY valid JSON (no markdown, no explanation):
 export async function matchJobs(
   jobs: Job[], 
   userSkills: string[], 
-  useAI: boolean
+  useAI: boolean,
+  searchQuery?: string
 ): Promise<JobMatch[]> {
   console.log(`[Matcher] Processing ${jobs.length} jobs with ${userSkills.length} skills (AI: ${useAI})`);
   
@@ -135,8 +177,8 @@ export async function matchJobs(
   const results = await Promise.all(
     jobs.map(job => 
       useAI 
-        ? geminiMatch(job, userSkills) 
-        : Promise.resolve(keywordMatch(job, userSkills))
+        ? geminiMatch(job, userSkills, searchQuery) 
+        : Promise.resolve(keywordMatch(job, userSkills, searchQuery))
     )
   );
   
