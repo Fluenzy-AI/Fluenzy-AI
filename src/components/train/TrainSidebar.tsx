@@ -165,6 +165,13 @@ export function TrainSidebar() {
   // Job & Career items
   const careerItems: NavigationItem[] = [
     {
+      title: 'AI Job Search',
+      icon: Zap,
+      href: '/train/job-search',
+      badge: 'New',
+      isActive: pathname === '/train/job-search',
+    },
+    {
       title: 'Auto-Apply Setup',
       icon: Settings,
       href: '/train/auto-apply-setup',

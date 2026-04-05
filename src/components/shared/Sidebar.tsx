@@ -80,6 +80,11 @@ const NAV_ITEMS = [
     badge: true, // Will show setup status badge
   },
   {
+    href: "/train/job-search",
+    label: "AI Job Search",
+    icon: Zap,
+  },
+  {
     href: "/jobs",
     label: "Browse Jobs",
     icon: Briefcase,

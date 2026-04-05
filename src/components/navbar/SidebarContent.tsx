@@ -120,6 +120,11 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ session, pathname }) =>
                   <Briefcase className="mr-3 h-4 w-4" />
                   Browse Jobs
                 </Link>
+                <Link href="/train/job-search" className={`flex items-center px-4 py-2 text-xs font-bold rounded-xl transition-all ${pathname === '/train/job-search' ? 'text-white bg-blue-500/20' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+                  <Zap className="mr-3 h-4 w-4 text-blue-400" />
+                  AI Job Search
+                  <span className="ml-2 px-1.5 py-0.5 text-[10px] bg-blue-500/20 text-blue-400 rounded-full">New</span>
+                </Link>
               </div>
 
               <div className="mt-4">

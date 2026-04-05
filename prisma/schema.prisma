@@ -183,6 +183,12 @@ model users {
   atsAnalyses      ATSAnalysis[]
   atsRankings      ATSRanking[]
   fileRecords      FileRecord[]
+  // Job Search Engine relations
+  jobSearchResume       JobSearchResume?
+  jobSearchSaved        JobSearchSaved[]
+  jobSearchApplications JobSearchApplication[]
+  jobSearchUsage        JobSearchSessionUsage[]
+  jobSearchHistory      JobSearchHistory[]
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -2479,4 +2485,86 @@ model MarketingAnalyticsDaily {
   triggersFired   Int       @default(0)
   
   createdAt       DateTime  @default(now())
+}
+
+// ─── Job Search Engine Models ──────────────────────────────────────────────
+
+model JobSearchResume {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @unique @db.ObjectId
+  user       users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileUrl    String
+  resumeText String
+  skills     String[]
+  updatedAt  DateTime @updatedAt
+  createdAt  DateTime @default(now())
+}
+
+model JobSearchCache {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  query     String   @unique
+  plan      String
+  jobs      Json
+  hitCount  Int      @default(0)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([query, plan])
+}
+
+model JobSearchSaved {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId     String
+  jobData   Json
+  createdAt DateTime @default(now())
+
+  @@unique([userId, jobId])
+  @@index([userId])
+}
+
+model JobSearchApplication {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String    @db.ObjectId
+  user       users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobId      String
+  jobData    Json
+  status     String    @default("saved")
+  appliedAt  DateTime?
+  notes      String?
+  matchScore Int?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([userId, jobId])
+  @@index([userId, status])
+}
+
+model JobSearchSessionUsage {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  user         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  month        String
+  sessionsUsed Int      @default(0)
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+
+  @@unique([userId, month])
+}
+
+model JobSearchHistory {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String   @db.ObjectId
+  user         users    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query        String
+  location     String?
+  jobType      String?
+  workMode     String?
+  resultsCount Int      @default(0)
+  fromCache    Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  @@index([userId, createdAt])
 }
