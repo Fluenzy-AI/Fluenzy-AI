@@ -102,7 +102,7 @@ export async function GET(req: NextRequest) {
     // Step 6: Consume session ONLY after successful search
     const consumeResult = await consumeSession(session.user.id, plan);
 
-    // Step 7: Save search to history
+    // Step 7: Save search to history (auto-expires after 30 days via cleanup)
     try {
       await prisma.jobSearchHistory.create({
         data: {

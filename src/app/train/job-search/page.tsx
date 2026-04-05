@@ -89,6 +89,11 @@ export default function BrowseJobsPage() {
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
   const [userSkills, setUserSkills] = useState<string[]>([]);
   
+  // Resume upload (optional)
+  const [showResumeUpload, setShowResumeUpload] = useState(false);
+  const [resumeUploading, setResumeUploading] = useState(false);
+  const [resumeFileName, setResumeFileName] = useState<string | null>(null);
+  
   // Session info
   const [sessionInfo, setSessionInfo] = useState<SessionInfo | null>(null);
   const [showLimitBanner, setShowLimitBanner] = useState(false);
@@ -117,6 +122,7 @@ export default function BrowseJobsPage() {
       fetchSessionInfo();
       fetchSearchHistory();
       fetchSavedJobs();
+      fetchResume();
     }
   }, [session]);
 
@@ -138,9 +144,11 @@ export default function BrowseJobsPage() {
 
   const fetchSearchHistory = async () => {
     try {
-      const res = await fetch("/api/job-search/history?limit=10");
+      const res = await fetch("/api/job-search/history?limit=20");
+      if (!res.ok) return;
+      
       const data = await res.json();
-      if (res.ok && data.history) {
+      if (data.history && Array.isArray(data.history)) {
         setSearchHistory(data.history);
       }
     } catch (err) {
@@ -151,12 +159,90 @@ export default function BrowseJobsPage() {
   const fetchSavedJobs = async () => {
     try {
       const res = await fetch("/api/job-search/save");
+      if (!res.ok) return;
+      
       const data = await res.json();
-      if (data.jobs) {
+      if (data.jobs && Array.isArray(data.jobs)) {
         setSavedIds(new Set(data.jobs.map((j: any) => j.id)));
       }
     } catch (err) {
       console.error("Failed to fetch saved jobs:", err);
+    }
+  };
+
+  const fetchResume = async () => {
+    try {
+      const res = await fetch("/api/job-search/resume");
+      if (!res.ok) return;
+      
+      const data = await res.json();
+      if (data.resume) {
+        setUserSkills(data.resume.skills || []);
+        setResumeFileName(data.resume.fileName);
+      }
+    } catch (err) {
+      console.error("Failed to fetch resume:", err);
+    }
+  };
+
+  const handleResumeUpload = async (file: File) => {
+    if (!file) return;
+    
+    setResumeUploading(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append("resume", file);
+      
+      console.log("[Frontend] Uploading resume:", file.name, file.size);
+      
+      const res = await fetch("/api/job-search/resume", {
+        method: "POST",
+        body: formData,
+      });
+      
+      console.log("[Frontend] Response status:", res.status);
+      
+      // Always try to parse JSON
+      let data;
+      try {
+        data = await res.json();
+      } catch (parseErr) {
+        console.error("[Frontend] Failed to parse response:", parseErr);
+        throw new Error("Invalid server response");
+      }
+      
+      if (!res.ok || !data.success) {
+        console.error("[Frontend] Upload failed:", data);
+        throw new Error(data.error || "Upload failed");
+      }
+      
+      if (data.skills && Array.isArray(data.skills)) {
+        setUserSkills(data.skills);
+        setResumeFileName(data.fileName);
+        setShowResumeUpload(false);
+        console.log("[Frontend] Resume uploaded successfully, skills:", data.skills.length);
+      }
+    } catch (err: any) {
+      console.error("[Frontend] Resume upload error:", err);
+      setError(err.message || "Failed to upload resume. Please try again.");
+    } finally {
+      setResumeUploading(false);
+    }
+  };
+
+  const deleteHistoryItem = async (id: string) => {
+    try {
+      const res = await fetch(`/api/job-search/history?id=${id}`, {
+        method: "DELETE",
+      });
+      
+      if (res.ok) {
+        setSearchHistory(prev => prev.filter(item => item.id !== id));
+      }
+    } catch (err) {
+      console.error("Failed to delete history item:", err);
     }
   };
 
@@ -495,9 +581,20 @@ export default function BrowseJobsPage() {
           </div>
         )}
 
-        {/* Search History Button */}
-        {searchHistory.length > 0 && (
-          <div className="flex justify-end">
+        {/* Search History & Resume Upload Buttons */}
+        <div className="flex justify-between items-center gap-3">
+          {/* Resume Upload Button (Optional) */}
+          <button
+            onClick={() => setShowResumeUpload(!showResumeUpload)}
+            className="flex items-center gap-2 px-4 py-2 text-sm bg-purple-600/20 text-purple-300 hover:bg-purple-600/30 rounded-lg border border-purple-600/50 transition-all"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            {resumeFileName ? `Resume: ${resumeFileName.slice(0, 20)}...` : "Upload Resume (Optional)"}
+          </button>
+          
+          {searchHistory.length > 0 && (
             <button
               onClick={() => setShowHistory(!showHistory)}
               className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 rounded-lg border border-gray-700 transition-all"
@@ -505,6 +602,61 @@ export default function BrowseJobsPage() {
               <History className="w-4 h-4" />
               Recent Searches ({searchHistory.length})
             </button>
+          )}
+        </div>
+
+        {/* Resume Upload Dropdown */}
+        {showResumeUpload && (
+          <div className="bg-purple-900/20 backdrop-blur-sm border border-purple-700/50 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-medium flex items-center gap-2">
+                <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Upload Resume for Better Matching
+              </h3>
+              <button onClick={() => setShowResumeUpload(false)} className="text-gray-400 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            {userSkills.length > 0 && (
+              <div className="mb-3 p-3 bg-green-900/20 border border-green-700/30 rounded-lg">
+                <p className="text-sm text-green-300 mb-2">✓ Skills detected: {userSkills.length}</p>
+                <div className="flex flex-wrap gap-1">
+                  {userSkills.slice(0, 10).map((skill, i) => (
+                    <span key={i} className="text-xs bg-green-600/30 text-green-200 px-2 py-0.5 rounded-full">
+                      {skill}
+                    </span>
+                  ))}
+                  {userSkills.length > 10 && (
+                    <span className="text-xs text-gray-400">+{userSkills.length - 10} more</span>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            <div className="space-y-3">
+              <input
+                type="file"
+                accept=".pdf"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleResumeUpload(file);
+                }}
+                disabled={resumeUploading}
+                className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-purple-600 file:text-white hover:file:bg-purple-500 file:cursor-pointer cursor-pointer disabled:opacity-50"
+              />
+              {resumeUploading && (
+                <div className="flex items-center gap-2 text-sm text-purple-300">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Extracting skills from resume...
+                </div>
+              )}
+              <p className="text-xs text-gray-500">
+                Upload your resume (PDF only, max 5MB) to get personalized job matches based on your skills.
+              </p>
+            </div>
           </div>
         )}
 
@@ -522,25 +674,40 @@ export default function BrowseJobsPage() {
             </div>
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {searchHistory.map((item) => (
-                <button
+                <div
                   key={item.id}
-                  onClick={() => runHistorySearch(item)}
-                  className="w-full flex items-center justify-between p-3 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors text-left"
+                  className="flex items-center justify-between p-3 rounded-lg bg-gray-700/30 hover:bg-gray-700/50 transition-colors"
                 >
-                  <div>
+                  <button
+                    onClick={() => runHistorySearch(item)}
+                    className="flex-1 text-left"
+                  >
                     <p className="text-white text-sm font-medium">{item.query}</p>
                     <p className="text-gray-400 text-xs">
                       {item.location || "Any location"} • {item.resultsCount} results
                     </p>
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">
+                      {new Date(item.createdAt).toLocaleDateString()}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteHistoryItem(item.id);
+                      }}
+                      className="p-1 text-gray-500 hover:text-red-400 transition-colors"
+                      title="Delete"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   </div>
-                  <span className="text-xs text-gray-500">
-                    {new Date(item.createdAt).toLocaleDateString()}
-                  </span>
-                </button>
+                </div>
               ))}
             </div>
           </div>
         )}
+
 
         {/* Main Search Box - 3 Step Form */}
         <div className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-2xl p-6 shadow-2xl">
