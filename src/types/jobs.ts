@@ -2,7 +2,29 @@
 
 export type UserPlan = "free" | "pro" | "standard";
 
-export type JobSource = "arbeitnow" | "jsearch" | "serpapi";
+export type JobSource = 
+  | "arbeitnow" 
+  | "jsearch" 
+  | "serpapi"
+  // Additional sources
+  | "remoteok"
+  | "remotive"
+  | "themuse"
+  | "adzuna"
+  | "linkedin"
+  | "indeed"
+  | "glassdoor"
+  | "naukri"
+  | "internshala"
+  | "foundit"
+  | "wellfound"
+  | "flexjobs"
+  | "weworkremotely"
+  | "google"
+  | "microsoft"
+  | "amazon"
+  | "apple"
+  | "meta";
 
 export type ApplicationStatus =
   | "saved" | "applied" | "interviewing" | "offered" | "rejected";
@@ -20,6 +42,7 @@ export interface Job {
   remote?: boolean;
   postedAt?: string;
   tags?: string[];
+  skills?: string[];
   source: JobSource;
 }
 
