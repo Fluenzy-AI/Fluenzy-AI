@@ -109,7 +109,7 @@ export default function CampaignsPage() {
         ...(statusFilter !== "all" && { status: statusFilter }),
         ...(searchQuery && { search: searchQuery }),
       });
-      const res = await fetch(`/api/admin/marketing/campaigns?${params}`);
+      const res = await fetch(`/api/admin/marketing/campaigns?${params}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch campaigns");
       const data = await res.json();
       setCampaigns(data.campaigns || []);
@@ -123,7 +123,7 @@ export default function CampaignsPage() {
 
   async function fetchSegments() {
     try {
-      const res = await fetch("/api/admin/marketing/segments?predefined=true");
+      const res = await fetch("/api/admin/marketing/segments?predefined=true", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch segments");
       const data = await res.json();
       setSegments(data.segments || []);
@@ -142,6 +142,7 @@ export default function CampaignsPage() {
       const res = await fetch("/api/admin/marketing/campaigns", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
       if (!res.ok) {
@@ -164,6 +165,7 @@ export default function CampaignsPage() {
       setActionLoading("delete");
       const res = await fetch(`/api/admin/marketing/campaigns/${selectedCampaign.id}`, {
         method: "DELETE",
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to delete campaign");
       setShowDeleteConfirm(false);
@@ -182,6 +184,7 @@ export default function CampaignsPage() {
       setActionLoading(campaign.id);
       const res = await fetch(`/api/admin/marketing/campaigns/${campaign.id}`, {
         method: "POST",
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to send campaign");
       fetchCampaigns();
@@ -218,10 +221,12 @@ export default function CampaignsPage() {
       const res = await fetch("/api/admin/marketing/ai-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           action: "generate",
           prompt: formData.aiPrompt,
           tone: formData.aiTone,
+          senderType: formData.senderType || "news",
         }),
       });
       if (!res.ok) throw new Error("Failed to generate content");

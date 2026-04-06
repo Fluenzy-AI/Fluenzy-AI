@@ -100,7 +100,7 @@ export default function SegmentsPage() {
   async function fetchSegments() {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/marketing/segments?predefined=true");
+      const res = await fetch("/api/admin/marketing/segments?predefined=true", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch segments");
       const data = await res.json();
       setSegments(data.segments || []);
@@ -139,6 +139,7 @@ export default function SegmentsPage() {
       const res = await fetch("/api/admin/marketing/segments/preview", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to preview segment");
@@ -158,6 +159,7 @@ export default function SegmentsPage() {
       const res = await fetch("/api/admin/marketing/segments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
       if (!res.ok) {

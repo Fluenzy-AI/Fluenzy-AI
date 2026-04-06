@@ -66,10 +66,12 @@ export default function AIGeneratorPage() {
       const res = await fetch("/api/admin/marketing/ai-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           action: "generate",
           prompt,
           tone,
+          senderType: "news",
         }),
       });
       if (!res.ok) {
@@ -77,7 +79,7 @@ export default function AIGeneratorPage() {
         throw new Error(data.error || "Failed to generate email");
       }
       const data = await res.json();
-      setResult(data);
+      setResult(data.email);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate email");
     } finally {
@@ -90,12 +92,19 @@ export default function AIGeneratorPage() {
     try {
       setLoading(true);
       setError(null);
+      // Parse subject from first line if possible
+      const lines = existingEmail.trim().split('\n');
+      const subject = lines[0].replace(/^Subject:\s*/i, '').trim() || 'Email Subject';
+      const body = lines.slice(1).join('\n').trim() || existingEmail;
+      
       const res = await fetch("/api/admin/marketing/ai-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           action: "improve",
-          content: existingEmail,
+          subject,
+          body,
           focus: improveFocus,
         }),
       });
@@ -104,7 +113,7 @@ export default function AIGeneratorPage() {
         throw new Error(data.error || "Failed to improve email");
       }
       const data = await res.json();
-      setResult(data);
+      setResult(data.improved);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to improve email");
     } finally {
@@ -120,9 +129,10 @@ export default function AIGeneratorPage() {
       const res = await fetch("/api/admin/marketing/ai-generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           action: "subject-lines",
-          content: emailContent,
+          context: emailContent,
         }),
       });
       if (!res.ok) {

@@ -36,10 +36,6 @@ export default function SettingsPage() {
     notifyOnLowOpen: true,
     bounceThreshold: 5,
     openThreshold: 10,
-
-    // API
-    geminiApiKey: "",
-    emailProvider: "brevo",
   });
 
   async function handleSave() {
@@ -242,59 +238,48 @@ export default function SettingsPage() {
               <div>
                 <h2 className="text-lg font-semibold text-white mb-4">Integrations</h2>
                 <div className="space-y-6">
-                  <div className="p-4 rounded-xl border border-white/10 bg-white/5">
+                  <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/10">
                     <div className="flex items-center gap-3 mb-4">
-                      <div className="h-10 w-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                        <Key className="h-5 w-5 text-blue-400" />
+                      <div className="h-10 w-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                        <Key className="h-5 w-5 text-green-400" />
                       </div>
                       <div>
                         <p className="text-white font-medium">Gemini AI API</p>
-                        <p className="text-xs text-slate-400">For AI email generation</p>
+                        <p className="text-xs text-green-400">✓ Configured via environment</p>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                        API Key
-                      </label>
-                      <input
-                        type="password"
-                        value={settings.geminiApiKey}
-                        onChange={(e) => setSettings(prev => ({ ...prev, geminiApiKey: e.target.value }))}
-                        placeholder="Enter your Gemini API key"
-                        className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-                      />
-                      <p className="text-xs text-slate-500 mt-1">
-                        Get your API key from{" "}
-                        <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:underline">
-                          Google AI Studio
-                        </a>
+                    <div className="px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                      <p className="text-sm text-slate-300">
+                        The Gemini AI API key is securely configured in the server environment. 
+                        No manual configuration needed.
+                      </p>
+                      <p className="text-xs text-slate-500 mt-2">
+                        AI email generation is ready to use via the AI Generator page.
                       </p>
                     </div>
                   </div>
 
-                  <div className="p-4 rounded-xl border border-white/10 bg-white/5">
+                  <div className="p-4 rounded-xl border border-green-500/30 bg-green-500/10">
                     <div className="flex items-center gap-3 mb-4">
                       <div className="h-10 w-10 rounded-lg bg-green-500/20 flex items-center justify-center">
                         <Mail className="h-5 w-5 text-green-400" />
                       </div>
                       <div>
-                        <p className="text-white font-medium">Email Provider</p>
-                        <p className="text-xs text-slate-400">For sending marketing emails</p>
+                        <p className="text-white font-medium">Email Provider (Brevo)</p>
+                        <p className="text-xs text-green-400">✓ Configured via environment</p>
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                        Provider
-                      </label>
-                      <select
-                        value={settings.emailProvider}
-                        onChange={(e) => setSettings(prev => ({ ...prev, emailProvider: e.target.value }))}
-                        className="w-full max-w-xs px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 transition"
-                      >
-                        <option value="brevo">Brevo (Sendinblue)</option>
-                        <option value="resend">Resend</option>
-                        <option value="sendgrid">SendGrid</option>
-                      </select>
+                    <div className="px-4 py-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                      <p className="text-sm text-slate-300">
+                        Email sending is configured using Brevo (Sendinblue) SMTP service.
+                        All sender addresses are pre-configured.
+                      </p>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-slate-400">
+                        <span>• news@fluenzyai.app</span>
+                        <span>• contact@fluenzyai.app</span>
+                        <span>• careers@fluenzyai.app</span>
+                        <span>• support@fluenzyai.app</span>
+                      </div>
                     </div>
                   </div>
                 </div>

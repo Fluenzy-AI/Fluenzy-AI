@@ -88,7 +88,7 @@ export default function EmailLogsPage() {
         ...(statusFilter !== "all" && { status: statusFilter }),
         ...(searchQuery && { email: searchQuery }),
       });
-      const res = await fetch(`/api/admin/marketing/logs?${params}`);
+      const res = await fetch(`/api/admin/marketing/logs?${params}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch logs");
       const data = await res.json();
       setLogs(data.logs || []);

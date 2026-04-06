@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
   async function fetchAnalytics() {
     try {
       setLoading(true);
-      const res = await fetch(`/api/admin/marketing?range=${dateRange}`);
+      const res = await fetch(`/api/admin/marketing?range=${dateRange}`, { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch analytics");
       const data = await res.json();
       

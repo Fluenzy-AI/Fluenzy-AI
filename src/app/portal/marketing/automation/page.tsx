@@ -102,7 +102,7 @@ export default function AutomationPage() {
   async function fetchTriggers() {
     try {
       setLoading(true);
-      const res = await fetch("/api/admin/marketing/triggers");
+      const res = await fetch("/api/admin/marketing/triggers", { credentials: "include" });
       if (!res.ok) throw new Error("Failed to fetch triggers");
       const data = await res.json();
       setTriggers(data.triggers || []);
@@ -119,6 +119,7 @@ export default function AutomationPage() {
       const res = await fetch("/api/admin/marketing/triggers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(formData),
       });
       if (!res.ok) {
@@ -141,6 +142,7 @@ export default function AutomationPage() {
       const res = await fetch(`/api/admin/marketing/triggers/${trigger.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ action: "toggle" }),
       });
       if (!res.ok) throw new Error("Failed to toggle trigger");
@@ -158,6 +160,7 @@ export default function AutomationPage() {
       setActionLoading("delete");
       const res = await fetch(`/api/admin/marketing/triggers/${selectedTrigger.id}`, {
         method: "DELETE",
+        credentials: "include",
       });
       if (!res.ok) throw new Error("Failed to delete trigger");
       setShowDeleteConfirm(false);
