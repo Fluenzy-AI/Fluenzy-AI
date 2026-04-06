@@ -108,3 +108,8 @@ desktop.ini
 
 # Package lock (keep for reproducible builds)
 # package-lock.json
+
+
+*.md
+*.txt
+!README.md
