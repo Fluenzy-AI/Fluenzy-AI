@@ -62,7 +62,8 @@ function getBrevoClient(): BrevoClient {
     throw new Error("[BREVO] Missing BREVO_API_KEY environment variable");
   }
 
-  _client = new BrevoClient({ apiKey });
+  // BrevoClient expects apiKey as a string or supplier function
+  _client = new BrevoClient({ apiKey: apiKey });
   console.log("[BREVO-API] Client initialized ✓");
   return _client;
 }
@@ -103,8 +104,17 @@ export async function sendBrevoEmail(options: BrevoEmailOptions): Promise<EmailR
     console.log(`[BREVO-API] To: ${toList.map(r => r.email).join(", ")}`);
     console.log(`[BREVO-API] Subject: ${subject}`);
 
-    // Build email request
-    const emailRequest: Parameters<typeof client.transactionalEmails.sendTransacEmail>[0] = {
+    // Build email request - using correct Brevo API field names
+    const emailRequest: {
+      sender: { name: string; email: string };
+      to: { email: string }[];
+      subject: string;
+      htmlContent?: string;
+      textContent?: string;
+      cc?: { email: string }[];
+      bcc?: { email: string }[];
+      attachment?: { name: string; content?: string }[];
+    } = {
       sender,
       to: toList,
       subject,
