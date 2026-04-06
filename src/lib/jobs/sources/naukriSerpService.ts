@@ -1,12 +1,12 @@
 // src/lib/jobs/sources/naukriSerpService.ts
-// Naukri.com Jobs via SerpAPI (Google Jobs from Naukri)
+// Naukri.com Jobs - Uses Google Jobs API without site filter (site filter doesn't work)
 
 import { Job } from "@/types/jobs";
 
 const SERP_API_KEY = process.env.SERP_API_KEY || "";
 const SERP_API_URL = "https://serpapi.com/search.json";
 
-interface SerpNaukriResult {
+interface GoogleJobResult {
   title: string;
   company_name: string;
   location: string;
@@ -29,22 +29,22 @@ export async function fetchNaukriJobs(params: {
   limit?: number;
 }): Promise<Job[]> {
   if (!SERP_API_KEY) {
-    console.log("[Naukri-Serp] API key not configured, skipping");
+    console.log("[Naukri] API key not configured, skipping");
     return [];
   }
 
   try {
-    console.log(`[Naukri-Serp] Fetching Naukri jobs for: ${params.query}`);
-
-    // Use site:naukri.com to filter Naukri results only
-    const searchQuery = `site:naukri.com ${params.query}`;
+    // Search for jobs in India specifically - no site filter (doesn't work with google_jobs)
+    const searchQuery = `${params.query} India jobs`;
+    console.log(`[Naukri] Fetching Indian jobs for: ${searchQuery}`);
     
     const url = new URL(SERP_API_URL);
     url.searchParams.set("api_key", SERP_API_KEY);
     url.searchParams.set("engine", "google_jobs");
     url.searchParams.set("q", searchQuery);
     url.searchParams.set("location", params.location || "India");
-    url.searchParams.set("num", String(params.limit || 10));
+    url.searchParams.set("gl", "in"); // Google India
+    url.searchParams.set("hl", "en"); // English
 
     const response = await fetch(url.toString(), {
       next: { revalidate: 3600 },
@@ -55,35 +55,74 @@ export async function fetchNaukriJobs(params: {
     }
 
     const data = await response.json();
-    const jobs: SerpNaukriResult[] = data.jobs_results || [];
+    const jobs: GoogleJobResult[] = data.jobs_results || [];
     
-    console.log(`[Naukri-Serp] Found ${jobs.length} jobs`);
+    // Filter for Indian locations and Naukri/Indian job board links
+    const indianJobs = jobs.filter(job => {
+      const locationLower = job.location?.toLowerCase() || "";
+      const hasIndianLocation = 
+        locationLower.includes("india") ||
+        locationLower.includes("delhi") ||
+        locationLower.includes("mumbai") ||
+        locationLower.includes("bangalore") ||
+        locationLower.includes("bengaluru") ||
+        locationLower.includes("hyderabad") ||
+        locationLower.includes("chennai") ||
+        locationLower.includes("pune") ||
+        locationLower.includes("kolkata") ||
+        locationLower.includes("noida") ||
+        locationLower.includes("gurgaon") ||
+        locationLower.includes("gurugram");
+      
+      // Also check if apply link is from Indian job boards
+      const hasIndianJobBoard = job.apply_options?.some(opt => 
+        opt.link?.includes("naukri.com") ||
+        opt.link?.includes("indeed.co.in") ||
+        opt.link?.includes("foundit.in") ||
+        opt.link?.includes("shine.com") ||
+        opt.link?.includes("timesjobs.com") ||
+        opt.link?.includes("internshala.com")
+      );
+      
+      return hasIndianLocation || hasIndianJobBoard;
+    });
+    
+    console.log(`[Naukri] Found ${indianJobs.length} Indian jobs (filtered from ${jobs.length})`);
 
-    return jobs.slice(0, params.limit || 10).map((job, index) => 
-      normalizeNaukriJob(job, index)
+    return indianJobs.slice(0, params.limit || 10).map((job, index) => 
+      normalizeIndianJob(job, index)
     );
   } catch (error: any) {
-    console.error("[Naukri-Serp] Error:", error.message);
+    console.error("[Naukri] Error:", error.message);
     return [];
   }
 }
 
-function normalizeNaukriJob(job: SerpNaukriResult, index: number): Job {
-  // Find Naukri apply link
+function normalizeIndianJob(job: GoogleJobResult, index: number): Job {
+  // Prioritize Indian job board links
   let applyLink = "";
   if (job.apply_options && job.apply_options.length > 0) {
-    const naukriOption = job.apply_options.find(opt => 
-      opt.link.includes("naukri.com")
+    const indianOption = job.apply_options.find(opt => 
+      opt.link?.includes("naukri.com") ||
+      opt.link?.includes("indeed.co.in") ||
+      opt.link?.includes("foundit.in") ||
+      opt.link?.includes("internshala.com")
     );
-    applyLink = naukriOption?.link || job.apply_options[0]?.link || "";
+    applyLink = indianOption?.link || job.apply_options[0]?.link || "";
   }
 
   const isRemote = 
     job.location?.toLowerCase().includes("remote") ||
     job.location?.toLowerCase().includes("work from home");
 
+  // Determine source based on apply link
+  let source: "naukri" | "indeed" | "internshala" | "foundit" = "naukri";
+  if (applyLink.includes("indeed")) source = "indeed";
+  else if (applyLink.includes("internshala")) source = "internshala";
+  else if (applyLink.includes("foundit")) source = "foundit";
+
   return {
-    id: `naukri_${job.job_id || index}_${Date.now()}`,
+    id: `indian_${job.job_id || index}_${Date.now()}`,
     title: job.title,
     company: job.company_name,
     location: job.location || "India",
@@ -93,7 +132,7 @@ function normalizeNaukriJob(job: SerpNaukriResult, index: number): Job {
     salary: job.detected_extensions?.salary,
     jobType: job.detected_extensions?.schedule_type,
     remote: isRemote,
-    source: "naukri",
+    source: source,
     skills: [],
   };
 }

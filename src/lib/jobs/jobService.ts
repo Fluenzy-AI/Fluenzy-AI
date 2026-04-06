@@ -8,16 +8,8 @@ import { matchJobs } from "./matcher";
 import { getApisForPlan, getJobLimit, canUseAIMatching } from "./planGate";
 import { Job, JobMatch, UserPlan, JobSource } from "@/types/jobs";
 
-// Additional sources imports
-import { fetchRemoteOkJobs } from "./sources/remoteOkService";
-import { fetchRemotiveJobs } from "./sources/remotiveService";
-import { fetchMuseJobs } from "./sources/theMuseService";
-import { fetchLinkedInJobs } from "./sources/linkedinSerpService";
-import { fetchIndeedJobs } from "./sources/indeedSerpService";
-import { fetchNaukriJobs } from "./sources/naukriSerpService";
-import { fetchInternshalaJobs } from "./sources/internshalaService";
-import { fetchGlassdoorJobs } from "./sources/glassdoorSerpService";
-import { fetchBigTechJobs } from "./sources/bigTechService";
+// Use optimized additional sources service (single SerpAPI call + free APIs)
+import { fetchAdditionalJobs } from "./additionalSourcesService";
 
 const RETRY_ATTEMPTS = 2;
 const RETRY_DELAY_MS = 500;
@@ -116,52 +108,30 @@ function buildSearchQuery(params: SearchParams): string {
 }
 
 /**
- * Fetch from additional sources in parallel (free APIs + SerpAPI-based)
+ * Fetch from additional sources using optimized service
+ * Makes single SerpAPI call + parallel free API calls
  */
 async function fetchAdditionalSourcesParallel(params: {
   query: string;
   location?: string;
   limit: number;
 }): Promise<Job[]> {
-  console.log(`[JobService] Fetching from additional sources...`);
+  console.log(`[JobService] Fetching from additional sources (optimized)...`);
   
-  const isIndia = params.location?.toLowerCase().includes("india") || 
-                  params.location?.toLowerCase().includes("delhi") ||
-                  params.location?.toLowerCase().includes("mumbai") ||
-                  params.location?.toLowerCase().includes("bangalore");
-
-  const fetchPromises: Promise<Job[]>[] = [
-    // Free APIs (always fetch)
-    fetchRemoteOkJobs({ query: params.query, limit: 10 }).catch(() => []),
-    fetchRemotiveJobs({ query: params.query, limit: 10 }).catch(() => []),
-    fetchMuseJobs({ query: params.query, location: params.location, limit: 10 }).catch(() => []),
-  ];
-
-  // India-specific sources
-  if (isIndia) {
-    fetchPromises.push(
-      fetchNaukriJobs({ query: params.query, location: params.location, limit: 10 }).catch(() => []),
-      fetchInternshalaJobs({ query: params.query, location: params.location, limit: 10 }).catch(() => [])
-    );
+  try {
+    const additionalJobs = await fetchAdditionalJobs({
+      query: params.query,
+      location: params.location,
+      limit: params.limit,
+      category: "all", // Fetch from all categories
+    });
+    
+    console.log(`[JobService] Additional sources returned ${additionalJobs.length} jobs`);
+    return additionalJobs;
+  } catch (error: any) {
+    console.error(`[JobService] Additional sources error: ${error.message}`);
+    return [];
   }
-
-  // SerpAPI-based sources (uses same API key)
-  fetchPromises.push(
-    fetchLinkedInJobs({ query: params.query, location: params.location, limit: 5 }).catch(() => []),
-    fetchIndeedJobs({ query: params.query, location: params.location, limit: 5 }).catch(() => []),
-    fetchGlassdoorJobs({ query: params.query, location: params.location, limit: 5 }).catch(() => [])
-  );
-
-  // Big tech companies
-  fetchPromises.push(
-    fetchBigTechJobs({ query: params.query, location: params.location, limit: 10 }).catch(() => [])
-  );
-
-  const results = await Promise.all(fetchPromises);
-  const additionalJobs = results.flat();
-  
-  console.log(`[JobService] Additional sources returned ${additionalJobs.length} jobs`);
-  return additionalJobs;
 }
 
 /**
@@ -246,28 +216,28 @@ export async function searchJobs(params: SearchParams): Promise<SearchResult> {
     throw new Error(`All job APIs failed: ${errorMsg}`);
   }
 
-  // 5. Deduplicate merged results
-  const dedupedJobs = deduplicateJobs(allJobs);
+  // 4. Deduplicate merged results (also filters by location for India searches)
+  const dedupedJobs = deduplicateJobs(allJobs, params.location);
   console.log(`[JobService] Deduplicated: ${allJobs.length} → ${dedupedJobs.length} jobs`);
 
-  // 6. Filter by work mode if remote requested
+  // 5. Filter by work mode if remote requested
   let filteredJobs = dedupedJobs;
   if (params.workMode === "remote") {
     filteredJobs = dedupedJobs.filter(j => j.remote === true);
     console.log(`[JobService] Remote filter: ${dedupedJobs.length} → ${filteredJobs.length} jobs`);
   }
 
-  // 7. Match with user skills (pass search query for better matching)
+  // 6. Match with user skills (pass search query for better matching)
   const matched = await matchJobs(filteredJobs, params.userSkills, canUseAIMatching(params.plan), params.query);
 
-  // 8. Cache results for future requests
+  // 7. Cache results for future requests
   if (matched.length > 0) {
     await setCachedJobs(cacheKey, params.plan, matched);
   }
 
   return { 
     jobs: matched, 
-    fromCache: false,
+    fromCache: false, 
     totalFetched: allJobs.length 
   };
 }

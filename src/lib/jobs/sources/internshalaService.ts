@@ -1,12 +1,12 @@
 // src/lib/jobs/sources/internshalaService.ts
-// Internshala Jobs via SerpAPI (Google Jobs from Internshala)
+// Internshala Jobs - Uses Google Jobs API for internships in India
 
 import { Job } from "@/types/jobs";
 
 const SERP_API_KEY = process.env.SERP_API_KEY || "";
 const SERP_API_URL = "https://serpapi.com/search.json";
 
-interface SerpInternshalaResult {
+interface GoogleJobResult {
   title: string;
   company_name: string;
   location: string;
@@ -29,22 +29,24 @@ export async function fetchInternshalaJobs(params: {
   limit?: number;
 }): Promise<Job[]> {
   if (!SERP_API_KEY) {
-    console.log("[Internshala-Serp] API key not configured, skipping");
+    console.log("[Internshala] API key not configured, skipping");
     return [];
   }
 
   try {
-    console.log(`[Internshala-Serp] Fetching Internshala jobs for: ${params.query}`);
-
-    // Use site:internshala.com to filter Internshala results only
-    const searchQuery = `site:internshala.com ${params.query} internship`;
+    // Search specifically for internships in India
+    const searchQuery = `${params.query} internship India`;
+    console.log(`[Internshala] Fetching internships for: ${searchQuery}`);
     
     const url = new URL(SERP_API_URL);
     url.searchParams.set("api_key", SERP_API_KEY);
     url.searchParams.set("engine", "google_jobs");
     url.searchParams.set("q", searchQuery);
     url.searchParams.set("location", params.location || "India");
-    url.searchParams.set("num", String(params.limit || 10));
+    url.searchParams.set("gl", "in");
+    url.searchParams.set("hl", "en");
+    // Filter for internships
+    url.searchParams.set("ltype", "1"); // Entry level / internship
 
     const response = await fetch(url.toString(), {
       next: { revalidate: 3600 },
@@ -55,45 +57,52 @@ export async function fetchInternshalaJobs(params: {
     }
 
     const data = await response.json();
-    const jobs: SerpInternshalaResult[] = data.jobs_results || [];
+    const jobs: GoogleJobResult[] = data.jobs_results || [];
     
-    console.log(`[Internshala-Serp] Found ${jobs.length} jobs`);
+    // Filter for internships and Indian locations
+    const internships = jobs.filter(job => {
+      const titleLower = job.title?.toLowerCase() || "";
+      const locationLower = job.location?.toLowerCase() || "";
+      
+      const isInternship = 
+        titleLower.includes("intern") ||
+        titleLower.includes("trainee") ||
+        titleLower.includes("apprentice") ||
+        job.detected_extensions?.schedule_type?.toLowerCase().includes("intern");
+      
+      const isIndian = 
+        locationLower.includes("india") ||
+        locationLower.includes("delhi") ||
+        locationLower.includes("mumbai") ||
+        locationLower.includes("bangalore") ||
+        locationLower.includes("hyderabad") ||
+        locationLower.includes("chennai") ||
+        locationLower.includes("pune") ||
+        locationLower.includes("noida");
+      
+      return isInternship && isIndian;
+    });
+    
+    console.log(`[Internshala] Found ${internships.length} internships (filtered from ${jobs.length})`);
 
-    return jobs.slice(0, params.limit || 10).map((job, index) => 
-      normalizeInternshalaJob(job, index)
-    );
+    return internships.slice(0, params.limit || 10).map((job, index) => ({
+      id: `internshala_${job.job_id || index}_${Date.now()}`,
+      title: job.title,
+      company: job.company_name,
+      location: job.location || "India",
+      description: job.description || "",
+      applyLink: job.apply_options?.[0]?.link || 
+        `https://internshala.com/internships/${encodeURIComponent(params.query)}-internship`,
+      postedAt: job.detected_extensions?.posted_at,
+      salary: job.detected_extensions?.salary || "Stipend",
+      jobType: "Internship",
+      remote: job.location?.toLowerCase().includes("remote") || 
+              job.location?.toLowerCase().includes("work from home"),
+      source: "internshala" as const,
+      skills: [],
+    }));
   } catch (error: any) {
-    console.error("[Internshala-Serp] Error:", error.message);
+    console.error("[Internshala] Error:", error.message);
     return [];
   }
-}
-
-function normalizeInternshalaJob(job: SerpInternshalaResult, index: number): Job {
-  // Find Internshala apply link
-  let applyLink = "";
-  if (job.apply_options && job.apply_options.length > 0) {
-    const internshalaOption = job.apply_options.find(opt => 
-      opt.link.includes("internshala.com")
-    );
-    applyLink = internshalaOption?.link || job.apply_options[0]?.link || "";
-  }
-
-  const isRemote = 
-    job.location?.toLowerCase().includes("remote") ||
-    job.location?.toLowerCase().includes("work from home");
-
-  return {
-    id: `internshala_${job.job_id || index}_${Date.now()}`,
-    title: job.title,
-    company: job.company_name,
-    location: job.location || "India",
-    description: job.description || "",
-    applyLink: applyLink || `https://internshala.com/internships/${encodeURIComponent(job.title)}-internship`,
-    postedAt: job.detected_extensions?.posted_at,
-    salary: job.detected_extensions?.salary,
-    jobType: "Internship",
-    remote: isRemote,
-    source: "internshala",
-    skills: [],
-  };
 }

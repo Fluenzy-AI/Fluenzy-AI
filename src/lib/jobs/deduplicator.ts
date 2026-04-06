@@ -18,6 +18,18 @@ const INVALID_URL_PATTERNS = [
   'webcache.googleusercontent.com',
 ];
 
+// Indian locations for filtering
+const INDIAN_LOCATIONS = [
+  "india", "delhi", "mumbai", "bangalore", "bengaluru", "hyderabad", "chennai",
+  "pune", "kolkata", "noida", "gurgaon", "gurugram", "ahmedabad", "jaipur",
+  "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal", "visakhapatnam",
+  "patna", "vadodara", "ghaziabad", "ludhiana", "coimbatore", "agra",
+  "madurai", "nashik", "faridabad", "meerut", "rajkot", "varanasi",
+  "uttar pradesh", "maharashtra", "karnataka", "tamil nadu", "west bengal",
+  "gujarat", "rajasthan", "madhya pradesh", "andhra pradesh", "telangana",
+  "kerala", "bihar", "odisha", "assam", "punjab", "haryana"
+];
+
 /**
  * Check if a URL is a valid direct apply link (not a Google search/redirect)
  */
@@ -63,6 +75,49 @@ function makeDedupeKey(job: Job): string {
 }
 
 /**
+ * Check if location matches India
+ */
+function isIndianLocation(locationStr: string): boolean {
+  if (!locationStr) return false;
+  const lower = locationStr.toLowerCase();
+  return INDIAN_LOCATIONS.some(loc => lower.includes(loc));
+}
+
+/**
+ * Filter jobs by location for India search
+ */
+export function filterJobsByLocation(jobs: Job[], searchLocation?: string): Job[] {
+  if (!searchLocation) return jobs;
+  
+  const isIndiaSearch = isIndianLocation(searchLocation);
+  
+  if (!isIndiaSearch) return jobs; // Only filter for India searches
+  
+  const beforeCount = jobs.length;
+  const filtered = jobs.filter(job => {
+    const jobLocation = job.location?.toLowerCase() || "";
+    
+    // Allow if:
+    // 1. Job is in India
+    // 2. Job is remote/worldwide/anywhere
+    // 3. Job explicitly allows work from home
+    return isIndianLocation(jobLocation) ||
+           jobLocation.includes("remote") ||
+           jobLocation.includes("work from home") ||
+           jobLocation.includes("worldwide") ||
+           jobLocation.includes("anywhere") ||
+           jobLocation.includes("global") ||
+           jobLocation === "";  // Unknown location - might be India
+  });
+  
+  if (filtered.length < beforeCount) {
+    console.log(`[Deduplicator] Location filter (India): ${beforeCount} → ${filtered.length} jobs`);
+  }
+  
+  return filtered;
+}
+
+/**
  * Filter out jobs with invalid apply links (Google search URLs, etc.)
  */
 export function filterValidJobs(jobs: Job[]): Job[] {
@@ -88,11 +143,16 @@ export function filterValidJobs(jobs: Job[]): Job[] {
  * When duplicates found, keep the one from higher priority source
  * Also filters out jobs with invalid apply links
  */
-export function deduplicateJobs(jobs: Job[]): Job[] {
+export function deduplicateJobs(jobs: Job[], searchLocation?: string): Job[] {
   if (jobs.length === 0) return [];
 
   // First, filter out invalid apply links
-  const validJobs = filterValidJobs(jobs);
+  let validJobs = filterValidJobs(jobs);
+  
+  // Then filter by location if searching India
+  if (searchLocation) {
+    validJobs = filterJobsByLocation(validJobs, searchLocation);
+  }
   
   const seen = new Map<string, Job>();
 
@@ -120,14 +180,15 @@ export function deduplicateJobs(jobs: Job[]): Job[] {
 /**
  * Merge jobs from multiple API calls and deduplicate
  */
-export function mergeAndDedupe(...jobArrays: Job[][]): Job[] {
+export function mergeAndDedupe(jobArrays: Job[][], searchLocation?: string): Job[] {
   const allJobs = jobArrays.flat();
-  return deduplicateJobs(allJobs);
+  return deduplicateJobs(allJobs, searchLocation);
 }
 
 export const deduplicator = {
   dedupe: deduplicateJobs,
   merge: mergeAndDedupe,
   filterValid: filterValidJobs,
+  filterByLocation: filterJobsByLocation,
   isValidApplyLink,
 };

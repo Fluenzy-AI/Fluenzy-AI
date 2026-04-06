@@ -3,10 +3,33 @@ import { Job } from "@/types/jobs";
 
 const BASE_URL = "https://serpapi.com/search.json";
 
+// Indian cities for location filtering
+const INDIAN_LOCATIONS = [
+  "india", "delhi", "mumbai", "bangalore", "bengaluru", "hyderabad", "chennai",
+  "pune", "kolkata", "noida", "gurgaon", "gurugram", "ahmedabad", "jaipur",
+  "lucknow", "kanpur", "nagpur", "indore", "thane", "bhopal", "visakhapatnam",
+  "pimpri", "patna", "vadodara", "ghaziabad", "ludhiana", "coimbatore", "agra",
+  "madurai", "nashik", "faridabad", "meerut", "rajkot", "varanasi", "srinagar",
+  "aurangabad", "dhanbad", "amritsar", "navi mumbai", "allahabad", "ranchi",
+  "howrah", "jabalpur", "gwalior", "vijayawada", "jodhpur", "raipur", "kota",
+  "chandigarh", "thiruvananthapuram", "mysore", "uttar pradesh", "maharashtra",
+  "karnataka", "tamil nadu", "west bengal", "gujarat", "rajasthan", "madhya pradesh",
+  "andhra pradesh", "telangana", "kerala", "bihar", "odisha", "assam", "punjab"
+];
+
 interface FetchParams {
   query: string;
   location?: string;
   limit?: number;
+}
+
+/**
+ * Check if a location string matches Indian locations
+ */
+function isIndianLocation(locationStr: string): boolean {
+  if (!locationStr) return false;
+  const lower = locationStr.toLowerCase();
+  return INDIAN_LOCATIONS.some(loc => lower.includes(loc));
 }
 
 /**
@@ -131,6 +154,9 @@ export const serpService = {
       throw new Error("SerpAPI not configured");
     }
 
+    // Check if searching for India
+    const isIndiaSearch = location ? isIndianLocation(location) : false;
+
     // Build search query - location is handled via lrad parameter for better results
     let searchQuery = query;
     
@@ -141,7 +167,7 @@ export const serpService = {
 
     // Determine country code for Google Jobs
     let countryCode = "in"; // Default to India
-    if (location?.toLowerCase().includes("india")) {
+    if (location?.toLowerCase().includes("india") || isIndiaSearch) {
       countryCode = "in";
     } else if (location?.toLowerCase().includes("united states") || location?.toLowerCase().includes("usa")) {
       countryCode = "us";
@@ -165,7 +191,7 @@ export const serpService = {
       }
     }
 
-    console.log(`[SerpAPI] Fetching: google_jobs engine, query="${searchQuery}", country=${countryCode}`);
+    console.log(`[SerpAPI] Fetching: google_jobs engine, query="${searchQuery}", country=${countryCode}, isIndiaSearch=${isIndiaSearch}`);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000); // 20s timeout
@@ -193,10 +219,26 @@ export const serpService = {
       }
 
       // Normalize and filter out jobs without direct apply links
-      const jobs = (data.jobs_results || [])
+      let jobs = (data.jobs_results || [])
         .map(normalizeSerpJob)
-        .filter((job: Job | null): job is Job => job !== null)
-        .slice(0, limit);
+        .filter((job: Job | null): job is Job => job !== null);
+      
+      // CRITICAL: Filter jobs by location for India searches
+      // Google Jobs API sometimes returns worldwide results even with gl=in
+      if (isIndiaSearch) {
+        const beforeFilter = jobs.length;
+        jobs = jobs.filter((job: Job) => {
+          const jobLocation = job.location?.toLowerCase() || "";
+          // Allow jobs that are in India OR remote
+          return isIndianLocation(jobLocation) || 
+                 jobLocation.includes("remote") ||
+                 jobLocation.includes("work from home") ||
+                 jobLocation.includes("anywhere");
+        });
+        console.log(`[SerpAPI] Location filter (India): ${beforeFilter} → ${jobs.length} jobs`);
+      }
+      
+      jobs = jobs.slice(0, limit);
       
       console.log(`[SerpAPI] Found ${jobs.length} jobs with valid direct apply links`);
       
