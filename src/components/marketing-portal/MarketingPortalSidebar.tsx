@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Megaphone,
+  UserPlus,
 } from "lucide-react";
 
 interface MarketingPortalSidebarProps {
@@ -34,6 +35,11 @@ const navItems = [
     title: "Campaigns",
     href: "/portal/marketing/campaigns",
     icon: Mail,
+  },
+  {
+    title: "Recipients",
+    href: "/portal/marketing/recipients",
+    icon: UserPlus,
   },
   {
     title: "Segments",

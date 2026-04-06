@@ -2312,13 +2312,14 @@ model MarketingEmailLog {
   campaignId      String?               @db.ObjectId
   campaign        MarketingCampaign?    @relation(fields: [campaignId], references: [id], onDelete: SetNull)
   
-  // User info
-  userId          String                @db.ObjectId
+  // User info (optional - for external recipients)
+  userId          String?               @db.ObjectId
   recipientEmail  String
   recipientName   String?
   
   // Email info
-  senderEmail     String
+  senderType      MarketingSenderType?
+  senderEmail     String?
   subject         String
   
   // Status tracking
@@ -2356,6 +2357,29 @@ model MarketingEmailLog {
   @@index([createdAt])
   @@index([sentAt])
   @@index([messageId])
+}
+
+// Marketing Recipients (external email list for campaigns)
+model MarketingRecipient {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  email           String    @unique
+  name            String?
+  tags            String[]  // For categorization
+  status          String    @default("active") // active, unsubscribed, bounced
+  
+  // Tracking
+  lastEmailedAt   DateTime?
+  totalEmails     Int       @default(0)
+  totalOpens      Int       @default(0)
+  totalClicks     Int       @default(0)
+  
+  // Source info
+  source          String?   // manual, csv, api
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([status])
 }
 
 // User Segment (for targeting)
