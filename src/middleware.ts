@@ -1,5 +1,5 @@
 import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { Role } from "@prisma/client";
 
 export default withAuth(
@@ -17,13 +17,14 @@ export default withAuth(
       return NextResponse.redirect(new URL("/?upgrade=true", req.url));
     }
 
-    // Allow MARKETING_ADMIN access to marketing API routes
-    if (isMarketingApiRoute && !["SUPER_ADMIN", "MARKETING_ADMIN"].includes(token?.role as string)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Marketing API routes are handled by the API itself (supports portal auth)
+    // So we skip middleware auth check for them
+    if (isMarketingApiRoute) {
+      return NextResponse.next();
     }
 
-    // Block other admin routes for non-SUPER_ADMIN (but not marketing routes which are handled above)
-    if (isAdminRoute && !isMarketingApiRoute && (token?.role as any) !== "SUPER_ADMIN") {
+    // Block other admin routes for non-SUPER_ADMIN
+    if (isAdminRoute && (token?.role as any) !== "SUPER_ADMIN") {
       return NextResponse.redirect(new URL("/", req.url));
     }
 
@@ -31,7 +32,13 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized: ({ token, req }) => {
+        // Allow marketing API routes without NextAuth token (portal auth handled in API)
+        if (req.nextUrl.pathname.startsWith("/api/admin/marketing")) {
+          return true;
+        }
+        return !!token;
+      },
     },
   }
 );

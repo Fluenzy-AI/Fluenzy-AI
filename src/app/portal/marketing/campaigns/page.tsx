@@ -371,7 +371,8 @@ export default function CampaignsPage() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {campaigns.map((campaign) => {
-                    const status = statusConfig[campaign.status];
+                    const statusKey = campaign.status.toUpperCase() as keyof typeof statusConfig;
+                    const status = statusConfig[statusKey] || statusConfig.DRAFT;
                     const StatusIcon = status.icon;
                     return (
                       <tr key={campaign.id} className="hover:bg-white/[0.02] transition-colors">

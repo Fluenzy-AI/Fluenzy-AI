@@ -10,7 +10,9 @@ import { checkMarketingAuth, unauthorizedResponse } from "@/lib/marketing-auth";
 export async function GET(req: NextRequest) {
   try {
     const auth = await checkMarketingAuth(req);
+    console.log("[Marketing API] Auth check:", auth);
     if (!auth.authorized) {
+      console.log("[Marketing API] Unauthorized, returning 401");
       return unauthorizedResponse(auth.error);
     }
 

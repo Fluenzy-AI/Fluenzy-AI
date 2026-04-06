@@ -75,27 +75,32 @@ export default function AnalyticsPage() {
       const data = await res.json();
       
       // Transform API response to analytics format
+      // API returns: overview, metrics, statusBreakdown, recentCampaigns, chartData, segments
+      const overview = data.overview || {};
+      const metrics = data.metrics || {};
+      const statusBreakdown = data.statusBreakdown || {};
+      
       setAnalytics({
         overview: {
-          totalCampaigns: data.totalCampaigns || 0,
-          totalEmailsSent: data.emailsSent || 0,
-          totalDelivered: Math.round((data.emailsSent || 0) * (data.metrics?.deliveryRate || 0) / 100),
-          totalOpened: Math.round((data.emailsSent || 0) * (data.openRate || 0) / 100),
-          totalClicked: Math.round((data.emailsSent || 0) * (data.clickRate || 0) / 100),
-          totalBounced: Math.round((data.emailsSent || 0) * (data.bounceRate || 0) / 100),
-          totalUnsubscribed: Math.round((data.emailsSent || 0) * (data.unsubscribeRate || 0) / 100),
-          deliveryRate: data.metrics?.deliveryRate || 0,
-          openRate: data.openRate || 0,
-          clickRate: data.clickRate || 0,
-          bounceRate: data.bounceRate || 0,
-          unsubscribeRate: data.unsubscribeRate || 0,
+          totalCampaigns: overview.totalCampaigns || 0,
+          totalEmailsSent: statusBreakdown.sent || overview.totalEmailsSent || 0,
+          totalDelivered: statusBreakdown.delivered || 0,
+          totalOpened: statusBreakdown.opened || 0,
+          totalClicked: statusBreakdown.clicked || 0,
+          totalBounced: statusBreakdown.bounced || 0,
+          totalUnsubscribed: statusBreakdown.unsubscribed || 0,
+          deliveryRate: parseFloat(metrics.deliveryRate) || 0,
+          openRate: parseFloat(metrics.openRate) || 0,
+          clickRate: parseFloat(metrics.clickRate) || 0,
+          bounceRate: parseFloat(metrics.bounceRate) || 0,
+          unsubscribeRate: parseFloat(metrics.unsubscribeRate) || 0,
         },
-        dailyStats: data.dailyStats || [],
+        dailyStats: data.chartData || [],
         topCampaigns: (data.recentCampaigns || []).slice(0, 5).map((c: any) => ({
           id: c.id,
           name: c.name,
-          openRate: c.openRate || 0,
-          clickRate: c.clickRate || 0,
+          openRate: c.totalOpened && c.totalSent ? (c.totalOpened / c.totalSent * 100) : 0,
+          clickRate: c.totalClicked && c.totalOpened ? (c.totalClicked / c.totalOpened * 100) : 0,
           sent: c.totalSent || 0,
         })),
         periodComparison: {
@@ -467,14 +472,15 @@ function BenchmarkCard({
   goodAbove: boolean;
 }) {
   const isGood = goodAbove ? value >= benchmark : value <= benchmark;
-  const percentage = Math.min((value / (benchmark * 1.5)) * 100, 100);
+  const numValue = typeof value === 'number' ? value : parseFloat(value) || 0;
+  const percentage = Math.min((numValue / (benchmark * 1.5)) * 100, 100);
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm text-slate-400">{label}</p>
         <p className={`text-sm font-medium ${isGood ? "text-green-400" : "text-amber-400"}`}>
-          {value.toFixed(1)}{unit}
+          {numValue.toFixed(1)}{unit}
         </p>
       </div>
       <div className="h-2 bg-white/5 rounded-full overflow-hidden">

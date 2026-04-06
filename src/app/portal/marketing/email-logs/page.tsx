@@ -243,7 +243,8 @@ export default function EmailLogsPage() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {logs.map((log) => {
-                    const status = statusConfig[log.status];
+                    const statusKey = log.status.toUpperCase() as keyof typeof statusConfig;
+                    const status = statusConfig[statusKey] || statusConfig.QUEUED;
                     const StatusIcon = status.icon;
                     return (
                       <tr key={log.id} className="hover:bg-white/[0.02] transition-colors">
@@ -356,9 +357,15 @@ export default function EmailLogsPage() {
               </div>
               <div>
                 <p className="text-xs text-slate-500 mb-1">Status</p>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusConfig[selectedLog.status].color}`}>
-                  {statusConfig[selectedLog.status].label}
-                </span>
+                {(() => {
+                  const statusKey = selectedLog.status.toUpperCase() as keyof typeof statusConfig;
+                  const status = statusConfig[statusKey] || statusConfig.QUEUED;
+                  return (
+                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${status.color}`}>
+                      {status.label}
+                    </span>
+                  );
+                })()}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 {selectedLog.sentAt && (

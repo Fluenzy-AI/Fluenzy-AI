@@ -19,6 +19,7 @@ export interface MarketingAuthResult {
 export async function checkMarketingAuth(req: NextRequest): Promise<MarketingAuthResult> {
   // First check next-auth session (for SUPER_ADMIN accessing via superadmin panel)
   const session = await getServerSession(authOptions);
+  console.log("[Marketing Auth] Session check:", session?.user?.role);
   if (session?.user && ["SUPER_ADMIN", "MARKETING_ADMIN"].includes(session.user.role as string)) {
     return {
       authorized: true,
@@ -28,9 +29,11 @@ export async function checkMarketingAuth(req: NextRequest): Promise<MarketingAut
     };
   }
 
-  // Then check portal token (for MARKETING_ADMIN via portal)
+  // Then check portal token (for portal staff accessing marketing)
   const portalAuth = getPortalAuthFromRequest(req);
-  if (portalAuth && portalAuth.role === "MARKETING_ADMIN") {
+  console.log("[Marketing Auth] Portal token check:", portalAuth?.role, portalAuth?.email);
+  // Allow ADMIN, HR, and MARKETING_ADMIN roles from portal
+  if (portalAuth && ["ADMIN", "HR", "MARKETING_ADMIN"].includes(portalAuth.role)) {
     return {
       authorized: true,
       userId: portalAuth.staffId,
@@ -41,7 +44,7 @@ export async function checkMarketingAuth(req: NextRequest): Promise<MarketingAut
 
   return {
     authorized: false,
-    error: "Unauthorized: requires SUPER_ADMIN or MARKETING_ADMIN role",
+    error: "Unauthorized: requires SUPER_ADMIN, ADMIN, HR, or MARKETING_ADMIN role",
   };
 }
 
