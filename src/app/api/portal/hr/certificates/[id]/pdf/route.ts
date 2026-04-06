@@ -56,7 +56,7 @@ export async function GET(
     // Build verification URL
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://fluenzyai.app";
     const verificationUrl = `${baseUrl}/verify/${certificate.certificateNumber}`;
-    const qrCodeDataUrl = generateQRCode(verificationUrl);
+    const qrCodeDataUrl = await generateQRCode(verificationUrl);
 
     // Reconstruct certificate data for PDF generation
     const certData: CertificateData = {

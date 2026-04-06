@@ -7,6 +7,7 @@
 
 import fs from "fs";
 import path from "path";
+import QRCode from "qrcode";
 import { getBrowser, scheduleBrowserClose } from "./pdf-browser";
 
 export interface CertificateData {
@@ -68,13 +69,26 @@ export function readLogoBase64Export(): string {
 
 /**
  * Generate QR Code Data URL
- * Uses canvas to generate QR code (lightweight solution)
+ * Uses qrcode library to generate base64 data URL
  */
-export function generateQRCode(text: string): string {
-  // For server-side, we'll return a placeholder
-  // In production, use a proper QR library or generate client-side
-  // For now, use a QR code API
-  return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(text)}`;
+export async function generateQRCode(text: string): Promise<string> {
+  try {
+    // Generate QR code as base64 data URL
+    const qrDataUrl = await QRCode.toDataURL(text, {
+      width: 200,
+      margin: 1,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      },
+      errorCorrectionLevel: 'M'
+    });
+    return qrDataUrl;
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    // Fallback: return a placeholder or empty string
+    return '';
+  }
 }
 
 /**

@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     const verificationUrl = `${baseUrl}/verify/${certificateNumber}`;
 
     // Generate QR code
-    const qrCodeDataUrl = generateQRCode(verificationUrl);
+    const qrCodeDataUrl = await generateQRCode(verificationUrl);
 
     // Get HR info
     const hrStaff = await prisma.portalStaff.findUnique({
