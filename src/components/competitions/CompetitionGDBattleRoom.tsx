@@ -71,13 +71,15 @@ const MediaPlayer = ({
   audioTrack, 
   uid, 
   local = false,
-  userName = 'User'
+  userName = 'User',
+  hasAudio = true
 }: { 
   videoTrack: IRemoteVideoTrack | ICameraVideoTrack | null; 
   audioTrack: IRemoteAudioTrack | IMicrophoneAudioTrack | null; 
   uid: UID;
   local?: boolean;
   userName?: string;
+  hasAudio?: boolean;
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -105,8 +107,15 @@ const MediaPlayer = ({
   return (
     <div className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden">
       <div ref={containerRef} className="w-full h-full" />
-      <div className="absolute bottom-2 left-2 bg-black/60 px-3 py-1 rounded-full text-xs text-white">
-        {userName} {local && '(You)'}
+      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
+        <div className="bg-black/60 px-3 py-1 rounded-full text-xs text-white">
+          {userName} {local && '(You)'}
+        </div>
+        {!hasAudio && (
+          <div className="bg-red-500/80 p-1.5 rounded-full" title="Muted">
+            <MicOff className="w-3 h-3 text-white" />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -138,6 +147,19 @@ export default function CompetitionGDBattleRoom({
   const [agoraToken, setAgoraToken] = useState<string>('');
   const [agoraUid, setAgoraUid] = useState<number>(Math.floor(Math.random() * 1000000));
   const [timeRemaining, setTimeRemaining] = useState(competition.durationPerModule || 1800);
+  
+  // Evaluation state
+  const [isEvaluating, setIsEvaluating] = useState(false);
+  const [evaluationResults, setEvaluationResults] = useState<any>(null);
+  const [sessionEnded, setSessionEnded] = useState(false);
+  
+  // Transcript for AI evaluation (in a real app, this would come from speech-to-text)
+  const transcriptRef = useRef<Array<{
+    participantId: string;
+    participantName: string;
+    text: string;
+    timestamp: Date;
+  }>>([]);
 
   // Refs
   const clientRef = useRef<IAgoraRTCClient | null>(null);
@@ -337,18 +359,28 @@ export default function CompetitionGDBattleRoom({
   // ─── Toggle Audio ──────────────────────────────────────────────────────────────
 
   const toggleAudio = useCallback(async () => {
+    console.log('[Battle] Toggle audio clicked, track:', localAudioTrack, 'isMuted:', isMuted);
     if (localAudioTrack) {
-      await localAudioTrack.setEnabled(!isMuted);
-      setIsMuted(!isMuted);
+      const newMutedState = !isMuted;
+      await localAudioTrack.setEnabled(!newMutedState);
+      setIsMuted(newMutedState);
+      console.log('[Battle] Audio toggled, now muted:', newMutedState);
+    } else {
+      console.warn('[Battle] No local audio track available');
     }
   }, [localAudioTrack, isMuted]);
 
   // ─── Toggle Video ──────────────────────────────────────────────────────────────
 
   const toggleVideo = useCallback(async () => {
+    console.log('[Battle] Toggle video clicked, track:', localVideoTrack, 'isVideoOff:', isVideoOff);
     if (localVideoTrack) {
-      await localVideoTrack.setEnabled(!isVideoOff);
-      setIsVideoOff(!isVideoOff);
+      const newVideoOffState = !isVideoOff;
+      await localVideoTrack.setEnabled(!newVideoOffState);
+      setIsVideoOff(newVideoOffState);
+      console.log('[Battle] Video toggled, now off:', newVideoOffState);
+    } else {
+      console.warn('[Battle] No local video track available');
     }
   }, [localVideoTrack, isVideoOff]);
 
@@ -379,25 +411,122 @@ export default function CompetitionGDBattleRoom({
     isJoinedRef.current = false;
   }, [localAudioTrack, localVideoTrack]);
 
+  // ─── Evaluate GD Performance ──────────────────────────────────────────────────
+
+  const evaluateGDPerformance = async () => {
+    setIsEvaluating(true);
+    
+    try {
+      // Get transcript (in production, this would come from actual speech-to-text)
+      // For now, generate simulated participation data
+      const transcript = transcriptRef.current.length > 0 
+        ? transcriptRef.current
+        : generateSimulatedTranscript();
+      
+      // Call AI evaluation API
+      const evalResponse = await fetch('/api/ai/evaluate-gd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          transcript,
+          topic: competition.topic || 'General Discussion',
+          userId,
+          participantName: userName
+        })
+      });
+      
+      const evalData = await evalResponse.json();
+      
+      // Store module scores for the competition
+      await fetch(`/api/competitions/${competitionId}/gd-scores`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scores: evalData.scores,
+          feedback: evalData.feedback,
+          highlights: evalData.highlights,
+          improvements: evalData.improvements,
+          talkTimePercent: evalData.talkTimePercent || 25
+        })
+      });
+      
+      // Complete the competition
+      const completeRes = await fetch(`/api/competitions/${competitionId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      const completeData = await completeRes.json();
+      
+      setEvaluationResults({
+        ...evalData,
+        rank: completeData.data?.rank,
+        totalScore: completeData.data?.totalScore,
+        badgeType: completeData.data?.badgeType
+      });
+      
+      setSessionEnded(true);
+      
+    } catch (err) {
+      console.error('Error evaluating GD:', err);
+      // Still complete the competition even if evaluation fails
+      await fetch(`/api/competitions/${competitionId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      setSessionEnded(true);
+    } finally {
+      setIsEvaluating(false);
+    }
+  };
+  
+  // Generate simulated transcript for demo (in production, use actual speech-to-text)
+  const generateSimulatedTranscript = () => {
+    const allParticipants = [
+      { id: userId, name: userName },
+      ...participants.map(p => ({ id: p.userId, name: p.user.name }))
+    ];
+    
+    const simulatedMessages = [
+      "I think this topic is very relevant in today's context.",
+      "Building on that point, we should also consider the economic aspects.",
+      "I agree with the previous speaker, but we need to look at it from a different angle.",
+      "Let me add another perspective to this discussion.",
+      "That's an interesting point. However, I believe we should also consider...",
+      "To summarize what we've discussed so far...",
+      "I'd like to respectfully disagree and present an alternative view.",
+      "Great points everyone. Let me connect this to the broader picture."
+    ];
+    
+    const transcript = [];
+    for (let i = 0; i < simulatedMessages.length; i++) {
+      const participant = allParticipants[i % allParticipants.length];
+      transcript.push({
+        participantId: participant.id,
+        participantName: participant.name,
+        text: simulatedMessages[i],
+        timestamp: new Date(Date.now() - (simulatedMessages.length - i) * 30000)
+      });
+    }
+    
+    return transcript;
+  };
+
   // ─── End Battle ────────────────────────────────────────────────────────────────
 
   const handleEndBattle = useCallback(async () => {
     try {
-      // Submit completion
-      await fetch(`/api/competitions/${competitionId}/complete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      // Cleanup
+      // Cleanup Agora first
       await cleanup();
-
-      // Redirect to results
-      window.location.href = `/train/competitions/${competitionId}`;
+      
+      // Evaluate GD performance
+      await evaluateGDPerformance();
+      
     } catch (err) {
       console.error('Error ending battle:', err);
+      setSessionEnded(true);
     }
-  }, [competitionId, cleanup]);
+  }, [cleanup, competitionId, userId, userName, competition.topic, participants]);
 
   // ─── Format Time ───────────────────────────────────────────────────────────────
 
@@ -417,6 +546,170 @@ export default function CompetitionGDBattleRoom({
   };
 
   // ─── Render ────────────────────────────────────────────────────────────────────
+
+  // Show evaluating screen
+  if (isEvaluating) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+        <div className="bg-slate-800 rounded-xl p-8 max-w-md text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-violet-500 mx-auto mb-6"></div>
+          <h2 className="text-2xl font-bold text-white mb-2">Evaluating Your Performance</h2>
+          <p className="text-slate-400">
+            AI is analyzing your participation in the GD...
+          </p>
+          <div className="mt-6 text-sm text-slate-500">
+            <p>Evaluating communication skills, leadership, teamwork, and more...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show results screen
+  if (sessionEnded && evaluationResults) {
+    const getScoreColor = (score: number) => {
+      if (score >= 80) return 'text-emerald-400';
+      if (score >= 60) return 'text-yellow-400';
+      if (score >= 40) return 'text-orange-400';
+      return 'text-red-400';
+    };
+
+    const getScoreBg = (score: number) => {
+      if (score >= 80) return 'bg-emerald-500/20 border-emerald-500/30';
+      if (score >= 60) return 'bg-yellow-500/20 border-yellow-500/30';
+      if (score >= 40) return 'bg-orange-500/20 border-orange-500/30';
+      return 'bg-red-500/20 border-red-500/30';
+    };
+
+    const scores = evaluationResults.scores || {};
+    const overallScore = scores.overall || 70;
+
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-violet-950 to-slate-900 p-6">
+        <div className="max-w-4xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-r from-violet-500 to-purple-600 rounded-full mb-4">
+              <Trophy className="w-10 h-10 text-white" />
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-2">GD Battle Complete! 🎉</h1>
+            <p className="text-slate-400">Your performance has been evaluated</p>
+          </div>
+
+          {/* Overall Score */}
+          <div className={cn(
+            "rounded-2xl p-8 mb-6 text-center border",
+            getScoreBg(overallScore)
+          )}>
+            <h2 className="text-lg text-slate-400 mb-2">Overall Score</h2>
+            <div className={cn("text-6xl font-bold mb-2", getScoreColor(overallScore))}>
+              {overallScore}
+            </div>
+            <p className="text-slate-400">out of 100</p>
+            
+            {evaluationResults.rank && (
+              <div className="mt-4 inline-flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-full">
+                <span className="text-slate-400">Your Rank:</span>
+                <span className="text-xl font-bold text-violet-400">#{evaluationResults.rank}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Score Breakdown */}
+          <div className="bg-slate-800/50 rounded-xl p-6 mb-6">
+            <h3 className="text-lg font-semibold text-white mb-4">Score Breakdown</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {[
+                { label: 'Communication', value: scores.communication || 70 },
+                { label: 'Leadership', value: scores.leadership || 70 },
+                { label: 'Confidence', value: scores.confidence || 70 },
+                { label: 'Content Quality', value: scores.contentQuality || 70 },
+                { label: 'Teamwork', value: scores.teamwork || 70 },
+              ].map((item) => (
+                <div key={item.label} className="bg-slate-900/50 rounded-lg p-4">
+                  <p className="text-sm text-slate-400 mb-1">{item.label}</p>
+                  <p className={cn("text-2xl font-bold", getScoreColor(item.value))}>
+                    {item.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Feedback */}
+          {evaluationResults.feedback && (
+            <div className="bg-slate-800/50 rounded-xl p-6 mb-6">
+              <h3 className="text-lg font-semibold text-white mb-3">AI Feedback</h3>
+              <p className="text-slate-300">{evaluationResults.feedback}</p>
+            </div>
+          )}
+
+          {/* Strengths & Improvements */}
+          <div className="grid md:grid-cols-2 gap-6 mb-6">
+            {evaluationResults.highlights && evaluationResults.highlights.length > 0 && (
+              <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-emerald-400 mb-3">✨ Strengths</h3>
+                <ul className="space-y-2">
+                  {evaluationResults.highlights.map((h: string, i: number) => (
+                    <li key={i} className="text-slate-300 flex items-start gap-2">
+                      <span className="text-emerald-400">•</span>
+                      {h}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {evaluationResults.improvements && evaluationResults.improvements.length > 0 && (
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-amber-400 mb-3">📈 Areas to Improve</h3>
+                <ul className="space-y-2">
+                  {evaluationResults.improvements.map((imp: string, i: number) => (
+                    <li key={i} className="text-slate-300 flex items-start gap-2">
+                      <span className="text-amber-400">•</span>
+                      {imp}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-center gap-4">
+            <Button
+              onClick={() => window.location.href = `/train/competitions/${competitionId}`}
+              className="bg-violet-600 hover:bg-violet-700"
+            >
+              View Leaderboard
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => window.location.href = '/train/competitions'}
+            >
+              Back to Competitions
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Session ended without results - redirect
+  if (sessionEnded) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
+        <div className="bg-slate-800 rounded-xl p-8 max-w-md text-center">
+          <Trophy className="w-16 h-16 text-violet-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Battle Complete!</h2>
+          <p className="text-slate-400 mb-6">Your results have been saved.</p>
+          <Button onClick={() => window.location.href = `/train/competitions/${competitionId}`}>
+            View Results
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -441,9 +734,17 @@ export default function CompetitionGDBattleRoom({
               <Users className="w-16 h-16 text-violet-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Waiting for Participants</h2>
               <p className="text-slate-400">
-                The battle will start when minimum participants join
+                The GD will start when minimum participants join
               </p>
             </div>
+            
+            {/* Topic */}
+            {competition.topic && (
+              <div className="bg-violet-500/10 border border-violet-500/30 rounded-lg p-4 mb-6">
+                <p className="text-xs text-violet-400 uppercase tracking-wider mb-1">Discussion Topic</p>
+                <p className="text-white font-medium">{competition.topic}</p>
+              </div>
+            )}
             
             <div className="bg-slate-900 rounded-lg p-6 mb-6">
               <div className="flex items-center justify-center gap-8">
@@ -460,6 +761,17 @@ export default function CompetitionGDBattleRoom({
                   </div>
                   <div className="text-sm text-slate-400">Minimum</div>
                 </div>
+                {competition.maxGDParticipants && (
+                  <>
+                    <div className="text-slate-600 text-2xl">-</div>
+                    <div className="text-center">
+                      <div className="text-4xl font-bold text-slate-500 mb-1">
+                        {competition.maxGDParticipants}
+                      </div>
+                      <div className="text-sm text-slate-400">Maximum</div>
+                    </div>
+                  </>
+                )}
               </div>
               
               <div className="mt-4">
@@ -469,6 +781,12 @@ export default function CompetitionGDBattleRoom({
                     style={{ width: `${Math.min((currentParticipants / minParticipants) * 100, 100)}%` }}
                   />
                 </div>
+              </div>
+              
+              {/* Duration info */}
+              <div className="mt-4 flex items-center justify-center gap-2 text-slate-400">
+                <Clock className="h-4 w-4" />
+                <span className="text-sm">Duration: {Math.floor(competition.durationPerModule / 60)} minutes</span>
               </div>
             </div>
             
@@ -627,10 +945,12 @@ export default function CompetitionGDBattleRoom({
 
         {/* Controls - Fixed at bottom center */}
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 flex items-center gap-4 z-50">
-          <button
+          <Button
             onClick={toggleAudio}
+            variant="ghost"
+            size="icon"
             className={cn(
-              "p-4 rounded-full transition-all shadow-lg",
+              "p-4 h-14 w-14 rounded-full transition-all shadow-lg",
               isMuted 
                 ? "bg-red-500 hover:bg-red-600 text-white" 
                 : "bg-slate-700 hover:bg-slate-600 text-white"
@@ -638,21 +958,18 @@ export default function CompetitionGDBattleRoom({
             title={isMuted ? "Unmute" : "Mute"}
           >
             {isMuted ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18"></path>
-              </svg>
+              <MicOff className="w-6 h-6" />
             ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
-              </svg>
+              <Mic className="w-6 h-6" />
             )}
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={toggleVideo}
+            variant="ghost"
+            size="icon"
             className={cn(
-              "p-4 rounded-full transition-all shadow-lg",
+              "p-4 h-14 w-14 rounded-full transition-all shadow-lg",
               isVideoOff 
                 ? "bg-red-500 hover:bg-red-600 text-white" 
                 : "bg-slate-700 hover:bg-slate-600 text-white"
@@ -660,23 +977,18 @@ export default function CompetitionGDBattleRoom({
             title={isVideoOff ? "Turn on camera" : "Turn off camera"}
           >
             {isVideoOff ? (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3l18 18"></path>
-              </svg>
+              <VideoOff className="w-6 h-6" />
             ) : (
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-              </svg>
+              <Video className="w-6 h-6" />
             )}
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={handleEndBattle}
-            className="px-6 py-4 bg-red-600 hover:bg-red-700 text-white rounded-full font-semibold shadow-lg transition-colors"
+            className="px-6 py-4 h-14 bg-red-600 hover:bg-red-700 text-white rounded-full font-semibold shadow-lg transition-colors"
           >
             End Session
-          </button>
+          </Button>
         </div>
       </div>
     </div>

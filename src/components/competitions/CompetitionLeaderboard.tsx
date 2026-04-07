@@ -46,6 +46,7 @@ interface LeaderboardEntry {
   completionTime?: number | null;
   badgeType?: 'GOLD' | 'SILVER' | 'BRONZE' | 'PARTICIPATION' | 'TOP_PERFORMER' | null;
   previousRank?: number | null;
+  status?: 'REGISTERED' | 'IN_PROGRESS' | 'COMPLETED' | 'DISQUALIFIED';
 }
 
 interface CompetitionLeaderboardProps {
@@ -170,6 +171,7 @@ export function CompetitionLeaderboard({
                     <TableHead className="w-16">Rank</TableHead>
                     <TableHead>Participant</TableHead>
                     {showUniversity && <TableHead>Institution</TableHead>}
+                    <TableHead className="text-center">Status</TableHead>
                     {showModuleScores && moduleNames.map(name => (
                       <TableHead key={name} className="text-center">{name}</TableHead>
                     ))}
@@ -245,6 +247,23 @@ export function CompetitionLeaderboard({
                           </TableCell>
                         )}
                         
+                        {/* Status */}
+                        <TableCell className="text-center">
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              'text-xs',
+                              entry.status === 'COMPLETED' && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30',
+                              entry.status === 'IN_PROGRESS' && 'bg-blue-500/10 text-blue-400 border-blue-500/30',
+                              entry.status === 'REGISTERED' && 'bg-slate-500/10 text-slate-400 border-slate-500/30',
+                              entry.status === 'DISQUALIFIED' && 'bg-red-500/10 text-red-400 border-red-500/30',
+                              !entry.status && 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                            )}
+                          >
+                            {entry.status || 'Completed'}
+                          </Badge>
+                        </TableCell>
+                        
                         {/* Module Scores */}
                         {showModuleScores && moduleNames.map(name => (
                           <TableCell key={name} className="text-center text-sm">
@@ -256,9 +275,9 @@ export function CompetitionLeaderboard({
                         <TableCell className="text-right">
                           <span className={cn(
                             'font-semibold',
-                            entry.rank <= 3 && 'text-yellow-400'
+                            entry.rank <= 3 && entry.totalScore > 0 && 'text-yellow-400'
                           )}>
-                            {entry.totalScore.toFixed(1)}
+                            {entry.totalScore > 0 ? entry.totalScore.toFixed(1) : '-'}
                           </span>
                         </TableCell>
                         

@@ -41,12 +41,22 @@ const createCompetitionSchema = z.object({
   maxGDParticipants: z.number().min(3).max(8).optional(),
   modules: z.array(z.object({
     moduleType: z.enum([
+      // Speaking/Interview Modules
       'READ_ALOUD', 
       'LISTEN_AND_REPEAT', 
       'COMPREHENSION', 
       'CONVERSATION', 
       'EXTEMPORANEOUS', 
-      'LISTEN_AND_SUMMARIZE'
+      'LISTEN_AND_SUMMARIZE',
+      // GD Battle Modules
+      'COMMUNICATION',
+      'LEADERSHIP',
+      'CONFIDENCE',
+      'RELEVANCE',
+      'TEAMWORK',
+      'GRAMMAR',
+      'INITIATIVE',
+      'BODY_LANGUAGE'
     ]),
     weight: z.number().min(0).max(100),
     order: z.number().min(0),

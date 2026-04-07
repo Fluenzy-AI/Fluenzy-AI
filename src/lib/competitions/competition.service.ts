@@ -406,9 +406,14 @@ export async function deleteCompetition(
       return { success: false, error: 'Competition not found' };
     }
 
-    // Only DRAFT competitions can be deleted
-    if (competition.status !== 'DRAFT') {
-      return { success: false, error: 'Only draft competitions can be deleted' };
+    // Only DRAFT or COMPLETED competitions can be deleted
+    // ACTIVE and UPCOMING competitions should be cancelled first
+    if (competition.status === 'ACTIVE') {
+      return { success: false, error: 'Cannot delete active competition. End it first.' };
+    }
+    
+    if (competition.status === 'UPCOMING') {
+      return { success: false, error: 'Cannot delete upcoming competition. Cancel it first.' };
     }
 
     // Validate permission
@@ -417,7 +422,42 @@ export async function deleteCompetition(
       return { success: false, error: 'Not authorized to delete this competition' };
     }
 
-    await prisma.competition.delete({ where: { id: competitionId } });
+    // Delete all related records in a transaction
+    await prisma.$transaction(async (tx) => {
+      // Delete competition rewards
+      await tx.competitionReward.deleteMany({ where: { competitionId } });
+      
+      // Delete competition modules
+      await tx.competitionModule.deleteMany({ where: { competitionId } });
+      
+      // Delete competition universities (if any)
+      await tx.competitionUniversity.deleteMany({ where: { competitionId } });
+      
+      // Delete leaderboard entries
+      await tx.competitionLeaderboard.deleteMany({ where: { competitionId } });
+      
+      // Delete results
+      await tx.competitionResult.deleteMany({ where: { competitionId } });
+      
+      // Get participants to delete their module scores
+      const participants = await tx.competitionParticipant.findMany({
+        where: { competitionId },
+        select: { id: true }
+      });
+      
+      // Delete module scores for all participants
+      if (participants.length > 0) {
+        await tx.competitionModuleScore.deleteMany({
+          where: { participantId: { in: participants.map(p => p.id) } }
+        });
+      }
+      
+      // Delete participants
+      await tx.competitionParticipant.deleteMany({ where: { competitionId } });
+      
+      // Finally delete the competition
+      await tx.competition.delete({ where: { id: competitionId } });
+    });
 
     return { success: true, data: { deleted: true } };
   } catch (error) {

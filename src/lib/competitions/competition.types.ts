@@ -101,6 +101,11 @@ export interface EligibilityCheckResult {
   eligible: boolean;
   reason?: string;
   alreadyRegistered: boolean;
+  isRegistered?: boolean;
+  participantStatus?: string;
+  attemptCount?: number; // Current number of attempts used
+  maxAttempts?: number; // Max attempts allowed
+  hasAttemptsRemaining?: boolean; // Can user still participate
   competitionFull: boolean;
   registrationClosed: boolean;
 }

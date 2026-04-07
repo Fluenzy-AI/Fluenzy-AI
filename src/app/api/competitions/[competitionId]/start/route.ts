@@ -47,6 +47,7 @@ export async function POST(
         startDate: true,
         endDate: true,
         durationPerModule: true,
+        maxAttempts: true,
         modules: {
           select: { id: true, moduleType: true, order: true },
           orderBy: { order: 'asc' }
@@ -84,19 +85,15 @@ export async function POST(
           competitionId,
           userId: user.id
         }
+      },
+      include: {
+        result: true
       }
     });
 
     if (!participant) {
       return NextResponse.json(
         { success: false, error: 'You are not registered for this competition' },
-        { status: 400 }
-      );
-    }
-
-    if (participant.status === 'COMPLETED') {
-      return NextResponse.json(
-        { success: false, error: 'You have already completed this competition' },
         { status: 400 }
       );
     }
@@ -108,14 +105,45 @@ export async function POST(
       );
     }
 
-    // Update participant status to IN_PROGRESS
-    const updatedParticipant = await prisma.competitionParticipant.update({
-      where: { id: participant.id },
-      data: {
-        status: 'IN_PROGRESS',
-        startedAt: participant.startedAt || new Date()
+    // Check max attempts - count how many times user has completed
+    if (participant.status === 'COMPLETED' && participant.result) {
+      // Count previous attempts by checking CompetitionModuleScore attemptNumber
+      const maxAttemptUsed = await prisma.competitionModuleScore.aggregate({
+        where: { participantId: participant.id },
+        _max: { attemptNumber: true }
+      });
+      
+      const attemptCount = maxAttemptUsed._max?.attemptNumber || 1;
+      
+      if (attemptCount >= competition.maxAttempts) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: `You have used all ${competition.maxAttempts} attempt(s) for this competition` 
+          },
+          { status: 400 }
+        );
       }
-    });
+      
+      // Allow retry - reset status for new attempt
+      await prisma.competitionParticipant.update({
+        where: { id: participant.id },
+        data: {
+          status: 'IN_PROGRESS',
+          startedAt: new Date(),
+          completedAt: null
+        }
+      });
+    } else if (participant.status !== 'COMPLETED') {
+      // Update participant status to IN_PROGRESS
+      await prisma.competitionParticipant.update({
+        where: { id: participant.id },
+        data: {
+          status: 'IN_PROGRESS',
+          startedAt: participant.startedAt || new Date()
+        }
+      });
+    }
 
     // Get completed modules
     const completedModules = await prisma.competitionModuleScore.findMany({
@@ -125,17 +153,25 @@ export async function POST(
 
     const completedModuleIds = completedModules.map(m => m.moduleId);
 
+    // Get current attempt number
+    const maxAttempt = await prisma.competitionModuleScore.aggregate({
+      where: { participantId: participant.id },
+      _max: { attemptNumber: true }
+    });
+
     return NextResponse.json({
       success: true,
       data: {
         participant: {
-          id: updatedParticipant.id,
-          status: updatedParticipant.status,
-          startedAt: updatedParticipant.startedAt
+          id: participant.id,
+          status: 'IN_PROGRESS',
+          startedAt: participant.startedAt || new Date()
         },
         modules: competition.modules,
         completedModules: completedModuleIds,
-        durationPerModule: competition.durationPerModule
+        durationPerModule: competition.durationPerModule,
+        currentAttempt: (maxAttempt._max?.attemptNumber || 0) + 1,
+        maxAttempts: competition.maxAttempts
       }
     });
   } catch (error) {

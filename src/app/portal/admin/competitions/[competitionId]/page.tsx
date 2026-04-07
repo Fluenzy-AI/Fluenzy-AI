@@ -111,6 +111,7 @@ interface LeaderboardEntry {
   totalScore: number;
   completionTime?: number | null;
   badgeType?: 'GOLD' | 'SILVER' | 'BRONZE' | 'PARTICIPATION' | 'TOP_PERFORMER' | null;
+  status?: 'REGISTERED' | 'IN_PROGRESS' | 'COMPLETED' | 'DISQUALIFIED';
 }
 
 const scopeConfig = {
@@ -141,6 +142,8 @@ export default function AdminCompetitionDetailPage({
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     params.then(p => setCompetitionId(p.competitionId));
@@ -162,7 +165,7 @@ export default function AdminCompetitionDetailPage({
           return;
         }
 
-        const lbRes = await fetch(`/api/competitions/${competitionId}/leaderboard?limit=30`, { credentials: 'include' });
+        const lbRes = await fetch(`/api/competitions/${competitionId}/leaderboard?limit=30&includeAll=true`, { credentials: 'include' });
         const lbData = await lbRes.json();
         if (lbData.success) {
           setLeaderboard(lbData.data.entries || []);
@@ -207,6 +210,7 @@ export default function AdminCompetitionDetailPage({
   const deleteCompetition = async () => {
     if (!competition) return;
     
+    setIsDeleting(true);
     try {
       const res = await fetch(`/api/competitions/${competition.id}`, {
         method: 'DELETE',
@@ -216,12 +220,16 @@ export default function AdminCompetitionDetailPage({
       
       if (data.success) {
         toast.success('Competition deleted');
+        setDeleteDialogOpen(false);
         router.push('/portal/admin/competitions');
       } else {
         toast.error(data.error || 'Failed to delete');
       }
     } catch (error) {
+      console.error('Delete error:', error);
       toast.error('Failed to delete competition');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -293,22 +301,28 @@ export default function AdminCompetitionDetailPage({
             </Button>
           )}
           
-          <AlertDialog>
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="icon">
+              <Button variant="destructive" size="icon" title="Delete Competition">
                 <Trash2 className="h-4 w-4" />
               </Button>
             </AlertDialogTrigger>
-            <AlertDialogContent>
+            <AlertDialogContent className="bg-slate-900 border-slate-700">
               <AlertDialogHeader>
                 <AlertDialogTitle>Delete Competition?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will permanently delete the competition and all associated data. This action cannot be undone.
+                  This will permanently delete "{competition.name}" and all associated data. This action cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={deleteCompetition}>Delete</AlertDialogAction>
+                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+                <Button 
+                  variant="destructive" 
+                  onClick={deleteCompetition}
+                  disabled={isDeleting}
+                >
+                  {isDeleting ? 'Deleting...' : 'Delete'}
+                </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

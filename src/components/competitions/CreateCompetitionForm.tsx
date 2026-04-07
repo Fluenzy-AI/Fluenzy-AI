@@ -90,7 +90,8 @@ const competitionTypes = [
   { value: 'CORPORATE_VOICE_BATTLE', label: 'Corporate Voice Battle', description: 'Voice and communication assessment' }
 ];
 
-const moduleTypes = [
+// Standard speaking modules (for HR Interview and Corporate Voice battles)
+const speakingModuleTypes = [
   { value: 'READ_ALOUD', label: 'Read Aloud' },
   { value: 'LISTEN_AND_REPEAT', label: 'Listen & Repeat' },
   { value: 'COMPREHENSION', label: 'Comprehension' },
@@ -98,6 +99,44 @@ const moduleTypes = [
   { value: 'EXTEMPORANEOUS', label: 'Extemporaneous' },
   { value: 'LISTEN_AND_SUMMARIZE', label: 'Listen & Summarize' }
 ];
+
+// GD-specific evaluation modules (for GD Battle)
+const gdModuleTypes = [
+  { value: 'COMMUNICATION', label: 'Communication Skills', description: 'Clarity, articulation, and expression' },
+  { value: 'LEADERSHIP', label: 'Leadership', description: 'Ability to guide and influence discussion' },
+  { value: 'CONFIDENCE', label: 'Confidence', description: 'Self-assurance and composure' },
+  { value: 'RELEVANCE', label: 'Topic Relevance', description: 'Staying on topic and adding value' },
+  { value: 'TEAMWORK', label: 'Team Work', description: 'Collaboration and listening skills' },
+  { value: 'GRAMMAR', label: 'Grammar & Vocabulary', description: 'Language accuracy and richness' },
+  { value: 'INITIATIVE', label: 'Initiative', description: 'Starting topics and driving conversation' },
+  { value: 'BODY_LANGUAGE', label: 'Body Language', description: 'Non-verbal communication' }
+];
+
+// Default modules for each competition type
+const defaultModulesByType = {
+  GD_BATTLE: [
+    { moduleType: 'COMMUNICATION', weight: 20, order: 1 },
+    { moduleType: 'LEADERSHIP', weight: 15, order: 2 },
+    { moduleType: 'CONFIDENCE', weight: 15, order: 3 },
+    { moduleType: 'RELEVANCE', weight: 20, order: 4 },
+    { moduleType: 'TEAMWORK', weight: 15, order: 5 },
+    { moduleType: 'GRAMMAR', weight: 15, order: 6 }
+  ],
+  HR_INTERVIEW_BATTLE: [
+    { moduleType: 'READ_ALOUD', weight: 20, order: 1 },
+    { moduleType: 'CONVERSATION', weight: 40, order: 2 },
+    { moduleType: 'EXTEMPORANEOUS', weight: 25, order: 3 },
+    { moduleType: 'COMPREHENSION', weight: 15, order: 4 }
+  ],
+  CORPORATE_VOICE_BATTLE: [
+    { moduleType: 'READ_ALOUD', weight: 25, order: 1 },
+    { moduleType: 'CONVERSATION', weight: 50, order: 2 },
+    { moduleType: 'EXTEMPORANEOUS', weight: 25, order: 3 }
+  ]
+};
+
+// Legacy support - keep moduleTypes as speakingModuleTypes
+const moduleTypes = speakingModuleTypes;
 
 const rewardTypes = [
   { value: 'GOLD_CERTIFICATE', label: 'Gold Certificate' },
@@ -125,6 +164,12 @@ export function CreateCompetitionForm({
   initialData
 }: CreateCompetitionFormProps) {
   const [currentStep, setCurrentStep] = useState(1);
+  
+  // Get default modules based on competition type
+  const getDefaultModules = (type: string) => {
+    return defaultModulesByType[type as keyof typeof defaultModulesByType] || defaultModulesByType.GD_BATTLE;
+  };
+  
   const [formData, setFormData] = useState<CompetitionFormData>({
     name: initialData?.name || '',
     description: initialData?.description || '',
@@ -139,11 +184,7 @@ export function CreateCompetitionForm({
     prizePool: initialData?.prizePool || '',
     bannerUrl: initialData?.bannerUrl || '',
     universityIds: initialData?.universityIds || [],
-    modules: initialData?.modules || [
-      { moduleType: 'READ_ALOUD', weight: 25, order: 1 },
-      { moduleType: 'CONVERSATION', weight: 50, order: 2 },
-      { moduleType: 'EXTEMPORANEOUS', weight: 25, order: 3 }
-    ],
+    modules: initialData?.modules || getDefaultModules(initialData?.type || 'GD_BATTLE'),
     rewards: initialData?.rewards || [
       { rankFrom: 1, rankTo: 1, rewardType: 'GOLD_CERTIFICATE', rewardTitle: 'Gold Winner' },
       { rankFrom: 2, rankTo: 2, rewardType: 'SILVER_CERTIFICATE', rewardTitle: 'Silver Winner' },
@@ -154,6 +195,14 @@ export function CreateCompetitionForm({
     maxGDParticipants: initialData?.maxGDParticipants || 8
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  
+  // Get available modules based on competition type
+  const getAvailableModules = () => {
+    if (formData.type === 'GD_BATTLE') {
+      return gdModuleTypes;
+    }
+    return speakingModuleTypes;
+  };
 
   const steps = [
     { number: 1, title: 'Basic Info', description: 'Name, type, and scope' },
@@ -169,6 +218,17 @@ export function CreateCompetitionForm({
   ) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setErrors(prev => ({ ...prev, [field]: '' }));
+  };
+  
+  // Handle type change - update modules accordingly
+  const handleTypeChange = (newType: string) => {
+    const newModules = getDefaultModules(newType);
+    setFormData(prev => ({
+      ...prev,
+      type: newType as CompetitionFormData['type'],
+      modules: newModules
+    }));
+    setErrors(prev => ({ ...prev, type: '' }));
   };
 
   const validateStep = (step: number): boolean => {
@@ -282,7 +342,7 @@ export function CreateCompetitionForm({
           {competitionTypes.map((type) => (
             <div
               key={type.value}
-              onClick={() => updateFormData('type', type.value as CompetitionFormData['type'])}
+              onClick={() => handleTypeChange(type.value)}
               className={cn(
                 'p-4 rounded-lg border-2 cursor-pointer transition-all',
                 formData.type === type.value
@@ -576,6 +636,11 @@ export function CreateCompetitionForm({
         <p className="text-muted-foreground mb-4">
           Configure the assessment modules for this competition. The total weight must equal 100%.
         </p>
+        {formData.type === 'GD_BATTLE' && (
+          <p className="text-sm text-violet-400 mb-4">
+            💡 GD Battle uses communication-based evaluation criteria for live group discussions.
+          </p>
+        )}
         {errors.modules && (
           <p className="text-sm text-red-400 mb-4">{errors.modules}</p>
         )}
@@ -583,7 +648,7 @@ export function CreateCompetitionForm({
 
       <ModuleWeightEditor
         modules={formData.modules}
-        availableModules={moduleTypes}
+        availableModules={getAvailableModules()}
         onChange={(modules) => updateFormData('modules', modules)}
       />
     </div>

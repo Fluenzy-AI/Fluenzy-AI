@@ -101,57 +101,57 @@ export function CompetitionRegistrationModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-violet-400" />
+      <DialogContent className="sm:max-w-[500px] max-h-[85vh] flex flex-col p-0">
+        <DialogHeader className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
             Register for Competition
           </DialogTitle>
-          <DialogDescription>
-            You&apos;re about to register for this competition. Please review the details below.
+          <DialogDescription className="text-xs sm:text-sm">
+            Review the details and confirm your registration.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className="space-y-3 sm:space-y-4 px-4 sm:px-6 py-2 overflow-y-auto flex-1">
           {/* Competition Info */}
-          <div className="bg-slate-800/50 rounded-lg p-4 space-y-3">
+          <div className="bg-slate-800/50 rounded-lg p-3 sm:p-4 space-y-2">
             <div>
-              <h4 className="font-semibold text-lg">{competition.name}</h4>
-              <Badge variant="secondary" className="mt-1">
+              <h4 className="font-semibold text-sm sm:text-base line-clamp-1">{competition.name}</h4>
+              <Badge variant="secondary" className="mt-1 text-xs">
                 {typeLabels[competition.type]}
               </Badge>
             </div>
 
             {competition.description && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-xs sm:text-sm text-muted-foreground line-clamp-3">
                 {competition.description}
               </p>
             )}
           </div>
 
           {/* Key Details */}
-          <div className="grid grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
             <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-violet-400" />
-              <div>
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-violet-400 flex-shrink-0" />
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-xs">Starts</p>
-                <p>{new Date(competition.startDate).toLocaleDateString()}</p>
+                <p className="truncate text-xs sm:text-sm">{new Date(competition.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
               </div>
             </div>
             
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-violet-400" />
-              <div>
-                <p className="text-muted-foreground text-xs">Duration per module</p>
-                <p>{formatDuration(competition.durationPerModule)}</p>
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-violet-400 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-muted-foreground text-xs">Duration/module</p>
+                <p className="truncate text-xs sm:text-sm">{formatDuration(competition.durationPerModule)}</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-violet-400" />
-              <div>
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-violet-400 flex-shrink-0" />
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-xs">Participants</p>
-                <p>
+                <p className="truncate text-xs sm:text-sm">
                   {competition.participantCount || 0}
                   {competition.participantLimit && ` / ${competition.participantLimit}`}
                 </p>
@@ -160,10 +160,10 @@ export function CompetitionRegistrationModal({
 
             {competition.prizePool && (
               <div className="flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-yellow-400" />
-                <div>
+                <Trophy className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 flex-shrink-0" />
+                <div className="min-w-0">
                   <p className="text-muted-foreground text-xs">Prize Pool</p>
-                  <p className="text-yellow-400">{competition.prizePool}</p>
+                  <p className="text-yellow-400 truncate text-xs sm:text-sm">{competition.prizePool}</p>
                 </div>
               </div>
             )}
@@ -172,10 +172,10 @@ export function CompetitionRegistrationModal({
           {/* Modules */}
           {competition.modules && competition.modules.length > 0 && (
             <div>
-              <p className="text-sm text-muted-foreground mb-2">Competition Modules:</p>
-              <div className="flex flex-wrap gap-2">
+              <p className="text-xs sm:text-sm text-muted-foreground mb-2">Competition Modules:</p>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {competition.modules.map((module, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs">
+                  <Badge key={idx} variant="outline" className="text-[10px] sm:text-xs px-2 py-0.5">
                     {module.moduleType.replace(/_/g, ' ')} ({module.weight}%)
                   </Badge>
                 ))}
@@ -185,9 +185,9 @@ export function CompetitionRegistrationModal({
 
           {/* Registration Deadline Countdown */}
           {competition.registrationDeadline && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-2 sm:p-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-amber-400">Registration closes in:</span>
+                <span className="text-xs sm:text-sm text-amber-400">Registration closes in:</span>
                 <CompetitionTimer 
                   targetDate={competition.registrationDeadline} 
                   size="sm"
@@ -199,20 +199,20 @@ export function CompetitionRegistrationModal({
 
           {/* Spots Warning */}
           {spotsRemaining !== null && spotsRemaining <= 10 && spotsRemaining > 0 && (
-            <div className="flex items-center gap-2 text-amber-400 text-sm">
-              <AlertCircle className="h-4 w-4" />
+            <div className="flex items-center gap-2 text-amber-400 text-xs sm:text-sm">
+              <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4" />
               <span>Only {spotsRemaining} spots remaining!</span>
             </div>
           )}
 
           {/* Not Eligible Warning */}
           {!eligibility.eligible && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-2 sm:p-3">
               <div className="flex items-start gap-2 text-red-400">
-                <AlertCircle className="h-4 w-4 mt-0.5" />
+                <AlertCircle className="h-3 w-3 sm:h-4 sm:w-4 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="font-medium">Not Eligible</p>
-                  <p className="text-sm text-red-400/80">
+                  <p className="font-medium text-xs sm:text-sm">Not Eligible</p>
+                  <p className="text-xs text-red-400/80">
                     {eligibility.reason || 'You are not eligible to register for this competition.'}
                   </p>
                 </div>
@@ -222,15 +222,16 @@ export function CompetitionRegistrationModal({
 
           {/* Agreement Checkbox */}
           {eligibility.eligible && (
-            <div className="flex items-start gap-3 pt-2">
+            <div className="flex items-start gap-2 sm:gap-3 pt-1">
               <Checkbox 
                 id="agree-rules"
                 checked={agreedToRules}
                 onCheckedChange={(checked) => setAgreedToRules(checked === true)}
+                className="mt-0.5"
               />
               <label 
                 htmlFor="agree-rules" 
-                className="text-sm text-muted-foreground cursor-pointer"
+                className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
               >
                 I understand that I will have <strong>{competition.maxAttempts}</strong> attempt(s) 
                 to complete this competition. Once started, I must complete all modules within the 
@@ -240,23 +241,23 @@ export function CompetitionRegistrationModal({
           )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={isRegistering}>
+        <DialogFooter className="px-4 sm:px-6 py-3 sm:py-4 border-t border-slate-800">
+          <Button variant="outline" onClick={onClose} disabled={isRegistering} className="text-xs sm:text-sm">
             Cancel
           </Button>
           <Button 
             onClick={handleRegister}
             disabled={!agreedToRules || isRegistering || !eligibility.eligible}
-            className="gap-2"
+            className="gap-2 text-xs sm:text-sm"
           >
             {isRegistering ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                 Registering...
               </>
             ) : (
               <>
-                <CheckCircle className="h-4 w-4" />
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                 Confirm Registration
               </>
             )}

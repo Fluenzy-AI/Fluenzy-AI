@@ -44,9 +44,30 @@ export async function checkEligibility(
     });
 
     if (existingParticipant) {
+      // Get user's attempt count from module scores
+      const attemptCount = await prisma.competitionModuleScore.aggregate({
+        where: {
+          participantId: existingParticipant.id
+        },
+        _max: {
+          attemptNumber: true
+        }
+      });
+      
+      const currentAttempts = attemptCount._max.attemptNumber || 0;
+      const maxAttempts = competition.maxAttempts || 1;
+      const hasAttemptsRemaining = currentAttempts < maxAttempts;
+      
       result.eligible = false;
       result.alreadyRegistered = true;
-      result.reason = 'You are already registered for this competition';
+      result.isRegistered = true;
+      result.participantStatus = existingParticipant.status;
+      result.attemptCount = currentAttempts;
+      result.maxAttempts = maxAttempts;
+      result.hasAttemptsRemaining = hasAttemptsRemaining;
+      result.reason = hasAttemptsRemaining 
+        ? `You are registered. Attempts: ${currentAttempts}/${maxAttempts}` 
+        : 'You have used all your attempts';
       return { success: true, data: result };
     }
 

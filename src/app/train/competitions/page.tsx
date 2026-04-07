@@ -134,12 +134,12 @@ export default function StudentCompetitionsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
-          <Skeleton className="h-10 w-64" />
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 p-4 sm:p-6">
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
+          <Skeleton className="h-8 sm:h-10 w-48 sm:w-64" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {[...Array(6)].map((_, i) => (
-              <Skeleton key={i} className="h-72 rounded-xl" />
+              <Skeleton key={i} className="h-56 sm:h-72 rounded-xl" />
             ))}
           </div>
         </div>
@@ -157,140 +157,154 @@ export default function StudentCompetitionsPage() {
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-violet-600/20 via-purple-600/10 to-violet-600/20 border-b border-violet-500/20">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <div className="relative max-w-6xl mx-auto px-6 py-12">
+        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-12">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col md:flex-row md:items-center md:justify-between gap-6"
+            className="flex flex-col gap-4 sm:gap-6"
           >
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-violet-500/20 rounded-xl">
-                  <Trophy className="h-8 w-8 text-violet-400" />
-                </div>
-                <div>
-                  <h1 className="text-3xl font-bold text-white">Competitions</h1>
-                  <p className="text-slate-400">Compete with students across India</p>
-                </div>
+            {/* Title - Mobile & Desktop */}
+            <div className="flex items-start sm:items-center gap-3">
+              <div className="p-2 sm:p-3 bg-violet-500/20 rounded-lg sm:rounded-xl">
+                <Trophy className="h-6 w-6 sm:h-8 sm:w-8 text-violet-400" />
               </div>
-              <div className="flex items-center gap-4 text-sm">
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Users className="h-4 w-4 text-violet-400" />
-                  <span>Join live battles</span>
-                </div>
-                <div className="flex items-center gap-2 text-slate-300">
-                  <Medal className="h-4 w-4 text-yellow-400" />
-                  <span>Win certificates & prizes</span>
-                </div>
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-white">Competitions</h1>
+                <p className="text-sm sm:text-base text-slate-400">Compete with students across India</p>
               </div>
             </div>
             
-            {myCompetitions.length > 0 && (
-              <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
-                <p className="text-sm text-muted-foreground mb-2">Your Stats</p>
-                <div className="grid grid-cols-3 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold text-green-400">
-                      {registeredCompetitions.length}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Active</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-violet-400">
-                      {historyCompetitions.length}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Completed</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold text-yellow-400">
-                      {myCompetitions.filter(c => c.myRank && c.myRank <= 3).length}
-                    </p>
-                    <p className="text-xs text-muted-foreground">Top 3</p>
-                  </div>
+            {/* Features - Mobile: stack, Desktop: row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm">
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Users className="h-3 w-3 sm:h-4 sm:w-4 text-violet-400" />
+                  <span>Join live battles</span>
+                </div>
+                <div className="flex items-center gap-2 text-slate-300">
+                  <Medal className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400" />
+                  <span>Win certificates & prizes</span>
                 </div>
               </div>
-            )}
+              
+              {/* Stats Card - Shows on both Mobile & Desktop when user has competitions */}
+              {myCompetitions.length > 0 && (
+                <div className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700">
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-2">Your Stats</p>
+                  <div className="grid grid-cols-3 gap-3 sm:gap-4 text-center">
+                    <div>
+                      <p className="text-xl sm:text-2xl font-bold text-green-400">
+                        {registeredCompetitions.length}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Active</p>
+                    </div>
+                    <div>
+                      <p className="text-xl sm:text-2xl font-bold text-violet-400">
+                        {historyCompetitions.length}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Completed</p>
+                    </div>
+                    <div>
+                      <p className="text-xl sm:text-2xl font-bold text-yellow-400">
+                        {myCompetitions.filter(c => c.myRank && c.myRank <= 3).length}
+                      </p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">Top 3</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'available' | 'registered' | 'history')}>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <TabsList className="bg-slate-800/50">
-              <TabsTrigger value="available" className="gap-2">
-                <Sparkles className="h-4 w-4" />
-                Available
-              </TabsTrigger>
-              <TabsTrigger value="registered" className="gap-2">
-                <Trophy className="h-4 w-4" />
-                My Competitions
-                {registeredCompetitions.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {registeredCompetitions.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="history" className="gap-2">
-                <Medal className="h-4 w-4" />
-                History
-                {historyCompetitions.length > 0 && (
-                  <Badge variant="secondary" className="ml-1">
-                    {historyCompetitions.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
+          {/* Tabs Header - Mobile: scrollable, Desktop: flex */}
+          <div className="flex flex-col gap-4 mb-4 sm:mb-6">
+            {/* Tabs - Scrollable on mobile */}
+            <div className="overflow-x-auto -mx-4 px-4 sm:mx-0 sm:px-0">
+              <TabsList className="bg-slate-800/50 w-max sm:w-auto">
+                <TabsTrigger value="available" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                  <Sparkles className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Available</span>
+                  <span className="sm:hidden">Open</span>
+                </TabsTrigger>
+                <TabsTrigger value="registered" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                  <Trophy className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">My Competitions</span>
+                  <span className="sm:hidden">Mine</span>
+                  {registeredCompetitions.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-[10px] sm:text-xs px-1.5">
+                      {registeredCompetitions.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="history" className="gap-1 sm:gap-2 text-xs sm:text-sm px-2 sm:px-4">
+                  <Medal className="h-3 w-3 sm:h-4 sm:w-4" />
+                  History
+                  {historyCompetitions.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 text-[10px] sm:text-xs px-1.5">
+                      {historyCompetitions.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-3">
-              <div className="relative">
+            {/* Filters - Mobile: stacked, Desktop: row */}
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+              {/* Search */}
+              <div className="relative flex-1 sm:flex-none">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search competitions..."
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 w-64"
+                  className="pl-9 w-full sm:w-48 lg:w-64 text-sm"
                 />
               </div>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-32">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="UPCOMING">Upcoming</SelectItem>
-                  <SelectItem value="ACTIVE">Live</SelectItem>
-                  <SelectItem value="COMPLETED">Completed</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Dropdowns - Row on mobile */}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-28 lg:w-32 text-xs sm:text-sm">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="UPCOMING">Upcoming</SelectItem>
+                    <SelectItem value="ACTIVE">Live</SelectItem>
+                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                  </SelectContent>
+                </Select>
 
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="GD_BATTLE">Group Discussion</SelectItem>
-                  <SelectItem value="HR_INTERVIEW_BATTLE">HR Interview</SelectItem>
-                  <SelectItem value="CORPORATE_VOICE_BATTLE">Corporate Voice</SelectItem>
-                </SelectContent>
-              </Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-32 lg:w-40 text-xs sm:text-sm">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="GD_BATTLE">GD Battle</SelectItem>
+                    <SelectItem value="HR_INTERVIEW_BATTLE">HR Interview</SelectItem>
+                    <SelectItem value="CORPORATE_VOICE_BATTLE">Corporate Voice</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           {/* Available Competitions Tab */}
-          <TabsContent value="available" className="space-y-8">
+          <TabsContent value="available" className="space-y-6 sm:space-y-8">
             {/* Active/Upcoming Section */}
             {upcomingCompetitions.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="h-5 w-5 text-violet-400" />
-                  <h2 className="text-lg font-semibold">Active & Upcoming</h2>
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
+                  <h2 className="text-base sm:text-lg font-semibold">Active & Upcoming</h2>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {upcomingCompetitions.map((competition) => (
                     <motion.div
                       key={competition.id}
@@ -310,11 +324,11 @@ export default function StudentCompetitionsPage() {
             {/* Past Competitions */}
             {pastCompetitions.length > 0 && (
               <section>
-                <div className="flex items-center gap-2 mb-4">
-                  <Clock className="h-5 w-5 text-slate-400" />
-                  <h2 className="text-lg font-semibold">Past Competitions</h2>
+                <div className="flex items-center gap-2 mb-3 sm:mb-4">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
+                  <h2 className="text-base sm:text-lg font-semibold">Past Competitions</h2>
                 </div>
-                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                   {pastCompetitions.map((competition) => (
                     <motion.div
                       key={competition.id}
@@ -333,10 +347,10 @@ export default function StudentCompetitionsPage() {
             )}
 
             {competitions.length === 0 && (
-              <div className="text-center py-16">
-                <Trophy className="h-16 w-16 mx-auto mb-4 text-slate-600" />
-                <h3 className="text-xl font-semibold mb-2">No Competitions Found</h3>
-                <p className="text-muted-foreground mb-6">
+              <div className="text-center py-12 sm:py-16">
+                <Trophy className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-slate-600" />
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">No Competitions Found</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
                   Check back soon for new competitions!
                 </p>
               </div>
@@ -344,43 +358,43 @@ export default function StudentCompetitionsPage() {
           </TabsContent>
 
           {/* My Competitions Tab (Registered) */}
-          <TabsContent value="registered" className="space-y-6">
+          <TabsContent value="registered" className="space-y-4 sm:space-y-6">
             {registeredCompetitions.length === 0 ? (
-              <div className="text-center py-16">
-                <Trophy className="h-16 w-16 mx-auto mb-4 text-slate-600" />
-                <h3 className="text-xl font-semibold mb-2">No Active Registrations</h3>
-                <p className="text-muted-foreground mb-6">
+              <div className="text-center py-12 sm:py-16">
+                <Trophy className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-slate-600" />
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">No Active Registrations</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
                   Register for a competition to start competing!
                 </p>
-                <Button onClick={() => setActiveTab('available')}>
+                <Button onClick={() => setActiveTab('available')} size="sm" className="sm:size-default">
                   Browse Competitions
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {registeredCompetitions.map((competition) => (
                   <motion.div
                     key={competition.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-violet-500/50 transition-colors cursor-pointer"
+                    className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700 hover:border-violet-500/50 transition-colors cursor-pointer"
                     onClick={() => router.push(`/train/competitions/${competition.id}`)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-violet-500/10 rounded-lg">
-                          <Trophy className="h-5 w-5 text-violet-400" />
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        <div className="p-2 sm:p-3 bg-violet-500/10 rounded-lg flex-shrink-0">
+                          <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
                         </div>
-                        <div>
-                          <h3 className="font-medium">{competition.name}</h3>
-                          <div className="flex items-center gap-2 mt-1">
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-sm sm:text-base truncate">{competition.name}</h3>
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
                             <CompetitionStatusTag status={competition.status} size="sm" />
-                            <Badge variant="outline" className="text-xs">
+                            <Badge variant="outline" className="text-[10px] sm:text-xs">
                               {competition.myStatus}
                             </Badge>
                             {competition.status === 'ACTIVE' && (
-                              <Badge className="bg-green-500/20 text-green-400 text-xs animate-pulse">
+                              <Badge className="bg-green-500/20 text-green-400 text-[10px] sm:text-xs animate-pulse">
                                 Join Now!
                               </Badge>
                             )}
@@ -388,7 +402,7 @@ export default function StudentCompetitionsPage() {
                         </div>
                       </div>
                       
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground flex-shrink-0" />
                     </div>
                   </motion.div>
                 ))}
@@ -397,36 +411,36 @@ export default function StudentCompetitionsPage() {
           </TabsContent>
 
           {/* History Tab */}
-          <TabsContent value="history" className="space-y-6">
+          <TabsContent value="history" className="space-y-4 sm:space-y-6">
             {historyCompetitions.length === 0 ? (
-              <div className="text-center py-16">
-                <Medal className="h-16 w-16 mx-auto mb-4 text-slate-600" />
-                <h3 className="text-xl font-semibold mb-2">No Completed Competitions</h3>
-                <p className="text-muted-foreground mb-6">
+              <div className="text-center py-12 sm:py-16">
+                <Medal className="h-12 w-12 sm:h-16 sm:w-16 mx-auto mb-3 sm:mb-4 text-slate-600" />
+                <h3 className="text-lg sm:text-xl font-semibold mb-2">No Completed Competitions</h3>
+                <p className="text-sm sm:text-base text-muted-foreground mb-4 sm:mb-6">
                   Complete competitions to see your history and achievements!
                 </p>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {historyCompetitions.map((competition) => (
                   <motion.div
                     key={competition.id}
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 hover:border-violet-500/50 transition-colors cursor-pointer"
+                    className="bg-slate-800/50 rounded-lg sm:rounded-xl p-3 sm:p-4 border border-slate-700 hover:border-violet-500/50 transition-colors cursor-pointer"
                     onClick={() => router.push(`/train/competitions/${competition.id}`)}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 bg-slate-500/10 rounded-lg">
-                          <Medal className="h-5 w-5 text-slate-400" />
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+                        <div className="p-2 sm:p-3 bg-slate-500/10 rounded-lg flex-shrink-0">
+                          <Medal className="h-4 w-4 sm:h-5 sm:w-5 text-slate-400" />
                         </div>
-                        <div>
-                          <h3 className="font-medium">{competition.name}</h3>
-                          <div className="flex items-center gap-2 mt-1">
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-sm sm:text-base truncate">{competition.name}</h3>
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mt-1">
                             <CompetitionStatusTag status={competition.status} size="sm" />
                             {competition.myRank && (
-                              <Badge className="bg-yellow-500/20 text-yellow-400 text-xs">
+                              <Badge className="bg-yellow-500/20 text-yellow-400 text-[10px] sm:text-xs">
                                 Rank #{competition.myRank}
                               </Badge>
                             )}
@@ -434,16 +448,16 @@ export default function StudentCompetitionsPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
                         {competition.myScore !== null && competition.myScore !== undefined && (
                           <div className="text-right">
-                            <p className="text-2xl font-bold text-violet-400">
+                            <p className="text-lg sm:text-2xl font-bold text-violet-400">
                               {competition.myScore.toFixed(1)}
                             </p>
-                            <p className="text-xs text-muted-foreground">Score</p>
+                            <p className="text-[10px] sm:text-xs text-muted-foreground">Score</p>
                           </div>
                         )}
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5 text-muted-foreground" />
                       </div>
                     </div>
                   </motion.div>
