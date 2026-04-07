@@ -123,6 +123,7 @@ export interface LeaderboardEntry {
   moduleScores: Record<string, number>;
   completionTime?: number | null;
   badgeType?: BadgeType | null;
+  status?: string; // Participant status (REGISTERED, IN_PROGRESS, COMPLETED, etc.)
 }
 
 export interface LeaderboardResponse {
