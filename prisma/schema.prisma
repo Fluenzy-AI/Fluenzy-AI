@@ -893,6 +893,7 @@ model CollegeAdmin {
   otpRecords        CollegeOtpVerification[]
   paymentHistories  CollegePaymentHistory[]
   transactions      CollegeTransaction[]
+  competitions      Competition[]
 
   @@index([domain])
   @@index([status])
@@ -2592,4 +2593,302 @@ model JobSearchHistory {
   createdAt    DateTime @default(now())
 
   @@index([userId, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// COMPETITION & BATTLE SYSTEM
+// ═══════════════════════════════════════════════════════════════════════════════
+
+enum CompetitionScope {
+  GLOBAL
+  UNIVERSITY
+  COLLEGE
+}
+
+enum CompetitionType {
+  GD_BATTLE
+  HR_INTERVIEW_BATTLE
+  CORPORATE_VOICE_BATTLE
+}
+
+enum CompetitionStatus {
+  DRAFT
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum CompetitionModuleType {
+  READ_ALOUD
+  LISTEN_AND_REPEAT
+  COMPREHENSION
+  CONVERSATION
+  EXTEMPORANEOUS
+  LISTEN_AND_SUMMARIZE
+}
+
+enum CompetitionParticipantStatus {
+  REGISTERED
+  IN_PROGRESS
+  COMPLETED
+  DISQUALIFIED
+}
+
+enum RewardType {
+  GOLD_CERTIFICATE
+  SILVER_CERTIFICATE
+  BRONZE_CERTIFICATE
+  SCHOLARSHIP
+  BADGE
+  CASH_PRIZE
+}
+
+enum BadgeType {
+  GOLD
+  SILVER
+  BRONZE
+  PARTICIPATION
+  TOP_PERFORMER
+}
+
+// Main Competition Model
+model Competition {
+  id                   String            @id @default(auto()) @map("_id") @db.ObjectId
+  name                 String
+  description          String?
+  scope                CompetitionScope
+  type                 CompetitionType
+  status               CompetitionStatus @default(DRAFT)
+  startDate            DateTime
+  endDate              DateTime
+  registrationDeadline DateTime?
+  durationPerModule    Int               // in seconds
+  maxAttempts          Int               @default(1)
+  participantLimit     Int?
+  prizePool            String?
+  bannerUrl            String?
+  
+  // GD Battle specific settings
+  minGDParticipants    Int?              // Min participants per GD room (e.g., 3)
+  maxGDParticipants    Int?              // Max participants per GD room (e.g., 8)
+  
+  // Creator info
+  createdById          String            @db.ObjectId
+  createdByRole        String            // SUPER_ADMIN, ADMIN, COLLEGE_ADMIN
+  createdByEmail       String
+  
+  // College scope (only for COLLEGE scope)
+  collegeAdminId       String?           @db.ObjectId
+  collegeAdmin         CollegeAdmin?     @relation(fields: [collegeAdminId], references: [id])
+  
+  // Relations
+  universities         CompetitionUniversity[]
+  modules              CompetitionModule[]
+  participants         CompetitionParticipant[]
+  results              CompetitionResult[]
+  rewards              CompetitionReward[]
+  leaderboard          CompetitionLeaderboard[]
+  
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  @@index([scope, status])
+  @@index([startDate, endDate])
+  @@index([collegeAdminId])
+  @@index([createdById])
+  @@index([status])
+}
+
+// Universities linked to UNIVERSITY scope competitions
+model CompetitionUniversity {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  competitionId   String      @db.ObjectId
+  competition     Competition @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  universityName  String      // Store university name since we don't have University model
+  universityId    String?     // Optional reference
+  createdAt       DateTime    @default(now())
+
+  @@unique([competitionId, universityName])
+  @@index([competitionId])
+}
+
+// Competition Modules (assessment types)
+model CompetitionModule {
+  id              String                @id @default(auto()) @map("_id") @db.ObjectId
+  competitionId   String                @db.ObjectId
+  competition     Competition           @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  moduleType      CompetitionModuleType
+  weight          Float                 // percentage weight (e.g., 20.0)
+  order           Int                   // display order
+  config          Json?                 // module-specific config (prompts, difficulty, etc.)
+  
+  moduleScores    CompetitionModuleScore[]
+  createdAt       DateTime              @default(now())
+
+  @@unique([competitionId, moduleType])
+  @@index([competitionId])
+}
+
+// Competition Participants
+model CompetitionParticipant {
+  id              String                      @id @default(auto()) @map("_id") @db.ObjectId
+  competitionId   String                      @db.ObjectId
+  competition     Competition                 @relation(fields: [competitionId], references: [id], onDelete: Cascade)
+  userId          String                      @db.ObjectId
+  userName        String
+  userEmail       String
+  userAvatar      String?
+  universityName  String?
+  collegeName     String?
+  collegeAdminId  String?                     @db.ObjectId
+  status          CompetitionParticipantStatus @default(REGISTERED)
+  registeredAt    DateTime                    @default(now())
+  startedAt       DateTime?
+  completedAt     DateTime?
+  
+  moduleScores    CompetitionModuleScore[]
+  result          CompetitionResult?
+
+  @@unique([competitionId, userId])
+  @@index([competitionId, status])
+  @@index([userId])
+  @@index([collegeAdminId])
+}
+
+// Module Scores for each participant
+model CompetitionModuleScore {
+  id                  String                 @id @default(auto()) @map("_id") @db.ObjectId
+  participantId       String                 @db.ObjectId
+  participant         CompetitionParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  moduleId            String                 @db.ObjectId
+  module              CompetitionModule      @relation(fields: [moduleId], references: [id])
+  score               Float                  // 0–100
+  pronunciationScore  Float?
+  grammarScore        Float?
+  confidenceScore     Float?
+  clarityScore        Float?
+  fluencyScore        Float?
+  paceScore           Float?
+  communicationScore  Float?
+  attemptNumber       Int                    @default(1)
+  completedAt         DateTime               @default(now())
+  rawAiResponse       Json?                  // store full AI evaluation
+  feedback            Json?                  // strengths, improvements, detailed feedback
+
+  @@unique([participantId, moduleId, attemptNumber])
+  @@index([participantId])
+  @@index([moduleId])
+}
+
+// Competition Results (final scores)
+model CompetitionResult {
+  id              String                 @id @default(auto()) @map("_id") @db.ObjectId
+  competitionId   String                 @db.ObjectId
+  competition     Competition            @relation(fields: [competitionId], references: [id])
+  userId          String                 @db.ObjectId
+  participantId   String                 @unique @db.ObjectId
+  participant     CompetitionParticipant @relation(fields: [participantId], references: [id])
+  totalScore      Float
+  rank            Int?
+  completionTime  Int?                   // in seconds
+  rewardsIssued   Boolean                @default(false)
+  badgeType       BadgeType?
+  certificateUrl  String?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@unique([competitionId, userId])
+  @@index([competitionId, rank])
+}
+
+// Competition Leaderboard (cached/snapshot)
+model CompetitionLeaderboard {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  competitionId   String      @db.ObjectId
+  competition     Competition @relation(fields: [competitionId], references: [id])
+  userId          String      @db.ObjectId
+  userName        String
+  userAvatar      String?
+  rank            Int
+  totalScore      Float
+  moduleScores    Json        // snapshot of per-module scores
+  universityName  String?
+  collegeName     String?
+  completionTime  Int?
+  badgeType       BadgeType?
+  updatedAt       DateTime    @updatedAt
+
+  @@unique([competitionId, userId])
+  @@index([competitionId, rank])
+}
+
+// Competition Rewards Configuration
+model CompetitionReward {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  competitionId   String      @db.ObjectId
+  competition     Competition @relation(fields: [competitionId], references: [id])
+  rankFrom        Int
+  rankTo          Int
+  rewardType      RewardType
+  rewardTitle     String
+  rewardValue     String?
+  certificateUrl  String?
+  issuedAt        DateTime?
+  createdAt       DateTime    @default(now())
+
+  @@index([competitionId])
+}
+
+// User Badges (earned from competitions)
+model UserBadge {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String      @db.ObjectId
+  competitionId   String?     @db.ObjectId
+  competitionName String?
+  badgeType       BadgeType
+  label           String
+  rank            Int?
+  score           Float?
+  awardedAt       DateTime    @default(now())
+
+  @@index([userId])
+  @@index([competitionId])
+}
+
+// User Competition History (for profile display)
+model UserCompetitionHistory {
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId          String           @db.ObjectId
+  competitionId   String           @db.ObjectId
+  competitionName String
+  competitionType CompetitionType
+  scope           CompetitionScope
+  rank            Int?
+  totalScore      Float
+  badgeType       BadgeType?
+  certificateUrl  String?
+  participatedAt  DateTime         @default(now())
+
+  @@index([userId])
+  @@index([competitionId])
+}
+
+// Battle Session (for resumable battles)
+model BattleSession {
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  competitionId   String      @db.ObjectId
+  userId          String      @db.ObjectId
+  participantId   String      @db.ObjectId
+  currentModuleIndex Int      @default(0)
+  completedModules String[]   @default([]) // Array of completed module IDs
+  moduleProgress   Json?      // Current module progress state
+  startedAt       DateTime    @default(now())
+  lastActivityAt  DateTime    @default(now())
+  expiresAt       DateTime    // 24 hours from start
+  isActive        Boolean     @default(true)
+
+  @@unique([competitionId, userId])
+  @@index([userId])
+  @@index([isActive])
 }

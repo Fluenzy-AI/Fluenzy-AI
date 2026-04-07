@@ -42,12 +42,14 @@ import {
   CheckCircle,
   Clock,
   Award,
-  Bookmark
+  Bookmark,
+  Trophy
 } from 'lucide-react';
 import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
 
 const navItems = [
   { href: '/train', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/train/competitions', label: 'Competitions', icon: Trophy, badge: 'New' },
   { href: '/train/live', label: 'Live GD', icon: Radio },
   { href: '/train/hr', label: 'HR Interview', icon: User },
   { href: '/train/gd-coach', label: 'GD Coach', icon: GraduationCap },
@@ -394,7 +396,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               >
                 <item.icon size={20} className={isActive ? isLight ? 'text-indigo-500' : 'text-cyan-400' : ''} />
                 {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
-                {isActive && (
+                {!collapsed && 'badge' in item && item.badge && (
+                  <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30">
+                    {item.badge}
+                  </span>
+                )}
+                {isActive && !('badge' in item && item.badge) && (
                   <motion.div
                     layoutId={mobile ? 'activeIndicator-mobile' : 'activeIndicator-desktop'}
                     className={`ml-auto w-1.5 h-1.5 rounded-full ${isLight ? 'bg-indigo-500' : 'bg-[#5B6CFF]'}`}

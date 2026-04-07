@@ -37,7 +37,8 @@ import {
   Activity,
   CheckCircle,
   Award,
-  Bookmark
+  Bookmark,
+  Trophy
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -96,6 +97,13 @@ export function TrainSidebar() {
       icon: Home,
       href: '/train',
       isActive: pathname === '/train',
+    },
+    {
+      title: 'Competitions',
+      icon: Trophy,
+      href: '/train/competitions',
+      badge: 'New',
+      isActive: pathname.startsWith('/train/competitions'),
     },
     {
       title: 'HR Interview',

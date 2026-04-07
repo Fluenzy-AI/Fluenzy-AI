@@ -12,11 +12,13 @@ import {
   ChevronRight,
   GraduationCap,
   Bell,
+  Trophy,
 } from "lucide-react";
 import { useCollegeAdmin } from "@/contexts/CollegeAdminContext";
 
 const NAV_ITEMS = [
   { href: "/college/dashboard",      label: "Dashboard",    icon: LayoutDashboard },
+  { href: "/college/competitions",   label: "Competitions", icon: Trophy },
   { href: "/college/students",       label: "Students",     icon: Users },
   { href: "/college/batches",        label: "Batches",      icon: GraduationCap },
   { href: "/college/analytics",      label: "Analytics",    icon: BarChart2 },
