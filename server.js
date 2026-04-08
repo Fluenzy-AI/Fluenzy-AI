@@ -514,6 +514,301 @@ app.prepare().then(() => {
     console.log(`[Interview] Room created: ${roomId} (${interviewType})`);
   }
 
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // CHAT SYSTEM - Real-time messaging handlers
+  // ═══════════════════════════════════════════════════════════════════════════════
+  
+  // Track online users and their socket connections
+  const onlineUsers = new Map(); // userId -> { socketId, lastSeen }
+  const userTyping = new Map();  // conversationId -> Set of { userId, userName, timestamp }
+  
+  // Chat socket namespace handlers (using same connection)
+  io.on('connection', (socket) => {
+    // ─── Chat Authentication ─────────────────────────────────────────────────────
+    socket.on('chat:auth', (data) => {
+      try {
+        const { userId, userName } = data;
+        if (!userId) return;
+        
+        socket.data.chatUserId = userId;
+        socket.data.chatUserName = userName;
+        
+        // Mark user as online
+        onlineUsers.set(userId, { 
+          socketId: socket.id, 
+          lastSeen: new Date(),
+          userName 
+        });
+        
+        // Join user's personal room for direct notifications
+        socket.join(`user:${userId}`);
+        
+        // Broadcast online status to friends
+        socket.broadcast.emit('chat:presence', { 
+          userId, 
+          isOnline: true,
+          lastSeen: new Date()
+        });
+        
+        console.log(`[Chat] User authenticated: ${userId}`);
+      } catch (e) { console.error('[Chat auth error]', e); }
+    });
+    
+    // ─── Join Conversation ───────────────────────────────────────────────────────
+    socket.on('chat:join', (data) => {
+      try {
+        const { conversationId } = data;
+        if (!conversationId || !socket.data.chatUserId) return;
+        
+        socket.join(`conv:${conversationId}`);
+        socket.data.currentConversation = conversationId;
+        
+        console.log(`[Chat] User ${socket.data.chatUserId} joined conversation ${conversationId}`);
+      } catch (e) { console.error('[Chat join error]', e); }
+    });
+    
+    // ─── Leave Conversation ──────────────────────────────────────────────────────
+    socket.on('chat:leave', (data) => {
+      try {
+        const { conversationId } = data;
+        if (!conversationId) return;
+        
+        socket.leave(`conv:${conversationId}`);
+        
+        // Clear typing status when leaving
+        const typingSet = userTyping.get(conversationId);
+        if (typingSet && socket.data.chatUserId) {
+          typingSet.delete(socket.data.chatUserId);
+          if (typingSet.size === 0) {
+            userTyping.delete(conversationId);
+          }
+        }
+        
+        if (socket.data.currentConversation === conversationId) {
+          socket.data.currentConversation = null;
+        }
+      } catch (e) { console.error('[Chat leave error]', e); }
+    });
+    
+    // ─── Send Message ────────────────────────────────────────────────────────────
+    socket.on('chat:message', (data) => {
+      try {
+        const { conversationId, message } = data;
+        if (!conversationId || !message || !socket.data.chatUserId) return;
+        
+        // Broadcast to all participants in the conversation
+        socket.to(`conv:${conversationId}`).emit('chat:message', {
+          conversationId,
+          message: {
+            ...message,
+            senderId: socket.data.chatUserId,
+            senderName: socket.data.chatUserName,
+            status: 'DELIVERED'
+          }
+        });
+        
+        // Clear typing indicator
+        const typingSet = userTyping.get(conversationId);
+        if (typingSet) {
+          typingSet.delete(socket.data.chatUserId);
+        }
+        socket.to(`conv:${conversationId}`).emit('chat:typing', {
+          conversationId,
+          userId: socket.data.chatUserId,
+          userName: socket.data.chatUserName,
+          isTyping: false
+        });
+        
+      } catch (e) { console.error('[Chat message error]', e); }
+    });
+    
+    // ─── Typing Indicator ────────────────────────────────────────────────────────
+    socket.on('chat:typing', (data) => {
+      try {
+        const { conversationId, isTyping } = data;
+        if (!conversationId || !socket.data.chatUserId) return;
+        
+        // Track typing status
+        if (!userTyping.has(conversationId)) {
+          userTyping.set(conversationId, new Map());
+        }
+        const typingMap = userTyping.get(conversationId);
+        
+        if (isTyping) {
+          typingMap.set(socket.data.chatUserId, {
+            userName: socket.data.chatUserName,
+            timestamp: Date.now()
+          });
+        } else {
+          typingMap.delete(socket.data.chatUserId);
+        }
+        
+        // Broadcast typing status
+        socket.to(`conv:${conversationId}`).emit('chat:typing', {
+          conversationId,
+          userId: socket.data.chatUserId,
+          userName: socket.data.chatUserName,
+          isTyping
+        });
+        
+      } catch (e) { console.error('[Chat typing error]', e); }
+    });
+    
+    // ─── Message Read ────────────────────────────────────────────────────────────
+    socket.on('chat:read', (data) => {
+      try {
+        const { conversationId, messageIds } = data;
+        if (!conversationId || !socket.data.chatUserId) return;
+        
+        // Broadcast read receipts
+        socket.to(`conv:${conversationId}`).emit('chat:read', {
+          conversationId,
+          messageIds,
+          userId: socket.data.chatUserId,
+          readAt: new Date()
+        });
+        
+      } catch (e) { console.error('[Chat read error]', e); }
+    });
+    
+    // ─── Message Reaction ────────────────────────────────────────────────────────
+    socket.on('chat:reaction', (data) => {
+      try {
+        const { conversationId, messageId, emoji, action } = data;
+        if (!conversationId || !messageId || !socket.data.chatUserId) return;
+        
+        // Broadcast reaction
+        socket.to(`conv:${conversationId}`).emit('chat:reaction', {
+          conversationId,
+          messageId,
+          userId: socket.data.chatUserId,
+          userName: socket.data.chatUserName,
+          emoji,
+          action // 'add' or 'remove'
+        });
+        
+      } catch (e) { console.error('[Chat reaction error]', e); }
+    });
+    
+    // ─── Message Edit/Delete ─────────────────────────────────────────────────────
+    socket.on('chat:message:update', (data) => {
+      try {
+        const { conversationId, messageId, action, content } = data;
+        if (!conversationId || !messageId || !socket.data.chatUserId) return;
+        
+        socket.to(`conv:${conversationId}`).emit('chat:message:update', {
+          conversationId,
+          messageId,
+          action, // 'edit' or 'delete'
+          content, // For edits
+          userId: socket.data.chatUserId
+        });
+        
+      } catch (e) { console.error('[Chat message update error]', e); }
+    });
+    
+    // ─── Friend Request Notification ─────────────────────────────────────────────
+    socket.on('chat:friend:request', (data) => {
+      try {
+        const { receiverId, request } = data;
+        if (!receiverId) return;
+        
+        // Send notification to receiver
+        io.to(`user:${receiverId}`).emit('chat:friend:request', {
+          request,
+          senderId: socket.data.chatUserId,
+          senderName: socket.data.chatUserName
+        });
+        
+      } catch (e) { console.error('[Chat friend request error]', e); }
+    });
+    
+    // ─── Group Update Notification ───────────────────────────────────────────────
+    socket.on('chat:group:update', (data) => {
+      try {
+        const { conversationId, action, groupData, memberIds } = data;
+        if (!conversationId) return;
+        
+        // Broadcast group update to all members
+        socket.to(`conv:${conversationId}`).emit('chat:group:update', {
+          conversationId,
+          action, // 'member_added', 'member_removed', 'info_updated', etc.
+          groupData,
+          actorId: socket.data.chatUserId,
+          actorName: socket.data.chatUserName
+        });
+        
+        // If new members added, notify them directly
+        if (action === 'member_added' && memberIds) {
+          memberIds.forEach(memberId => {
+            io.to(`user:${memberId}`).emit('chat:group:invite', {
+              conversationId,
+              groupData,
+              invitedBy: socket.data.chatUserName
+            });
+          });
+        }
+        
+      } catch (e) { console.error('[Chat group update error]', e); }
+    });
+    
+    // ─── Chat Disconnect Handler ─────────────────────────────────────────────────
+    socket.on('disconnect', () => {
+      try {
+        const userId = socket.data.chatUserId;
+        if (!userId) return;
+        
+        // Update last seen and mark offline
+        onlineUsers.set(userId, {
+          ...onlineUsers.get(userId),
+          socketId: null,
+          lastSeen: new Date()
+        });
+        
+        // Broadcast offline status (with delay to handle reconnects)
+        setTimeout(() => {
+          const userStatus = onlineUsers.get(userId);
+          if (userStatus && !userStatus.socketId) {
+            socket.broadcast.emit('chat:presence', {
+              userId,
+              isOnline: false,
+              lastSeen: userStatus.lastSeen
+            });
+            onlineUsers.delete(userId);
+          }
+        }, 3000); // 3 second delay for reconnection
+        
+        // Clear typing status
+        userTyping.forEach((typingMap, convId) => {
+          if (typingMap.has(userId)) {
+            typingMap.delete(userId);
+            socket.to(`conv:${convId}`).emit('chat:typing', {
+              conversationId: convId,
+              userId,
+              isTyping: false
+            });
+          }
+        });
+        
+      } catch (e) { console.error('[Chat disconnect error]', e); }
+    });
+  });
+  
+  // Clean up stale typing indicators every 30 seconds
+  setInterval(() => {
+    const now = Date.now();
+    userTyping.forEach((typingMap, convId) => {
+      typingMap.forEach((data, odluserId) => {
+        if (now - data.timestamp > 10000) { // 10 seconds timeout
+          typingMap.delete(odluserId);
+        }
+      });
+      if (typingMap.size === 0) {
+        userTyping.delete(convId);
+      }
+    });
+  }, 30000);
+
   server.listen(port, '0.0.0.0', (err) => {
     if (err) throw err;
     console.log(`> Server running on port ${port}`);

@@ -18,6 +18,7 @@ import {
   GraduationCap,
   Zap,
   Bookmark,
+  MessageSquare,
 } from "lucide-react";
 
 // Context for sidebar state
@@ -68,6 +69,16 @@ const NAV_ITEMS = [
     label: "Training Hub",
     icon: Home,
     exact: true,
+  },
+  {
+    href: "/train/chat",
+    label: "Messages",
+    icon: MessageSquare,
+  },
+  {
+    href: "/train/friends",
+    label: "Friends",
+    icon: User,
   },
   {
     href: "/train/applications",

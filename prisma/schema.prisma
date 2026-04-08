@@ -189,6 +189,20 @@ model users {
   jobSearchApplications JobSearchApplication[]
   jobSearchUsage        JobSearchSessionUsage[]
   jobSearchHistory      JobSearchHistory[]
+  
+  // Chat System Relations
+  sentFriendRequests     FriendRequest[]            @relation("SentFriendRequests")
+  receivedFriendRequests FriendRequest[]            @relation("ReceivedFriendRequests")
+  friendships            Friendship[]               @relation("UserFriends")
+  friendOf               Friendship[]               @relation("FriendOf")
+  createdGroups          ChatGroup[]                @relation("GroupCreator")
+  groupMemberships       GroupMember[]
+  conversationParticipants ConversationParticipant[]
+  sentMessages           Message[]                  @relation("SentMessages")
+  messageReadStatuses    MessageReadStatus[]
+  messageReactions       MessageReaction[]
+  encryptionKeys         UserEncryptionKey[]
+  
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
@@ -2902,4 +2916,251 @@ model BattleSession {
   @@unique([competitionId, userId])
   @@index([userId])
   @@index([isActive])
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// CHAT SYSTEM - WhatsApp-style messaging
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── FRIEND SYSTEM ─────────────────────────────────────────────────────────────
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  CANCELLED
+}
+
+model FriendRequest {
+  id         String              @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String              @db.ObjectId
+  receiverId String              @db.ObjectId
+  status     FriendRequestStatus @default(PENDING)
+  message    String?             // Optional message with friend request
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  sender   users @relation("SentFriendRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver users @relation("ReceivedFriendRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@index([receiverId, status])
+  @@index([senderId, status])
+}
+
+model Friendship {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  friendId  String   @db.ObjectId
+  createdAt DateTime @default(now())
+
+  user   users @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend users @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@index([friendId])
+}
+
+// ─── GROUP SYSTEM ──────────────────────────────────────────────────────────────
+enum GroupRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model ChatGroup {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  description String?
+  avatar      String?
+  createdBy   String   @db.ObjectId
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  creator      users              @relation("GroupCreator", fields: [createdBy], references: [id])
+  members      GroupMember[]
+  conversation Conversation?
+  
+  @@index([createdBy])
+}
+
+model GroupMember {
+  id       String    @id @default(auto()) @map("_id") @db.ObjectId
+  groupId  String    @db.ObjectId
+  userId   String    @db.ObjectId
+  role     GroupRole @default(MEMBER)
+  nickname String?   // Optional nickname within group
+  isMuted  Boolean   @default(false)
+  joinedAt DateTime  @default(now())
+
+  group ChatGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user  users     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, userId])
+  @@index([userId])
+}
+
+// ─── CONVERSATION SYSTEM ───────────────────────────────────────────────────────
+enum ConversationType {
+  DIRECT
+  GROUP
+}
+
+model Conversation {
+  id            String           @id @default(auto()) @map("_id") @db.ObjectId
+  type          ConversationType
+  groupId       String?          @unique @db.ObjectId
+  lastMessageAt DateTime?
+  lastMessagePreview String?     // Preview text for conversation list
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  group        ChatGroup?                @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  participants ConversationParticipant[]
+  messages     Message[]
+  encryptionKeys ConversationKey[]
+  
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String   @db.ObjectId
+  userId         String   @db.ObjectId
+  lastReadAt     DateTime @default(now())
+  isArchived     Boolean  @default(false)
+  isMuted        Boolean  @default(false)
+  isPinned       Boolean  @default(false)
+  unreadCount    Int      @default(0)
+  joinedAt       DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  user         users        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, userId])
+  @@index([userId, isArchived])
+  @@index([userId, isPinned])
+}
+
+// ─── MESSAGE SYSTEM ────────────────────────────────────────────────────────────
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  DOCUMENT
+  VOICE
+  SYSTEM    // System messages like "User joined group"
+}
+
+enum MessageStatus {
+  SENDING
+  SENT
+  DELIVERED
+  SEEN
+  FAILED
+}
+
+model Message {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId String        @db.ObjectId
+  senderId       String        @db.ObjectId
+  type           MessageType   @default(TEXT)
+  content        String?       // Text content or caption for media
+  mediaUrl       String?       // URL to media file (R2/Cloudinary)
+  mediaMeta      Json?         // { duration, waveform, width, height, size, mimeType, fileName }
+  // E2E Encryption fields
+  isEncrypted    Boolean       @default(false)
+  encryptedContent String?     // Base64 encrypted content (replaces content when encrypted)
+  encryptedMediaKey String?    // Encrypted symmetric key for media (if encrypted)
+  nonce          String?       // Nonce/IV used for encryption
+  keyVersion     Int?          // Which conversation key version was used
+  replyToId      String?       @db.ObjectId
+  forwardedFrom  String?       @db.ObjectId
+  mentions       String[]      @db.ObjectId // Array of mentioned user IDs
+  isEdited       Boolean       @default(false)
+  editedAt       DateTime?
+  isDeleted      Boolean       @default(false)
+  deletedForAll  Boolean       @default(false)
+  deletedBy      String[]      @db.ObjectId // Users who deleted "for me"
+  status         MessageStatus @default(SENT)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  conversation Conversation       @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       users              @relation("SentMessages", fields: [senderId], references: [id])
+  replyTo      Message?           @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies      Message[]          @relation("MessageReplies")
+  readStatus   MessageReadStatus[]
+  reactions    MessageReaction[]
+
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+}
+
+model MessageReadStatus {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  messageId   String   @db.ObjectId
+  userId      String   @db.ObjectId
+  deliveredAt DateTime?
+  readAt      DateTime?
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId])
+  @@index([userId])
+}
+
+model MessageReaction {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  messageId String   @db.ObjectId
+  userId    String   @db.ObjectId
+  emoji     String   // Unicode emoji
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    users   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+}
+
+// ==================== E2E ENCRYPTION MODELS ====================
+
+// User's encryption key pairs for E2E encryption
+model UserEncryptionKey {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  deviceId       String   // Unique device identifier
+  publicKey      String   // Base64 encoded public key (X25519)
+  identityKey    String   // Base64 encoded identity key for verification
+  signedPreKey   String   // Base64 encoded signed pre-key
+  preKeySignature String  // Signature of the pre-key
+  oneTimePreKeys String[] // Array of one-time pre-keys
+  isActive       Boolean  @default(true)
+  lastUsedAt     DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user users @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, deviceId])
+  @@index([userId, isActive])
+}
+
+// Conversation-level encryption keys (for group chats)
+model ConversationKey {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  conversationId   String   @db.ObjectId
+  version          Int      @default(1) // Key rotation version
+  encryptedKey     String   // Encrypted symmetric key (encrypted per-user)
+  keyDistribution  Json     // Map of userId -> encrypted key for that user
+  createdBy        String   @db.ObjectId
+  rotatedAt        DateTime @default(now())
+  createdAt        DateTime @default(now())
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@unique([conversationId, version])
+  @@index([conversationId])
 }

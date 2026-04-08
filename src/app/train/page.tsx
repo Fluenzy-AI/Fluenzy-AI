@@ -5,12 +5,12 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { 
-  BookOpen, 
-  MessageSquare, 
-  UserPlus, 
-  Code, 
-  Building2, 
+import {
+  BookOpen,
+  MessageSquare,
+  UserPlus,
+  Code,
+  Building2,
   Briefcase,
   ArrowRight,
   Sparkles,
@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme, themeConfig } from '@/contexts/ThemeContext';
+import { TrainNavigation } from '@/components/train/TrainNavigation';
 
 // ===== CRITICAL FIX: Module Classifications =====
 // Unlimited modules that should NOT show session counts (no limit enforced)
@@ -408,7 +409,9 @@ export default function TrainPage() {
   }
 
   return (
-    <div className="p-4 md:p-6 lg:p-8 relative">
+    <>
+      <TrainNavigation />
+      <div className="p-4 md:p-6 lg:p-8 relative">
       {/* Light theme ambient background */}
       {resolvedTheme === 'light' && (
         <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
@@ -699,5 +702,6 @@ export default function TrainPage() {
         </motion.div>
       )}
     </div>
+    </>
   );
 }
