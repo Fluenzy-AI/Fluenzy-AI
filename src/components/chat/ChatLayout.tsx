@@ -348,7 +348,7 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
         )}
       </AnimatePresence>
 
-      <div className="flex h-[calc(100vh-3.5rem-16px)] sm:h-[calc(100vh-4rem)] bg-slate-950 rounded-2xl overflow-hidden border border-white/5">
+      <div className="flex h-full w-full bg-slate-950 rounded-2xl overflow-hidden border border-white/5">
         {/* Mobile Sidebar Drawer */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && (

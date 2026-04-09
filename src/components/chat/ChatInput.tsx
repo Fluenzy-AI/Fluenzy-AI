@@ -253,7 +253,7 @@ export function ChatInput({
   const commonEmojis = ['😀', '😂', '❤️', '👍', '🙏', '🎉', '🔥', '✨', '💯', '👋'];
 
   return (
-    <div className="border-t border-white/5 bg-slate-900/50">
+    <div className="border-t border-white/5 bg-slate-900/50 flex-shrink-0">
       {/* Reply preview */}
       <AnimatePresence>
         {replyingTo && (
@@ -293,7 +293,7 @@ export function ChatInput({
               <div className="flex-1">
                 <p className="text-sm text-slate-300">Uploading...</p>
                 <div className="h-1 bg-slate-700 rounded-full mt-1 overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-purple-500 transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
                   />
@@ -304,7 +304,7 @@ export function ChatInput({
         )}
       </AnimatePresence>
 
-      <div className="p-4 flex items-end gap-2">
+      <div className="p-4 pt-3 flex items-end gap-2">
         {/* Recording UI */}
         {isRecording ? (
           <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-slate-800 rounded-2xl">
