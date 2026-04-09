@@ -44,7 +44,7 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
   const [messageError, setMessageError] = useState<string | null>(null);
 
   // UI State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile drawer starts closed
   const [debugMode] = useState(false); // Set to true for debugging
 
   // Refs for cleanup
@@ -256,6 +256,10 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
   // ============================================
   const handleSelectConversation = useCallback((conversation: ConversationListItem) => {
     setSelectedConversationId(conversation.id);
+    // Close sidebar drawer on mobile after selection
+    if (window.innerWidth < 640) {
+      setIsSidebarOpen(false);
+    }
   }, []);
 
   // ============================================
@@ -330,160 +334,187 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
   // RENDER
   // ============================================
   return (
-    <div className="flex h-[calc(100vh-4rem)] bg-slate-950 rounded-2xl overflow-hidden border border-white/5">
-      {/* Sidebar */}
-      <AnimatePresence mode="wait">
+    <>
+      {/* Mobile overlay for sidebar */}
+      <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 320, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            className="border-r border-white/5 flex-shrink-0"
-          >
-            <ChatSidebar
-              conversations={conversations}
-              selectedId={selectedConversationId || undefined}
-              onSelect={handleSelectConversation}
-              onConversationsChange={setConversations}
-              userId={userId}
-            />
-          </motion.div>
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 sm:hidden"
+            onClick={() => setIsSidebarOpen(false)}
+          />
         )}
       </AnimatePresence>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {selectedConversation ? (
-          <>
-            {/* Friend Request Panel */}
-            {friendRequests.length > 0 && (
-              <div className="px-4 pt-4">
-                <FriendRequestPanel
-                  requests={friendRequests.map((r: any) => ({
-                    id: r.id,
-                    fromUserId: r.sender.id,
-                    fromUserName: r.sender.name,
-                    fromUserAvatar: r.sender.avatar,
-                    fromUserUsername: r.sender.profile?.username || null,
-                  }))}
-                  onRequestHandled={(requestId) => {
-                    setFriendRequests(prev => prev.filter(r => r.id !== requestId));
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Chat Header */}
-            <div className="h-16 px-4 border-b border-white/5 flex items-center justify-between bg-slate-900/50">
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors md:hidden"
-                >
-                  <MessageSquare size={20} />
-                </button>
-
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center overflow-hidden">
-                  {selectedConversation.avatar ? (
-                    <img
-                      src={selectedConversation.avatar}
-                      alt={selectedConversation.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-white font-bold text-sm">
-                      {selectedConversation.name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <h2 className="font-semibold text-white text-sm">
-                    {selectedConversation.name}
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    {selectedConversation.type === 'GROUP'
-                      ? `${selectedConversation.participants?.length || 0} members`
-                      : isConnected ? 'Online' : 'Offline'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button className="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
-                  <Search size={18} />
-                </button>
-                <button className="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
-                  <Settings size={18} />
-                </button>
-              </div>
-            </div>
-
-            {/* Messages - CRITICAL RENDERING FIX */}
-            {isLoadingMessages ? (
-              <div className="flex-1 flex items-center justify-center">
-                <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
-              </div>
-            ) : messageError ? (
-              <div className="flex-1 flex items-center justify-center p-4">
-                <div className="text-center">
-                  <p className="text-red-400 mb-2">Failed to load messages</p>
-                  <p className="text-slate-500 text-sm">{messageError}</p>
-                </div>
-              </div>
-            ) : (
-              <>
-                <ChatMessages
-                  messages={messages}
-                  currentUserId={userId}
-                  conversationId={selectedConversation.id}
-                  isLoading={false}
-                />
-
-                {/* DEBUG PANEL (TEMPORARY) */}
-                {debugMode && (
-                  <div className="border-t border-white/5 p-2 bg-slate-900/50 max-h-32 overflow-y-auto">
-                    <pre className="text-[10px] text-slate-400 whitespace-pre-wrap break-words">
-                      {JSON.stringify({
-                        selectedConversationId,
-                        messagesCount: messages.length,
-                        isLoading: isLoadingMessages,
-                        error: messageError
-                      }, null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </>
-            )}
-
-            {/* Input */}
-            <ChatInput
-              onSend={handleSendMessage}
-              conversationId={selectedConversation.id}
-              onTyping={(isTyping) => sendTyping(selectedConversation.id, isTyping)}
-            />
-          </>
-        ) : (
-          /* Empty State */
-          <div className="flex-1 flex flex-col items-center justify-center text-center p-8">
-            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mb-6">
-              <MessageSquare className="w-12 h-12 text-purple-400" />
-            </div>
-            <h2 className="text-xl font-bold text-white mb-2">
-              Welcome to Chat
-            </h2>
-            <p className="text-slate-500 max-w-sm mb-6">
-              Select a conversation from the sidebar or start a new chat with your friends.
-            </p>
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-full text-sm font-medium transition-colors"
+      <div className="flex h-[calc(100vh-3.5rem-16px)] sm:h-[calc(100vh-4rem)] bg-slate-950 rounded-2xl overflow-hidden border border-white/5">
+        {/* Mobile Sidebar Drawer */}
+        <AnimatePresence mode="wait">
+          {isSidebarOpen && (
+            <motion.div
+              initial={{ width: 0, opacity: 0, x: -320 }}
+              animate={{ width: 320, opacity: 1, x: 0 }}
+              exit={{ width: 0, opacity: 0, x: -320 }}
+              transition={{ duration: 0.3 }}
+              className="border-r border-white/5 flex-shrink-0 fixed sm:static z-40 sm:z-0 h-[calc(100vh-3.5rem-16px)] sm:h-auto sm:w-80 w-80 sm:flex-none"
             >
-              Start Chatting
-            </button>
-          </div>
-        )}
+              <ChatSidebar
+                conversations={conversations}
+                selectedId={selectedConversationId || undefined}
+                onSelect={handleSelectConversation}
+                onConversationsChange={setConversations}
+                userId={userId}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Desktop Sidebar - always visible */}
+        <div className="hidden sm:flex border-r border-white/5 w-80 flex-shrink-0">
+          <ChatSidebar
+            conversations={conversations}
+            selectedId={selectedConversationId || undefined}
+            onSelect={handleSelectConversation}
+            onConversationsChange={setConversations}
+            userId={userId}
+          />
+        </div>
+
+        {/* Main Chat Area */}
+        <div className="flex-1 flex flex-col min-w-0">
+          {selectedConversation ? (
+            <>
+              {/* Friend Request Panel */}
+              {friendRequests.length > 0 && (
+                <div className="px-2 sm:px-4 pt-2 sm:pt-4">
+                  <FriendRequestPanel
+                    requests={friendRequests.map((r: any) => ({
+                      id: r.id,
+                      fromUserId: r.sender.id,
+                      fromUserName: r.sender.name,
+                      fromUserAvatar: r.sender.avatar,
+                      fromUserUsername: r.sender.profile?.username || null,
+                    }))}
+                    onRequestHandled={(requestId) => {
+                      setFriendRequests(prev => prev.filter(r => r.id !== requestId));
+                    }}
+                  />
+                </div>
+              )}
+
+              {/* Chat Header */}
+              <div className="h-12 sm:h-16 px-2 sm:px-4 border-b border-white/5 flex items-center justify-between bg-slate-900/50">
+                <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                  <button
+                    onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                    className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors sm:hidden flex-shrink-0"
+                  >
+                    <MessageSquare size={18} className="sm:w-5 sm:h-5" />
+                  </button>
+
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center overflow-hidden flex-shrink-0">
+                    {selectedConversation.avatar ? (
+                      <img
+                        src={selectedConversation.avatar}
+                        alt={selectedConversation.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-white font-bold text-xs sm:text-sm">
+                        {selectedConversation.name.charAt(0).toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-semibold text-white text-xs sm:text-sm truncate">
+                      {selectedConversation.name}
+                    </h2>
+                    <p className="text-[10px] sm:text-xs text-slate-500">
+                      {selectedConversation.type === 'GROUP'
+                        ? `${selectedConversation.participants?.length || 0} members`
+                        : isConnected ? 'Online' : 'Offline'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                  <button className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
+                    <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
+                  </button>
+                  <button className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors hidden sm:flex">
+                    <Settings size={18} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages - CRITICAL RENDERING FIX */}
+              {isLoadingMessages ? (
+                <div className="flex-1 flex items-center justify-center">
+                  <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+                </div>
+              ) : messageError ? (
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <div className="text-center">
+                    <p className="text-red-400 mb-2">Failed to load messages</p>
+                    <p className="text-slate-500 text-sm">{messageError}</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <ChatMessages
+                    messages={messages}
+                    currentUserId={userId}
+                    conversationId={selectedConversation.id}
+                    isLoading={false}
+                  />
+
+                  {/* DEBUG PANEL (TEMPORARY) */}
+                  {debugMode && (
+                    <div className="border-t border-white/5 p-2 bg-slate-900/50 max-h-32 overflow-y-auto">
+                      <pre className="text-[10px] text-slate-400 whitespace-pre-wrap break-words">
+                        {JSON.stringify({
+                          selectedConversationId,
+                          messagesCount: messages.length,
+                          isLoading: isLoadingMessages,
+                          error: messageError
+                        }, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* Input */}
+              <ChatInput
+                onSend={handleSendMessage}
+                conversationId={selectedConversation.id}
+                onTyping={(isTyping) => sendTyping(selectedConversation.id, isTyping)}
+              />
+            </>
+          ) : (
+            /* Empty State */
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-8">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center mb-4 sm:mb-6">
+                <MessageSquare className="w-10 h-10 sm:w-12 sm:h-12 text-purple-400" />
+              </div>
+              <h2 className="text-lg sm:text-xl font-bold text-white mb-2">
+                Welcome to Chat
+              </h2>
+              <p className="text-slate-500 text-xs sm:text-sm max-w-sm mb-4 sm:mb-6">
+                Select a conversation from the sidebar or start a new chat with your friends.
+              </p>
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="px-4 sm:px-6 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-full text-xs sm:text-sm font-medium transition-colors"
+              >
+                Start Chatting
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
