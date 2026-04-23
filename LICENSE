@@ -1,0 +1,557 @@
+PROPRIETARY SOFTWARE LICENSE AGREEMENT
+
+=====================================================================
+FLUENZY AI - PROPRIETARY SOFTWARE LICENSE
+=====================================================================
+
+Version: 1.0
+Effective Date: April 23, 2026
+Last Updated: April 23, 2026
+
+=====================================================================
+© 2025 Fluenzy AI. All Rights Reserved.
+=====================================================================
+
+IMPORTANT NOTICE:
+This software is proprietary and confidential. Unauthorized copying, 
+modification, distribution, reverse engineering, or public disclosure 
+is strictly prohibited and subject to legal action and liability.
+
+=====================================================================
+1. DEFINITIONS
+=====================================================================
+
+1.1 "Software" means the Fluenzy AI application, including all source 
+    code, object code, algorithms, documentation, configurations, 
+    designs, user interfaces, and any modifications or derivative works 
+    thereof, whether in written, electronic, or any other form.
+
+1.2 "Licensor" means Fluenzy AI and its authorized representatives.
+
+1.3 "Licensee" means any individual, entity, or organization granted 
+    access to the Software by the Licensor, including but not limited to 
+    employees, contractors, contributors, and authorized developers.
+
+1.4 "Authorized Use" means the limited use of the Software solely for 
+    the specific purpose authorized by the Licensor in writing, and only 
+    within the scope explicitly permitted in this Agreement.
+
+1.5 "Confidential Information" means all proprietary technical 
+    information, trade secrets, algorithms, source code, architecture, 
+    business logic, and any other information disclosed by the Licensor 
+    that is not publicly known.
+
+1.6 "Contribution" means any code, modification, patch, feature, or 
+    work submitted to or created for the Software by a Licensee.
+
+1.7 "Public Disclosure" means any publication, upload, transfer, or 
+    sharing of the Software or any portion thereof on GitHub, GitLab, 
+    BitBucket, any public or private repository, cloud storage service, 
+    or any other platform accessible to third parties without explicit 
+    written authorization from the Licensor.
+
+=====================================================================
+2. GRANT OF LICENSE
+=====================================================================
+
+2.1 Limited License Grant: Subject to the terms and conditions of this 
+    Agreement, the Licensor grants the Licensee a LIMITED, 
+    NON-EXCLUSIVE, NON-TRANSFERABLE, REVOCABLE license to:
+    
+    (a) Access and use the Software solely for the authorized purpose(s) 
+        specified by the Licensor in writing;
+    
+    (b) Execute the Software in the authorized environment only;
+    
+    (c) Create bug reports and submit fixes for the Licensor's review, 
+        PROVIDED that all rights to such fixes shall vest exclusively 
+        in the Licensor.
+
+2.2 Restrictions on License: The license granted herein does NOT include 
+    the right to:
+    
+    (a) Copy, reproduce, or duplicate the Software in any form;
+    
+    (b) Modify, alter, adapt, or create derivative works;
+    
+    (c) Distribute, sublicense, lease, rent, or transfer the Software;
+    
+    (d) Reverse engineer, decompile, disassemble, or attempt to derive 
+        source code;
+    
+    (e) Remove, obscure, or alter any copyright, trademark, or 
+        proprietary notices;
+    
+    (f) Use the Software as a basis for competing products;
+    
+    (g) Public Disclosure in any form or on any platform.
+
+2.3 Revocation: The Licensor reserves the right to revoke this license 
+    at any time, for any reason, with or without cause, by written notice 
+    to the Licensee. Upon revocation, all rights terminate immediately.
+
+=====================================================================
+3. OWNERSHIP & INTELLECTUAL PROPERTY RIGHTS
+=====================================================================
+
+3.1 Exclusive Ownership: All right, title, and interest in the Software, 
+    including but not limited to all intellectual property rights 
+    (patents, copyrights, trade secrets, trademarks, and moral rights), 
+    remain exclusively with the Licensor.
+
+3.2 No Ownership Transfer: Nothing in this Agreement transfers any 
+    ownership rights to the Licensee. The Licensee acquires only a 
+    limited, revocable license as defined in Section 2.
+
+3.3 Licensor's Rights: The Licensor retains all rights to:
+    
+    (a) Modify, enhance, or discontinue the Software;
+    
+    (b) Develop competing products or services;
+    
+    (c) Use any feedback, suggestions, or contributions provided by 
+        the Licensee without compensation or obligation;
+    
+    (d) Enforce its intellectual property rights against any unauthorized 
+        use.
+
+3.4 Contributions Work-for-Hire: All Contributions submitted by the 
+    Licensee to the Software shall be deemed "work made for hire" 
+    under applicable copyright law. To the extent not qualifying as 
+    work-for-hire, the Licensee hereby irrevocably assigns all right, 
+    title, and interest in such Contributions to the Licensor.
+
+=====================================================================
+4. STRICT RESTRICTIONS
+=====================================================================
+
+4.1 Prohibition on Copying: The Licensee SHALL NOT copy, reproduce, or 
+    duplicate the Software, in whole or in part, except as necessary 
+    to execute the Software for the authorized purpose.
+
+4.2 Prohibition on Distribution: The Licensee SHALL NOT distribute, 
+    sublicense, transfer, lease, rent, or otherwise convey the Software 
+    to any third party.
+
+4.3 Prohibition on Modification: The Licensee SHALL NOT modify, alter, 
+    translate, adapt, or create derivative works of the Software.
+
+4.4 Prohibition on Reverse Engineering: The Licensee SHALL NOT reverse 
+    engineer, decompile, disassemble, decrypt, or attempt to derive or 
+    discover source code, algorithms, trade secrets, or any proprietary 
+    information from the Software.
+
+4.5 Prohibition on Public Disclosure: The Licensee EXPRESSLY PROHIBITS 
+    from:
+    
+    (a) Uploading the Software to GitHub, GitLab, or any public 
+        repository platform;
+    
+    (b) Publishing the code on any website, blog, or online platform;
+    
+    (c) Sharing the Software with unauthorized third parties;
+    
+    (d) Disclosing the Software in any form without prior written 
+        authorization from the Licensor.
+    
+    Violation of this clause constitutes material breach and grounds for 
+    immediate legal action, including injunction, damages, and criminal 
+    prosecution as permitted under law.
+
+4.6 Prohibition on Commercial Exploitation: The Licensee SHALL NOT use 
+    the Software to develop, market, or operate a competing product 
+    or service.
+
+=====================================================================
+5. CONFIDENTIALITY & NON-DISCLOSURE OBLIGATIONS
+=====================================================================
+
+5.1 Confidential Treatment: The Licensee acknowledges that the Software 
+    and all associated documentation contain valuable Confidential 
+    Information and trade secrets belonging to the Licensor.
+
+5.2 Duty of Confidentiality: The Licensee SHALL:
+    
+    (a) Maintain the Software in strict confidence;
+    
+    (b) Restrict access to employees, contractors, and representatives 
+        with a legitimate need to access the Software;
+    
+    (c) Require all such individuals to execute written confidentiality 
+        agreements with equivalent terms;
+    
+    (d) Implement reasonable technical and administrative safeguards 
+        to prevent unauthorized disclosure.
+
+5.3 Non-Disclosure: The Licensee SHALL NOT disclose the Software, its 
+    structure, functionality, or underlying technology to any third 
+    party without the Licensor's prior written consent.
+
+5.4 Duration: Confidentiality obligations shall survive indefinitely, 
+    even after termination of this Agreement.
+
+=====================================================================
+6. CONTRIBUTOR ACCESS TERMS
+=====================================================================
+
+6.1 Limited Contributor Rights: Contributors are granted access solely 
+    to contribute bug fixes, patches, or features for the Licensor's 
+    review and potential integration into the Software.
+
+6.2 No Ownership: Contributors shall acquire NO ownership, copyright, 
+    or intellectual property rights in the Software or any 
+    Contributions.
+
+6.3 No Reuse Rights: Contributors shall have NO right to reuse, 
+    incorporate, or adapt the Software or any portion thereof in other 
+    projects or products.
+
+6.4 Right of Attribution (Optional): The Licensor may, at its sole 
+    discretion, provide attribution to Contributors for accepted 
+    Contributions, but shall have no obligation to do so.
+
+6.5 Grant of Rights: By submitting any Contribution, the Contributor 
+    irrevocably grants the Licensor all rights necessary to:
+    
+    (a) Accept, reject, modify, or enhance the Contribution;
+    
+    (b) Integrate the Contribution into the Software;
+    
+    (c) Use the Contribution in any manner the Licensor deems appropriate;
+    
+    (d) Sublicense or distribute the Contribution as part of the Software.
+
+6.6 Contributor Agreement: All Contributors MUST execute a Contributor 
+    License Agreement (CLA) if required by the Licensor before any 
+    Contribution is accepted.
+
+=====================================================================
+7. SECURITY & DATA PROTECTION RESPONSIBILITIES
+=====================================================================
+
+7.1 Security Obligations: The Licensee SHALL:
+    
+    (a) Implement reasonable physical, technical, and administrative 
+        security measures to protect the Software;
+    
+    (b) Restrict access to authorized personnel only;
+    
+    (c) Monitor and log access to the Software;
+    
+    (d) Immediately report any unauthorized access or breach to the 
+        Licensor;
+    
+    (e) Maintain audit trails of all access and modifications.
+
+7.2 Compliance with Laws: The Licensee SHALL comply with all applicable 
+    laws, regulations, and data protection requirements, including but 
+    not limited to:
+    
+    (a) The Information Technology Act, 2000;
+    
+    (b) The Indian Penal Code, 1860;
+    
+    (c) The Personal Data Protection Act, 2023 (or applicable successor);
+    
+    (d) Industry-specific regulations and standards.
+
+7.3 Incident Notification: The Licensee SHALL notify the Licensor 
+    immediately (within 24 hours) of any:
+    
+    (a) Suspected unauthorized access to the Software;
+    
+    (b) Security breach or vulnerability;
+    
+    (c) Loss, theft, or destruction of the Software;
+    
+    (d) Violation or suspected violation of this Agreement.
+
+=====================================================================
+8. TERMINATION
+=====================================================================
+
+8.1 Automatic Termination: This Agreement and the license granted herein 
+    shall automatically terminate immediately upon:
+    
+    (a) Any material breach by the Licensee;
+    
+    (b) Public Disclosure of the Software or any portion thereof;
+    
+    (c) Reverse engineering or decompilation of the Software;
+    
+    (d) Unauthorized distribution or transfer of the Software;
+    
+    (e) Expiration of the authorized access period specified by the 
+        Licensor;
+    
+    (f) Written notice of termination from the Licensor.
+
+8.2 Effect of Termination: Upon termination:
+    
+    (a) The license granted herein terminates immediately;
+    
+    (b) The Licensee MUST immediately cease all use of the Software;
+    
+    (c) The Licensee SHALL delete all copies of the Software from all 
+        systems, servers, and storage devices;
+    
+    (d) The Licensee SHALL certify in writing to the Licensor that all 
+        copies have been deleted;
+    
+    (e) The Licensor may conduct audits to verify compliance with this 
+        section.
+
+8.3 Survival: Sections 1 (Definitions), 3 (Ownership), 5 
+    (Confidentiality), 6 (Contributor Terms), 9 (Audit Rights), 10 
+    (Indemnification), 11 (Limitation of Liability), 12 (Injunctive 
+    Relief), 13 (Governing Law), and this Section 8 shall survive any 
+    termination or expiration of this Agreement.
+
+=====================================================================
+9. AUDIT & COMPLIANCE RIGHTS
+=====================================================================
+
+9.1 Audit Rights: The Licensor reserves the right to:
+    
+    (a) Audit the Licensee's compliance with this Agreement at any time, 
+        with or without notice;
+    
+    (b) Access systems where the Software is installed to verify 
+        compliance;
+    
+    (c) Review access logs, security measures, and data handling 
+        practices;
+    
+    (d) Require the Licensee to provide compliance certifications.
+
+9.2 Audit Costs: If an audit reveals material non-compliance, the 
+    Licensee shall reimburse the Licensor for all reasonable costs 
+    associated with the audit.
+
+9.3 Cooperation: The Licensee SHALL cooperate fully with all audit 
+    activities and provide all requested documentation within 10 days.
+
+=====================================================================
+10. INDEMNIFICATION
+=====================================================================
+
+10.1 Indemnification by Licensee: The Licensee SHALL INDEMNIFY, DEFEND, 
+     AND HOLD HARMLESS the Licensor from any and all claims, damages, 
+     losses, liabilities, costs, and expenses (including reasonable 
+     attorneys' fees) arising from or related to:
+     
+     (a) Any breach or violation of this Agreement by the Licensee;
+     
+     (b) Unauthorized use, copying, modification, or distribution of 
+         the Software;
+     
+     (c) Public Disclosure of the Software;
+     
+     (d) Reverse engineering or decompilation of the Software;
+     
+     (e) Any claim by third parties arising from the Licensee's use or 
+         misuse of the Software;
+     
+     (f) Any data breach or security incident caused by the Licensee's 
+         negligence or violation of this Agreement.
+
+10.2 Third-Party Claims: In the event of any claim by a third party, 
+     the Licensee shall immediately notify the Licensor and cooperate 
+     fully in the defense or settlement of such claim.
+
+=====================================================================
+11. LIMITATION OF LIABILITY
+=====================================================================
+
+11.1 Disclaimer of Warranties: THE SOFTWARE IS PROVIDED "AS IS" WITHOUT 
+     WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED 
+     TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, 
+     NON-INFRINGEMENT, OR TITLE.
+
+11.2 NO LIABILITY FOR INDIRECT DAMAGES: TO THE MAXIMUM EXTENT PERMITTED 
+     BY LAW, IN NO EVENT SHALL THE LICENSOR BE LIABLE FOR ANY INDIRECT, 
+     INCIDENTAL, SPECIAL, CONSEQUENTIAL, PUNITIVE, OR EXEMPLARY DAMAGES, 
+     INCLUDING BUT NOT LIMITED TO DAMAGES FOR LOSS OF PROFITS, DATA, OR 
+     BUSINESS INTERRUPTION, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH 
+     DAMAGES.
+
+11.3 Limitation on Direct Damages: THE LICENSOR'S TOTAL LIABILITY FOR 
+     ANY CLAIM OR DAMAGE SHALL NOT EXCEED THE AMOUNTS PAID BY THE 
+     LICENSEE FOR THE SOFTWARE IN THE TWELVE (12) MONTHS PRECEDING THE 
+     CLAIM.
+
+11.4 Essential Term: These limitations are essential terms of this 
+     Agreement without which the Licensor would not have agreed to 
+     provide access to the Software.
+
+=====================================================================
+12. INJUNCTIVE RELIEF
+=====================================================================
+
+12.1 Right to Injunctive Relief: The Licensee acknowledges that any 
+     breach of this Agreement, particularly involving Public Disclosure, 
+     reverse engineering, or unauthorized distribution, would cause 
+     irreparable harm to the Licensor that cannot be adequately 
+     compensated by monetary damages.
+
+12.2 Immediate Relief: The Licensor shall have the right to seek 
+     immediate injunctive relief and specific performance in any court 
+     of competent jurisdiction without the necessity of:
+     
+     (a) Posting bond;
+     
+     (b) Proving actual damages;
+     
+     (c) Providing prior notice to the Licensee.
+
+12.3 In Addition to Remedies: The right to seek injunctive relief shall 
+     be in addition to, and not in lieu of, all other remedies available 
+     at law or in equity.
+
+12.4 Equitable Remedies: The Licensee expressly submits to the 
+     jurisdiction of courts and agrees that equitable remedies are an 
+     appropriate remedy for breach.
+
+=====================================================================
+13. GOVERNING LAW & JURISDICTION
+=====================================================================
+
+13.1 Governing Law: This Agreement shall be governed by and construed 
+     in accordance with the laws of India, without regard to conflicts 
+     of law principles.
+
+13.2 Jurisdiction and Venue: Each party irrevocably submits to the 
+     exclusive jurisdiction and venue of:
+     
+     (a) The Courts of New Delhi, India;
+     
+     (b) The District Court having jurisdiction over the Licensor's 
+         principal place of business;
+     
+     for the resolution of any disputes arising from or related to this 
+     Agreement.
+
+13.3 Applicable Statutes: This Agreement is governed by the following 
+     statutes and legal frameworks:
+     
+     (a) The Indian Contract Act, 1872;
+     
+     (b) The Copyright Act, 1957;
+     
+     (c) The Information Technology Act, 2000;
+     
+     (d) The Indian Penal Code, 1860;
+     
+     (e) Any applicable intellectual property laws of India.
+
+13.4 Waiver of Other Venues: Each party hereby waives any right to 
+     litigate any dispute in any court or jurisdiction outside India.
+
+=====================================================================
+14. ENTIRE AGREEMENT & SEVERABILITY
+=====================================================================
+
+14.1 Entire Agreement: This Agreement constitutes the entire agreement 
+     between the parties regarding the Software and supersedes all prior 
+     negotiations, understandings, and agreements, whether written or 
+     oral.
+
+14.2 Amendments: No amendment or modification of this Agreement is valid 
+     unless made in writing and signed by authorized representatives of 
+     both parties.
+
+14.3 Waiver: The waiver of any provision or right under this Agreement 
+     shall not constitute a waiver of any other provision or any 
+     subsequent breach or violation.
+
+14.4 Severability: If any provision of this Agreement is determined by 
+     a court to be invalid, illegal, or unenforceable, such provision 
+     shall be modified to the minimum extent necessary to make it valid 
+     and enforceable, or if such modification is not possible, the 
+     provision shall be severed, and the remaining provisions shall 
+     continue in full force and effect.
+
+14.5 Interpretation: This Agreement shall not be interpreted against 
+     the drafter. Both parties acknowledge that they have had the 
+     opportunity to seek legal counsel before executing this Agreement.
+
+=====================================================================
+15. ALL RIGHTS RESERVED
+=====================================================================
+
+15.1 Exclusive Rights: FLUENZY AI EXPRESSLY RESERVES ALL RIGHTS NOT 
+     EXPLICITLY GRANTED IN THIS AGREEMENT.
+
+15.2 Copyright Notice: © 2025 Fluenzy AI. All Rights Reserved.
+
+15.3 Statement of Rights: All right, title, and interest in and to the 
+     Software, including all intellectual property rights therein, are 
+     reserved exclusively to Fluenzy AI. The Licensee acquires no rights 
+     except as explicitly stated herein.
+
+=====================================================================
+16. ADDITIONAL TERMS
+=====================================================================
+
+16.1 Severance of Access: The Licensor may immediately sever the 
+     Licensee's access to the Software without liability if the 
+     Licensee:
+     
+     (a) Breaches any material term of this Agreement;
+     
+     (b) Attempts to publish code on public platforms;
+     
+     (c) Engages in reverse engineering or decompilation;
+     
+     (d) Uses the Software for unlawful purposes;
+     
+     (e) Poses a security threat to the Software.
+
+16.2 Notices: Any notices required under this Agreement shall be sent to:
+     
+     Licensor: Fluenzy AI
+     Email: admin@fluenzyai.app
+     Website: https://www.fluenzyai.app/
+
+16.3 Contact for Authorization Requests: Any requests for special 
+     authorization, including requests to publish code or use the 
+     Software for purposes beyond the scope of this Agreement, must be 
+     submitted in writing to admin@fluenzyai.app.
+
+=====================================================================
+17. ACKNOWLEDGMENT
+=====================================================================
+
+17.1 By accessing, using, or accepting a copy of the Software, the 
+     Licensee acknowledges and agrees to be bound by all terms and 
+     conditions of this Agreement.
+
+17.2 The Licensee further acknowledges that:
+     
+     (a) They have read and understood this Agreement;
+     
+     (b) They fully understand the restrictions and obligations imposed 
+         herein;
+     
+     (c) They agree to comply strictly with all terms;
+     
+     (d) Violation may result in legal action, damages, and injunction;
+     
+     (e) This Agreement is binding and enforceable.
+
+17.3 Continued use of the Software constitutes acceptance of this 
+     Agreement. If the Licensee does not agree to be bound by these 
+     terms, they must immediately cease use and delete all copies of 
+     the Software.
+
+=====================================================================
+
+© 2025 Fluenzy AI. All Rights Reserved.
+Fluenzy AI® is a registered trademark.
+
+This License Agreement is legally binding and enforceable.
+For inquiries or special requests, contact: admin@fluenzyai.app
+
+=====================================================================
+END OF LICENSE AGREEMENT
+=====================================================================

@@ -22,27 +22,7 @@ Advanced AI Training Features - A comprehensive interview preparation platform b
 
 2. **Set up environment variables:**
    Create a `.env.local` file with:
-   ```env
-   # Database
-   DATABASE_URL="mongodb://localhost:27017/pixora"
-   
-   # NextAuth
-   NEXTAUTH_URL="http://localhost:3000"
-   NEXTAUTH_SECRET="your-secret-key-here"
-   
-   # Google OAuth
-   GOOGLE_CLIENT_ID="your-google-client-id"
-   GOOGLE_CLIENT_SECRET="your-google-client-secret"
-   
-   # ImageKit
-   IMAGEKIT_PUBLIC_KEY="your-imagekit-public-key"
-   IMAGEKIT_PRIVATE_KEY="your-imagekit-private-key"
-   IMAGEKIT_URL_ENDPOINT="your-imagekit-url-endpoint"
-   
-   # Razorpay
-   RAZORPAY_API_KEY="your-razorpay-api-key"
-   RAZORPAY_API_SECRET="your-razorpay-api-secret"
-   ```
+   ```env ...................
 
 3. **Set up database:**
    ```bash
