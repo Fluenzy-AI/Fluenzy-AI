@@ -114,3 +114,4 @@ desktop.ini
 *.md
 *.txt
 !README.md
+!DOCUMENTATION.md
