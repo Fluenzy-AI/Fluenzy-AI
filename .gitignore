@@ -112,6 +112,8 @@ desktop.ini
 
 
 *.md
+!FORENSIC_ANALYSIS.md
+!forensics/**/*.md
 *.txt
 !README.md
 !DOCUMENTATION.md
