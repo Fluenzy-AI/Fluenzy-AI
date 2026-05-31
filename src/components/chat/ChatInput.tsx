@@ -356,7 +356,7 @@ export function ChatInput({
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute bottom-full left-0 mb-2 p-2 bg-slate-800 rounded-xl border border-white/10 shadow-xl"
+                    className="fixed bottom-24 left-4 p-3 bg-slate-900 rounded-xl border border-white/10 shadow-2xl z-50 flex gap-2"
                   >
                     <div className="flex gap-2">
                       <button
@@ -430,7 +430,7 @@ export function ChatInput({
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="absolute bottom-full right-0 mb-2 p-2 bg-slate-800 rounded-xl border border-white/10 shadow-xl"
+                    className="fixed bottom-24 right-4 p-3 bg-slate-900 rounded-xl border border-white/10 shadow-2xl z-50"
                   >
                     <div className="grid grid-cols-5 gap-1">
                       {commonEmojis.map((emoji) => (

@@ -199,6 +199,11 @@ function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
               src={message.sender.avatar}
               alt={message.sender.name}
               className="w-full h-full rounded-full object-cover"
+              crossOrigin="anonymous"
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
             />
           ) : (
             <span className="text-white text-[10px] sm:text-xs font-bold">
@@ -210,7 +215,7 @@ function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
         <div className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" />
       ) : null}
 
-      <div className={`max-w-[85%] sm:max-w-[70%] relative ${isOwn ? 'items-end' : 'items-start'}`}>
+      <div className={`flex flex-col max-w-[85%] sm:max-w-[70%] relative ${isOwn ? 'items-end' : 'items-start'}`}>
         {/* Sender name for group chats */}
         {!isOwn && showAvatar && message.sender && (
           <p className="text-[9px] sm:text-xs text-purple-400 mb-0.5 sm:mb-1 ml-1">
@@ -369,6 +374,8 @@ function MessageContent({ message, isOwn }: { message: MessageWithDetails; isOwn
             src={message.mediaUrl || ''}
             alt="Image"
             className="w-full rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
+            crossOrigin="anonymous"
+            referrerPolicy="no-referrer"
           />
         </div>
       );
@@ -380,6 +387,7 @@ function MessageContent({ message, isOwn }: { message: MessageWithDetails; isOwn
             src={message.mediaUrl || ''}
             className="w-full rounded-lg"
             controls
+            crossOrigin="anonymous"
           />
         </div>
       );

@@ -1,16 +1,18 @@
 // GET /api/chat/conversations/[id] - Get conversation details with messages
-// PATCH /api/chat/conversations/[id] - Update conversation settings (pin, mute, archive)
+// PATCH /api/chat/conversations/[id] - Update conversation settings (pin, mute, archive, clearHistory, delete)
+// DELETE /api/chat/conversations/[id] - Delete conversation permanently
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { 
+import {
   getConversation,
   togglePinConversation,
   toggleMuteConversation,
   archiveConversation,
-  markConversationAsRead
+  markConversationAsRead,
+  deleteConversation
 } from "@/modules/chat/services/conversation.service";
-import { getMessages } from "@/modules/chat/services/message.service";
+import { getMessages, clearConversationHistory } from "@/modules/chat/services/message.service";
 
 export async function GET(
   req: NextRequest,
@@ -85,6 +87,12 @@ export async function PATCH(
       case 'markRead':
         await markConversationAsRead(id, session.user.id);
         break;
+      case 'clearHistory':
+        await clearConversationHistory(id);
+        break;
+      case 'delete':
+        await deleteConversation(id);
+        break;
       default:
         return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
@@ -97,6 +105,39 @@ export async function PATCH(
     console.error("[PATCH /api/chat/conversations/[id]]", error);
     return NextResponse.json(
       { error: error.message || "Failed to update conversation" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    // Verify user is a participant
+    const conversation = await getConversation(id, session.user.id);
+    if (!conversation) {
+      return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
+    }
+
+    await deleteConversation(id);
+
+    return NextResponse.json({
+      success: true,
+      message: "Conversation deleted successfully"
+    });
+  } catch (error: any) {
+    console.error("[DELETE /api/chat/conversations/[id]]", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to delete conversation" },
       { status: 500 }
     );
   }

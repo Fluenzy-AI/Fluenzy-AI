@@ -351,6 +351,35 @@ export async function archiveConversation(
 }
 
 /**
+ * Delete a conversation permanently (for all participants)
+ */
+export async function deleteConversation(conversationId: string): Promise<void> {
+  // Delete in transaction to ensure consistency
+  await prisma.$transaction([
+    // Delete reactions
+    prisma.messageReaction.deleteMany({
+      where: { message: { conversationId } }
+    }),
+    // Delete read statuses
+    prisma.messageReadStatus.deleteMany({
+      where: { message: { conversationId } }
+    }),
+    // Delete messages
+    prisma.message.deleteMany({
+      where: { conversationId }
+    }),
+    // Delete participants
+    prisma.conversationParticipant.deleteMany({
+      where: { conversationId }
+    }),
+    // Delete conversation
+    prisma.conversation.delete({
+      where: { id: conversationId }
+    })
+  ]);
+}
+
+/**
  * Mark conversation as read
  */
 export async function markConversationAsRead(

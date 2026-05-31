@@ -583,8 +583,8 @@ export async function getMediaMessages(
     throw new Error("Not authorized to view messages");
   }
 
-  const mediaTypes = type 
-    ? [type] 
+  const mediaTypes = type
+    ? [type]
     : [MessageType.IMAGE, MessageType.VIDEO, MessageType.DOCUMENT, MessageType.VOICE];
 
   const messages = await prisma.message.findMany({
@@ -606,4 +606,27 @@ export async function getMediaMessages(
   });
 
   return messages as MessageWithDetails[];
+}
+
+// ─── MESSAGE HISTORY ───────────────────────────────────────────────────────────
+
+/**
+ * Clear all messages from a conversation (delete for everyone)
+ */
+export async function clearConversationHistory(conversationId: string): Promise<void> {
+  // Delete all messages and their related data
+  await prisma.$transaction([
+    // Delete reactions
+    prisma.messageReaction.deleteMany({
+      where: { message: { conversationId } }
+    }),
+    // Delete read statuses
+    prisma.messageReadStatus.deleteMany({
+      where: { message: { conversationId } }
+    }),
+    // Delete messages
+    prisma.message.deleteMany({
+      where: { conversationId }
+    })
+  ]);
 }

@@ -15,9 +15,9 @@ export default function ChatPageClient({
   initialConversations
 }: ChatPageClientProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 flex flex-col overflow-hidden h-screen">
+    <div className="w-screen h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
       {/* Header */}
-      <header className="h-14 sm:h-16 border-b border-white/5 bg-slate-900/50 backdrop-blur-sm sticky top-0 z-50 flex-shrink-0">
+      <header className="h-14 sm:h-16 border-b border-white/5 bg-slate-900/50 backdrop-blur-sm flex-shrink-0">
         <div className="h-full px-3 sm:px-4 flex items-center justify-between max-w-full">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
             <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent truncate">
@@ -43,7 +43,7 @@ export default function ChatPageClient({
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 p-2 sm:p-4 min-w-0 overflow-hidden">
+      <main className="flex-1 min-w-0 overflow-hidden">
         <ChatLayout
           userId={userId}
           userName={userName}

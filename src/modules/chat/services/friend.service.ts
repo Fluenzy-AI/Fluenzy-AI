@@ -374,7 +374,7 @@ export async function getPendingRequestCount(userId: string): Promise<number> {
  * Get mutual friends between two users
  */
 export async function getMutualFriends(
-  userId1: string, 
+  userId1: string,
   userId2: string,
   limit: number = 10
 ): Promise<Array<{ id: string; name: string; avatar: string | null }>> {
@@ -387,7 +387,7 @@ export async function getMutualFriends(
 
   // Get friends of user2 that are also friends of user1
   const mutualFriends = await prisma.friendship.findMany({
-    where: { 
+    where: {
       userId: userId2,
       friendId: { in: user1FriendIds }
     },
@@ -400,4 +400,82 @@ export async function getMutualFriends(
   });
 
   return mutualFriends.map(f => f.friend);
+}
+
+// ─── BLOCK OPERATIONS ──────────────────────────────────────────────────────────
+
+/**
+ * Block a user
+ */
+export async function blockUser(userId: string, blockedUserId: string): Promise<void> {
+  if (userId === blockedUserId) {
+    throw new Error("Cannot block yourself");
+  }
+
+  // Check if already blocked
+  const existing = await prisma.blockedUser.findUnique({
+    where: { userId_blockedUserId: { userId, blockedUserId } }
+  });
+
+  if (existing) {
+    throw new Error("User already blocked");
+  }
+
+  // Create block record
+  await prisma.blockedUser.create({
+    data: {
+      userId,
+      blockedUserId,
+      blockedAt: new Date()
+    }
+  });
+
+  // Optional: delete conversation with blocked user
+  await prisma.conversation.deleteMany({
+    where: {
+      type: 'DIRECT',
+      participants: {
+        every: {
+          userId: { in: [userId, blockedUserId] }
+        }
+      }
+    }
+  });
+}
+
+/**
+ * Unblock a user
+ */
+export async function unblockUser(userId: string, blockedUserId: string): Promise<void> {
+  await prisma.blockedUser.delete({
+    where: { userId_blockedUserId: { userId, blockedUserId } }
+  }).catch(() => {
+    throw new Error("User not blocked");
+  });
+}
+
+/**
+ * Check if user is blocked by another user
+ */
+export async function isUserBlocked(userId: string, checkedById: string): Promise<boolean> {
+  const block = await prisma.blockedUser.findUnique({
+    where: { userId_blockedUserId: { userId: checkedById, blockedUserId: userId } }
+  });
+  return !!block;
+}
+
+/**
+ * Get list of blocked users
+ */
+export async function getBlockedUsers(userId: string): Promise<Array<{ id: string; name: string; avatar: string | null }>> {
+  const blocks = await prisma.blockedUser.findMany({
+    where: { userId },
+    include: {
+      blockedUser: {
+        select: { id: true, name: true, avatar: true }
+      }
+    }
+  });
+
+  return blocks.map(b => b.blockedUser);
 }

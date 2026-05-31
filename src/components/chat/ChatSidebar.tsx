@@ -124,7 +124,7 @@ export function ChatSidebar({
   };
 
   return (
-    <div className="h-full flex flex-col bg-slate-900/30">
+    <div className="h-full flex flex-col bg-slate-900">
       {/* Header */}
       <div className="p-2 sm:p-4 border-b border-white/5">
         <div className="flex items-center justify-between mb-3 sm:mb-4">
@@ -311,6 +311,12 @@ function ConversationItem({ conversation, isSelected, onClick }: ConversationIte
                 src={conversation.avatar}
                 alt={conversation.name}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                crossOrigin="anonymous"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
               />
             ) : conversation.type === 'GROUP' ? (
               <Users size={18} className="sm:w-5 sm:h-5 text-white" />

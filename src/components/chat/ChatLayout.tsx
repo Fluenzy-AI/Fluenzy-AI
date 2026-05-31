@@ -10,7 +10,11 @@ import {
   Settings,
   Filter,
   X,
-  Loader2
+  Loader2,
+  Pin,
+  Archive,
+  Bell,
+  Trash2
 } from "lucide-react";
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatMessages } from "./ChatMessages";
@@ -46,6 +50,7 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
   // UI State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile drawer starts closed
   const [debugMode] = useState(false); // Set to true for debugging
+  const [showSettings, setShowSettings] = useState(false);
 
   // Refs for cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -263,6 +268,171 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
   }, []);
 
   // ============================================
+  // HANDLE MENU OPERATIONS
+  // ============================================
+  const getOtherUser = () => {
+    if (!selectedConversation?.participants) return null;
+    return selectedConversation.participants.find(p => p.id !== userId);
+  };
+
+  const handleViewProfile = async () => {
+    const otherUser = getOtherUser();
+    if (!otherUser?.id) return;
+
+    try {
+      // Fetch user profile to get username
+      const res = await fetch(`/api/public-profile/${otherUser.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        const username = data.profile?.username || otherUser.id;
+        window.location.href = `/u/${username}`;
+      } else {
+        // Fallback to userId if username fetch fails
+        window.location.href = `/u/${otherUser.id}`;
+      }
+    } catch (error) {
+      console.error('Failed to fetch user profile:', error);
+      // Fallback to userId
+      window.location.href = `/u/${otherUser.id}`;
+    }
+  };
+
+  const handleBlockUser = async () => {
+    const otherUser = getOtherUser();
+    if (!otherUser?.id) return;
+
+    try {
+      const res = await fetch('/api/chat/friends/block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ blockedUserId: otherUser.id })
+      });
+
+      if (res.ok) {
+        setShowSettings(false);
+        setSelectedConversationId(null);
+        // Refresh conversations
+        const convRes = await fetch('/api/chat/conversations');
+        if (convRes.ok) {
+          const data = await convRes.json();
+          setConversations(data.data || []);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to block user:', error);
+    }
+  };
+
+  const handlePinConversation = async () => {
+    if (!selectedConversationId) return;
+
+    try {
+      await fetch(`/api/chat/conversations/${selectedConversationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'pin',
+          value: !selectedConversation?.isPinned
+        })
+      });
+
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === selectedConversationId
+            ? { ...conv, isPinned: !conv.isPinned }
+            : conv
+        )
+      );
+    } catch (error) {
+      console.error('Failed to pin conversation:', error);
+    }
+  };
+
+  const handleMuteConversation = async () => {
+    if (!selectedConversationId) return;
+
+    try {
+      await fetch(`/api/chat/conversations/${selectedConversationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'mute',
+          value: !selectedConversation?.isMuted
+        })
+      });
+
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === selectedConversationId
+            ? { ...conv, isMuted: !conv.isMuted }
+            : conv
+        )
+      );
+    } catch (error) {
+      console.error('Failed to mute conversation:', error);
+    }
+  };
+
+  const handleArchiveConversation = async () => {
+    if (!selectedConversationId) return;
+
+    try {
+      await fetch(`/api/chat/conversations/${selectedConversationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'archive',
+          value: true
+        })
+      });
+
+      setShowSettings(false);
+      setSelectedConversationId(null);
+      setConversations(prev =>
+        prev.filter(conv => conv.id !== selectedConversationId)
+      );
+    } catch (error) {
+      console.error('Failed to archive conversation:', error);
+    }
+  };
+
+  const handleClearHistory = async () => {
+    if (!selectedConversationId) return;
+
+    try {
+      await fetch(`/api/chat/conversations/${selectedConversationId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clearHistory' })
+      });
+
+      setMessages([]);
+      setShowSettings(false);
+    } catch (error) {
+      console.error('Failed to clear history:', error);
+    }
+  };
+
+  const handleDeleteChat = async () => {
+    if (!selectedConversationId) return;
+
+    try {
+      await fetch(`/api/chat/conversations/${selectedConversationId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+
+      setShowSettings(false);
+      setSelectedConversationId(null);
+      setConversations(prev =>
+        prev.filter(conv => conv.id !== selectedConversationId)
+      );
+    } catch (error) {
+      console.error('Failed to delete chat:', error);
+    }
+  };
+
+  // ============================================
   // HANDLE SEND MESSAGE
   // ============================================
   const handleSendMessage = useCallback(async (
@@ -348,7 +518,7 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
         )}
       </AnimatePresence>
 
-      <div className="flex h-full w-full bg-slate-950 rounded-2xl overflow-hidden border border-white/5">
+      <div className="flex h-full w-full bg-slate-950 rounded-none overflow-hidden border-0 text-white dark">
         {/* Mobile Sidebar Drawer */}
         <AnimatePresence mode="wait">
           {isSidebarOpen && (
@@ -419,6 +589,11 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
                         src={selectedConversation.avatar}
                         alt={selectedConversation.name}
                         className="w-full h-full object-cover"
+                        crossOrigin="anonymous"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
                       />
                     ) : (
                       <span className="text-white font-bold text-xs sm:text-sm">
@@ -439,13 +614,115 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
                   </div>
                 </div>
 
-                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 relative">
                   <button className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
                     <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
                   </button>
-                  <button className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors hidden sm:flex">
+                  <button
+                    onClick={() => setShowSettings(!showSettings)}
+                    className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+                  >
                     <Settings size={18} />
                   </button>
+
+                  {/* Settings Panel - Simple Dropdown */}
+                  <AnimatePresence>
+                    {showSettings && (
+                      <>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-40"
+                          onClick={() => setShowSettings(false)}
+                        />
+                        <motion.div
+                          initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                          className="fixed w-72 bg-slate-900 border border-white/10 rounded-xl shadow-2xl z-50 overflow-y-auto max-h-96"
+                          style={{
+                            right: '1rem',
+                            top: '4.5rem'
+                          }}
+                        >
+                          <div className="p-3">
+                            <div className="space-y-1">
+                              {selectedConversation?.type === 'GROUP' ? (
+                                <>
+                                  <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 transition-colors">
+                                    <Users size={16} />
+                                    View Members
+                                  </button>
+                                  <button
+                                    onClick={handlePinConversation}
+                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 transition-colors"
+                                  >
+                                    <Pin size={16} />
+                                    {selectedConversation?.isPinned ? 'Unpin Group' : 'Pin Group'}
+                                  </button>
+                                </>
+                              ) : (
+                                <>
+                                  <button
+                                    onClick={handleViewProfile}
+                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 transition-colors"
+                                  >
+                                    <Users size={16} />
+                                    View Profile
+                                  </button>
+                                  <button
+                                    onClick={handleBlockUser}
+                                    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                                  >
+                                    <X size={16} />
+                                    Block User
+                                  </button>
+                                </>
+                              )}
+                              <hr className="my-2 border-white/10" />
+                              <button
+                                onClick={handlePinConversation}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 transition-colors"
+                              >
+                                <Pin size={16} />
+                                {selectedConversation?.isPinned ? 'Unpin Conversation' : 'Pin Conversation'}
+                              </button>
+                              <button
+                                onClick={handleMuteConversation}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 transition-colors"
+                              >
+                                <Bell size={16} />
+                                {selectedConversation?.isMuted ? 'Unmute Notifications' : 'Mute Notifications'}
+                              </button>
+                              <button
+                                onClick={handleArchiveConversation}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 transition-colors"
+                              >
+                                <Archive size={16} />
+                                Archive Chat
+                              </button>
+                              <hr className="my-2 border-white/10" />
+                              <button
+                                onClick={handleClearHistory}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-slate-300 hover:bg-white/5 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                                Clear History
+                              </button>
+                              <button
+                                onClick={handleDeleteChat}
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                              >
+                                <Trash2 size={16} />
+                                Delete Chat
+                              </button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
