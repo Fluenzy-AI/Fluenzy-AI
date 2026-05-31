@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import "./globals.css";
 import Provider from "./providers";
 import LayoutWrapper from "../components/LayoutWrapper";
@@ -76,18 +77,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Google Analytics */}
-        <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.dataLayer = window.dataLayer || [];
-              function gtag(){dataLayer.push(arguments);}
-              gtag('js', new Date());
-              gtag('config', 'GA_MEASUREMENT_ID');
-            `,
-          }}
-        />
         {/* PWA Meta Tags */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#5B6CFF" />
@@ -187,6 +176,7 @@ export default function RootLayout({
             </Suspense>
           </Provider>
         </ThemeProvider>
+        <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID!} />
       </body>
     </html>
   );
