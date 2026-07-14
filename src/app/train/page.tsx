@@ -210,14 +210,28 @@ export default function TrainPage() {
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
   const [autoApplyStatus, setAutoApplyStatus] = useState<AutoApplyStatus | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
 
   // ===== CRITICAL FIX: Fetch usage data correctly =====
+  // ===== SAFE TIMESTAMP HELPER =====
+  const getLastUpdateMs = useCallback((): number => {
+    try {
+      const raw = localStorage.getItem('usage-updated');
+      if (!raw) return 0;
+      const parsed = Number(raw);
+      if (Number.isNaN(parsed) || parsed <= 0) {
+        console.warn('[TRAIN_PAGE_TIMESTAMP] Corrupt usage-updated value, treating as stale:', raw);
+        return 0;
+      }
+      return parsed;
+    } catch {
+      return 0;
+    }
+  }, []);
+
   const fetchUsageData = useCallback(async () => {
     try {
-      setIsLoading(true);
       console.log('[TRAIN_PAGE_FETCH_START] Fetching usage data from /api/training-usage');
 
       const [usageRes, planRes, autoApplyRes] = await Promise.all([
@@ -236,6 +250,10 @@ export default function TrainPage() {
           isUnlimited: data.isUnlimited
         });
         setUsageData(data);
+        // Persist fetch timestamp for staleness checks on next mount
+        try {
+          localStorage.setItem('usage-updated', String(Date.now()));
+        } catch { /* localStorage unavailable */ }
       } else {
         console.warn('[TRAIN_PAGE_FETCH_FAILED] Usage fetch failed:', usageRes.status);
       }
@@ -262,8 +280,6 @@ export default function TrainPage() {
       }
     } catch (error) {
       console.error('[TRAIN_PAGE_FETCH_ERROR] Error fetching data:', error);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 
@@ -277,25 +293,16 @@ export default function TrainPage() {
     if (session?.user) {
       console.log('[TRAIN_PAGE_LOAD] Session detected, checking for recent updates');
       
-      // Check if there was a recent usage update (in case we navigated back from session)
-      const lastUpdate = localStorage.getItem('usage-updated');
-      if (lastUpdate) {
-        const updateTime = parseInt(lastUpdate);
-        const now = Date.now();
-        const timeDiff = now - updateTime;
-        
+      // Check staleness with safe timestamp parsing
+      const lastUpdateMs = getLastUpdateMs();
+      if (lastUpdateMs > 0) {
+        const timeDiff = Date.now() - lastUpdateMs;
         console.log(`[TRAIN_PAGE_RECENT_UPDATE_CHECK] Last update: ${timeDiff}ms ago`);
-        
-        // If update was within last 10 seconds, refetch immediately
-        if (timeDiff < 10000) {
-          console.log('[TRAIN_PAGE_RECENT_UPDATE_FOUND] Recent update detected, refetching immediately');
-          fetchUsageData();
-        }
       } else {
-        console.log('[TRAIN_PAGE_NO_RECENT_UPDATE] No recent update in localStorage');
+        console.log('[TRAIN_PAGE_NO_RECENT_UPDATE] No valid usage-updated timestamp in localStorage');
       }
       
-      // Initial fetch
+      // Single initial fetch (no duplicate calls)
       fetchUsageData();
       
       // Listen for usage updates from other sources (same tab)
@@ -324,7 +331,7 @@ export default function TrainPage() {
         console.log('[TRAIN_PAGE_LISTENER_REMOVED] Event listener removed');
       };
     }
-  }, [session, fetchUsageData]);
+  }, [session, fetchUsageData, getLastUpdateMs]);
 
   const getUpdatedModules = () => {
     console.log('[TRAIN_PAGE_GET_MODULES_START] usageData:', usageData ? 'loaded' : 'null');
@@ -522,7 +529,7 @@ export default function TrainPage() {
                       {mod.isUnlimited ? (
                         'Unlimited'
                       ) : mod.sessions === '-' ? (
-                        'Loading...'
+                        <span className="inline-block w-16 h-4 rounded bg-current opacity-10 animate-pulse" />
                       ) : (
                         <>
                           {mod.sessions} {mod.sessions === 1 ? 'session' : 'sessions'}

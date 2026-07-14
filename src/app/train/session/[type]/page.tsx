@@ -1,58 +1,23 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
-import { validateModuleAccess } from "@/lib/billing";
 import { Suspense } from "react";
 import { SessionPageClient } from "./SessionPageClient";
-
-// Maps URL type param → billing module key
-const SESSION_MODULE_MAP: Record<string, string> = {
-  ENGLISH_LEARNING: "english",
-  CONVERSATION_PRACTICE: "daily",
-  HR_INTERVIEW: "hr",
-  TECH_INTERVIEW: "technical",
-  COMPANY_WISE_HR: "company",
-  GD_COACH: "gdCoach",
-  GD_DISCUSSION: "gd",
-  GD_AI_AGENTS: "gd",
-  GD_PRIVATE: "gd",
-  GD_RANDOM: "gd",
-};
 
 export default async function SessionPage({
   params,
 }: {
   params: Promise<{ type: string }>;
 }) {
-  const { type } = await params;
-
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) redirect("/login");
-
-  const moduleKey = SESSION_MODULE_MAP[type];
-  if (moduleKey) {
-    const user = await prisma.users.findUnique({
-      where: { email: session!.user!.email! },
-      select: { id: true },
-    });
-    if (!user) redirect("/login");
-
-    const subFeature =
-      type === "GD_AI_AGENTS"
-        ? "gd_ai_agents"
-        : type === "GD_PRIVATE"
-        ? "gd_private"
-        : type === "GD_RANDOM"
-        ? "gd_random"
-        : undefined;
-
-    const access = await validateModuleAccess(user.id, moduleKey as any, subFeature);
-    if (!access.allowed) redirect(`/billing?locked=${moduleKey}`);
-  }
+  // Auth is handled by middleware matcher for /train/:path*
+  // Quota validation happens at session start (API level), not page render
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+          <p className="text-sm text-muted-foreground">Preparing session...</p>
+        </div>
+      </div>
+    }>
       <SessionPageClient />
     </Suspense>
   );

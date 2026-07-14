@@ -1,22 +1,5 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
-import { validateModuleAccess } from "@/lib/billing";
 import HRPageClient from "./HRPageClient";
 
-export default async function HRPage() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.email) redirect("/login");
-
-  const user = await prisma.users.findUnique({
-    where: { email: session!.user!.email! },
-    select: { id: true },
-  });
-  if (!user) redirect("/login");
-
-  const access = await validateModuleAccess(user.id, "hr");
-  if (!access.allowed) redirect("/billing?locked=hr");
-
+export default function HRPage() {
   return <HRPageClient />;
 }
