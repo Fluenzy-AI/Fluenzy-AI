@@ -175,19 +175,19 @@ export async function getOrGenerateDocument(
 
   // Upsert: update if exists (forceRegenerate), create if not
   try {
-    const existingRecord = await prisma.fileRecord.findFirst({
-      where: {
+    const rawRecords = (await prisma.fileRecord.findRaw({
+      filter: {
         fileType: documentType,
-        metadata: {
-          path: ["documentId"],
-          equals: documentId,
-        },
+        "metadata.documentId": documentId,
       },
-    });
+    })) as any;
+
+    const existingRecord = rawRecords.length > 0 ? rawRecords[0] : null;
 
     if (existingRecord) {
+      const id = existingRecord._id?.$oid || existingRecord._id?.toString() || "";
       await prisma.fileRecord.update({
-        where: { id: existingRecord.id },
+        where: { id },
         data: {
           fileKey: storageKey,
           originalFileName: fileName,
@@ -257,23 +257,23 @@ async function findCachedDocument(
   ownerId: string
 ): Promise<{ id: string; fileKey: string; fileSize: number } | null> {
   try {
-    const record = await prisma.fileRecord.findFirst({
-      where: {
+    const records = (await prisma.fileRecord.findRaw({
+      filter: {
         fileType: documentType,
         isDeleted: false,
-        metadata: {
-          path: ["documentId"],
-          equals: documentId,
-        },
+        "metadata.documentId": documentId,
       },
-      select: {
-        id: true,
-        fileKey: true,
-        fileSize: true,
-      },
-    });
+    })) as any;
 
-    return record;
+    if (!records || records.length === 0) return null;
+    const record = records[0];
+    const id = record._id?.$oid || record._id?.toString() || "";
+
+    return {
+      id,
+      fileKey: record.fileKey as string,
+      fileSize: record.fileSize as number,
+    };
   } catch {
     return null;
   }
@@ -313,18 +313,16 @@ async function cleanupOldDocument(
   ownerId: string
 ): Promise<void> {
   try {
-    const existing = await prisma.fileRecord.findFirst({
-      where: {
+    const records = (await prisma.fileRecord.findRaw({
+      filter: {
         fileType: documentType,
         isDeleted: false,
-        metadata: {
-          path: ["documentId"],
-          equals: documentId,
-        },
+        "metadata.documentId": documentId,
       },
-    });
+    })) as any;
 
-    if (existing) {
+    if (records && records.length > 0) {
+      const existing = records[0];
       // Delete from R2
       try {
         await deleteFromR2(existing.fileKey);
@@ -332,9 +330,11 @@ async function cleanupOldDocument(
         // R2 deletion failure is non-fatal
       }
 
+      const id = existing._id?.$oid || existing._id?.toString() || "";
+
       // Soft-delete the FileRecord
       await prisma.fileRecord.update({
-        where: { id: existing.id },
+        where: { id },
         data: {
           isDeleted: true,
           deletedAt: new Date(),

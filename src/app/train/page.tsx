@@ -23,7 +23,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme, themeConfig } from '@/contexts/ThemeContext';
-import { TrainNavigation } from '@/components/train/TrainNavigation';
 
 // ===== CRITICAL FIX: Module Classifications =====
 // Unlimited modules that should NOT show session counts (no limit enforced)

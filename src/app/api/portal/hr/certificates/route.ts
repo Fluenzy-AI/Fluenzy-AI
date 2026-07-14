@@ -279,10 +279,19 @@ export async function GET(req: NextRequest) {
     if (type) where.type = type;
     if (status) where.status = status;
     if (search) {
-      where.OR = [
-        { certificateNumber: { contains: search, mode: "insensitive" } },
-        { data: { path: ["candidateName"], string_contains: search } },
-      ];
+      const rawResults = (await prisma.certificate.findRaw({
+        filter: {
+          $or: [
+            { certificateNumber: { $regex: search, $options: "i" } },
+            { "data.candidateName": { $regex: search, $options: "i" } },
+          ],
+        },
+        options: {
+          projection: { _id: 1 },
+        },
+      })) as any;
+      const certificateIds = (rawResults as any[]).map((r: any) => r._id?.$oid || r._id?.toString() || "");
+      where.id = { in: certificateIds };
     }
 
     const [certificates, total] = await Promise.all([

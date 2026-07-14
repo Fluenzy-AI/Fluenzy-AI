@@ -202,6 +202,8 @@ model users {
   messageReadStatuses    MessageReadStatus[]
   messageReactions       MessageReaction[]
   encryptionKeys         UserEncryptionKey[]
+  blockedUsers           BlockedUser[]              @relation("UserBlocks")
+  blockedBy              BlockedUser[]              @relation("BlockedByUsers")
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -2958,6 +2960,20 @@ model Friendship {
 
   @@unique([userId, friendId])
   @@index([friendId])
+}
+
+model BlockedUser {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  blockedUserId String   @db.ObjectId
+  blockedAt     DateTime @default(now())
+
+  user        users @relation("UserBlocks", fields: [userId], references: [id], onDelete: Cascade)
+  blockedUser users @relation("BlockedByUsers", fields: [blockedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, blockedUserId])
+  @@index([userId])
+  @@index([blockedUserId])
 }
 
 // ─── GROUP SYSTEM ──────────────────────────────────────────────────────────────
