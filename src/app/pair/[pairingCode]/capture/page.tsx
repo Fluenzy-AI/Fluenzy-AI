@@ -39,7 +39,7 @@ export default function CapturePage() {
     if (stream && videoRef.current) {
       videoRef.current.srcObject = stream;
     }
-  }, [stream]);
+  }, [stream, isCapturing]);
 
   // Setup speech recognition
   useEffect(() => {

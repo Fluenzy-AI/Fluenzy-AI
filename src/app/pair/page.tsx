@@ -6,16 +6,50 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Camera, QrCode, Keyboard, ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import QRScanner from '@/components/interview/QRScanner';
 
+import { useEffect } from 'react';
+
 export default function PhonePairingPage() {
   const router = useRouter();
   const [mode, setMode] = useState<'qr' | 'manual'>('qr');
   const [code, setCode] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPasteButton, setShowPasteButton] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && navigator.clipboard && typeof navigator.clipboard.readText === 'function') {
+      setShowPasteButton(true);
+    }
+  }, []);
+
+  const cleanAndSetCode = (val: string) => {
+    // Extract code from pasted URLs or formatted texts
+    const match = val.match(/\/pair\/([0-9a-zA-Z\-]+)/);
+    let extracted = match && match[1] ? match[1] : val;
+    
+    // Filter only alphanumeric characters and limit to 6
+    const clean = extracted.replace(/[^0-9a-zA-Z]/g, '').slice(0, 6);
+    setCode(clean);
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const val = text.trim();
+      if (val) {
+        cleanAndSetCode(val);
+        setError(null);
+      } else {
+        setError("Clipboard is empty.");
+      }
+    } catch (err) {
+      setError("Could not read clipboard. Please paste manually into the input box.");
+    }
+  };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanCode = code.trim().replace('-', '');
+    const cleanCode = code.trim();
     if (cleanCode.length !== 6) {
       setError("Pairing code must be exactly 6 digits.");
       return;
@@ -84,18 +118,28 @@ export default function PhonePairingPage() {
               </div>
 
               <form onSubmit={handleManualSubmit} className="space-y-4">
-                <input
-                  type="text"
-                  maxLength={7} // Support typing hyphens/spaces
-                  placeholder="000000"
-                  value={code}
-                  onChange={(e) => {
-                    setError(null);
-                    setCode(e.target.value);
-                  }}
-                  className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 rounded-xl py-4 text-center text-3xl font-bold font-mono tracking-widest text-white placeholder-slate-800 focus:outline-none transition-all"
-                  disabled={isSubmitting}
-                />
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    placeholder="Enter 6-digit code or paste link"
+                    value={code}
+                    onChange={(e) => {
+                      setError(null);
+                      cleanAndSetCode(e.target.value);
+                    }}
+                    className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30 rounded-xl py-4 px-4 text-white placeholder-slate-700 text-lg font-mono focus:outline-none transition-all pr-16"
+                    disabled={isSubmitting}
+                  />
+                  {showPasteButton && (
+                    <button
+                      type="button"
+                      onClick={handlePasteFromClipboard}
+                      className="absolute right-2 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-lg text-xs font-semibold transition-colors"
+                    >
+                      Paste
+                    </button>
+                  )}
+                </div>
 
                 {error && (
                   <p className="text-red-400 text-xs text-center leading-normal">
