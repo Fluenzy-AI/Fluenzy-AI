@@ -404,8 +404,8 @@ export default function HireLensPage() {
               
               {/* Body */}
               <p className="text-lg text-slate-400 max-w-md">
-                Wear it. Interview anyone. Get real-time behavioral intelligence, live scoring, 
-                and AI-suggested questions — all without touching your laptop.
+                Wear it. Conduct interviews naturally while HireLens captures the conversation in real time. 
+                Your HR dashboard continuously receives AI-powered insights, live scoring, follow-up question suggestions, and candidate evaluation.
               </p>
               
               {/* CTA row */}
@@ -422,6 +422,15 @@ export default function HireLensPage() {
                   Watch Demo
                 </button>
               </div>
+
+              {/* How it works link */}
+              <Link
+                href="/hirelens/how-it-works"
+                className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors text-sm font-medium group"
+              >
+                Learn how HireLens works, step by step
+                <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
               
               {/* Trust row */}
               <div className="flex flex-wrap gap-6 pt-4">

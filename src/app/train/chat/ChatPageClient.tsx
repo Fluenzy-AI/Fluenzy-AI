@@ -15,41 +15,15 @@ export default function ChatPageClient({
   initialConversations
 }: ChatPageClientProps) {
   return (
-    <div className="w-screen h-screen flex flex-col bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 overflow-hidden">
-      {/* Header */}
-      <header className="h-14 sm:h-16 border-b border-white/5 bg-slate-900/50 backdrop-blur-sm flex-shrink-0">
-        <div className="h-full px-3 sm:px-4 flex items-center justify-between max-w-full">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
-            <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent truncate">
-              Messages
-            </h1>
-          </div>
-
-          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-            <a
-              href="/train/friends"
-              className="text-xs sm:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
-            >
-              Friends
-            </a>
-            <a
-              href="/train"
-              className="text-xs sm:text-sm text-slate-400 hover:text-white transition-colors whitespace-nowrap"
-            >
-              Dashboard
-            </a>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="flex-1 min-w-0 overflow-hidden">
-        <ChatLayout
-          userId={userId}
-          userName={userName}
-          initialConversations={initialConversations}
-        />
-      </main>
+    // Fill all space below the global LayoutWrapper top navbar.
+    // The LayoutWrapper's <main> is flex-col, so flex-1 + overflow-hidden
+    // gives the chat UI exactly the remaining viewport height.
+    <div className="flex-1 flex overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
+      <ChatLayout
+        userId={userId}
+        userName={userName}
+        initialConversations={initialConversations}
+      />
     </div>
   );
 }

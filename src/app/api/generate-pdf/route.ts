@@ -1,9 +1,12 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { calculateInterviewScore } from "@/lib/utils";
+import { getOrGenerateDocument } from "@/lib/document-service";
+import { buildDocumentFileName } from "@/lib/document-types";
+import { htmlToPdf } from "@/lib/pdf-browser";
 
 const BEHAVIORAL_COLLECTION = "behavioral_analytics";
 
@@ -1157,40 +1160,30 @@ const findBestBehavioralDoc = async (userId: string, sessionStart: Date, session
   }
 };
 
-export async function POST(request: NextRequest) {
+async function renderInterviewReportHtml(sessionId: string): Promise<string> {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { sessionId } = await request.json();
-
-    const user = await prisma.users.findUnique({
-      where: { email: session.user.email },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    const sessionData = await (prisma as any).session.findFirst({
-      where: {
-        sessionId,
-        userId: user.id,
+    const sessionData = await (prisma as any).session.findUnique({
+    where: {
+      sessionId,
+    },
+    include: {
+      user: true,
+      transcripts: {
+        orderBy: [{ createdAt: "asc" }, { turnNumber: "asc" }],
       },
-      include: {
-        transcripts: {
-          orderBy: [{ createdAt: "asc" }, { turnNumber: "asc" }],
-        },
-      },
-    });
+    },
+  });
 
-    if (!sessionData) {
-      return NextResponse.json({ error: "Session not found" }, { status: 404 });
-    }
+  if (!sessionData) {
+    throw new Error("Session not found");
+  }
 
-    let { subScores } = calculateInterviewScore(sessionData.transcripts);
+  const user = sessionData.user;
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  let { subScores } = calculateInterviewScore(sessionData.transcripts);
     const score = Math.round((sessionData.aggregateScore || 0) * 100);
     const status = sessionData.status || "Incomplete";
 
@@ -1649,13 +1642,126 @@ export async function POST(request: NextRequest) {
       </html>
     `;
 
+    return html;
+  } catch (error) {
+    console.error("PDF generation error:", error);
+    throw error;
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const sessionId = searchParams.get("sessionId");
+    const format = searchParams.get("format");
+
+    if (!sessionId) {
+      return NextResponse.json({ error: "Session ID required" }, { status: 400 });
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Keep all existing session-ownership check
+    const sessionData = await (prisma as any).session.findFirst({
+      where: {
+        sessionId,
+        userId: user.id,
+      },
+    });
+
+    if (!sessionData) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    if (format === "pdf") {
+      const result = await getOrGenerateDocument({
+        documentType: "interview-report",
+        documentId: sessionId,
+        ownerId: user.id,
+        generatePdf: async () => {
+          const html = await renderInterviewReportHtml(sessionId);
+          return htmlToPdf(html);
+        },
+        fileName: buildDocumentFileName("interview-report", sessionId),
+      });
+
+      if (result.cdnUrl) {
+        return NextResponse.redirect(result.cdnUrl);
+      }
+
+      // Fallback
+      return new NextResponse(result.pdfBuffer as unknown as BodyInit, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${buildDocumentFileName("interview-report", sessionId)}"`,
+        },
+      });
+    }
+
+    // Default: return HTML for printing (window.print() fallback)
+    const html = await renderInterviewReportHtml(sessionId);
     return new NextResponse(html, {
       headers: {
         "Content-Type": "text/html",
       },
     });
   } catch (error) {
-    console.error("PDF generation error:", error);
-    return NextResponse.json({ error: "Failed to generate PDF" }, { status: 500 });
+    console.error("GET interview report PDF error:", error);
+    return NextResponse.json({ error: "Failed to generate report" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { sessionId } = await request.json();
+    if (!sessionId) {
+      return NextResponse.json({ error: "Session ID required" }, { status: 400 });
+    }
+
+    const user = await prisma.users.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Keep all existing session-ownership check
+    const sessionData = await (prisma as any).session.findFirst({
+      where: {
+        sessionId,
+        userId: user.id,
+      },
+    });
+
+    if (!sessionData) {
+      return NextResponse.json({ error: "Session not found" }, { status: 404 });
+    }
+
+    const html = await renderInterviewReportHtml(sessionId);
+    return new NextResponse(html, {
+      headers: {
+        "Content-Type": "text/html",
+      },
+    });
+  } catch (error) {
+    console.error("POST interview report PDF error:", error);
+    return NextResponse.json({ error: "Failed to generate report" }, { status: 500 });
   }
 }

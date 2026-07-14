@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Check, CheckCheck, Info, Megaphone, AlertTriangle, CheckCircle2, X } from "lucide-react";
+import NotificationBadge from "@/components/NotificationBadge";
 
 interface Notification {
   id: string;
@@ -122,14 +123,10 @@ export default function NotificationBell({
       <button
         onClick={() => setOpen((v) => !v)}
         className={`p-2 rounded-lg transition-colors ${iconCls} relative`}
-        aria-label="Notifications"
+        aria-label={unread > 0 ? `Notifications, ${unread} unread` : "Notifications"}
       >
         <Bell size={20} />
-        {unread > 0 && (
-          <span className="absolute top-1 right-1 min-w-[16px] h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center px-0.5 leading-none">
-            {unread > 99 ? "99+" : unread}
-          </span>
-        )}
+        <NotificationBadge count={unread} />
       </button>
 
       {/* Dropdown */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import NotificationBell from '@/components/NotificationBell';
+import NotificationBadge from '@/components/NotificationBadge';
 import {
   Menu,
   X,
@@ -111,6 +112,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     completed: false,
     enabled: false,
   });
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [pendingFriends, setPendingFriends] = useState(0);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
   const isLight = resolvedTheme === 'light';
@@ -132,6 +135,31 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   useEffect(() => {
     setImageError(false);
   }, [avatarUrl]);
+
+  // Poll unread messages and pending friend requests (every 30s)
+  const fetchSocialCounts = useCallback(async () => {
+    try {
+      const [msgRes, friendRes] = await Promise.all([
+        fetch('/api/chat/conversations?unreadCount=true'),
+        fetch('/api/chat/friends?type=count'),
+      ]);
+      if (msgRes.ok) {
+        const data = await msgRes.json();
+        setUnreadMessages(data.unreadCount ?? 0);
+      }
+      if (friendRes.ok) {
+        const data = await friendRes.json();
+        setPendingFriends(data.count ?? 0);
+      }
+    } catch { /* silent */ }
+  }, []);
+
+  useEffect(() => {
+    if (!session?.user) return;
+    fetchSocialCounts();
+    const id = setInterval(fetchSocialCounts, 30000);
+    return () => clearInterval(id);
+  }, [session, fetchSocialCounts]);
 
   // Fetch user plan info and auto-apply status
   useEffect(() => {
@@ -697,6 +725,26 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* Messages */}
+              <Link
+                href="/train/chat"
+                className={`p-2 rounded-lg transition-colors relative ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
+                aria-label={unreadMessages > 0 ? `Messages, ${unreadMessages} unread` : 'Messages'}
+              >
+                <MessageSquare size={20} />
+                <NotificationBadge count={unreadMessages} />
+              </Link>
+
+              {/* Friends */}
+              <Link
+                href="/train/friends"
+                className={`p-2 rounded-lg transition-colors relative ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
+                aria-label={pendingFriends > 0 ? `Friends, ${pendingFriends} pending` : 'Friends'}
+              >
+                <Users size={20} />
+                <NotificationBadge count={pendingFriends} />
+              </Link>
 
               {/* Notifications */}
               <NotificationBell isDark={!isLight} />

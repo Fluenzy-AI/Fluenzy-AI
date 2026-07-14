@@ -1,11 +1,19 @@
-﻿import { NextRequest, NextResponse } from "next/server";
+/**
+ * Payment History PDF Download
+ * GET /api/payment-history/[id]/pdf
+ * 
+ * REFACTORED: Standardized to use document-service (was partially cached before).
+ * Now uses the same getOrGenerateDocument() pattern as all other PDF endpoints.
+ */
+
+import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { htmlToPdf } from "@/lib/pdf-browser";
 import { buildInvoiceHtml, titleCase } from "@/lib/invoice-html";
-import { uploadPdfToR2, getPublicUrl } from "@/lib/r2-service";
-import { isR2Configured } from "@/lib/r2";
+import { getOrGenerateDocument } from "@/lib/document-service";
+import { buildDocumentFileName } from "@/lib/document-types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -38,80 +46,37 @@ export async function GET(
       receipt?.invoiceNumber ||
       payment.invoiceId ||
       `FLZ-${status.toUpperCase().slice(0, 3)}-${payment.id.slice(-6).toUpperCase()}`;
-    const filename = `FluenzyAI_${titleCase(status).replace(/ /g, "_")}_${invoiceNumber}.pdf`;
 
-    // Generate expected fileKey for cache lookup
-    const expectedFileKey = `payment-receipt/${user.id}_${payment.id}/${filename}`.replace(/\s+/g, "_");
+    const fileName = buildDocumentFileName("invoice", invoiceNumber);
 
-    // Check if PDF already cached in R2
-    const existingFile = await prisma.fileRecord.findFirst({
-      where: {
-        userId: user.id,
-        fileType: "payment-receipt",
-        fileKey: { contains: `${user.id}_${payment.id}` },
+    // Use standardized document service
+    const result = await getOrGenerateDocument({
+      documentType: "invoice",
+      documentId: payment.id,
+      ownerId: user.id,
+      fileName,
+      metadata: { invoiceNumber, paymentId: payment.id, status },
+      generatePdf: async () => {
+        const html = buildInvoiceHtml(payment, {
+          name: user.name,
+          email: user.email,
+          renewalDate: (user as any).renewalDate ?? null,
+        });
+        return htmlToPdf(html);
       },
     });
 
-    if (existingFile?.fileKey) {
-      const cdnUrl = getPublicUrl(existingFile.fileKey);
-      if (cdnUrl) {
-        console.info(`[PAYMENT_PDF] Cache hit: ${cdnUrl}`);
-        // Redirect to CDN for fast download
-        return NextResponse.redirect(cdnUrl);
-      }
+    // Redirect to CDN if available
+    if (result.cdnUrl) {
+      return NextResponse.redirect(result.cdnUrl);
     }
 
-    // Generate PDF (cache miss)
-    console.info(`[PAYMENT_PDF] Cache miss, generating PDF...`);
-    const html = buildInvoiceHtml(payment, {
-      name: user.name,
-      email: user.email,
-      renewalDate: (user as any).renewalDate ?? null,
-    });
-    const pdfBuffer = await htmlToPdf(html);
-
-    // Upload to R2 for caching (if configured)
-    if (isR2Configured()) {
-      try {
-        const fileKey = await uploadPdfToR2(
-          "payment-receipt",
-          `${user.id}_${payment.id}`,
-          pdfBuffer,
-          filename
-        );
-        
-        // Create FileRecord for caching
-        await prisma.fileRecord.create({
-          data: {
-            userId: user.id,
-            fileType: "payment-receipt",
-            fileKey,
-            originalFileName: filename,
-            fileSize: pdfBuffer.byteLength,
-            mimeType: "application/pdf",
-            isPublic: true,
-            metadata: { paymentId: payment.id, invoiceNumber },
-          },
-        });
-
-        const cdnFileUrl = getPublicUrl(fileKey);
-        console.info(`[PAYMENT_PDF] Cached to R2: ${cdnFileUrl}`);
-        
-        // Redirect to CDN
-        if (cdnFileUrl) {
-          return NextResponse.redirect(cdnFileUrl);
-        }
-      } catch (r2Error) {
-        console.error("[PAYMENT_PDF] R2 upload failed:", r2Error);
-        // Fall through to direct PDF response
-      }
-    }
-
-    // Return PDF directly (fallback)
-    return new NextResponse(pdfBuffer as unknown as BodyInit, {
+    // Fallback: return PDF directly
+    return new NextResponse(result.pdfBuffer as unknown as BodyInit, {
       headers: {
         "Content-Type": "application/pdf",
-        "Content-Disposition": `attachment; filename="${filename}"`,
+        "Content-Disposition": `attachment; filename="${fileName}"`,
+        "Cache-Control": "public, max-age=31536000, immutable",
       },
     });
   } catch (error) {

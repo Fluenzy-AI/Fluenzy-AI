@@ -10,33 +10,8 @@ const SessionDetailModal = ({ session, user, onClose }: { session: SessionRecord
   const displayScore = (session as any).score || 0;
   const displayStatus = displayScore === 0 ? 'Incomplete' : displayScore >= 71 ? 'Excellent' : displayScore >= 31 ? 'Good' : 'Needs Practice';
   
-  const handleDownloadPDF = async () => {
-    try {
-      const response = await fetch('/api/generate-pdf', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sessionId: session.id })
-      });
-
-      if (response.ok) {
-        const html = await response.text();
-        const printWindow = window.open('', '_blank');
-        if (printWindow) {
-          printWindow.document.write(html);
-          printWindow.document.close();
-          // Wait for content to load then print
-          printWindow.onload = () => {
-            setTimeout(() => {
-              printWindow.print();
-            }, 500);
-          };
-        }
-      } else {
-        console.error('Failed to generate PDF');
-      }
-    } catch (error) {
-      console.error('PDF download error:', error);
-    }
+  const handleDownloadPDF = () => {
+    window.open(`/api/generate-pdf?sessionId=${session.id}&format=pdf`, '_blank');
   };
 
   return (

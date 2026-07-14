@@ -410,7 +410,6 @@ export default function TrainPage() {
 
   return (
     <>
-      <TrainNavigation />
       <div className="p-4 md:p-6 lg:p-8 relative">
       {/* Light theme ambient background */}
       {resolvedTheme === 'light' && (
