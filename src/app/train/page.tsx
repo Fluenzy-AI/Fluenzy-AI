@@ -399,20 +399,7 @@ export default function TrainPage() {
 
   const updatedModules = getUpdatedModules();
 
-  if (status === 'loading') {
-    return (
-      <div className={`min-h-screen ${currentTheme.background} flex items-center justify-center`}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
-          <p className={currentTheme.textMuted}>Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
-  if (!session?.user) {
-    return null;
-  }
 
   return (
     <>
@@ -448,7 +435,7 @@ export default function TrainPage() {
           
           <div className="relative z-10">
             <h1 className={`text-3xl md:text-4xl lg:text-5xl font-black ${currentTheme.text} mb-4`}>
-              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5B6CFF] to-[#8B5CF6]">{session.user.name?.split(' ')[0]}</span> 👋
+              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#5B6CFF] to-[#8B5CF6]">{session?.user?.name ? session.user.name.split(' ')[0] : 'User'}</span> 👋
             </h1>
             <p className={`text-lg md:text-xl ${currentTheme.textMuted} max-w-2xl mb-8`}>
               Master your interview skills with AI-powered practice sessions. Choose a module below to begin your journey.

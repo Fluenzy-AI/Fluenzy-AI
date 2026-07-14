@@ -24,6 +24,9 @@ import {
   Building2,
   Mail,
   BarChart3,
+  ScanFace,
+  Brain,
+  Zap,
 } from "lucide-react";
 
 const COMPANY_NAV = [
@@ -31,6 +34,7 @@ const COMPANY_NAV = [
   { label: "Job Postings", href: "/company/portal/jobs", icon: <Briefcase className="w-4 h-4" /> },
   { label: "Applications", href: "/company/portal/applications", icon: <Users className="w-4 h-4" /> },
   { label: "Assessments", href: "/company/portal/assessments", icon: <FileText className="w-4 h-4" /> },
+  { label: "HireLens AI", href: "/company/portal/hirelens", icon: <ScanFace className="w-4 h-4" /> },
   { label: "Team", href: "/company/portal/team", icon: <UserPlus className="w-4 h-4" />, adminOnly: true },
   { label: "Settings", href: "/company/portal/settings", icon: <Settings className="w-4 h-4" />, adminOnly: true },
 ];
@@ -352,7 +356,32 @@ export default function CompanyPortalDashboard() {
                 href="/company/portal/team"
                 color="text-amber-400"
               />
+              <QuickActionCard
+                icon={<ScanFace className="w-5 h-5" />}
+                label="HireLens AI"
+                href="/company/portal/hirelens"
+                color="text-indigo-400"
+              />
             </div>
+
+            {/* HireLens Promo Banner */}
+            <Link
+              href="/company/portal/hirelens"
+              className="mt-4 flex items-start gap-3 p-4 rounded-xl border border-indigo-500/25 bg-gradient-to-br from-indigo-600/10 to-purple-600/10 hover:from-indigo-600/15 hover:to-purple-600/15 transition-all group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                <Brain className="w-4.5 h-4.5 text-indigo-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-sm font-bold text-white">HireLens AI — New</p>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-semibold flex items-center gap-1">
+                    <Zap className="w-2.5 h-2.5" /> Live
+                  </span>
+                </div>
+                <p className="text-xs text-slate-400">AI-powered interview intelligence. Real-time scores, transcripts &amp; behavioral alerts.</p>
+              </div>
+            </Link>
           </motion.div>
 
           {/* Recent Jobs */}

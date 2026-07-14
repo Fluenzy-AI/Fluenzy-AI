@@ -14,13 +14,15 @@ const HistoryPage = () => {
       router.push("/");
     }
   }, [status, router]);
-
-  if (status === "loading") {
-    return <div>Loading...</div>;
-  }
-
-  if (!session?.user) {
-    return null;
+  if (status === "loading" || !session?.user) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh] animate-pulse">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-cyan-400/30 border-t-cyan-400 rounded-full animate-spin" />
+          <p className="text-sm text-slate-400">Loading history...</p>
+        </div>
+      </div>
+    );
   }
 
   // Convert NextAuth session to UserProfile
