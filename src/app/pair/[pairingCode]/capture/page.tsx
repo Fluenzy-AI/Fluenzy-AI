@@ -5,6 +5,8 @@ import { useParams, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Camera, Mic, AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useMediaCapture } from '@/hooks/useMediaCapture';
+import { connectHireLensSocket } from '@/lib/hirelens-ws';
+
 
 // ─── Minimal Mobile Capture Screen ───────────────────────────────────────────
 // This is the ONLY screen the HR rep interacts with on the phone — open it,
@@ -22,6 +24,9 @@ export default function CapturePage() {
   const [isCapturing, setIsCapturing] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const isCapturingRef = useRef(false);
+  const recognitionRef = useRef<any>(null);
 
   // Request camera/mic as soon as the page loads
   useEffect(() => {
@@ -36,6 +41,137 @@ export default function CapturePage() {
     }
   }, [stream]);
 
+  // Setup speech recognition
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const rec = new SpeechRecognition();
+      rec.continuous = true;
+      rec.interimResults = false;
+      rec.lang = 'en-US';
+      
+      rec.onresult = (event: any) => {
+        const resultIndex = event.resultIndex;
+        const transcriptText = event.results[resultIndex][0].transcript.trim();
+        
+        console.log('[SpeechRecognition] Final transcript:', transcriptText);
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: 'audio',
+            transcript: transcriptText,
+            is_speaking: false
+          }));
+        }
+      };
+      
+      rec.onstart = () => {
+        console.log('[SpeechRecognition] Started');
+      };
+      
+      rec.onend = () => {
+        console.log('[SpeechRecognition] Ended');
+        if (isCapturingRef.current && recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+          } catch (e) {
+            console.error('Failed to restart SpeechRecognition:', e);
+          }
+        }
+      };
+      
+      rec.onerror = (e: any) => {
+        console.error('[SpeechRecognition] Error:', e);
+      };
+      
+      recognitionRef.current = rec;
+    }
+  }, []);
+
+  // Handle frame sending and speech recognition on capture start
+  useEffect(() => {
+    isCapturingRef.current = isCapturing;
+    if (isCapturing) {
+      const ws = connectHireLensSocket(sessionId);
+      wsRef.current = ws;
+
+      let frameCounter = 0;
+      let frameInterval: NodeJS.Timeout;
+      let pingInterval: NodeJS.Timeout;
+
+      ws.onopen = () => {
+        console.log('[CapturePage] WebSocket opened');
+        
+        // Start SpeechRecognition
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.start();
+          } catch (e) {
+            console.error('Failed to start SpeechRecognition:', e);
+          }
+        }
+
+        // Frame sending interval (~3fps)
+        const canvas = document.createElement('canvas');
+        canvas.width = 320;
+        canvas.height = 240;
+        const ctx = canvas.getContext('2d');
+
+        frameInterval = setInterval(() => {
+          if (videoRef.current && ws.readyState === WebSocket.OPEN && ctx) {
+            try {
+              ctx.drawImage(videoRef.current, 0, 0, 320, 240);
+              const base64 = canvas.toDataURL('image/jpeg', 0.6);
+              frameCounter++;
+              ws.send(JSON.stringify({
+                type: 'frame',
+                image: base64,
+                frame_id: frameCounter,
+                timestamp: Date.now()
+              }));
+            } catch (err) {
+              console.error('[CapturePage] Frame capture/send error:', err);
+            }
+          }
+        }, 333);
+
+        // Ping interval (every 10 seconds)
+        pingInterval = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        }, 10000);
+      };
+
+      ws.onclose = () => {
+        console.log('[CapturePage] WebSocket closed');
+        clearInterval(frameInterval);
+        clearInterval(pingInterval);
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.stop();
+          } catch (e) {}
+        }
+      };
+
+      ws.onerror = (e) => {
+        console.error('[CapturePage] WebSocket error:', e);
+      };
+
+      return () => {
+        clearInterval(frameInterval);
+        clearInterval(pingInterval);
+        if (recognitionRef.current) {
+          try {
+            recognitionRef.current.stop();
+          } catch (e) {}
+        }
+        ws.close();
+        wsRef.current = null;
+      };
+    }
+  }, [isCapturing, sessionId]);
+
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
@@ -46,7 +182,6 @@ export default function CapturePage() {
   const handleStartCapture = () => {
     if (permissionStatus !== 'granted') return;
 
-    // In production: initiate WebRTC offer + emit REGISTER_DEVICE('MOBILE') via socket
     setIsCapturing(true);
     const startedAt = Date.now();
     timerRef.current = setInterval(() => {

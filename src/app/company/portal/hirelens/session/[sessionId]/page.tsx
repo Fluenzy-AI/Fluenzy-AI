@@ -214,7 +214,7 @@ function QuestionCard({ q, onDismiss }: { q: AIQuestion; onDismiss: () => void }
 
 // ─── Verdict Panel ────────────────────────────────────────────────────────────
 
-function VerdictPanel({ scores, onClose }: { scores: { composite: number; communication: number; technical: number; confidence: number; behavioral: number }; onClose: () => void }) {
+function VerdictPanel({ scores, onClose, onViewReport }: { scores: { composite: number; communication: number; technical: number; confidence: number; behavioral: number }; onClose: () => void; onViewReport: () => void }) {
   const verdict = scores.composite >= 72 ? 'HIRE' : scores.composite >= 52 ? 'REVIEW' : 'REJECT';
 
   const verdictConfig = {
@@ -267,7 +267,7 @@ function VerdictPanel({ scores, onClose }: { scores: { composite: number; commun
 
         <div className="space-y-3">
           <button
-            onClick={onClose}
+            onClick={onViewReport}
             className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold transition-all"
           >
             View Full Report
@@ -373,12 +373,12 @@ export default function HireLensLiveDashboard() {
   // Auto-start: mobile sessions wait for mobileConnected; hardware sessions wait for deviceStreaming
   useEffect(() => {
     if (sessionMode === 'HARDWARE') {
-      if (candidate && deviceStreaming && status === 'PENDING') {
+      if (candidate && deviceStreaming && (status === 'PENDING' || status === 'CONSENT_PENDING')) {
         const t = setTimeout(() => activateSession(), 800);
         return () => clearTimeout(t);
       }
     } else {
-      if (candidate && mobileConnected && status === 'PENDING') {
+      if (candidate && mobileConnected && (status === 'PENDING' || status === 'CONSENT_PENDING')) {
         const t = setTimeout(() => activateSession(), 800);
         return () => clearTimeout(t);
       }
@@ -411,9 +411,12 @@ export default function HireLensLiveDashboard() {
   return (
     <CompanyPortalLayout navItems={COMPANY_NAV} title={`HireLens Live — ${candidate?.name ?? 'Loading…'}`}>
 
-      {/* Verdict Modal */}
       {showVerdict && scores && (
-        <VerdictPanel scores={scores} onClose={() => { setShowVerdict(false); router.push('/company/portal/hirelens'); }} />
+        <VerdictPanel 
+          scores={scores} 
+          onClose={() => { setShowVerdict(false); router.push('/company/portal/hirelens'); }} 
+          onViewReport={() => window.open(`/api/generate-pdf?sessionId=${sessionId}&format=pdf`, '_blank')}
+        />
       )}
 
       {/* ── Waiting overlay — mode-aware ─────────────────────────────────── */}

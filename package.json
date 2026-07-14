@@ -68,6 +68,7 @@
     "express-rate-limit": "^8.2.1",
     "file-saver": "^2.0.5",
     "framer-motion": "^12.23.12",
+    "html5-qrcode": "^2.3.8",
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.3",
     "libsodium-wrappers": "^0.8.2",

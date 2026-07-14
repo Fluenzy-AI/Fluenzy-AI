@@ -600,6 +600,50 @@ if __name__ == "__main__":
 # ============================================
 
 
+class BehavioralRoomManager:
+    """WebSocket room connection manager for behavioral analysis"""
+    
+    def __init__(self):
+        # Maps session_id to a list of WebSockets
+        self.rooms: Dict[str, List[WebSocket]] = {}
+        # Maps session_id to a single BehavioralAnalyzer
+        self.analyzers: Dict[str, BehavioralAnalyzer] = {}
+    
+    async def connect(self, websocket: WebSocket, session_id: str):
+        await websocket.accept()
+        if session_id not in self.rooms:
+            self.rooms[session_id] = []
+            self.analyzers[session_id] = BehavioralAnalyzer()
+        self.rooms[session_id].append(websocket)
+        print(f"[BehavioralRoomManager] Connected {websocket.client} to session {session_id}. Total room connections: {len(self.rooms[session_id])}")
+        
+    def disconnect(self, websocket: WebSocket, session_id: str):
+        if session_id in self.rooms:
+            if websocket in self.rooms[session_id]:
+                self.rooms[session_id].remove(websocket)
+            if not self.rooms[session_id]:
+                del self.rooms[session_id]
+                if session_id in self.analyzers:
+                    del self.analyzers[session_id]
+        print(f"[BehavioralRoomManager] Disconnected client from session {session_id}.")
+        
+    def get_analyzer(self, session_id: str) -> BehavioralAnalyzer:
+        if session_id not in self.analyzers:
+            self.analyzers[session_id] = BehavioralAnalyzer()
+        return self.analyzers[session_id]
+        
+    async def broadcast(self, session_id: str, message: dict):
+        if session_id in self.rooms:
+            connections = list(self.rooms[session_id])
+            for websocket in connections:
+                try:
+                    await websocket.send_json(message)
+                except Exception as e:
+                    print(f"[BehavioralRoomManager] Error broadcasting to connection in session {session_id}: {e}")
+
+behavioral_room_manager = BehavioralRoomManager()
+
+
 @app.websocket("/ws/behavioral/{session_id}")
 async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
     """
@@ -618,10 +662,10 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
     - Frame dropping: Only processes the most recent frame if backend is busy
     - Backpressure: Notifies frontend when overloaded
     """
-    await websocket.accept()
+    await behavioral_room_manager.connect(websocket, session_id)
     
-    # Create session-specific analyzer
-    session_analyzer = BehavioralAnalyzer()
+    # Create / get session-specific analyzer
+    session_analyzer = behavioral_room_manager.get_analyzer(session_id)
     
     # Frame dropping: Use asyncio primitives for thread-safe state
     is_processing = False
@@ -641,8 +685,8 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                 # Analyze frame
                 result = session_analyzer.analyze_frame(frame, session_id)
                 
-                # Send result
-                await websocket.send_json({
+                # Broadcast result to all connections in the room
+                await behavioral_room_manager.broadcast(session_id, {
                     "type": "behavioral_result",
                     "data": {
                         "frame_id": result.frame_id,
@@ -756,9 +800,16 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                     
                     audio_result = session_analyzer.process_audio(transcript, is_speaking)
                     
-                    await websocket.send_json({
+                    # Broadcast audio result and transcript to the room
+                    await behavioral_room_manager.broadcast(session_id, {
                         "type": "audio_result",
-                        "data": audio_result
+                        "data": {
+                            "filler_words": audio_result.get("filler_words", 0),
+                            "filler_list": audio_result.get("filler_list", []),
+                            "speaking_rate": audio_result.get("speaking_rate", 0),
+                            "transcript": transcript,
+                            "is_speaking": is_speaking
+                        }
                     })
                 
                 elif message_type == "ping":
@@ -777,7 +828,7 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                 
                 elif message_type == "reset":
                     # Reset session analyzer
-                    session_analyzer = BehavioralAnalyzer()
+                    session_analyzer = behavioral_room_manager.get_analyzer(session_id)
                     await websocket.send_json({
                         "type": "reset_complete",
                         "message": "Session analysis reset"
@@ -802,9 +853,11 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                 })
                 
     except WebSocketDisconnect:
+        behavioral_room_manager.disconnect(websocket, session_id)
         print(f"Behavioral analysis session ended for: {session_id}")
     except Exception as e:
         print(f"WebSocket error: {e}")
+        behavioral_room_manager.disconnect(websocket, session_id)
 
 
 # Health check for behavioral analysis

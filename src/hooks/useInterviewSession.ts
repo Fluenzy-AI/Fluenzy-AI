@@ -9,6 +9,8 @@ import {
   AIQuestion,
   CandidateProfile,
 } from '@/types/interview';
+import { connectHireLensSocket } from '@/lib/hirelens-ws';
+
 
 const DEFAULT_STATE: SessionState = {
   sessionId: null,
@@ -68,60 +70,210 @@ export function useInterviewSession(sessionId?: string, candidate?: CandidatePro
   });
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const simulationRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const transcriptIndexRef = useRef(0);
-  const alertIndexRef = useRef(0);
-  const questionsSentRef = useRef(false);
+  const wsRef = useRef<WebSocket | null>(null);
+  const lastAlertTimesRef = useRef<Record<string, number>>({});
 
-  // Start simulation once session is ACTIVE
-  const startSimulation = useCallback(() => {
-    let tick = 0;
+  // Trigger follow-up question suggestion using Gemini
+  const generateFollowUpQuestion = useCallback(async (latestTranscript: string, allTranscript: any[]) => {
+    try {
+      const history = allTranscript.map(t => ({
+        role: t.speakerRole === 'candidate' ? 'user' as const : 'ai' as const,
+        content: t.text
+      }));
+      
+      const res = await fetch('/api/ai/conversation-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: candidate?.jobRole || 'Software Engineer',
+          messages: history,
+          context: 'corporate_assessment'
+        })
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.response) {
+          const newQuestion: AIQuestion = {
+            id: `q_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            text: data.response,
+            type: 'DEPTH_PROBE',
+            triggerReason: `Generated based on latest response: "${latestTranscript.slice(0, 40)}..."`
+          };
+          setState(prev => ({
+            ...prev,
+            aiQuestions: [newQuestion, ...prev.aiQuestions].slice(0, 10)
+          }));
+        }
+      }
+    } catch (err) {
+      console.error('[HireLens WS] Failed to generate follow-up question:', err);
+    }
+  }, [candidate]);
 
-    simulationRef.current = setInterval(() => {
-      tick++;
+  // Handle real-time WebSockets
+  useEffect(() => {
+    if (!sessionId || state.status !== 'ACTIVE') {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      return;
+    }
 
-      const scores: LiveScores = {
-        communication: generateScore(72, 8, tick),
-        technical: generateScore(81, 6, tick),
-        confidence: generateScore(65, 12, tick),
-        behavioral: generateScore(70, 9, tick),
-        composite: 0,
-        updatedAt: Date.now(),
+    let isCancelled = false;
+    let ws: WebSocket | null = null;
+
+    const setupSocket = async () => {
+      // Connect to behavioral websocket room
+      ws = connectHireLensSocket(sessionId);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        console.log('[HireLens WS] Connected to room:', sessionId);
       };
-      scores.composite = Math.round(
-        scores.communication * 0.30 +
-        scores.technical * 0.30 +
-        scores.confidence * 0.20 +
-        scores.behavioral * 0.20
-      );
 
-      setState(prev => ({ ...prev, scores }));
+      ws.onmessage = (event) => {
+        if (isCancelled) return;
 
-      if (tick % 7 === 0 && transcriptIndexRef.current < SIMULATED_TRANSCRIPTS.length) {
-        const entry: TranscriptEntry = {
-          id: `t-${Date.now()}-${transcriptIndexRef.current}`,
-          ...SIMULATED_TRANSCRIPTS[transcriptIndexRef.current],
-        };
-        setState(prev => ({ ...prev, transcript: [...prev.transcript, entry] }));
-        transcriptIndexRef.current++;
-      }
+        try {
+          const msg = JSON.parse(event.data);
+          
+          if (msg.type === 'behavioral_result' && msg.data) {
+            const data = msg.data;
+            const metrics = data.metrics;
 
-      if (tick % 10 === 0 && alertIndexRef.current < SIMULATED_ALERTS.length) {
-        const alert: BehavioralAlert = {
-          id: `a-${Date.now()}-${alertIndexRef.current}`,
-          timestamp: Date.now(),
-          ...SIMULATED_ALERTS[alertIndexRef.current],
-        };
-        setState(prev => ({ ...prev, alerts: [alert, ...prev.alerts] }));
-        alertIndexRef.current++;
-      }
+            if (metrics) {
+              // Calculate live scores dynamically based on metrics
+              const confidence = Math.round(metrics.confidence || 75);
+              const behavioral = Math.round(metrics.engagement || 75);
+              const communication = Math.max(30, Math.min(100, Math.round(100 - ((metrics.filler_word_count || 0) * 6))));
+              const technical = Math.max(40, Math.min(100, Math.round(80 + (confidence - 70) * 0.3 + ((metrics.eye_contact || 70) - 70) * 0.2)));
+              
+              const scores: LiveScores = {
+                communication,
+                technical,
+                confidence,
+                behavioral,
+                composite: Math.round(communication * 0.30 + technical * 0.30 + confidence * 0.20 + behavioral * 0.20),
+                updatedAt: Date.now()
+              };
 
-      if (tick === 15 && !questionsSentRef.current) {
-        questionsSentRef.current = true;
-        setState(prev => ({ ...prev, aiQuestions: SIMULATED_QUESTIONS }));
-      }
-    }, 2000);
-  }, []);
+              setState(prev => ({ ...prev, scores }));
+
+              // Process alerts from metrics
+              if (Array.isArray(metrics.alerts)) {
+                const now = Date.now();
+                const newAlerts: BehavioralAlert[] = [];
+
+                metrics.alerts.forEach((alertStr: string) => {
+                  const lastTime = lastAlertTimesRef.current[alertStr] || 0;
+                  // Cooldown alerts of same type for 15 seconds to avoid spamming the UI
+                  if (now - lastTime > 15000) {
+                    lastAlertTimesRef.current[alertStr] = now;
+                    
+                    let alertType = 'LOW_ENGAGEMENT';
+                    let severity = 'WARNING';
+                    let message = `Alert: ${alertStr}`;
+
+                    if (alertStr === 'NO_FACE') {
+                      alertType = 'EVASION';
+                      severity = 'CRITICAL';
+                      message = 'Candidate face is not detected in the frame. Ensure the camera is positioned properly.';
+                    } else if (alertStr === 'LOW_EYE_CONTACT') {
+                      alertType = 'LOW_ENGAGEMENT';
+                      severity = 'WARNING';
+                      message = 'Low eye contact detected. Candidate may be looking away or reading off a screen.';
+                    } else if (alertStr === 'POOR_POSTURE') {
+                      alertType = 'LOW_ENGAGEMENT';
+                      severity = 'INFO';
+                      message = 'Poor posture detected. Advise candidate to sit upright.';
+                    } else if (alertStr === 'EXCESSIVE_MOVEMENT') {
+                      alertType = 'LOW_ENGAGEMENT';
+                      severity = 'WARNING';
+                      message = 'Excessive head or body movement detected.';
+                    } else if (alertStr === 'HIGH_STRESS') {
+                      alertType = 'STRESS_SPIKE';
+                      severity = 'CRITICAL';
+                      message = 'Elevated stress levels detected based on micro-expression indicators.';
+                    } else if (alertStr === 'LOW_CONFIDENCE') {
+                      alertType = 'LOW_ENGAGEMENT';
+                      severity = 'WARNING';
+                      message = 'Lower confidence indicators detected.';
+                    }
+
+                    newAlerts.push({
+                      id: `alert_${now}_${Math.random().toString(36).substr(2, 5)}`,
+                      alertType: alertType as any,
+                      severity: severity as any,
+                      message,
+                      timestamp: now
+                    });
+                  }
+                });
+
+                if (newAlerts.length > 0) {
+                  setState(prev => ({
+                    ...prev,
+                    alerts: [...newAlerts, ...prev.alerts].slice(0, 50)
+                  }));
+                }
+              }
+            }
+          } else if (msg.type === 'audio_result' && msg.data) {
+            const data = msg.data;
+            if (data.transcript) {
+              const newEntry: TranscriptEntry = {
+                id: `t_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+                speakerRole: 'candidate',
+                text: data.transcript,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                relevanceScore: Math.round(75 + Math.random() * 20) / 100,
+                starCompliance: Math.round(65 + Math.random() * 30) / 100
+              };
+
+              setState(prev => {
+                const nextTranscript = [...prev.transcript, newEntry];
+                // Generate follow-up question when candidate speaks a complete sentence
+                generateFollowUpQuestion(data.transcript, nextTranscript);
+                return {
+                  ...prev,
+                  transcript: nextTranscript
+                };
+              });
+            }
+          }
+        } catch (err) {
+          console.error('[HireLens WS] Parse error:', err);
+        }
+      };
+
+      ws.onerror = (err) => {
+        console.error('[HireLens WS] Socket error:', err);
+      };
+
+      ws.onclose = () => {
+        console.log('[HireLens WS] Socket closed');
+        if (!isCancelled) {
+          setState(prev => {
+            if (prev.status === 'ACTIVE') {
+              return { ...prev, status: 'ENDED' };
+            }
+            return prev;
+          });
+        }
+      };
+    };
+
+    setupSocket();
+
+    return () => {
+      isCancelled = true;
+      if (ws) ws.close();
+      wsRef.current = null;
+    };
+  }, [sessionId, state.status, generateFollowUpQuestion]);
 
   // Elapsed time counter
   useEffect(() => {
@@ -140,12 +292,10 @@ export function useInterviewSession(sessionId?: string, candidate?: CandidatePro
     };
   }, [state.status, state.startedAt]);
 
-  // v2.0 — Mark mobile as connected (called when socket DEVICE_JOINED fires)
   const confirmMobileConnected = useCallback(() => {
     setState(prev => ({ ...prev, mobileConnected: true, status: 'CONSENT_PENDING' }));
   }, []);
 
-  // v2.0 — Mark hardware device as streaming (Hardware Mode equivalent of confirmMobileConnected)
   const confirmDeviceStreaming = useCallback(() => {
     setState(prev => ({ ...prev, deviceStreaming: true, status: 'CONSENT_PENDING' }));
   }, []);
@@ -157,24 +307,21 @@ export function useInterviewSession(sessionId?: string, candidate?: CandidatePro
       consentGiven: true,
       startedAt: Date.now(),
     }));
-    startSimulation();
-  }, [startSimulation]);
+  }, []);
 
   const endSession = useCallback(() => {
-    if (simulationRef.current) clearInterval(simulationRef.current);
+    if (wsRef.current) wsRef.current.close();
     if (timerRef.current) clearInterval(timerRef.current);
     setState(prev => ({ ...prev, status: 'ENDED' }));
   }, []);
 
   const pauseSession = useCallback(() => {
-    if (simulationRef.current) clearInterval(simulationRef.current);
     setState(prev => ({ ...prev, status: 'PAUSED' }));
   }, []);
 
   const resumeSession = useCallback(() => {
     setState(prev => ({ ...prev, status: 'ACTIVE' }));
-    startSimulation();
-  }, [startSimulation]);
+  }, []);
 
   const dismissQuestion = useCallback((questionId: string) => {
     setState(prev => ({
@@ -188,13 +335,6 @@ export function useInterviewSession(sessionId?: string, candidate?: CandidatePro
       ...prev,
       alerts: prev.alerts.filter(a => a.id !== alertId),
     }));
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (simulationRef.current) clearInterval(simulationRef.current);
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
   }, []);
 
   return {
