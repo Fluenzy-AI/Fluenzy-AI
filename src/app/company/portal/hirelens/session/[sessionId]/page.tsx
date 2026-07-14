@@ -9,11 +9,13 @@ import {
   LayoutDashboard, Briefcase, Users, UserPlus, Settings, FileText, ScanFace,
   Square, Pause, Play, Clock, Wifi, WifiOff, AlertTriangle, Zap,
   MessageSquare, Brain, BarChart3, ChevronDown, X, ThumbsUp, ThumbsDown, Minus,
-  CheckCircle2, TrendingUp, Volume2, Eye, Activity, Smartphone, Loader2,
+  CheckCircle2, TrendingUp, Volume2, Eye, Activity, Smartphone, Loader2, Cpu,
 } from 'lucide-react';
 import { useInterviewSession } from '@/hooks/useInterviewSession';
+import { DeviceDiagnosticsBar } from '@/components/interview/hardware/DeviceDiagnostics';
 import { cn } from '@/lib/utils';
 import type { CandidateProfile, BehavioralAlert, AIQuestion } from '@/types/interview';
+import type { InterviewMode } from '@/types/interview';
 
 const COMPANY_NAV = [
   { label: 'Dashboard', href: '/company/portal', icon: <LayoutDashboard className="w-4 h-4" /> },
@@ -292,11 +294,14 @@ export default function HireLensLiveDashboard() {
   const [candidate, setCandidate] = useState<CandidateProfile | null>(null);
   const [showVerdict, setShowVerdict] = useState(false);
   const [activeTab, setActiveTab] = useState<'transcript' | 'alerts' | 'questions'>('transcript');
+  const [sessionMode, setSessionMode] = useState<InterviewMode>('MOBILE');
+  const [hardwareDeviceId, setHardwareDeviceId] = useState<string | null>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
 
   const {
     status, scores, transcript, alerts, aiQuestions, elapsedSeconds,
     mobileConnected, confirmMobileConnected,
+    deviceStreaming, confirmDeviceStreaming,
     activateSession, endSession, pauseSession, resumeSession,
     dismissQuestion, dismissAlert,
   } = useInterviewSession(sessionId, candidate);
@@ -341,9 +346,18 @@ export default function HireLensLiveDashboard() {
     };
   }, [mobileConnected, sessionId, confirmMobileConnected]);
 
-  // Load candidate from sessionStorage
+  // Load candidate + session mode from sessionStorage
   useEffect(() => {
     if (typeof window !== 'undefined' && sessionId) {
+      // Mode
+      const mode = sessionStorage.getItem(`hirelens_mode_${sessionId}`) as InterviewMode | null;
+      if (mode) setSessionMode(mode);
+
+      // Device (hardware mode)
+      const deviceId = sessionStorage.getItem(`hirelens_device_${sessionId}`);
+      if (deviceId) setHardwareDeviceId(deviceId);
+
+      // Candidate
       const stored = sessionStorage.getItem(`hirelens_candidate_${sessionId}`);
       if (stored) {
         try {
@@ -351,19 +365,25 @@ export default function HireLensLiveDashboard() {
           setCandidate({ id: parsed.sessionId, name: parsed.name, email: parsed.email, jobRole: parsed.jobRole });
         } catch { /* ignore */ }
       } else {
-        // Fallback demo candidate
         setCandidate({ id: sessionId, name: 'Demo Candidate', email: 'demo@example.com', jobRole: 'Software Engineer' });
       }
     }
   }, [sessionId]);
 
-  // Auto-start session ONLY after mobile has connected
+  // Auto-start: mobile sessions wait for mobileConnected; hardware sessions wait for deviceStreaming
   useEffect(() => {
-    if (candidate && mobileConnected && status === 'PENDING') {
-      const t = setTimeout(() => activateSession(), 800);
-      return () => clearTimeout(t);
+    if (sessionMode === 'HARDWARE') {
+      if (candidate && deviceStreaming && status === 'PENDING') {
+        const t = setTimeout(() => activateSession(), 800);
+        return () => clearTimeout(t);
+      }
+    } else {
+      if (candidate && mobileConnected && status === 'PENDING') {
+        const t = setTimeout(() => activateSession(), 800);
+        return () => clearTimeout(t);
+      }
     }
-  }, [candidate, mobileConnected, status, activateSession]);
+  }, [candidate, mobileConnected, deviceStreaming, sessionMode, status, activateSession]);
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -396,46 +416,88 @@ export default function HireLensLiveDashboard() {
         <VerdictPanel scores={scores} onClose={() => { setShowVerdict(false); router.push('/company/portal/hirelens'); }} />
       )}
 
-      {/* ── Waiting for phone overlay ──────────────────────────────────────── */}
+      {/* ── Waiting overlay — mode-aware ─────────────────────────────────── */}
       <AnimatePresence>
-        {!mobileConnected && (
+        {((sessionMode === 'MOBILE' && !mobileConnected) ||
+          (sessionMode === 'HARDWARE' && !deviceStreaming)) && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-40 bg-slate-950/95 backdrop-blur-sm flex flex-col items-center justify-center gap-6 px-6 text-center"
           >
-            <motion.div
-              animate={{ scale: [1, 1.06, 1] }}
-              transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
-              className="w-20 h-20 rounded-2xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center"
-            >
-              <Smartphone className="w-9 h-9 text-indigo-400" />
-            </motion.div>
+            {sessionMode === 'HARDWARE' ? (
+              /* ── Hardware: waiting for collar ── */
+              <>
+                <motion.div
+                  animate={{ scale: [1, 1.06, 1] }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+                  className="w-20 h-20 rounded-2xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center"
+                >
+                  <Cpu className="w-9 h-9 text-indigo-400" />
+                </motion.div>
 
-            <div className="space-y-2">
-              <h2 className="text-2xl font-bold text-white">Waiting for phone to connect…</h2>
-              <p className="text-slate-400 text-sm max-w-sm mx-auto leading-relaxed">
-                Open Fluenzy AI on your phone, sign in with the same account, and scan the QR code
-                (or enter the pairing code) shown on the previous screen.
-              </p>
-            </div>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-white">Waiting for collar to stream…</h2>
+                  <p className="text-slate-400 text-sm max-w-sm mx-auto leading-relaxed">
+                    The HireLens collar device is connecting to the AI cloud via WiFi.
+                    Make sure it is powered on and within range.
+                  </p>
+                </div>
 
-            {/* Device status */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-300 text-xs font-semibold">💻 Laptop ready</span>
-              </div>
-              <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700">
-                <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
-                <span className="text-slate-400 text-xs font-semibold">📱 Phone pairing…</span>
-              </div>
-            </div>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-300 text-xs font-semibold">💻 Laptop ready</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700">
+                    <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                    <span className="text-slate-400 text-xs font-semibold">🎙️ Collar connecting…</span>
+                  </div>
+                </div>
 
-            <p className="text-slate-600 text-xs">
-              Once the phone connects, this dashboard will activate automatically.
-            </p>
+                <button
+                  onClick={confirmDeviceStreaming}
+                  className="text-xs text-indigo-400/60 underline underline-offset-2"
+                >
+                  Device already streaming — skip wait
+                </button>
+              </>
+            ) : (
+              /* ── Mobile: waiting for phone ── */
+              <>
+                <motion.div
+                  animate={{ scale: [1, 1.06, 1] }}
+                  transition={{ repeat: Infinity, duration: 2.5, ease: 'easeInOut' }}
+                  className="w-20 h-20 rounded-2xl bg-indigo-500/15 border border-indigo-500/20 flex items-center justify-center"
+                >
+                  <Smartphone className="w-9 h-9 text-indigo-400" />
+                </motion.div>
+
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold text-white">Waiting for phone to connect…</h2>
+                  <p className="text-slate-400 text-sm max-w-sm mx-auto leading-relaxed">
+                    Open Fluenzy AI on your phone, sign in with the same account, and scan the QR code
+                    (or enter the pairing code) shown on the previous screen.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/25">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                    <span className="text-emerald-300 text-xs font-semibold">💻 Laptop ready</span>
+                  </div>
+                  <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 border border-slate-700">
+                    <Loader2 className="w-4 h-4 text-indigo-400 animate-spin" />
+                    <span className="text-slate-400 text-xs font-semibold">📱 Phone pairing…</span>
+                  </div>
+                </div>
+
+                <p className="text-slate-600 text-xs">
+                  Once the phone connects, this dashboard will activate automatically.
+                </p>
+              </>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
@@ -462,6 +524,18 @@ export default function HireLensLiveDashboard() {
             <div className="flex items-center gap-1.5 text-sm text-slate-300 font-mono">
               <Clock className="w-3.5 h-3.5 text-slate-500" />
               {formatTime(elapsedSeconds)}
+            </div>
+
+            {/* Mode chip */}
+            <div className={cn(
+              'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border',
+              sessionMode === 'HARDWARE'
+                ? 'bg-blue-500/10 border-blue-500/25 text-blue-300'
+                : 'bg-indigo-500/10 border-indigo-500/25 text-indigo-300'
+            )}>
+              {sessionMode === 'HARDWARE'
+                ? <><Cpu className="w-3 h-3" /> HireLens Collar</>
+                : <><Smartphone className="w-3 h-3" /> Mobile Capture</>}
             </div>
 
             {/* Connection */}

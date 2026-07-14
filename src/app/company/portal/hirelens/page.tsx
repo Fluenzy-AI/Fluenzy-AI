@@ -162,32 +162,48 @@ export default function HireLensModePage() {
             </div>
           </button>
 
-          {/* ── Hardware Mode (Coming Soon) ── */}
-          <div className="relative p-6 rounded-2xl border-2 border-slate-700/50 bg-slate-800/30 text-left opacity-55 cursor-not-allowed select-none">
-            <span className="absolute top-4 right-4 text-xs px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 font-semibold flex items-center gap-1.5">
-              <Clock className="w-3 h-3" />
-              Coming Soon
+          {/* ── Hardware Mode ── */}
+          <button
+            onClick={() => setSelected('HARDWARE')}
+            className={cn(
+              'relative p-6 rounded-2xl border-2 text-left transition-all duration-200 group focus:outline-none',
+              selected === 'HARDWARE'
+                ? 'border-indigo-500 bg-indigo-600/10 shadow-lg shadow-indigo-500/10'
+                : 'border-slate-700/80 bg-slate-800/50 hover:border-indigo-500/50 hover:bg-slate-800'
+            )}
+          >
+            {/* Enterprise badge */}
+            <span className="absolute top-4 right-4 text-xs px-2.5 py-1 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 font-semibold">
+              Enterprise
             </span>
 
-            <div className="w-14 h-14 rounded-xl bg-slate-700/50 flex items-center justify-center mb-5">
-              <Cpu className="w-7 h-7 text-slate-500" />
+            {/* Selection ring */}
+            {selected === 'HARDWARE' && (
+              <motion.div
+                layoutId="selection-ring"
+                className="absolute inset-0 rounded-2xl border-2 border-indigo-500 pointer-events-none"
+              />
+            )}
+
+            <div className="w-14 h-14 rounded-xl bg-indigo-500/15 flex items-center justify-center mb-5 group-hover:scale-105 transition-transform">
+              <Cpu className="w-7 h-7 text-indigo-400" />
             </div>
 
-            <h2 className="text-xl font-bold text-slate-400 mb-2">Hardware Mode</h2>
-            <p className="text-slate-500 text-sm leading-relaxed mb-5">
-              HireLens Collar Device — wearable mic and camera worn by the HR interviewer.
-              Enterprise-grade capture quality with hands-free operation.
+            <h2 className="text-xl font-bold text-white mb-2">Hardware Mode</h2>
+            <p className="text-slate-400 text-sm leading-relaxed mb-5">
+              HireLens Collar Device — clip-on camera worn during the interview.
+              Enterprise-grade capture with hands-free operation and offline edge processing.
             </p>
 
             <div className="space-y-2">
               {hardwareFeatures.map(f => (
-                <div key={f} className="flex items-center gap-2.5 text-xs text-slate-600">
-                  <div className="w-1.5 h-1.5 rounded-full bg-slate-600 flex-shrink-0" />
+                <div key={f} className="flex items-center gap-2.5 text-xs text-indigo-300">
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-400 flex-shrink-0" />
                   {f}
                 </div>
               ))}
             </div>
-          </div>
+          </button>
         </motion.div>
 
         {/* CTA */}
@@ -198,10 +214,14 @@ export default function HireLensModePage() {
           className="flex flex-col items-center gap-3"
         >
           <Link
-            href={selected === 'MOBILE' ? '/company/portal/hirelens/new' : '#'}
+            href={
+              selected === 'MOBILE' ? '/company/portal/hirelens/new'
+              : selected === 'HARDWARE' ? '/company/portal/hirelens/hardware'
+              : '#'
+            }
             className={cn(
               'inline-flex items-center gap-3 px-8 py-4 rounded-xl font-bold text-lg transition-all duration-200 shadow-lg',
-              selected === 'MOBILE'
+              selected
                 ? 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white shadow-indigo-500/25 scale-100 hover:scale-[1.02]'
                 : 'bg-slate-800 text-slate-600 cursor-not-allowed pointer-events-none'
             )}

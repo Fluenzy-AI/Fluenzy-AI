@@ -111,6 +111,7 @@
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",
     "@types/uuid": "^10.0.0",
+    "@types/web-bluetooth": "^0.0.21",
     "concurrently": "^9.2.1",
     "lightningcss": "^1.27.0",
     "prisma": "^6.19.2",

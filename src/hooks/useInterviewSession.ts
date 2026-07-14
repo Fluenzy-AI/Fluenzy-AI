@@ -22,7 +22,8 @@ const DEFAULT_STATE: SessionState = {
   consentGiven: false,
   startedAt: null,
   elapsedSeconds: 0,
-  mobileConnected: false, // v2.0
+  mobileConnected: false, // v2.0 Mobile Mode
+  deviceStreaming: false, // v2.0 Hardware Mode
 };
 
 // ─── Simulated AI data (swap for real Socket.IO in production) ────────────────
@@ -144,6 +145,11 @@ export function useInterviewSession(sessionId?: string, candidate?: CandidatePro
     setState(prev => ({ ...prev, mobileConnected: true, status: 'CONSENT_PENDING' }));
   }, []);
 
+  // v2.0 — Mark hardware device as streaming (Hardware Mode equivalent of confirmMobileConnected)
+  const confirmDeviceStreaming = useCallback(() => {
+    setState(prev => ({ ...prev, deviceStreaming: true, status: 'CONSENT_PENDING' }));
+  }, []);
+
   const activateSession = useCallback(() => {
     setState(prev => ({
       ...prev,
@@ -194,6 +200,7 @@ export function useInterviewSession(sessionId?: string, candidate?: CandidatePro
   return {
     ...state,
     confirmMobileConnected,
+    confirmDeviceStreaming,
     activateSession,
     endSession,
     pauseSession,

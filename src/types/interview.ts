@@ -103,7 +103,8 @@ export interface SessionState {
   consentGiven: boolean;
   startedAt: number | null;
   elapsedSeconds: number;
-  mobileConnected: boolean;   // v2.0 — tracks whether the capture device has paired
+  mobileConnected: boolean;   // v2.0 Mobile Mode — phone has paired
+  deviceStreaming: boolean;   // v2.0 Hardware Mode — collar is streaming
 }
 
 // Socket.IO event payloads

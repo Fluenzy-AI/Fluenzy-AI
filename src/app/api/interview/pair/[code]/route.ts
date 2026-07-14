@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { PAIRING_STORE } from '@/lib/stores';
 
 // ─── GET /api/interview/pair/[code]
 // Mobile validates the pairing code and fetches interview context (read-only).
@@ -80,21 +81,3 @@ export async function POST(
     jobRole: session.jobRole,
   });
 }
-
-// ─── In-memory pairing store (shared with sessions/route.ts via module import)
-// In production this should be replaced with Prisma reads/writes.
-// Export so the sessions/create route can write to it.
-
-export interface PairingRecord {
-  sessionId: string;
-  pairingCode: string;
-  candidateName: string;
-  jobRole: string;
-  status: string;
-  pairingExpiresAt: string;
-  mobileConnected: boolean;
-  mobileJoinedAt?: string;
-  deviceInfo?: unknown;
-}
-
-export const PAIRING_STORE = new Map<string, PairingRecord>();

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { PAIRING_STORE, type PairingRecord } from '@/app/api/interview/pair/[code]/route';
+import { PAIRING_STORE, type PairingRecord } from '@/lib/stores';
 
 function generatePairingCode(): string {
   return Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit code
