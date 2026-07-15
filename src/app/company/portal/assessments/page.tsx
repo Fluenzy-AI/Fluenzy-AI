@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { PortalLayout, StatCard, EmptyState, PortalStatusBadge } from "@/components/portal";
 import { motion } from "framer-motion";
-import CompanyPortalLayout from "@/components/CompanyPortalLayout";
 import {
   Plus,
   Search,
@@ -13,26 +13,8 @@ import {
   Video,
   Users as UsersIcon,
   Calendar,
-  Clock,
-  TrendingUp,
   BarChart3,
-  LayoutDashboard,
-  Briefcase,
-  Users,
-  FileText,
-  UserPlus,
-  Settings,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
-const COMPANY_NAV = [
-  { label: "Dashboard", href: "/company/portal", icon: <LayoutDashboard className="w-4 h-4" /> },
-  { label: "Job Postings", href: "/company/portal/jobs", icon: <Briefcase className="w-4 h-4" /> },
-  { label: "Applications", href: "/company/portal/applications", icon: <Users className="w-4 h-4" /> },
-  { label: "Assessments", href: "/company/portal/assessments", icon: <FileText className="w-4 h-4" /> },
-  { label: "Team", href: "/company/portal/team", icon: <UserPlus className="w-4 h-4" />, adminOnly: true },
-  { label: "Settings", href: "/company/portal/settings", icon: <Settings className="w-4 h-4" />, adminOnly: true },
-];
 
 interface Assessment {
   id: string;
@@ -55,6 +37,28 @@ const assessmentIcons: Record<string, any> = {
   VOICE: Video,
   GD: UsersIcon,
 };
+
+const TYPE_COLORS: Record<string, string> = {
+  MCQ: "var(--portal-info)",
+  CODING: "var(--portal-primary)",
+  AI_INTERVIEW: "var(--portal-live)",
+  VOICE: "var(--portal-warning)",
+  GD: "var(--portal-success)",
+};
+
+/**
+ * Safe number display — never renders NaN.
+ * Returns "0" for zero, "—" for null/undefined/NaN.
+ */
+function safeNum(val: number | null | undefined): string {
+  if (val === null || val === undefined || isNaN(val)) return "—";
+  return val.toLocaleString();
+}
+
+function safePercent(numerator: number | undefined, denominator: number | undefined): string {
+  if (!numerator || !denominator || isNaN(numerator) || isNaN(denominator) || denominator === 0) return "0%";
+  return `${Math.round((numerator / denominator) * 100)}%`;
+}
 
 export default function AssessmentsPage() {
   const router = useRouter();
@@ -81,218 +85,224 @@ export default function AssessmentsPage() {
     }
   };
 
-  const filteredAssessments = assessments.filter((assessment) =>
-    assessment.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    assessment.jobTitle.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredAssessments = assessments.filter(
+    (assessment) =>
+      assessment.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      assessment.jobTitle.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // NaN-safe stat computation
   const stats = {
     total: assessments.length,
-    assigned: assessments.reduce((sum, a) => sum + a.assigned, 0),
-    completed: assessments.reduce((sum, a) => sum + a.completed, 0),
-    avgCompletion: assessments.length > 0
-      ? Math.round(
-          (assessments.reduce((sum, a) => sum + (a.assigned > 0 ? (a.completed / a.assigned) * 100 : 0), 0) /
-            assessments.length)
-        )
-      : 0,
+    assigned: assessments.reduce((sum, a) => sum + (isNaN(a.assigned) ? 0 : a.assigned || 0), 0),
+    completed: assessments.reduce((sum, a) => sum + (isNaN(a.completed) ? 0 : a.completed || 0), 0),
+    avgCompletion: (() => {
+      const validAssessments = assessments.filter((a) => a.assigned > 0 && !isNaN(a.assigned) && !isNaN(a.completed));
+      if (validAssessments.length === 0) return 0;
+      const totalRate = validAssessments.reduce((sum, a) => sum + (a.completed / a.assigned) * 100, 0);
+      return Math.round(totalRate / validAssessments.length);
+    })(),
   };
 
   return (
-    <CompanyPortalLayout navItems={COMPANY_NAV} title="Assessments">
-      <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Assessments</h1>
-          <p className="text-slate-400 mt-1">Create and manage candidate assessments</p>
+    <PortalLayout title="Assessments">
+      <div className="space-y-5">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: "var(--portal-text-primary)" }}>
+              Assessments
+            </h1>
+            <p className="text-sm mt-0.5" style={{ color: "var(--portal-text-muted)" }}>
+              Create and manage candidate assessments
+            </p>
+          </div>
+          <button
+            onClick={() => router.push("/company/portal/assessments/new")}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors"
+            style={{
+              backgroundColor: "var(--portal-primary)",
+              color: "var(--portal-primary-text)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--portal-primary-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--portal-primary)";
+            }}
+          >
+            <Plus className="w-4 h-4" />
+            Create Assessment
+          </button>
         </div>
-        <Button
-          onClick={() => router.push("/company/portal/assessments/new")}
-          className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create Assessment
-        </Button>
-      </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-800/50 border border-slate-700 rounded-xl p-4"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Total Assessments</p>
-              <p className="text-2xl font-bold text-white mt-1">{stats.total}</p>
-            </div>
-            <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center">
-              <ClipboardList className="w-6 h-6 text-blue-400" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-slate-800/50 border border-slate-700 rounded-xl p-4"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Assigned</p>
-              <p className="text-2xl font-bold text-white mt-1">{stats.assigned}</p>
-            </div>
-            <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center">
-              <UsersIcon className="w-6 h-6 text-purple-400" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="bg-slate-800/50 border border-slate-700 rounded-xl p-4"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Completed</p>
-              <p className="text-2xl font-bold text-white mt-1">{stats.completed}</p>
-            </div>
-            <div className="w-12 h-12 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-emerald-400" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className="bg-slate-800/50 border border-slate-700 rounded-xl p-4"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-400 text-sm">Completion Rate</p>
-              <p className="text-2xl font-bold text-white mt-1">{stats.avgCompletion}%</p>
-            </div>
-            <div className="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-amber-400" />
-            </div>
-          </div>
-        </motion.div>
-      </div>
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-        <input
-          type="text"
-          placeholder="Search assessments by title or job..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 bg-slate-800/50 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
-        />
-      </div>
-
-      {/* Assessments List */}
-      {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+        {/* Stats — NaN-safe */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard label="Total Assessments" value={stats.total} variant="compact" loading={isLoading} icon={<ClipboardList className="w-5 h-5" />} />
+          <StatCard label="Assigned" value={stats.assigned} variant="compact" loading={isLoading} icon={<UsersIcon className="w-5 h-5" />} />
+          <StatCard label="Completed" value={stats.completed} variant="compact" loading={isLoading} icon={<BarChart3 className="w-5 h-5" />} />
+          <StatCard label="Completion Rate" value={`${stats.avgCompletion}%`} variant="compact" loading={isLoading} icon={<BarChart3 className="w-5 h-5" />} />
         </div>
-      ) : filteredAssessments.length === 0 ? (
-        <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-12 text-center">
-          <ClipboardList className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-white mb-2">No assessments found</h3>
-          <p className="text-slate-400 mb-4">
-            {searchQuery
-              ? "Try adjusting your search"
-              : "Create your first assessment to evaluate candidates"}
-          </p>
-          {!searchQuery && (
-            <Button
-              onClick={() => router.push("/company/portal/assessments/new")}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Create Assessment
-            </Button>
-          )}
+
+        {/* Search */}
+        <div className="relative">
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
+            style={{ color: "var(--portal-text-muted)" }}
+          />
+          <input
+            type="text"
+            placeholder="Search assessments by title or job..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-md text-sm outline-none"
+            style={{
+              backgroundColor: "var(--portal-bg-elevated)",
+              border: "1px solid var(--portal-border)",
+              color: "var(--portal-text-primary)",
+            }}
+            onFocus={(e) => {
+              e.currentTarget.style.borderColor = "var(--portal-primary)";
+            }}
+            onBlur={(e) => {
+              e.currentTarget.style.borderColor = "var(--portal-border)";
+            }}
+          />
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {filteredAssessments.map((assessment, index) => {
-            const Icon = assessmentIcons[assessment.type] || ClipboardList;
-            const completionRate = assessment.assigned > 0
-              ? Math.round((assessment.completed / assessment.assigned) * 100)
-              : 0;
 
-            return (
-              <motion.div
-                key={assessment.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-                className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 hover:border-indigo-500/50 transition-all cursor-pointer"
-                onClick={() => router.push(`/company/portal/assessments/${assessment.id}`)}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                    <Icon className="w-6 h-6 text-indigo-400" />
-                  </div>
-                  <span className="px-2 py-1 rounded-full bg-purple-500/10 text-purple-400 text-xs font-medium">
-                    {assessment.type.replace("_", " ")}
-                  </span>
-                </div>
+        {/* Assessments Grid */}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div
+                key={i}
+                className="h-56 rounded-lg border portal-skeleton"
+                style={{ borderColor: "var(--portal-border)" }}
+              />
+            ))}
+          </div>
+        ) : filteredAssessments.length === 0 ? (
+          <EmptyState
+            icon={<ClipboardList className="w-6 h-6" />}
+            title={searchQuery ? "No assessments match your search" : "No assessments created yet"}
+            description={
+              searchQuery
+                ? "Try adjusting your search terms."
+                : "Create your first assessment to evaluate candidates."
+            }
+            action={
+              !searchQuery
+                ? { label: "Create Assessment", onClick: () => router.push("/company/portal/assessments/new") }
+                : undefined
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredAssessments.map((assessment, index) => {
+              const Icon = assessmentIcons[assessment.type] || ClipboardList;
+              const typeColor = TYPE_COLORS[assessment.type] || "var(--portal-primary)";
 
-                <h3 className="text-lg font-bold text-white mb-1">{assessment.title}</h3>
-                <p className="text-sm text-slate-400 mb-4">{assessment.jobTitle}</p>
+              // NaN-safe completion rate
+              const completionRate =
+                assessment.assigned > 0 && !isNaN(assessment.assigned) && !isNaN(assessment.completed)
+                  ? Math.round((assessment.completed / assessment.assigned) * 100)
+                  : 0;
 
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400">Questions:</span>
-                    <span className="text-white font-semibold">{assessment.questions}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400">Duration:</span>
-                    <span className="text-white font-semibold">{assessment.duration} mins</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-slate-400">Pass Percentage:</span>
-                    <span className="text-white font-semibold">{assessment.passPercentage}%</span>
-                  </div>
-                </div>
+              const hasSubmissions = assessment.assigned > 0 && !isNaN(assessment.assigned);
 
-                <div className="border-t border-slate-700 pt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm text-slate-400">Completion Rate</span>
-                    <span className="text-sm text-white font-semibold">{completionRate}%</span>
-                  </div>
-                  <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+              return (
+                <motion.div
+                  key={assessment.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.04, duration: 0.2 }}
+                  className="rounded-lg border p-5 transition-shadow hover:shadow-[var(--portal-shadow-hover)] cursor-pointer"
+                  style={{
+                    backgroundColor: "var(--portal-bg-elevated)",
+                    borderColor: "var(--portal-border)",
+                  }}
+                  onClick={() => router.push(`/company/portal/assessments/${assessment.id}`)}
+                >
+                  <div className="flex items-start justify-between mb-4">
                     <div
-                      className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all"
-                      style={{ width: `${completionRate}%` }}
-                    />
+                      className="w-10 h-10 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: `color-mix(in srgb, ${typeColor} 12%, transparent)` }}
+                    >
+                      <Icon className="w-5 h-5" style={{ color: typeColor }} />
+                    </div>
+                    <span
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      style={{
+                        backgroundColor: `color-mix(in srgb, ${typeColor} 12%, transparent)`,
+                        color: typeColor,
+                      }}
+                    >
+                      {assessment.type.replace(/_/g, " ")}
+                    </span>
                   </div>
-                  <div className="flex items-center justify-between mt-2 text-xs text-slate-500">
-                    <span>{assessment.completed} completed</span>
-                    <span>{assessment.assigned} assigned</span>
-                  </div>
-                </div>
 
-                <div className="flex items-center gap-1 mt-4 text-xs text-slate-500">
-                  <Calendar className="w-3 h-3" />
-                  Created {new Date(assessment.createdAt).toLocaleDateString()}
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-    </CompanyPortalLayout>
+                  <h3 className="text-base font-semibold mb-0.5" style={{ color: "var(--portal-text-primary)" }}>
+                    {assessment.title}
+                  </h3>
+                  <p className="text-xs mb-4" style={{ color: "var(--portal-text-muted)" }}>
+                    {assessment.jobTitle}
+                  </p>
+
+                  <div className="space-y-1.5 mb-4">
+                    {[
+                      { label: "Questions", value: safeNum(assessment.questions) },
+                      { label: "Duration", value: `${safeNum(assessment.duration)} mins` },
+                      { label: "Pass %", value: `${safeNum(assessment.passPercentage)}%` },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex justify-between text-xs">
+                        <span style={{ color: "var(--portal-text-muted)" }}>{label}</span>
+                        <span className="portal-mono font-medium" style={{ color: "var(--portal-text-primary)" }}>
+                          {value}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Completion Progress — handles zero/NaN explicitly */}
+                  <div className="pt-3" style={{ borderTop: "1px solid var(--portal-border)" }}>
+                    {hasSubmissions ? (
+                      <>
+                        <div className="flex justify-between text-xs mb-1.5">
+                          <span style={{ color: "var(--portal-text-secondary)" }}>Completion</span>
+                          <span className="portal-mono font-semibold" style={{ color: "var(--portal-text-primary)" }}>
+                            {safeNum(assessment.completed)}/{safeNum(assessment.assigned)} · {completionRate}%
+                          </span>
+                        </div>
+                        <div
+                          className="w-full h-1.5 rounded-full overflow-hidden"
+                          style={{ backgroundColor: "var(--portal-surface)" }}
+                        >
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${completionRate}%`,
+                              backgroundColor: "var(--portal-primary)",
+                            }}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-center py-1" style={{ color: "var(--portal-text-muted)" }}>
+                        No submissions yet
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-1 mt-3 text-xs" style={{ color: "var(--portal-text-muted)" }}>
+                    <Calendar className="w-3 h-3" />
+                    Created {new Date(assessment.createdAt).toLocaleDateString()}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </PortalLayout>
   );
 }

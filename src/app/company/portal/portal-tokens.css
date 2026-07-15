@@ -1,0 +1,123 @@
+/* ============================================================
+   FLUENZY AI — PORTAL DESIGN TOKENS
+   Dual-theme system: Dark (default) + Light
+   
+   Base surface: slightly warm ink-black (hsl 222, 22%, 9%))
+   because HireLens video panels need a low-glare, skin-tone-
+   friendly backdrop for 8-hour recruiter use.
+   
+   Primary: evolved violet (#7C6EF6) from brand equity (#6C5CE7)
+   Live-signal: teal-cyan (#00D4AA) — ONLY for real-time/AI states
+   ============================================================ */
+
+/* ── DARK THEME (default) ── */
+[data-portal-theme="dark"],
+.portal-dark {
+  /* Backgrounds */
+  --portal-bg-base: #121318;
+  --portal-bg-raised: #1A1B23;
+  --portal-bg-elevated: #22232E;
+  --portal-surface: #2A2B38;
+
+  /* Borders */
+  --portal-border: rgba(255, 255, 255, 0.08);
+  --portal-border-strong: rgba(255, 255, 255, 0.14);
+
+  /* Primary (structural UI) */
+  --portal-primary: #7C6EF6;
+  --portal-primary-hover: #6B5CE8;
+  --portal-primary-pressed: #5A4CD6;
+  --portal-primary-muted: rgba(124, 110, 246, 0.12);
+  --portal-primary-text: #FFFFFF;
+
+  /* Live-signal (real-time / AI states ONLY) */
+  --portal-live: #00D4AA;
+  --portal-live-hover: #00BF99;
+  --portal-live-muted: rgba(0, 212, 170, 0.12);
+
+  /* Semantic status */
+  --portal-success: #34D399;
+  --portal-success-muted: rgba(52, 211, 153, 0.12);
+  --portal-warning: #FBBF24;
+  --portal-warning-muted: rgba(251, 191, 36, 0.12);
+  --portal-danger: #F87171;
+  --portal-danger-muted: rgba(248, 113, 113, 0.12);
+  --portal-info: #60A5FA;
+  --portal-info-muted: rgba(96, 165, 250, 0.12);
+
+  /* Text */
+  --portal-text-primary: #F1F1F4;
+  --portal-text-secondary: #9394A1;
+  --portal-text-muted: #5C5D6E;
+  --portal-text-disabled: #3D3E4A;
+
+  /* Disabled */
+  --portal-disabled-bg: rgba(255, 255, 255, 0.04);
+  --portal-disabled-border: rgba(255, 255, 255, 0.06);
+
+  /* Elevation shadows */
+  --portal-shadow-resting: 0 1px 3px rgba(0, 0, 0, 0.24), 0 1px 2px rgba(0, 0, 0, 0.16);
+  --portal-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.28), 0 2px 4px rgba(0, 0, 0, 0.20);
+  --portal-shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.40), 0 4px 12px rgba(0, 0, 0, 0.24);
+
+  /* Sidebar specific */
+  --portal-sidebar-bg: #16171F;
+  --portal-sidebar-active: rgba(124, 110, 246, 0.12);
+  --portal-sidebar-hover: rgba(255, 255, 255, 0.04);
+}
+
+/* ── LIGHT THEME ── */
+[data-portal-theme="light"],
+.portal-light {
+  /* Backgrounds */
+  --portal-bg-base: #F4F1EA;
+  --portal-bg-raised: #FBFAF6;
+  --portal-bg-elevated: #FFFFFF;
+  --portal-surface: #F0EDE6;
+
+  /* Borders */
+  --portal-border: rgba(0, 0, 0, 0.08);
+  --portal-border-strong: rgba(0, 0, 0, 0.16);
+
+  /* Primary (warm terracotta) */
+  --portal-primary: #D97757;
+  --portal-primary-hover: #C46846;
+  --portal-primary-pressed: #B05A3A;
+  --portal-primary-muted: rgba(217, 119, 87, 0.10);
+  --portal-primary-text: #FFFFFF;
+
+  /* Live-signal (deeper teal for light backgrounds) */
+  --portal-live: #0EA47A;
+  --portal-live-hover: #0C8F6A;
+  --portal-live-muted: rgba(14, 164, 122, 0.10);
+
+  /* Semantic status (re-tuned for light bg) */
+  --portal-success: #16A34A;
+  --portal-success-muted: rgba(22, 163, 74, 0.10);
+  --portal-warning: #D97706;
+  --portal-warning-muted: rgba(217, 119, 6, 0.10);
+  --portal-danger: #DC2626;
+  --portal-danger-muted: rgba(220, 38, 38, 0.10);
+  --portal-info: #2563EB;
+  --portal-info-muted: rgba(37, 99, 235, 0.10);
+
+  /* Text */
+  --portal-text-primary: #1C1917;
+  --portal-text-secondary: #78716C;
+  --portal-text-muted: #A8A29E;
+  --portal-text-disabled: #D6D3D1;
+
+  /* Disabled */
+  --portal-disabled-bg: rgba(0, 0, 0, 0.04);
+  --portal-disabled-border: rgba(0, 0, 0, 0.08);
+
+  /* Elevation shadows */
+  --portal-shadow-resting: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --portal-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  --portal-shadow-modal: 0 16px 48px rgba(0, 0, 0, 0.14), 0 4px 12px rgba(0, 0, 0, 0.06);
+
+  /* Sidebar specific */
+  --portal-sidebar-bg: #FBFAF6;
+  --portal-sidebar-active: rgba(217, 119, 87, 0.10);
+  --portal-sidebar-hover: rgba(0, 0, 0, 0.04);
+}

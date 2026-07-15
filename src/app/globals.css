@@ -1,8 +1,42 @@
-﻿/* Tailwind v4 core */
+/* Tailwind v4 core */
 @import "tailwindcss";
 
 /* System font stack with Geist as preferred (loaded via CDN when available) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+/* ── Portal-specific utilities ── */
+
+/* Monospace numeric treatment for scores, percentages, timestamps */
+.portal-mono {
+  font-family: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Fira Code', monospace;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+}
+
+/* Live-signal pulse — used ONLY on HireLens recording indicator */
+@keyframes portal-live-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.15); }
+}
+.portal-live-pulse {
+  animation: portal-live-pulse 2s ease-in-out infinite;
+}
+
+/* Skeleton shimmer */
+@keyframes portal-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.portal-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--portal-bg-elevated) 25%,
+    var(--portal-surface) 50%,
+    var(--portal-bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: portal-shimmer 1.5s ease-in-out infinite;
+}
 
 /* ===== THEME TOKENS =====
    Map your old theme.extend.* into v4 tokens via @theme.

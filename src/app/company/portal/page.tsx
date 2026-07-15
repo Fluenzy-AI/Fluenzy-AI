@@ -1,43 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import CompanyPortalLayout from "@/components/CompanyPortalLayout";
+import { PortalLayout, StatCard, EmptyState, LiveIndicator } from "@/components/portal";
 import { useCompanyAuth } from "@/contexts/CompanyAuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
-  LayoutDashboard,
   Briefcase,
   Users,
-  UserPlus,
-  Settings,
-  FileText,
   Plus,
   Eye,
   Clock,
   CheckCircle,
-  XCircle,
   TrendingUp,
-  Calendar,
-  DollarSign,
-  Building2,
-  Mail,
   BarChart3,
   ScanFace,
   Brain,
   Zap,
+  ArrowRight,
+  FileText,
 } from "lucide-react";
-
-const COMPANY_NAV = [
-  { label: "Dashboard", href: "/company/portal", icon: <LayoutDashboard className="w-4 h-4" /> },
-  { label: "Job Postings", href: "/company/portal/jobs", icon: <Briefcase className="w-4 h-4" /> },
-  { label: "Applications", href: "/company/portal/applications", icon: <Users className="w-4 h-4" /> },
-  { label: "Assessments", href: "/company/portal/assessments", icon: <FileText className="w-4 h-4" /> },
-  { label: "HireLens AI", href: "/company/portal/hirelens", icon: <ScanFace className="w-4 h-4" /> },
-  { label: "Team", href: "/company/portal/team", icon: <UserPlus className="w-4 h-4" />, adminOnly: true },
-  { label: "Settings", href: "/company/portal/settings", icon: <Settings className="w-4 h-4" />, adminOnly: true },
-];
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 
 interface DashboardStats {
   totalJobs: number;
@@ -76,6 +68,18 @@ interface RecentJob {
   createdAt: string;
 }
 
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: "var(--portal-warning)",
+  SHORTLISTED: "var(--portal-info)",
+  INTERVIEWING: "var(--portal-primary)",
+  INTERVIEW_SCHEDULED: "var(--portal-primary)",
+  ACCEPTED: "var(--portal-success)",
+  HIRED: "var(--portal-success)",
+  REJECTED: "var(--portal-danger)",
+};
+
+const CHART_COLORS = ["#7C6EF6", "#60A5FA", "#34D399", "#FBBF24", "#F87171"];
+
 export default function CompanyPortalDashboard() {
   const { user, company, loading } = useCompanyAuth();
   const router = useRouter();
@@ -110,160 +114,242 @@ export default function CompanyPortalDashboard() {
     }
   }
 
+  // Compute hiring funnel
+  const funnelData = stats
+    ? [
+        { stage: "Applied", count: stats.totalApplications },
+        { stage: "Shortlisted", count: stats.shortlistedApplications },
+        { stage: "Hired", count: stats.hiredApplications },
+      ]
+    : [];
+
   if (loading || loadingData) {
     return (
-      <CompanyPortalLayout navItems={COMPANY_NAV} title="Dashboard">
+      <PortalLayout title="Dashboard">
         <DashboardSkeleton />
-      </CompanyPortalLayout>
+      </PortalLayout>
     );
   }
 
   return (
-    <CompanyPortalLayout navItems={COMPANY_NAV} title="Dashboard">
+    <PortalLayout title="Dashboard">
       <div className="space-y-6">
-        {/* Welcome Section */}
+        {/* Welcome + CTA */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white">
+            <h2
+              className="text-2xl font-bold"
+              style={{ color: "var(--portal-text-primary)" }}
+            >
               Welcome back, {user?.name?.split(" ")[0]}!
             </h2>
-            <p className="text-slate-400 text-sm mt-1">
-              {company?.name} • {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+            <p className="text-sm mt-1" style={{ color: "var(--portal-text-muted)" }}>
+              {company?.name} •{" "}
+              {new Date().toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
             </p>
           </div>
           <Link
             href="/company/portal/jobs/new"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-indigo-500/20"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-md text-sm font-semibold transition-colors"
+            style={{
+              backgroundColor: "var(--portal-primary)",
+              color: "var(--portal-primary-text)",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--portal-primary-hover)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "var(--portal-primary)";
+            }}
           >
             <Plus className="w-4 h-4" />
             Post New Job
           </Link>
         </div>
 
-        {/* Primary Stats - 6 Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-5"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
-                <Briefcase className="w-5 h-5 text-blue-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-white mb-1">{stats?.totalJobs ?? 0}</p>
-            <p className="text-sm text-slate-400">Total Jobs</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 }}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-5"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                <CheckCircle className="w-5 h-5 text-emerald-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-white mb-1">{stats?.activeJobs ?? 0}</p>
-            <p className="text-sm text-slate-400">Active</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-5"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center">
-                <Clock className="w-5 h-5 text-amber-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-white mb-1">{stats?.pendingApplications ?? 0}</p>
-            <p className="text-sm text-slate-400">Pending Review</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 }}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-5"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center">
-                <Users className="w-5 h-5 text-purple-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-white mb-1">{stats?.totalApplications ?? 0}</p>
-            <p className="text-sm text-slate-400">Total Applications</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-5"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-indigo-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-white mb-1">{stats?.hiredApplications ?? 0}</p>
-            <p className="text-sm text-slate-400">Hired This Month</p>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-5"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <div className="w-10 h-10 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                <Eye className="w-5 h-5 text-cyan-400" />
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-white mb-1">{stats?.viewsThisMonth ?? 0}</p>
-            <p className="text-sm text-slate-400">Job Views</p>
-          </motion.div>
+        {/* ── Hero Metrics Row ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <StatCard
+            label="Total Applications"
+            value={stats?.totalApplications}
+            variant="hero"
+            icon={<Users className="w-6 h-6" />}
+            trend={
+              stats && stats.applicationsThisMonth > 0
+                ? { direction: "up", value: `${stats.applicationsThisMonth} this month` }
+                : undefined
+            }
+            loading={!stats}
+          />
+          <StatCard
+            label="Active Jobs"
+            value={stats?.activeJobs}
+            variant="hero"
+            icon={<Briefcase className="w-6 h-6" />}
+            loading={!stats}
+          />
+          <StatCard
+            label="Pending Review"
+            value={stats?.pendingApplications}
+            variant="hero"
+            icon={<Clock className="w-6 h-6" />}
+            trend={
+              stats && stats.pendingApplications > 0
+                ? { direction: "neutral", value: "needs attention" }
+                : undefined
+            }
+            loading={!stats}
+          />
         </div>
 
-        {/* Main Content Grid */}
+        {/* ── Secondary Stats ── */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard
+            label="Total Jobs"
+            value={stats?.totalJobs}
+            variant="compact"
+            loading={!stats}
+          />
+          <StatCard
+            label="Shortlisted"
+            value={stats?.shortlistedApplications}
+            variant="compact"
+            loading={!stats}
+          />
+          <StatCard
+            label="Hired This Month"
+            value={stats?.hiredApplications}
+            variant="compact"
+            loading={!stats}
+          />
+          <StatCard
+            label="Job Views"
+            value={stats?.viewsThisMonth}
+            variant="compact"
+            loading={!stats}
+          />
+        </div>
+
+        {/* ── Main Grid: Department + Funnel + Applications ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Department Breakdown - Takes 2 columns */}
+          {/* Department Breakdown Chart */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="lg:col-span-2 bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+            transition={{ delay: 0.15 }}
+            className="lg:col-span-1 rounded-lg border p-5"
+            style={{
+              backgroundColor: "var(--portal-bg-elevated)",
+              borderColor: "var(--portal-border)",
+            }}
           >
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <BarChart3 className="w-5 h-5 text-indigo-400" />
-                Department Breakdown
-              </h3>
-            </div>
+            <h3
+              className="text-sm font-semibold mb-4 flex items-center gap-2"
+              style={{ color: "var(--portal-text-primary)" }}
+            >
+              <BarChart3 className="w-4 h-4" style={{ color: "var(--portal-primary)" }} />
+              Department Breakdown
+            </h3>
             {departmentBreakdown.length > 0 ? (
+              <div className="h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={departmentBreakdown.slice(0, 5)}
+                    layout="vertical"
+                    margin={{ left: 0, right: 8, top: 0, bottom: 0 }}
+                  >
+                    <XAxis type="number" hide />
+                    <YAxis
+                      dataKey="department"
+                      type="category"
+                      width={80}
+                      tick={{
+                        fontSize: 11,
+                        fill: "var(--portal-text-secondary)",
+                      }}
+                      axisLine={false}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "var(--portal-bg-elevated)",
+                        border: "1px solid var(--portal-border)",
+                        borderRadius: "6px",
+                        color: "var(--portal-text-primary)",
+                        fontSize: "12px",
+                      }}
+                    />
+                    <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={16}>
+                      {departmentBreakdown.slice(0, 5).map((_, idx) => (
+                        <Cell key={idx} fill={CHART_COLORS[idx % CHART_COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <BarChart3 className="w-8 h-8 mb-2" style={{ color: "var(--portal-text-muted)" }} />
+                <p className="text-xs" style={{ color: "var(--portal-text-muted)" }}>
+                  Post jobs to see department breakdown
+                </p>
+              </div>
+            )}
+          </motion.div>
+
+          {/* Hiring Funnel */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="lg:col-span-1 rounded-lg border p-5"
+            style={{
+              backgroundColor: "var(--portal-bg-elevated)",
+              borderColor: "var(--portal-border)",
+            }}
+          >
+            <h3
+              className="text-sm font-semibold mb-4 flex items-center gap-2"
+              style={{ color: "var(--portal-text-primary)" }}
+            >
+              <TrendingUp className="w-4 h-4" style={{ color: "var(--portal-primary)" }} />
+              Hiring Funnel
+            </h3>
+            {stats && stats.totalApplications > 0 ? (
               <div className="space-y-4">
-                {departmentBreakdown.slice(0, 5).map((item, idx) => {
-                  const colors = ["bg-blue-500", "bg-purple-500", "bg-pink-500", "bg-emerald-500", "bg-amber-500"];
-                  const maxCount = Math.max(...departmentBreakdown.map(d => d.count), 1);
+                {funnelData.map((item, idx) => {
+                  const maxCount = Math.max(...funnelData.map((d) => d.count), 1);
+                  const pct = Math.round((item.count / maxCount) * 100);
                   return (
-                    <div key={idx} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-slate-300 font-medium">{item.department}</span>
-                        <span className="text-slate-400">{item.count} jobs</span>
+                    <div key={item.stage}>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span style={{ color: "var(--portal-text-secondary)" }}>
+                          {item.stage}
+                        </span>
+                        <span
+                          className="portal-mono font-semibold"
+                          style={{ color: "var(--portal-text-primary)" }}
+                        >
+                          {item.count}
+                        </span>
                       </div>
-                      <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                      <div
+                        className="w-full h-2 rounded-full overflow-hidden"
+                        style={{ backgroundColor: "var(--portal-surface)" }}
+                      >
                         <motion.div
                           initial={{ width: 0 }}
-                          animate={{ width: `${(item.count / maxCount) * 100}%` }}
-                          transition={{ duration: 1, delay: 0.5 + idx * 0.1 }}
-                          className={`h-full ${colors[idx % colors.length]}`}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.8, delay: 0.3 + idx * 0.1 }}
+                          className="h-full rounded-full"
+                          style={{
+                            backgroundColor: CHART_COLORS[idx % CHART_COLORS.length],
+                          }}
                         />
                       </div>
                     </div>
@@ -271,155 +357,277 @@ export default function CompanyPortalDashboard() {
                 })}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <BarChart3 className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">No department data yet</p>
-                <p className="text-slate-600 text-xs mt-1">Post jobs to see breakdown by department</p>
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <TrendingUp className="w-8 h-8 mb-2" style={{ color: "var(--portal-text-muted)" }} />
+                <p className="text-xs" style={{ color: "var(--portal-text-muted)" }}>
+                  Funnel data appears as candidates apply
+                </p>
               </div>
             )}
           </motion.div>
 
-          {/* Recent Applications - Takes 1 column */}
+          {/* Recent Applications */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+            transition={{ delay: 0.25 }}
+            className="lg:col-span-1 rounded-lg border p-5"
+            style={{
+              backgroundColor: "var(--portal-bg-elevated)",
+              borderColor: "var(--portal-border)",
+            }}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Recent Applications</h3>
-              <Link href="/company/portal/applications" className="text-xs text-indigo-400 hover:text-indigo-300 transition">
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: "var(--portal-text-primary)" }}
+              >
+                Recent Applications
+              </h3>
+              <Link
+                href="/company/portal/applications"
+                className="text-xs font-medium transition-colors"
+                style={{ color: "var(--portal-primary)" }}
+              >
                 View all
               </Link>
             </div>
             {recentApplications.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {recentApplications.slice(0, 5).map((app) => (
-                  <div key={app.id} className="flex items-start gap-3 p-3 bg-slate-900/50 rounded-xl border border-slate-700/50 hover:border-indigo-500/30 transition">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  <Link
+                    key={app.id}
+                    href="/company/portal/applications"
+                    className="flex items-center gap-3 p-2.5 rounded-md transition-colors"
+                    style={{ backgroundColor: "transparent" }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "var(--portal-surface)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "transparent";
+                    }}
+                  >
+                    <div
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white font-semibold text-xs flex-shrink-0"
+                      style={{ backgroundColor: "var(--portal-primary)" }}
+                    >
                       {app.name[0]?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-200 truncate">{app.name}</p>
-                      <p className="text-xs text-slate-400 truncate">{app.jobTitle}</p>
-                      <div className="flex items-center gap-2 mt-1">
-                        <StatusBadge status={app.status} />
-                        {app.isAutoApplied && (
-                          <span className="text-[10px] text-purple-400 bg-purple-500/10 px-1.5 py-0.5 rounded">Auto</span>
-                        )}
-                      </div>
+                      <p
+                        className="text-sm font-medium truncate"
+                        style={{ color: "var(--portal-text-primary)" }}
+                      >
+                        {app.name}
+                      </p>
+                      <p
+                        className="text-xs truncate"
+                        style={{ color: "var(--portal-text-muted)" }}
+                      >
+                        {app.jobTitle}
+                      </p>
                     </div>
-                  </div>
+                    <span
+                      className="text-[10px] font-semibold px-2 py-0.5 rounded-full flex-shrink-0"
+                      style={{
+                        backgroundColor:
+                          STATUS_COLORS[app.status]
+                            ? `color-mix(in srgb, ${STATUS_COLORS[app.status]} 12%, transparent)`
+                            : "var(--portal-disabled-bg)",
+                        color: STATUS_COLORS[app.status] || "var(--portal-text-muted)",
+                      }}
+                    >
+                      {app.status.replace(/_/g, " ")}
+                    </span>
+                  </Link>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <Users className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm">No applications yet</p>
+              <div className="flex flex-col items-center justify-center py-8 text-center">
+                <Users className="w-8 h-8 mb-2" style={{ color: "var(--portal-text-muted)" }} />
+                <p className="text-xs" style={{ color: "var(--portal-text-muted)" }}>
+                  No applications yet
+                </p>
               </div>
             )}
           </motion.div>
         </div>
 
-        {/* Bottom Grid */}
+        {/* ── Bottom Grid: AI Insights + Recent Jobs ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Quick Actions */}
+          {/* HireLens AI Insights */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+            transition={{ delay: 0.3 }}
           >
-            <h3 className="text-lg font-bold text-white mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <QuickActionCard
-                icon={<Plus className="w-5 h-5" />}
-                label="Post Job"
-                href="/company/portal/jobs/new"
-                color="text-blue-400"
-              />
-              <QuickActionCard
-                icon={<Users className="w-5 h-5" />}
-                label="Applications"
-                href="/company/portal/applications"
-                color="text-purple-400"
-              />
-              <QuickActionCard
-                icon={<FileText className="w-5 h-5" />}
-                label="Assessment"
-                href="/company/portal/assessments/new"
-                color="text-emerald-400"
-              />
-              <QuickActionCard
-                icon={<Mail className="w-5 h-5" />}
-                label="Invite Team"
-                href="/company/portal/team"
-                color="text-amber-400"
-              />
-              <QuickActionCard
-                icon={<ScanFace className="w-5 h-5" />}
-                label="HireLens AI"
-                href="/company/portal/hirelens"
-                color="text-indigo-400"
-              />
-            </div>
-
-            {/* HireLens Promo Banner */}
             <Link
               href="/company/portal/hirelens"
-              className="mt-4 flex items-start gap-3 p-4 rounded-xl border border-indigo-500/25 bg-gradient-to-br from-indigo-600/10 to-purple-600/10 hover:from-indigo-600/15 hover:to-purple-600/15 transition-all group"
+              className="block rounded-lg border p-5 transition-shadow hover:shadow-[var(--portal-shadow-hover)] group"
+              style={{
+                backgroundColor: "var(--portal-bg-elevated)",
+                borderColor: "var(--portal-border)",
+              }}
             >
-              <div className="w-9 h-9 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                <Brain className="w-4.5 h-4.5 text-indigo-400" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <p className="text-sm font-bold text-white">HireLens AI — New</p>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-semibold flex items-center gap-1">
-                    <Zap className="w-2.5 h-2.5" /> Live
-                  </span>
+              <div className="flex items-start gap-3">
+                <div
+                  className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                  style={{
+                    backgroundColor: "var(--portal-live-muted)",
+                  }}
+                >
+                  <Brain className="w-5 h-5" style={{ color: "var(--portal-live)" }} />
                 </div>
-                <p className="text-xs text-slate-400">AI-powered interview intelligence. Real-time scores, transcripts &amp; behavioral alerts.</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p
+                      className="text-sm font-semibold"
+                      style={{ color: "var(--portal-text-primary)" }}
+                    >
+                      HireLens AI
+                    </p>
+                    <LiveIndicator label="Live" size="sm" />
+                  </div>
+                  <p
+                    className="text-xs"
+                    style={{ color: "var(--portal-text-muted)" }}
+                  >
+                    AI-powered interview intelligence. Real-time behavioral scoring, transcripts & insights.
+                  </p>
+                </div>
+                <ArrowRight
+                  className="w-4 h-4 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ color: "var(--portal-primary)" }}
+                />
               </div>
             </Link>
+
+            {/* Quick Actions */}
+            <div
+              className="rounded-lg border p-5 mt-4"
+              style={{
+                backgroundColor: "var(--portal-bg-elevated)",
+                borderColor: "var(--portal-border)",
+              }}
+            >
+              <h3
+                className="text-sm font-semibold mb-3"
+                style={{ color: "var(--portal-text-primary)" }}
+              >
+                Quick Actions
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: "Post Job", href: "/company/portal/jobs/new", icon: Plus },
+                  { label: "Applications", href: "/company/portal/applications", icon: Users },
+                  { label: "Assessment", href: "/company/portal/assessments/new", icon: FileText },
+                  { label: "HireLens", href: "/company/portal/hirelens", icon: ScanFace },
+                ].map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <Link
+                      key={action.href}
+                      href={action.href}
+                      className="flex items-center gap-2.5 p-2.5 rounded-md text-sm transition-colors"
+                      style={{ color: "var(--portal-text-secondary)" }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "var(--portal-surface)";
+                        e.currentTarget.style.color = "var(--portal-text-primary)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "";
+                        e.currentTarget.style.color = "var(--portal-text-secondary)";
+                      }}
+                    >
+                      <Icon className="w-4 h-4" style={{ color: "var(--portal-primary)" }} />
+                      <span className="text-xs font-medium">{action.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
           </motion.div>
 
           {/* Recent Jobs */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.45 }}
-            className="lg:col-span-2 bg-slate-800/50 border border-slate-700 rounded-xl p-6"
+            transition={{ delay: 0.35 }}
+            className="lg:col-span-2 rounded-lg border p-5"
+            style={{
+              backgroundColor: "var(--portal-bg-elevated)",
+              borderColor: "var(--portal-border)",
+            }}
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">Your Job Postings</h3>
-              <Link href="/company/portal/jobs" className="text-xs text-indigo-400 hover:text-indigo-300 transition">
+              <h3
+                className="text-sm font-semibold"
+                style={{ color: "var(--portal-text-primary)" }}
+              >
+                Your Job Postings
+              </h3>
+              <Link
+                href="/company/portal/jobs"
+                className="text-xs font-medium transition-colors"
+                style={{ color: "var(--portal-primary)" }}
+              >
                 Manage all
               </Link>
             </div>
             {recentJobs.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {recentJobs.slice(0, 4).map((job) => (
                   <Link
                     key={job.id}
                     href={`/company/portal/jobs/${job.id}`}
-                    className="flex items-center gap-4 p-4 bg-slate-900/50 rounded-xl border border-slate-700/50 hover:border-indigo-500/30 transition group"
+                    className="flex items-center gap-4 p-3 rounded-md transition-colors group"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "var(--portal-surface)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "";
+                    }}
                   >
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                      <Briefcase className="w-6 h-6 text-white" />
+                    <div
+                      className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0"
+                      style={{
+                        backgroundColor: "var(--portal-primary-muted)",
+                      }}
+                    >
+                      <Briefcase className="w-5 h-5" style={{ color: "var(--portal-primary)" }} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-slate-200 truncate group-hover:text-white transition">{job.title}</p>
-                      <p className="text-xs text-slate-500">{job.department}</p>
+                      <p
+                        className="text-sm font-medium truncate"
+                        style={{ color: "var(--portal-text-primary)" }}
+                      >
+                        {job.title}
+                      </p>
+                      <p
+                        className="text-xs"
+                        style={{ color: "var(--portal-text-muted)" }}
+                      >
+                        {job.department}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-400">
+                    <div className="flex items-center gap-4 text-xs" style={{ color: "var(--portal-text-muted)" }}>
                       <span className="flex items-center gap-1">
-                        <Eye className="w-3 h-3" /> {job.viewCount}
+                        <Eye className="w-3 h-3" /> <span className="portal-mono">{job.viewCount}</span>
                       </span>
                       <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3" /> {job.applicationsCount}
+                        <Users className="w-3 h-3" /> <span className="portal-mono">{job.applicationsCount}</span>
                       </span>
-                      <span className={`px-2 py-1 rounded-full text-[10px] font-medium ${job.isActive ? "bg-emerald-500/10 text-emerald-400" : "bg-slate-500/10 text-slate-400"}`}>
+                      <span
+                        className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: job.isActive
+                            ? "var(--portal-success-muted)"
+                            : "var(--portal-disabled-bg)",
+                          color: job.isActive
+                            ? "var(--portal-success)"
+                            : "var(--portal-text-muted)",
+                        }}
+                      >
                         {job.isActive ? "Active" : "Closed"}
                       </span>
                     </div>
@@ -427,79 +635,64 @@ export default function CompanyPortalDashboard() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12">
-                <Briefcase className="w-12 h-12 text-slate-600 mx-auto mb-3" />
-                <p className="text-slate-500 text-sm mb-3">No jobs posted yet</p>
-                <Link
-                  href="/company/portal/jobs/new"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-medium transition"
-                >
-                  <Plus className="w-4 h-4" />
-                  Post your first job
-                </Link>
-              </div>
+              <EmptyState
+                icon={<Briefcase className="w-6 h-6" />}
+                title="No jobs posted yet"
+                description="Create your first job posting to start receiving applications."
+                action={{
+                  label: "Post your first job",
+                  onClick: () => router.push("/company/portal/jobs/new"),
+                }}
+              />
             )}
           </motion.div>
         </div>
       </div>
-    </CompanyPortalLayout>
+    </PortalLayout>
   );
 }
 
 function DashboardSkeleton() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="space-y-6">
+      {/* Welcome skeleton */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
-          <div className="h-8 bg-slate-800 rounded w-64" />
-          <div className="h-4 bg-slate-800 rounded w-96" />
+          <div className="h-8 w-64 rounded portal-skeleton" />
+          <div className="h-4 w-96 rounded portal-skeleton" />
         </div>
-        <div className="h-12 bg-slate-800 rounded-xl w-40" />
+        <div className="h-10 w-36 rounded-md portal-skeleton" />
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-28 bg-slate-800 rounded-xl" />
+      {/* Hero cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="h-32 rounded-lg border portal-skeleton"
+            style={{ borderColor: "var(--portal-border)" }}
+          />
         ))}
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 h-80 bg-slate-800 rounded-xl" />
-        <div className="h-80 bg-slate-800 rounded-xl" />
+      {/* Secondary stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {[...Array(4)].map((_, i) => (
+          <div
+            key={i}
+            className="h-20 rounded-lg border portal-skeleton"
+            style={{ borderColor: "var(--portal-border)" }}
+          />
+        ))}
       </div>
+      {/* Main grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="h-64 bg-slate-800 rounded-xl" />
-        <div className="lg:col-span-2 h-64 bg-slate-800 rounded-xl" />
+        {[...Array(3)].map((_, i) => (
+          <div
+            key={i}
+            className="h-72 rounded-lg border portal-skeleton"
+            style={{ borderColor: "var(--portal-border)" }}
+          />
+        ))}
       </div>
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    PENDING: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-    REVIEWED: "bg-blue-500/10 text-blue-400 border-blue-500/20",
-    SHORTLISTED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    INTERVIEWING: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-    INTERVIEW_SCHEDULED: "bg-purple-500/10 text-purple-400 border-purple-500/20",
-    ACCEPTED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    HIRED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-    REJECTED: "bg-red-500/10 text-red-400 border-red-500/20",
-  };
-
-  return (
-    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${styles[status] || "bg-slate-500/10 text-slate-400 border-slate-500/20"}`}>
-      {status.replace(/_/g, " ")}
-    </span>
-  );
-}
-
-function QuickActionCard({ icon, label, href, color }: { icon: React.ReactNode; label: string; href: string; color: string }) {
-  return (
-    <Link
-      href={href}
-      className="flex flex-col items-center gap-3 p-4 bg-slate-900/50 hover:bg-slate-900/80 border border-slate-700/50 hover:border-indigo-500/30 rounded-xl transition text-center group"
-    >
-      <span className={`${color} group-hover:scale-110 transition-transform`}>{icon}</span>
-      <span className="text-xs text-slate-300 font-medium group-hover:text-white transition">{label}</span>
-    </Link>
   );
 }
