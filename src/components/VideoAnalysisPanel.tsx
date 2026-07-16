@@ -28,6 +28,7 @@ interface VideoAnalysisPanelProps {
   sessionId: string;
   isActive: boolean;
   onSessionEnd?: (metrics: BehavioralMetrics) => void;
+  isCompact?: boolean;
 }
 
 interface BehavioralTimelinePoint {
@@ -69,7 +70,8 @@ const DEFAULT_METRICS: BehavioralMetrics = {
 const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({ 
   sessionId, 
   isActive,
-  onSessionEnd 
+  onSessionEnd,
+  isCompact = false
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -685,7 +687,13 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
       </div>
 
       {/* Video Display */}
-      <div className="relative aspect-video bg-slate-900">
+      <div className={`relative bg-slate-900 transition-all duration-300 ${
+        isCameraOn 
+          ? 'aspect-video' 
+          : isCompact 
+            ? 'h-[100px]' 
+            : 'aspect-video'
+      }`}>
         {isCameraOn ? (
           <>
             <video
@@ -723,9 +731,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
             )}
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center h-full text-slate-500">
-            <CameraOff size={48} className="mb-3 opacity-50" />
-            <p className="text-sm">Click "Start Interview" to begin</p>
+          <div className="flex flex-col items-center justify-center h-full text-slate-500 p-4">
+            <CameraOff size={32} className="mb-1 opacity-50" />
+            <p className="text-xs">Camera Feed Idle (Waiting for start)</p>
           </div>
         )}
         

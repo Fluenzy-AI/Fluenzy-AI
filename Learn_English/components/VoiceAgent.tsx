@@ -8,11 +8,15 @@ import {
   CheckCircle2,
   Zap,
   ArrowRight,
-  Mic2
+  Mic2,
+  Settings
 } from 'lucide-react';
 import { UserProfile, ModuleType, SessionRecord, QAPair, InterviewQA } from '../types';
 import { SYSTEM_INSTRUCTIONS } from '../constants';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import InterviewSettingsPanel from '../../src/components/session/InterviewSettingsPanel';
+import { InterviewSettings, DEFAULT_SETTINGS } from '../../src/types/interviewSettings';
+import { buildSessionConfig, settingsFromUrlParams } from '../../src/lib/sessionConfig';
 
 // --- Utility Functions for Audio ---
 function decode(base64: string) {
@@ -104,7 +108,19 @@ const HumanAvatar = ({
   );
 };
 
-const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) => void; onInterviewStart?: () => void }> = ({ user, onSessionEnd, onInterviewStart }) => {
+const VoiceAgent: React.FC<{ 
+  user: UserProfile; 
+  onSessionEnd: (u: UserProfile) => void; 
+  onInterviewStart?: () => void;
+  showSettings?: boolean;
+  onShowSettingsChange?: (show: boolean) => void;
+}> = ({ 
+  user, 
+  onSessionEnd, 
+  onInterviewStart,
+  showSettings,
+  onShowSettingsChange
+}) => {
   const { type } = useParams<{ type: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -115,6 +131,16 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
   const [isFinished, setIsFinished] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [isUserSpeaking, setIsUserSpeaking] = useState(false);
+
+  const [localShowSettings, setLocalShowSettings] = useState(false);
+  const isSettingsShown = showSettings !== undefined ? showSettings : localShowSettings;
+  const toggleSettings = () => {
+    if (onShowSettingsChange) {
+      onShowSettingsChange(!showSettings);
+    } else {
+      setLocalShowSettings(!localShowSettings);
+    }
+  };
   
   // Silence detection refs
   const silenceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -168,6 +194,24 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
 
   const lessonContext = getLessonContext();
 
+  const isFirstChunkOfTurnRef = useRef(true);
+  const [localSettings, setLocalSettings] = useState<InterviewSettings>(DEFAULT_SETTINGS);
+
+  const getActiveSettings = useCallback((): InterviewSettings => {
+    const urlParams = settingsFromUrlParams(searchParams);
+    return {
+      voiceSpeed:     urlParams.voiceSpeed     ?? localSettings.voiceSpeed,
+      voiceId:        urlParams.voiceId        ?? localSettings.voiceId,
+      pressureStyle:  urlParams.pressureStyle  ?? localSettings.pressureStyle,
+      responseTiming: urlParams.responseTiming ?? localSettings.responseTiming,
+    };
+  }, [searchParams, localSettings]);
+
+  const activeSettingsRef = useRef<InterviewSettings>(DEFAULT_SETTINGS);
+  useEffect(() => {
+    activeSettingsRef.current = getActiveSettings();
+  }, [localSettings, searchParams]);
+
   const currentQA = useRef({ question: '', answer: '' });
   const transcriptHistory = useRef<InterviewQA[]>([]);
   const startTimeRef = useRef(new Date());
@@ -193,6 +237,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
       silenceTimerRef.current = null;
     }
     silencePromptCountRef.current = 0;
+    isFirstChunkOfTurnRef.current = true;
     
     if (sessionRef.current) { sessionRef.current.close(); sessionRef.current = null; }
     if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
@@ -366,6 +411,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
   const startSession = async () => {
     setIsConnecting(true);
     setError(null);
+    isFirstChunkOfTurnRef.current = true;
     
     try {
       // ============================================================
@@ -449,8 +495,10 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
         return 'Advanced';
       };
 
+      const config = buildSessionConfig(getActiveSettings(), sessionMeta);
       const instruction = `
         ${SYSTEM_INSTRUCTIONS[type as ModuleType] || 'Senior Interview Coach.'}
+        ${config.systemPromptAddons ? `STRICT STYLE & SPEECH PACE INSTRUCTIONS: ${config.systemPromptAddons}` : ''}
         ${isEnglishLearning
           ? `CONTEXT: Lesson Topic: ${sessionMeta?.lessonTitle || 'General English Practice'}, User Proficiency Level: ${user.proficiency}. Focus on teaching English skills, not conducting interviews.`
           : isHRInterview
@@ -577,6 +625,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
               currentQA.current = { question: '', answer: '' };
               // Reset last speech time when turn completes to give user time to respond
               lastUserSpeechRef.current = Date.now();
+              isFirstChunkOfTurnRef.current = true;
             }
             const data = m.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (data) {
@@ -585,6 +634,18 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
               src.buffer = buf; src.connect(outputAudioContextRef.current!.destination);
               setIsAiSpeaking(true);
               src.onended = () => { sourcesRef.current.delete(src); if (sourcesRef.current.size === 0) setIsAiSpeaking(false); };
+              
+              if (isFirstChunkOfTurnRef.current) {
+                isFirstChunkOfTurnRef.current = false;
+                const dynamicConfig = buildSessionConfig(activeSettingsRef.current, sessionMeta);
+                const delaySec = (dynamicConfig.responseDelayMs ?? 1200) / 1000;
+                if (nextStartTimeRef.current < outputAudioContextRef.current!.currentTime) {
+                  nextStartTimeRef.current = outputAudioContextRef.current!.currentTime + delaySec;
+                } else {
+                  nextStartTimeRef.current += delaySec;
+                }
+              }
+
               src.start(Math.max(nextStartTimeRef.current, outputAudioContextRef.current!.currentTime));
               nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputAudioContextRef.current!.currentTime) + buf.duration;
               sourcesRef.current.add(src);
@@ -633,6 +694,32 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
     return () => window.removeEventListener('beforeunload', handler);
   }, [isSaving]);
 
+  // Handle dynamic settings update in real-time during session
+  useEffect(() => {
+    const handleSettingsUpdate = (e: Event) => {
+      const nextSettings = (e as CustomEvent).detail as InterviewSettings;
+      setLocalSettings(nextSettings);
+      
+      // If session is active, dynamically notify Gemini about the style/speed change
+      if (sessionRef.current) {
+        console.log('[LIVE_SETTINGS_DYNAMIC_SYNC] Notifying Gemini about new speed & style settings:', nextSettings);
+        try {
+          sessionRef.current.sendRealtimeInput({
+            text: `[SYSTEM NOTICE: The user has updated your interview settings in real-time. Please adjust your behavior immediately:
+- Speech speed: ${nextSettings.voiceSpeed}x (if 1.5x/1.75x speak fast, if 0.75x speak slow).
+- Interview style: ${nextSettings.pressureStyle}.
+From now on, speak and act strictly according to these new settings!]`
+          });
+        } catch (err) {
+          console.error('[LIVE_SETTINGS_DYNAMIC_SYNC_FAILED]', err);
+        }
+      }
+    };
+    
+    window.addEventListener('fluenzy_settings_updated', handleSettingsUpdate);
+    return () => window.removeEventListener('fluenzy_settings_updated', handleSettingsUpdate);
+  }, []);
+
   return (
     <div className={`flex flex-col rounded-2xl md:rounded-3xl border overflow-hidden relative
       ${isLight
@@ -659,14 +746,31 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
             )}
           </div>
         </div>
-        <button
-          onClick={() => router.push('/train')}
-          className={`flex-shrink-0 p-2 rounded-xl transition-all ml-2 ${
-            isLight ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-900' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
-          }`}
-        >
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-1.5 md:gap-2 ml-2">
+          {(!isEnglishLearning && !isConversationPractice && !isGDCoach) && (
+            <button
+              onClick={toggleSettings}
+              className={`p-2 rounded-xl border transition-all duration-200 ${
+                isSettingsShown
+                  ? 'bg-gradient-to-br from-pink-500/20 to-purple-600/20 border-pink-500/40 text-pink-400'
+                  : isLight
+                    ? 'border-slate-200 text-slate-400 hover:border-pink-500/40 hover:text-slate-600 hover:bg-slate-50'
+                    : 'bg-slate-800/40 border-slate-700/60 text-slate-400 hover:border-pink-500/40 hover:text-slate-200 hover:bg-slate-800'
+              }`}
+              title="Interview Settings"
+            >
+              <Settings size={18} />
+            </button>
+          )}
+          <button
+            onClick={() => router.push('/train')}
+            className={`flex-shrink-0 p-2 rounded-xl transition-all ${
+              isLight ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-900' : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
+            }`}
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
       
       <div className="flex-1 p-4 md:p-8 flex flex-col items-center justify-center relative">
@@ -675,7 +779,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
         }`}><Zap size={14} /> {error}</div>}
         {!isActive && !isConnecting ? (
         <div className="w-full max-w-lg mx-auto">
-          <div className={`rounded-2xl border p-5 md:p-8 text-center space-y-5 animate-in fade-in duration-500 ${
+          <div className={`rounded-2xl border p-4 md:p-6 text-center space-y-3.5 animate-in fade-in duration-500 relative ${
             isLight
               ? 'bg-gradient-to-br from-slate-50 to-white border-slate-200 shadow-md'
               : 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border-slate-700/50 shadow-2xl'
@@ -687,11 +791,11 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
                 <img
                   src="/image/img.png"
                   alt="AI Coach"
-                  className="relative w-16 h-16 md:w-24 md:h-24 rounded-2xl border-2 border-slate-600/50 shadow-xl object-cover"
+                  className="relative w-14 h-14 md:w-20 md:h-20 rounded-2xl border-2 border-slate-600/50 shadow-xl object-cover"
                 />
               </div>
-              <div className="flex-1 md:mt-3 space-y-1 md:space-y-2">
-                <h3 className={`text-lg md:text-2xl font-black leading-tight ${
+              <div className="flex-1 md:mt-2 space-y-0.5 md:space-y-1">
+                <h3 className={`text-base md:text-xl font-black leading-tight ${
                   isLight ? 'text-slate-900' : 'text-white'
                 }`}>
                   {isEnglishLearning
@@ -705,7 +809,7 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
                           : 'HR Interview is Ready'
                   }
                 </h3>
-                <p className={`text-xs md:text-sm font-medium leading-relaxed hidden md:block ${
+                <p className={`text-[11px] md:text-[13px] font-medium leading-relaxed hidden md:block ${
                   isLight ? 'text-slate-500' : 'text-slate-300'
                 }`}>
                   {isEnglishLearning
@@ -744,9 +848,17 @@ const VoiceAgent: React.FC<{ user: UserProfile; onSessionEnd: (u: UserProfile) =
                 }`}>{lessonContext.objective}</p>
               </div>
             )}
+            {(!isEnglishLearning && !isConversationPractice && !isGDCoach && isSettingsShown && !onShowSettingsChange) && (
+              <div className="animate-in fade-in slide-in-from-top-4 duration-300">
+                <InterviewSettingsPanel
+                  isPro={user.isPro}
+                  onChange={(s) => setLocalSettings(s)}
+                />
+              </div>
+            )}
             <button
               onClick={startSession}
-              className={`w-full py-3 md:py-4 rounded-full font-black uppercase tracking-[0.1em] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all text-sm text-white bg-gradient-to-r ${
+              className={`w-full py-2.5 md:py-3.5 rounded-full font-black uppercase tracking-[0.1em] shadow-lg hover:scale-[1.02] active:scale-[0.98] transition-all text-xs md:text-sm text-white bg-gradient-to-r ${
                 isEnglishLearning
                   ? 'from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700'
                   : 'from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700'

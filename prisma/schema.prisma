@@ -153,6 +153,7 @@ model users {
   gdCoachUsage    Int      @default(0)  // GD Coach - separate from GD Agent
   gdUsage         Int      @default(0)
   interviewGuideUsage Int   @default(0)
+  interviewSettings   Json?
   
   // Billing & Renewal fields
   renewalDate      DateTime?

@@ -3,6 +3,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { 
   Building2, 
   ArrowLeft, 
@@ -16,10 +17,14 @@ import {
   Link as LinkIcon,
   Plus,
   UserCheck,
-  Code2
+  Code2,
+  Settings
 } from 'lucide-react';
 import { ModuleType } from '../types';
 import { useTheme } from '../../src/contexts/ThemeContext';
+import InterviewSettingsPanel from '../../src/components/session/InterviewSettingsPanel';
+import { InterviewSettings, DEFAULT_SETTINGS } from '../../src/types/interviewSettings';
+import { settingsToUrlParams } from '../../src/lib/sessionConfig';
 
 const COMPANIES = [
   { id: 'google', name: 'Google', logo: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' },
@@ -32,10 +37,13 @@ const COMPANIES = [
 
 const CompanyHRDashboard: React.FC = () => {
   const router = useRouter();
+  const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
   const isLight = resolvedTheme === 'light';
   const [step, setStep] = useState(1);
   const [showCustomForm, setShowCustomForm] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [localSettings, setLocalSettings] = useState<InterviewSettings>(DEFAULT_SETTINGS);
   const [selection, setSelection] = useState({
     company: '',
     companyLogo: '',
@@ -53,11 +61,17 @@ const CompanyHRDashboard: React.FC = () => {
   const nextStep = () => setStep(s => s + 1);
   const prevStep = () => setStep(s => s - 1);
 
-  const startInterview = () => {
+  const startInterview = (settings?: InterviewSettings) => {
     const company = selection.company === 'custom' ? selection.customCompany : selection.company;
     const companyLogo = selection.company === 'custom' ? selection.customLogoUrl : selection.companyLogo;
     const role = selection.role === 'custom' ? selection.customRole : selection.role;
-    router.push(`/train/session/${ModuleType.COMPANY_WISE_HR}?company=${encodeURIComponent(company)}&companyLogo=${encodeURIComponent(companyLogo)}&role=${encodeURIComponent(role)}&experience=${encodeURIComponent(selection.experience)}&difficulty=${encodeURIComponent(selection.difficulty)}&roundType=${encodeURIComponent(selection.roundType)}&resumeText=${encodeURIComponent(selection.resumeText)}&isCompanyWise=true`);
+    const voiceSettings = settings || DEFAULT_SETTINGS;
+    const serialized = settingsToUrlParams(voiceSettings);
+    const settingsParams = Object.entries(serialized)
+      .map(([key, val]) => `&${key}=${encodeURIComponent(val)}`)
+      .join('');
+
+    router.push(`/train/session/${ModuleType.COMPANY_WISE_HR}?company=${encodeURIComponent(company)}&companyLogo=${encodeURIComponent(companyLogo)}&role=${encodeURIComponent(role)}&experience=${encodeURIComponent(selection.experience)}&difficulty=${encodeURIComponent(selection.difficulty)}&roundType=${encodeURIComponent(selection.roundType)}&resumeText=${encodeURIComponent(selection.resumeText)}&isCompanyWise=true${settingsParams}`);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -345,8 +359,19 @@ const CompanyHRDashboard: React.FC = () => {
 
         {/* Step 5: Resume */}
         {step === 5 && (
-          <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
-             <div className="text-center space-y-2">
+          <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300 relative">
+            <button
+              onClick={() => setShowSettings(!showSettings)}
+              className={`absolute top-4 right-4 p-2 rounded-xl border transition-all duration-200 ${
+                showSettings
+                  ? 'bg-gradient-to-br from-pink-500/20 to-purple-600/20 border-pink-500/40 text-pink-400'
+                  : 'bg-slate-800/40 border-slate-700/60 text-slate-400 hover:border-pink-500/40 hover:text-slate-200'
+              }`}
+              title="Interview Settings"
+            >
+              <Settings size={18} />
+            </button>
+            <div className="text-center space-y-2">
               <h2 className="text-2xl sm:text-3xl font-black text-card-foreground tracking-tight">Personalize via Resume</h2>
               <p className="text-muted-foreground font-medium text-sm sm:text-base">Upload or paste resume content for role-specific questions.</p>
             </div>
@@ -377,9 +402,19 @@ const CompanyHRDashboard: React.FC = () => {
                   />
                </div>
             </div>
+            
+            {showSettings && (
+              <div className="max-w-xl mx-auto animate-in fade-in slide-in-from-top-4 duration-300">
+                <InterviewSettingsPanel
+                  isPro={(session?.user as any)?.plan === 'Pro' || (session?.user as any)?.plan === 'Enterprise'}
+                  onChange={setLocalSettings}
+                />
+              </div>
+            )}
+
             <div className="flex justify-center pt-6">
                <button 
-                 onClick={startInterview}
+                 onClick={() => startInterview(localSettings)}
                  className="bg-primary text-primary-foreground px-20 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/25 hover:brightness-110 transition-all transform hover:scale-105"
                >
                  Launch Real-Time Interview

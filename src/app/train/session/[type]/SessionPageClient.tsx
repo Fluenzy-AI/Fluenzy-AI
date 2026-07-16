@@ -5,6 +5,7 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import VoiceAgent from "../../../../../Learn_English/components/VoiceAgent";
 import VideoAnalysisPanel from "../../../../components/VideoAnalysisPanel";
+import InterviewSettingsPanel from "../../../../components/session/InterviewSettingsPanel";
 import { UserProfile, ModuleType } from "../../../../../Learn_English/types";
 import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 import { INITIAL_USER } from "../../../../../Learn_English/constants";
@@ -21,6 +22,7 @@ export const SessionPageClient = () => {
   const [isVideoAnalysisEnabled, setIsVideoAnalysisEnabled] = useState(false);
   const [isInterviewActive, setIsInterviewActive] = useState(false);
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+  const [showSettings, setShowSettings] = useState(false);
 
   const isCompanyWise = type === ModuleType.COMPANY_WISE_HR;
 
@@ -68,11 +70,19 @@ export const SessionPageClient = () => {
       <div className="relative z-10 max-w-7xl mx-auto p-4 md:p-8 lg:p-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {isCompanyWise && (
-            <div className="order-first lg:order-last lg:col-span-1">
+            <div className="order-first lg:order-last lg:col-span-1 space-y-6">
               <VideoAnalysisPanel
                 sessionId={sessionId}
                 isActive={isInterviewActive}
+                isCompact={showSettings}
               />
+              {showSettings && (
+                <div className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-4 md:p-5 theme-transition animate-in fade-in slide-in-from-top-4 duration-300`}>
+                  <InterviewSettingsPanel
+                    isPro={user.isPro}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -84,12 +94,14 @@ export const SessionPageClient = () => {
             } ${isCompanyWise ? "order-last lg:order-first" : ""}`}
           >
             <div
-              className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-6 md:p-8 lg:p-12 theme-transition`}
+              className={`${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl p-4 md:p-6 lg:p-8 theme-transition`}
             >
               <VoiceAgent
                 user={user}
                 onSessionEnd={() => setIsInterviewActive(false)}
                 onInterviewStart={() => setIsInterviewActive(true)}
+                showSettings={showSettings}
+                onShowSettingsChange={setShowSettings}
               />
             </div>
           </div>
