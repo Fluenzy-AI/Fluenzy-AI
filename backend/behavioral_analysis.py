@@ -251,7 +251,7 @@ class BehavioralAnalyzer:
         return [(lm.x, lm.y, lm.z) for lm in landmarks.landmark]
     
     def _calculate_eye_contact(self, landmarks, w: int, h: int) -> float:
-        """Calculate eye contact score based on face orientation"""
+        """Calculate eye contact score based on face orientation (horizontal & vertical)"""
         try:
             LEFT_EYE = [33, 133, 160, 158, 153, 144]
             RIGHT_EYE = [362, 263, 387, 385, 380, 373]
@@ -268,10 +268,43 @@ class BehavioralAnalyzer:
             right_eye_center = ((right_eye_left.x + right_eye_right.x) / 2,
                              (right_eye_left.y + right_eye_right.y) / 2)
             
-            eye_distance = abs(left_eye_center[0] - right_eye_center[0])
-            nose_to_eye_ratio = (nose_tip.x - (left_eye_center[0] + right_eye_center[0]) / 2) / eye_distance
+            # Distance between eyes for normalization
+            eye_distance = math.sqrt(
+                (right_eye_center[0] - left_eye_center[0]) ** 2 + 
+                (right_eye_center[1] - left_eye_center[1]) ** 2
+            )
             
-            eye_contact = max(0, min(100, 100 - abs(nose_to_eye_ratio) * 200))
+            # Horizontal head/gaze deviation (normally centered at 0.0)
+            nose_to_eye_x = (nose_tip.x - (left_eye_center[0] + right_eye_center[0]) / 2) / max(0.01, eye_distance)
+            
+            # Vertical head/gaze deviation (normally nose is ~0.95 below eyes)
+            nose_to_eye_y = (nose_tip.y - (left_eye_center[1] + right_eye_center[1]) / 2) / max(0.01, eye_distance)
+            
+            horizontal_deviation = abs(nose_to_eye_x)
+            vertical_deviation = abs(nose_to_eye_y - 0.95)
+            
+            # Calculate scores based on deviation
+            # Relaxed look has low deviations. High deviations reduce score.
+            horiz_score = max(0, min(100, 100 - horizontal_deviation * 300))
+            vert_score = max(0, min(100, 100 - vertical_deviation * 300))
+            
+            # Combined score: Looking away horizontally OR vertically drops the eye contact score
+            eye_contact = min(horiz_score, vert_score)
+            
+            # Reset look direction
+            self.look_direction = None
+            if eye_contact < 50:
+                if horiz_score < vert_score:
+                    if nose_to_eye_x < -0.12:
+                        self.look_direction = "LEFT"
+                    elif nose_to_eye_x > 0.12:
+                        self.look_direction = "RIGHT"
+                else:
+                    if nose_to_eye_y < 0.77:
+                        self.look_direction = "UP"
+                    elif nose_to_eye_y > 1.13:
+                        self.look_direction = "DOWN"
+            
             return eye_contact
             
         except:
@@ -456,7 +489,10 @@ class BehavioralAnalyzer:
             alerts.append("NO_FACE")
         
         if metrics.eye_contact < 40:
-            alerts.append("LOW_EYE_CONTACT")
+            if hasattr(self, 'look_direction') and self.look_direction:
+                alerts.append(f"LOOK_{self.look_direction}")
+            else:
+                alerts.append("LOW_EYE_CONTACT")
         
         if metrics.posture < 50:
             alerts.append("POOR_POSTURE")

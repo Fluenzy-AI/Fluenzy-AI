@@ -123,6 +123,34 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
             observation: "Candidate is frequently looking away from the camera.",
             suggestion: "Maintain direct eye contact with the camera lens to project confidence."
           };
+        case "LOOK_LEFT":
+          return {
+            issueCode,
+            issueDetected: "Looking Left",
+            observation: "Candidate is frequently looking to the left side of the screen.",
+            suggestion: "Maintain direct focus on the center of the camera to show engagement."
+          };
+        case "LOOK_RIGHT":
+          return {
+            issueCode,
+            issueDetected: "Looking Right",
+            observation: "Candidate is frequently looking to the right side of the screen.",
+            suggestion: "Avoid looking away to the sides; focus straight at the camera lens."
+          };
+        case "LOOK_UP":
+          return {
+            issueCode,
+            issueDetected: "Looking Up",
+            observation: "Candidate is looking upwards away from the interview screen.",
+            suggestion: "Keep your gaze centered on the screen/camera instead of looking up."
+          };
+        case "LOOK_DOWN":
+          return {
+            issueCode,
+            issueDetected: "Looking Down",
+            observation: "Candidate is frequently looking downwards (potentially at notes or a device).",
+            suggestion: "Keep your head elevated and look directly at the interviewer."
+          };
         case "POOR_POSTURE":
           return {
             issueCode,
@@ -143,6 +171,13 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
             issueDetected: "Mobile Phone Detected",
             observation: "A mobile phone was detected in the frame during the interview.",
             suggestion: "Please keep your mobile phone away to avoid distractions and maintain professionalism."
+          };
+        case "MULTIPLE_PERSONS":
+          return {
+            issueCode,
+            issueDetected: "Multiple People Detected",
+            observation: "More than one person was detected in the camera frame.",
+            suggestion: "Please ensure you are alone in a quiet room for the duration of the interview."
           };
         case "NO_FACE":
           return {
@@ -177,6 +212,11 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
 
     if (alertSet.has("NO_FACE") || !newMetrics.face_detected) return "NO_FACE";
     if (alertSet.has("PHONE_DETECTED")) return "PHONE_DETECTED";
+    if (alertSet.has("MULTIPLE_PERSONS")) return "MULTIPLE_PERSONS";
+    if (alertSet.has("LOOK_LEFT")) return "LOOK_LEFT";
+    if (alertSet.has("LOOK_RIGHT")) return "LOOK_RIGHT";
+    if (alertSet.has("LOOK_UP")) return "LOOK_UP";
+    if (alertSet.has("LOOK_DOWN")) return "LOOK_DOWN";
     if (alertSet.has("HIGH_STRESS") || newMetrics.stress_level > 70) return "HIGH_STRESS";
     if (alertSet.has("POOR_POSTURE") || newMetrics.posture < 50) return "POOR_POSTURE";
     if (alertSet.has("LOW_EYE_CONTACT") || newMetrics.eye_contact < 40) return "LOW_EYE_CONTACT";

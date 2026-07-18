@@ -695,8 +695,9 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
             frame = decode_base64_image(image_data)
             
             if frame is not None:
-                # Also detect cell phone with YOLO if loaded
+                # Also detect cell phone / multiple persons with YOLO if loaded
                 phone_detected = False
+                person_count = 0
                 global yolo_model
                 if yolo_model is not None:
                     try:
@@ -714,6 +715,14 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                                         cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 255), 2)
                                         label = f"cell phone: {float(box.conf[0]):.2f}"
                                         cv2.putText(frame, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
+                                    elif class_name == "person":
+                                        person_count += 1
+                                        x1, y1, x2, y2 = box.xyxy[0].tolist()
+                                        # Draw cyan box around extra people
+                                        if person_count > 1:
+                                            cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2)
+                                            label = f"person {person_count}: {float(box.conf[0]):.2f}"
+                                            cv2.putText(frame, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
                     except Exception as yolo_err:
                         print(f"YOLO detection error in behavioral analysis: {yolo_err}")
 
@@ -722,6 +731,9 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                 if phone_detected:
                     if "PHONE_DETECTED" not in result.metrics.alerts:
                         result.metrics.alerts.append("PHONE_DETECTED")
+                if person_count > 1:
+                    if "MULTIPLE_PERSONS" not in result.metrics.alerts:
+                        result.metrics.alerts.append("MULTIPLE_PERSONS")
                 
                 # Broadcast result to all connections in the room
                 await behavioral_room_manager.broadcast(session_id, {
