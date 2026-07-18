@@ -5,6 +5,8 @@ import prisma from '@/lib/prisma';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { enforceModuleAccess } from '@/lib/serverAccessCheck';
 
+import { traceGeminiCall, extractRequestMetadata, FEATURES } from '@/lib/langsmith';
+
 export async function POST(request: NextRequest) {
   try {
     // ── Auth guard ────────────────────────────────────────────────────────
@@ -73,6 +75,13 @@ Provide evaluation in STRICT JSON format:
   "perQuestionScore": 0-10
 }`;
 
+    // Extract trace metadata from request headers and active session
+    const traceMeta = extractRequestMetadata(request, {
+      userId: user.id,
+      email: session.user.email,
+      conversationId: context,
+    });
+
     // --- SMART MODEL SELECTION & FALLBACK (2026 UPDATED) ---
     let result;
     try {
@@ -81,17 +90,34 @@ Provide evaluation in STRICT JSON format:
         model: 'gemini-2.5-pro', 
         generationConfig: { responseMimeType: "application/json" } 
       });
-      result = await modelPro.generateContent(prompt);
+      
+      result = await traceGeminiCall({
+        feature: FEATURES.INTERVIEW_AI,
+        name: 'evaluate-answer-pro',
+        model: 'gemini-2.5-pro',
+        userPrompt: prompt,
+        metadata: traceMeta,
+        tags: [module || 'unspecified', 'primary'],
+        fn: () => modelPro.generateContent(prompt)
+      });
     } catch (proError: any) {
       console.warn("Gemini 2.5 Pro busy or 404, switching to 2.5 Flash...");
       
       // Fallback: Gemini 2.5 Flash (Reliable & Fast)
-      // Note: If 2.5 is not available, try 'gemini-3-flash-preview'
       const modelFlash = genAI.getGenerativeModel({ 
         model: 'gemini-2.5-flash',
         generationConfig: { responseMimeType: "application/json" }
       });
-      result = await modelFlash.generateContent(prompt);
+      
+      result = await traceGeminiCall({
+        feature: FEATURES.INTERVIEW_AI,
+        name: 'evaluate-answer-flash-fallback',
+        model: 'gemini-2.5-flash',
+        userPrompt: prompt,
+        metadata: traceMeta,
+        tags: [module || 'unspecified', 'fallback'],
+        fn: () => modelFlash.generateContent(prompt)
+      });
     }
 
     const response = await result.response;

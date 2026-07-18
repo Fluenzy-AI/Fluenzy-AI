@@ -5,6 +5,7 @@
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { traceGeminiCall, FEATURES, TraceMetadata } from "@/lib/langsmith";
 
 // Initialize Gemini
 const genAI = new GoogleGenerativeAI(
@@ -264,7 +265,8 @@ RESUME TEXT TO PARSE:
  * Parse resume text using AI (Gemini)
  */
 export async function parseResumeWithAI(
-  rawText: string
+  rawText: string,
+  metadata?: TraceMetadata
 ): Promise<{ data: ParsedResumeStructured | null; error?: string }> {
   try {
     if (!rawText || rawText.trim().length < 50) {
@@ -286,7 +288,14 @@ export async function parseResumeWithAI(
 
     const prompt = RESUME_PARSER_PROMPT + rawText;
 
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.RESUME_ATS,
+      name: "parse-resume-with-ai",
+      model: "gemini-1.5-flash",
+      userPrompt: prompt,
+      metadata: metadata,
+      fn: () => model.generateContent(prompt),
+    });
     const response = await result.response;
     const text = response.text();
 
@@ -664,7 +673,8 @@ export function parseResumeWithRegex(rawText: string): ParsedResumeStructured {
  */
 export async function parseResumeStructured(
   rawText: string,
-  useAI: boolean = true
+  useAI: boolean = true,
+  metadata?: TraceMetadata
 ): Promise<{
   data: ParsedResumeStructured;
   method: "ai" | "regex";
@@ -672,7 +682,7 @@ export async function parseResumeStructured(
 }> {
   // Try AI parsing first
   if (useAI) {
-    const aiResult = await parseResumeWithAI(rawText);
+    const aiResult = await parseResumeWithAI(rawText, metadata);
     if (aiResult.data) {
       return {
         data: aiResult.data,

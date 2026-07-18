@@ -570,7 +570,7 @@ const VoiceAgent: React.FC<{
                 setIsUserSpeaking(false);
               }
               
-              sessionPromise.then(s => s.sendRealtimeInput({ media: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' } }));
+              sessionPromise.then(s => s.sendRealtimeInput({ audio: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' } }));
             };
             source.connect(scriptProcessor); scriptProcessor.connect(inputAudioContextRef.current!.destination);
             

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { validateModuleAccess, incrementModuleUsage, getPlanConfig } from "@/lib/billing";
+import { traceGeminiCall, FEATURES, extractRequestMetadata } from "@/lib/langsmith";
 
 interface UserGuideInput {
   name: string;
@@ -492,6 +493,13 @@ export async function POST(request: NextRequest) {
     const genAI = new GoogleGenerativeAI(apiKey);
     const prompt = generateGuidePrompt(guideInput);
 
+    const traceMeta = extractRequestMetadata(request, {
+      userId: user.id,
+      email: user.email,
+      plan: user.plan?.toString() || "Free",
+      conversationId: targetRole || "Interview Guide",
+    });
+
     let result;
     try {
       // Primary: Gemini 2.5 Pro
@@ -499,7 +507,15 @@ export async function POST(request: NextRequest) {
         model: "gemini-2.5-pro",
         generationConfig: { responseMimeType: "application/json" },
       });
-      result = await modelPro.generateContent(prompt);
+      result = await traceGeminiCall({
+        feature: FEATURES.INTERVIEW_AI,
+        name: "generate-interview-guide-pro",
+        model: "gemini-2.5-pro",
+        userPrompt: prompt,
+        metadata: traceMeta,
+        tags: [targetRole || "Software Developer", "primary"],
+        fn: () => modelPro.generateContent(prompt),
+      });
     } catch (proError: any) {
       console.warn("Gemini 2.5 Pro busy, switching to 2.5 Flash...");
       // Fallback: Gemini 2.5 Flash
@@ -507,7 +523,15 @@ export async function POST(request: NextRequest) {
         model: "gemini-2.5-flash",
         generationConfig: { responseMimeType: "application/json" },
       });
-      result = await modelFlash.generateContent(prompt);
+      result = await traceGeminiCall({
+        feature: FEATURES.INTERVIEW_AI,
+        name: "generate-interview-guide-flash",
+        model: "gemini-2.5-flash",
+        userPrompt: prompt,
+        metadata: traceMeta,
+        tags: [targetRole || "Software Developer", "fallback"],
+        fn: () => modelFlash.generateContent(prompt),
+      });
     }
 
     const response = await result.response;

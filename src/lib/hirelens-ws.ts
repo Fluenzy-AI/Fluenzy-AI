@@ -12,10 +12,19 @@ export async function checkBackendHealth(): Promise<boolean> {
   }
 }
 
-export function connectHireLensSocket(sessionId: string): WebSocket {
+export function connectHireLensSocket(
+  sessionId: string,
+  userMeta?: { userId?: string; email?: string; plan?: string }
+): WebSocket {
   // sessionId is the InterviewSession ID used as the identifier
   const cleanBase = WS_BASE.replace(/\/+$/, '');
-  const ws = new WebSocket(`${cleanBase}/ws/behavioral/${sessionId}`);
+  const params = new URLSearchParams();
+  if (userMeta?.userId) params.append("user_id", userMeta.userId);
+  if (userMeta?.email) params.append("email", userMeta.email);
+  if (userMeta?.plan) params.append("plan", userMeta.plan);
+
+  const queryStr = params.toString() ? `?${params.toString()}` : "";
+  const ws = new WebSocket(`${cleanBase}/ws/behavioral/${sessionId}${queryStr}`);
   return ws;
 }
 

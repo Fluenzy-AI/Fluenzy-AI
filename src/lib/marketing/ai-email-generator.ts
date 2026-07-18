@@ -4,6 +4,7 @@
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { traceGeminiCall, FEATURES, TraceMetadata } from "@/lib/langsmith";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
@@ -41,7 +42,10 @@ const SPAM_TRIGGERS = [
 /**
  * Generate marketing email content using Gemini AI
  */
-export async function generateMarketingEmail(request: AIEmailRequest): Promise<AIEmailResponse> {
+export async function generateMarketingEmail(
+  request: AIEmailRequest,
+  metadata?: TraceMetadata
+): Promise<AIEmailResponse> {
   if (!genAI) {
     throw new Error("Gemini API is not configured. Please set GEMINI_API_KEY environment variable.");
   }
@@ -85,7 +89,14 @@ Respond in JSON format with the following structure:
 }`;
 
   try {
-    const result = await model.generateContent(systemPrompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.AI_CHAT,
+      name: "generate-marketing-email",
+      model: "gemini-2.0-flash",
+      userPrompt: systemPrompt,
+      metadata: metadata,
+      fn: () => model.generateContent(systemPrompt),
+    });
     const response = result.response;
     const text = response.text();
 
@@ -127,7 +138,8 @@ Respond in JSON format with the following structure:
  */
 export async function generateEmailVariations(
   request: AIEmailRequest,
-  variationCount: number = 3
+  variationCount: number = 3,
+  metadata?: TraceMetadata
 ): Promise<AIEmailResponse[]> {
   if (!genAI) {
     throw new Error("Gemini API is not configured");
@@ -158,7 +170,14 @@ Respond in JSON format:
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.AI_CHAT,
+      name: "generate-email-variations",
+      model: "gemini-2.0-flash",
+      userPrompt: prompt,
+      metadata: metadata,
+      fn: () => model.generateContent(prompt),
+    });
     const text = result.response.text();
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -188,7 +207,8 @@ Respond in JSON format:
 export async function improveEmailContent(
   subject: string,
   body: string,
-  improvementFocus: "deliverability" | "engagement" | "conversion" | "clarity"
+  improvementFocus: "deliverability" | "engagement" | "conversion" | "clarity",
+  metadata?: TraceMetadata
 ): Promise<AIEmailResponse> {
   if (!genAI) {
     throw new Error("Gemini API is not configured");
@@ -220,7 +240,14 @@ Respond in JSON format:
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.AI_CHAT,
+      name: "improve-email-content",
+      model: "gemini-2.0-flash",
+      userPrompt: prompt,
+      metadata: metadata,
+      fn: () => model.generateContent(prompt),
+    });
     const text = result.response.text();
 
     const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -336,7 +363,8 @@ function addUnsubscribeLink(html: string): string {
  */
 export async function generateSubjectLines(
   context: string,
-  count: number = 5
+  count: number = 5,
+  metadata?: TraceMetadata
 ): Promise<string[]> {
   if (!genAI) {
     return ["Check out what's new at Fluenzy AI", "Your progress update", "Don't miss out!"];
@@ -357,7 +385,14 @@ Requirements:
 Respond as JSON array: ["subject1", "subject2", ...]`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.AI_CHAT,
+      name: "generate-subject-lines",
+      model: "gemini-2.0-flash",
+      userPrompt: prompt,
+      metadata: metadata,
+      fn: () => model.generateContent(prompt),
+    });
     const text = result.response.text();
 
     const jsonMatch = text.match(/\[[\s\S]*\]/);

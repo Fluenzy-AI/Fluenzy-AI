@@ -11,6 +11,7 @@ import {
   generateSubjectLines,
 } from "@/lib/marketing/ai-email-generator";
 import { checkMarketingAuth, unauthorizedResponse } from "@/lib/marketing-auth";
+import { extractRequestMetadata } from "@/lib/langsmith";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,6 +22,12 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const { action, ...params } = body;
+
+    const traceMeta = extractRequestMetadata(req, {
+      userId: auth.userId,
+      email: auth.email,
+      plan: "Pro",
+    });
 
     switch (action || "generate") {
       case "generate": {
@@ -47,7 +54,7 @@ export async function POST(req: NextRequest) {
           tone: tone || "professional",
           targetAudience,
           purpose,
-        });
+        }, traceMeta);
 
         return NextResponse.json({
           success: true,
@@ -67,7 +74,8 @@ export async function POST(req: NextRequest) {
 
         const variations = await generateEmailVariations(
           { prompt, senderType, tone: tone || "professional" },
-          count || 3
+          count || 3,
+          traceMeta
         );
 
         return NextResponse.json({
@@ -94,7 +102,7 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const improved = await improveEmailContent(subject, emailBody, focus);
+        const improved = await improveEmailContent(subject, emailBody, focus, traceMeta);
 
         return NextResponse.json({
           success: true,
@@ -112,7 +120,7 @@ export async function POST(req: NextRequest) {
           );
         }
 
-        const subjects = await generateSubjectLines(context, count || 5);
+        const subjects = await generateSubjectLines(context, count || 5, traceMeta);
 
         return NextResponse.json({
           success: true,

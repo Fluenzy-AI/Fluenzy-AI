@@ -21,6 +21,9 @@ from pydantic import BaseModel
 # Import behavioral analysis module
 from behavioral_analysis import BehavioralAnalyzer, BehavioralMetrics, AnalysisResult
 
+# Import LangSmith tracer
+import langsmith_tracer
+
 
 # Detection classes (COCO dataset subset)
 DETECTION_CLASSES = {
@@ -664,6 +667,16 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
     """
     await behavioral_room_manager.connect(websocket, session_id)
     
+    # Extract query parameters for metadata tracing
+    user_id = websocket.query_params.get("user_id", "unknown")
+    email = websocket.query_params.get("email", "unknown")
+    plan = websocket.query_params.get("plan", "Free")
+    
+    # Lazy load YOLO model for phone/object detection
+    global yolo_model
+    if yolo_model is None:
+        yolo_model = load_yolo_model()
+    
     # Create / get session-specific analyzer
     session_analyzer = behavioral_room_manager.get_analyzer(session_id)
     
@@ -682,8 +695,33 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
             frame = decode_base64_image(image_data)
             
             if frame is not None:
-                # Analyze frame
+                # Also detect cell phone with YOLO if loaded
+                phone_detected = False
+                global yolo_model
+                if yolo_model is not None:
+                    try:
+                        yolo_results = yolo_model(frame, verbose=False, conf=0.3, iou=0.5)
+                        if yolo_results and len(yolo_results) > 0:
+                            boxes = yolo_results[0].boxes
+                            if boxes is not None:
+                                for box in boxes:
+                                    class_id = int(box.cls[0])
+                                    class_name = DETECTION_CLASSES.get(class_id, "")
+                                    if class_name == "cell phone":
+                                        phone_detected = True
+                                        x1, y1, x2, y2 = box.xyxy[0].tolist()
+                                        # Draw magenta bounding box and label directly on the frame
+                                        cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 255), 2)
+                                        label = f"cell phone: {float(box.conf[0]):.2f}"
+                                        cv2.putText(frame, label, (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
+                    except Exception as yolo_err:
+                        print(f"YOLO detection error in behavioral analysis: {yolo_err}")
+
+                # Analyze frame with MediaPipe
                 result = session_analyzer.analyze_frame(frame, session_id)
+                if phone_detected:
+                    if "PHONE_DETECTED" not in result.metrics.alerts:
+                        result.metrics.alerts.append("PHONE_DETECTED")
                 
                 # Broadcast result to all connections in the room
                 await behavioral_room_manager.broadcast(session_id, {
@@ -731,6 +769,17 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
     
     print(f"Behavioral analysis session started for: {session_id}")
     
+    # Trace WebSocket session start
+    langsmith_tracer.trace_session_start(session_id, [
+        "face_landmarks",
+        "pose_detection",
+        "eye_contact_scoring",
+        "posture_analysis",
+        "smile_detection",
+        "stress_detection",
+        "engagement_scoring"
+    ], user_id=user_id, email=email, plan=plan)
+    
     try:
         # Send welcome message
         await websocket.send_json({
@@ -767,7 +816,6 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                                 dropped_frames += 1
                                 print(f"⚠️ Frame {last_frame_id} dropped, now queuing {frame_id}. Total dropped: {dropped_frames}")
                                 
-                                # Notify frontend about backpressure
                                 try:
                                     await websocket.send_json({
                                         "type": "busy",
@@ -853,9 +901,17 @@ async def websocket_behavioral_analysis(websocket: WebSocket, session_id: str):
                 })
                 
     except WebSocketDisconnect:
+        # Get final session summary to trace
+        summary = session_analyzer.get_session_summary() if session_analyzer else {}
+        langsmith_tracer.trace_session_end(session_id, summary, user_id=user_id, email=email, plan=plan)
+        
         behavioral_room_manager.disconnect(websocket, session_id)
         print(f"Behavioral analysis session ended for: {session_id}")
     except Exception as e:
+        # Get final session summary to trace along with the exception
+        summary = session_analyzer.get_session_summary() if session_analyzer else {}
+        langsmith_tracer.trace_session_end(session_id, summary, user_id=user_id, email=email, plan=plan, error=str(e))
+        
         print(f"WebSocket error: {e}")
         behavioral_room_manager.disconnect(websocket, session_id)
 

@@ -125,8 +125,14 @@ export function useInterviewSession(sessionId?: string, candidate?: CandidatePro
     let ws: WebSocket | null = null;
 
     const setupSocket = async () => {
+      const userMeta = candidate ? {
+        userId: candidate.id || undefined,
+        email: candidate.email || undefined,
+        plan: (candidate as any).plan || undefined,
+      } : undefined;
+
       // Connect to behavioral websocket room
-      ws = connectHireLensSocket(sessionId);
+      ws = connectHireLensSocket(sessionId, userMeta);
       wsRef.current = ws;
 
       ws.onopen = () => {

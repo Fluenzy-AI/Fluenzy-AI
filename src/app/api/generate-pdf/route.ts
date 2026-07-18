@@ -7,6 +7,7 @@ import { calculateInterviewScore } from "@/lib/utils";
 import { getOrGenerateDocument } from "@/lib/document-service";
 import { buildDocumentFileName } from "@/lib/document-types";
 import { htmlToPdf } from "@/lib/pdf-browser";
+import { traceGeminiCall, FEATURES, TraceMetadata, extractRequestMetadata } from "@/lib/langsmith";
 
 const BEHAVIORAL_COLLECTION = "behavioral_analytics";
 
@@ -256,7 +257,8 @@ const evaluateAnswerWithAI = async (
   rawAnswer: string,
   userName: string,
   role?: string | null,
-  company?: string | null
+  company?: string | null,
+  metadata?: TraceMetadata
 ) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -310,7 +312,14 @@ Return JSON:
   "structuredAnswer": true
 }`;
 
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.INTERVIEW_AI,
+      name: "evaluate-answer-pdf-v1",
+      model: "gemini-2.0-flash",
+      userPrompt: prompt,
+      metadata: metadata,
+      fn: () => model.generateContent(prompt),
+    });
     const text = result.response.text();
     const parsed = JSON.parse(text.replace(/```json\n?|\n?```/g, "").trim());
 
@@ -681,7 +690,8 @@ const evaluateAnswerWithAIV2 = async (
   userName: string,
   role?: string | null,
   company?: string | null,
-  profileContext?: string | null
+  profileContext?: string | null,
+  metadata?: TraceMetadata
 ) => {
   const questionType = classifyQuestionTypeV2(question, rawAnswer);
   const rawRoman = toRomanRaw(rawAnswer);
@@ -757,7 +767,14 @@ OTHER RULES:
 - Do not force STAR for Greeting/Introduction.
 - Corrected version must be grammar-only correction of the raw answer, nothing else.`;
 
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.INTERVIEW_AI,
+      name: "evaluate-answer-pdf-v2",
+      model: "gemini-2.0-flash",
+      userPrompt: prompt,
+      metadata: metadata,
+      fn: () => model.generateContent(prompt),
+    });
     const parsed = JSON.parse(result.response.text().replace(/```json\n?|\n?```/g, "").trim());
     const output: ArchiveEvaluation = {
       userRawRoman: normalizeToEnglishSafe(String(parsed.userRawRoman || rawRoman)),
@@ -1160,7 +1177,10 @@ const findBestBehavioralDoc = async (userId: string, sessionStart: Date, session
   }
 };
 
-async function renderInterviewReportHtml(sessionId: string): Promise<string> {
+async function renderInterviewReportHtml(
+  sessionId: string,
+  metadata?: TraceMetadata
+): Promise<string> {
   try {
     const sessionData = await (prisma as any).session.findUnique({
     where: {
@@ -1359,7 +1379,8 @@ async function renderInterviewReportHtml(sessionId: string): Promise<string> {
           user.name || "Candidate",
           sessionData.role,
           sessionData.targetCompany,
-          profileContext
+          profileContext,
+          metadata
         )
       )
     );
@@ -1684,13 +1705,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
+    const traceMeta = extractRequestMetadata(request, {
+      userId: user.id,
+      email: user.email,
+      plan: user.plan?.toString() || "Free",
+      sessionId,
+      conversationId: sessionId,
+    });
+
     if (format === "pdf") {
       const result = await getOrGenerateDocument({
         documentType: "interview-report",
         documentId: sessionId,
         ownerId: user.id,
         generatePdf: async () => {
-          const html = await renderInterviewReportHtml(sessionId);
+          const html = await renderInterviewReportHtml(sessionId, traceMeta);
           return htmlToPdf(html);
         },
         fileName: buildDocumentFileName("interview-report", sessionId),
@@ -1710,7 +1739,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Default: return HTML for printing (window.print() fallback)
-    const html = await renderInterviewReportHtml(sessionId);
+    const html = await renderInterviewReportHtml(sessionId, traceMeta);
     return new NextResponse(html, {
       headers: {
         "Content-Type": "text/html",
@@ -1754,7 +1783,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
 
-    const html = await renderInterviewReportHtml(sessionId);
+    const traceMeta = extractRequestMetadata(request, {
+      userId: user.id,
+      email: user.email,
+      plan: user.plan?.toString() || "Free",
+      sessionId,
+      conversationId: sessionId,
+    });
+
+    const html = await renderInterviewReportHtml(sessionId, traceMeta);
     return new NextResponse(html, {
       headers: {
         "Content-Type": "text/html",

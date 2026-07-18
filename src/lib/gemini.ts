@@ -1,9 +1,14 @@
 /**
  * Gemini AI Library
  * Wrapper around Google Generative AI for assessment-related tasks
+ *
+ * LangSmith tracing is injected here via traceGeminiCall().
+ * Every call to generateContent() is automatically traced.
  */
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
+// LangSmith observability — fire-and-forget, never breaks existing logic
+import { traceGeminiCall, FEATURES } from "@/lib/langsmith";
 
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is required");
@@ -77,7 +82,15 @@ Return ONLY valid JSON array in this exact format:
 Make questions practical, relevant, and at ${difficulty} difficulty level.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
+    const result = await traceGeminiCall({
+      feature:    FEATURES.GENERATE_QUESTIONS,
+      name:       'generate-mcq-questions',
+      model:      FLASH_MODEL,
+      userPrompt: prompt,
+      tags:       ['MCQ', topic, difficulty],
+      fn:         () => model.generateContent(prompt),
+    });
     const response = result.response.text();
     
     // Extract JSON from response (handle markdown code blocks)
@@ -136,7 +149,15 @@ Return ONLY valid JSON in this exact format:
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
+    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
+    const result = await traceGeminiCall({
+      feature:    FEATURES.CODING_INTERVIEW,
+      name:       'generate-coding-challenge',
+      model:      FLASH_MODEL,
+      userPrompt: prompt,
+      tags:       ['Coding', topic, difficulty],
+      fn:         () => model.generateContent(prompt),
+    });
     const response = result.response.text();
     
     // Extract JSON from response
@@ -196,7 +217,16 @@ Return ONLY valid JSON:
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
+    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
+    const result = await traceGeminiCall({
+      feature:     FEATURES.INTERVIEW_AI,
+      name:        'evaluate-text-answer',
+      model:       FLASH_MODEL,
+      systemPrompt:'You are an expert evaluator assessing a candidate\'s answer.',
+      userPrompt:  prompt,
+      tags:        ['TEXT', 'evaluation'],
+      fn:          () => model.generateContent(prompt),
+    });
     const response = result.response.text();
     
     const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -300,7 +330,15 @@ Return ONLY valid JSON:
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
+    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
+    const result = await traceGeminiCall({
+      feature:    FEATURES.CODING_INTERVIEW,
+      name:       'evaluate-coding-submission',
+      model:      FLASH_MODEL,
+      userPrompt: prompt,
+      tags:       ['CODING', 'evaluation', language],
+      fn:         () => model.generateContent(prompt),
+    });
     const response = result.response.text();
     
     const jsonMatch = response.match(/\{[\s\S]*\}/);
@@ -352,7 +390,15 @@ Return ONLY a JSON array of question strings:
 ["Question 1?", "Question 2?", "Question 3?"]`;
 
   try {
-    const result = await model.generateContent(prompt);
+    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
+    const result = await traceGeminiCall({
+      feature:    FEATURES.INTERVIEW_AI,
+      name:       'generate-interview-questions',
+      model:      FLASH_MODEL,
+      userPrompt: prompt,
+      tags:       ['question-gen', role, experienceLevel],
+      fn:         () => model.generateContent(prompt),
+    });
     const response = result.response.text();
     
     const jsonMatch = response.match(/\[[\s\S]*\]/);
@@ -410,7 +456,15 @@ Return ONLY valid JSON:
 }`;
 
   try {
-    const result = await model.generateContent(prompt);
+    // ── LangSmith trace wraps the Gemini call (PRO model for transcript eval) ─
+    const result = await traceGeminiCall({
+      feature:    FEATURES.INTERVIEW_AI,
+      name:       'evaluate-interview-transcript',
+      model:      PRO_MODEL,
+      userPrompt: prompt,
+      tags:       ['INTERVIEW', 'transcript-eval', role, experienceLevel ?? 'unspecified'],
+      fn:         () => model.generateContent(prompt),
+    });
     const response = result.response.text();
     
     const jsonMatch = response.match(/\{[\s\S]*\}/);

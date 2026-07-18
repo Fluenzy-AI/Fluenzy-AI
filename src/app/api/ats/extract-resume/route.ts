@@ -10,6 +10,7 @@ import {
   ParsedResumeStructured,
 } from "@/lib/resume-parser-ai";
 import { parseResume } from "@/lib/ats-engine";
+import { extractRequestMetadata } from "@/lib/langsmith";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,6 +36,12 @@ export async function POST(request: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const traceMeta = extractRequestMetadata(request, {
+      userId: (session.user as any)?.id || session.user.email,
+      email: session.user.email,
+      plan: (session.user as any)?.plan || "Free",
+    });
 
     // Parse multipart form
     const formData = await request.formData();
@@ -126,7 +133,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse the resume text into structured format
-    const parseResult = await parseResumeStructured(sanitizedText, useAI);
+    const parseResult = await parseResumeStructured(sanitizedText, useAI, traceMeta);
 
     // Return the structured data
     return NextResponse.json({

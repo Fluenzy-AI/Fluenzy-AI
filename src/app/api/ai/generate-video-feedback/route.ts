@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+import { traceGeminiCall, extractRequestMetadata, FEATURES } from "@/lib/langsmith";
+
 if (!process.env.GEMINI_API_KEY) {
   throw new Error("GEMINI_API_KEY environment variable is required");
 }
@@ -44,7 +46,7 @@ export interface VideoFeedbackResponse {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { metrics, jobRole, sessionDurationSeconds, averagedMetrics = true } = body;
+    const { metrics, jobRole, sessionDurationSeconds, averagedMetrics = true, userId, sessionId } = body;
 
     // Validate metrics
     if (!metrics || typeof metrics !== 'object') {
@@ -76,7 +78,6 @@ export async function POST(req: NextRequest) {
       metrics.smile * 0.05 +
       metrics.engagement * 0.15 +
       (100 - metrics.stressLevel) * 0.10 + // Invert stress
-      metrics.stressControl * 0.10 +
       metrics.focus * 0.10 +
       metrics.expressionAnalysis * 0.05
     );
@@ -129,7 +130,20 @@ Return ONLY valid JSON in this exact format:
   "improvements": ["Improvement area 1", "Improvement area 2", "Improvement area 3"]
 }`;
 
-    const result = await model.generateContent(prompt);
+    const traceMeta = extractRequestMetadata(req, {
+      userId,
+      sessionId,
+    });
+
+    const result = await traceGeminiCall({
+      feature: FEATURES.BEHAVIORAL_ANALYSIS,
+      name: 'generate-video-feedback',
+      model: 'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata: traceMeta,
+      tags: [jobRole || 'general'],
+      fn: () => model.generateContent(prompt)
+    });
     const response = result.response.text();
 
     // Extract JSON from response

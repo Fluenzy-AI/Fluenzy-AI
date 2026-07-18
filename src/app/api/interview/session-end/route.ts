@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { traceGeminiCall, extractRequestMetadata, FEATURES } from "@/lib/langsmith";
 
 const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
 
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
       duration,        // seconds
       transcript,      // [{ speaker, role, text, ts }]
       topic,
+      sessionId,
     } = body;
 
     const isCandidate = role === 'Candidate';
@@ -101,10 +103,25 @@ Respond in strict JSON:
 
     const prompt = isCandidate ? candidatePrompt : interviewerPrompt;
 
+    const traceMeta = extractRequestMetadata(request, {
+      userId: session.user.id || session.user.email,
+      email: session.user.email,
+      sessionId,
+      conversationId: topic,
+    });
+
     let report: Record<string, unknown>;
     try {
       const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-      const result = await model.generateContent(prompt);
+      const result = await traceGeminiCall({
+        feature: FEATURES.MOCK_INTERVIEW,
+        name: isCandidate ? 'evaluate-candidate-session' : 'evaluate-interviewer-session',
+        model: 'gemini-1.5-flash',
+        userPrompt: prompt,
+        metadata: traceMeta,
+        tags: [interviewType, role],
+        fn: () => model.generateContent(prompt)
+      }) as any;
       const text = result.response.text().replace(/```json\n?|```\n?/g, '').trim();
       report = JSON.parse(text);
     } catch {

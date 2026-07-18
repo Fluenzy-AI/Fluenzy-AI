@@ -479,7 +479,7 @@ Begin the interview now with a warm greeting.`;
               }
               sessionPromise.then(s => {
                 s.sendRealtimeInput({ 
-                  media: { 
+                  audio: { 
                     data: encodeAudio(new Uint8Array(int16Data.buffer)), 
                     mimeType: 'audio/pcm;rate=16000' 
                   } 

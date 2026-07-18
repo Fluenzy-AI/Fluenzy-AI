@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { traceGeminiCall, extractRequestMetadata, FEATURES, TraceMetadata } from "@/lib/langsmith";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
@@ -27,25 +28,31 @@ interface TranscriptEntry {
 
 export async function POST(req: NextRequest) {
   try {
-    const body: VoiceEvaluationRequest & { transcript?: string | TranscriptEntry[] } = await req.json();
-    const { type } = body;
+    const body: VoiceEvaluationRequest & { transcript?: string | TranscriptEntry[]; userId?: string; sessionId?: string } = await req.json();
+    const { type, userId, sessionId } = body;
+
+    const traceMeta = extractRequestMetadata(req, {
+      userId,
+      sessionId,
+      conversationId: body.topic || body.question,
+    });
 
     // Handle different evaluation types
     switch (type) {
       case "read_aloud":
-        return evaluateReadAloud(body);
+        return evaluateReadAloud(body, traceMeta);
       case "listen_repeat":
-        return evaluateListenRepeat(body);
+        return evaluateListenRepeat(body, traceMeta);
       case "interview_response":
-        return evaluateInterviewResponse(body);
+        return evaluateInterviewResponse(body, traceMeta);
       case "extemporaneous":
-        return evaluateExtemporaneous(body);
+        return evaluateExtemporaneous(body, traceMeta);
       case "listen_summarize":
-        return evaluateListenSummarize(body);
+        return evaluateListenSummarize(body, traceMeta);
       case "conversation":
-        return evaluateConversation(body);
+        return evaluateConversation(body, traceMeta);
       case "final_evaluation":
-        return evaluateFinalInterview(body);
+        return evaluateFinalInterview(body, traceMeta);
       default:
         return NextResponse.json(
           { error: `Unknown evaluation type: ${type}` },
@@ -61,7 +68,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-async function evaluateReadAloud(body: VoiceEvaluationRequest) {
+async function evaluateReadAloud(body: VoiceEvaluationRequest, traceMeta?: TraceMetadata) {
   const { transcript, originalText } = body;
 
   if (!transcript || !originalText) {
@@ -117,7 +124,15 @@ Return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.VOICE_PRACTICE,
+      name: 'evaluate-read-aloud',
+      model: 'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata: traceMeta,
+      tags: ['read_aloud'],
+      fn: () => model.generateContent(prompt)
+    });
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     
@@ -134,7 +149,7 @@ Respond ONLY with valid JSON.`;
   }
 }
 
-async function evaluateListenRepeat(body: VoiceEvaluationRequest) {
+async function evaluateListenRepeat(body: VoiceEvaluationRequest, traceMeta?: TraceMetadata) {
   const { transcript, originalText } = body;
 
   if (!transcript || !originalText) {
@@ -179,7 +194,15 @@ Return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.VOICE_PRACTICE,
+      name: 'evaluate-listen-repeat',
+      model: 'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata: traceMeta,
+      tags: ['listen_repeat'],
+      fn: () => model.generateContent(prompt)
+    });
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     
@@ -195,7 +218,7 @@ Respond ONLY with valid JSON.`;
   }
 }
 
-async function evaluateInterviewResponse(body: VoiceEvaluationRequest) {
+async function evaluateInterviewResponse(body: VoiceEvaluationRequest, traceMeta?: TraceMetadata) {
   const { transcript, question, jobRole, phase } = body;
 
   if (!transcript) {
@@ -252,7 +275,15 @@ Evaluate and return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.HR_INTERVIEW,
+      name: 'evaluate-interview-response',
+      model: 'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata: traceMeta,
+      tags: ['interview_response', jobRole || 'unknown', phase || 'unknown'],
+      fn: () => model.generateContent(prompt)
+    });
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     
@@ -274,7 +305,7 @@ Respond ONLY with valid JSON.`;
   }
 }
 
-async function evaluateExtemporaneous(body: VoiceEvaluationRequest) {
+async function evaluateExtemporaneous(body: VoiceEvaluationRequest, traceMeta?: TraceMetadata) {
   const { transcript, topic, durationSeconds } = body;
 
   if (!transcript) {
@@ -327,7 +358,15 @@ Evaluate and return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.VOICE_PRACTICE,
+      name: 'evaluate-extemporaneous',
+      model: 'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata: traceMeta,
+      tags: ['extemporaneous', topic || 'unknown'],
+      fn: () => model.generateContent(prompt)
+    });
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     
@@ -348,7 +387,7 @@ Respond ONLY with valid JSON.`;
   }
 }
 
-async function evaluateListenSummarize(body: VoiceEvaluationRequest) {
+async function evaluateListenSummarize(body: VoiceEvaluationRequest, traceMeta?: TraceMetadata) {
   const { originalText, candidateSummary } = body;
 
   if (!candidateSummary) {
@@ -397,7 +436,15 @@ Evaluate and return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.VOICE_PRACTICE,
+      name: 'evaluate-listen-summarize',
+      model: 'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata: traceMeta,
+      tags: ['listen_summarize'],
+      fn: () => model.generateContent(prompt)
+    });
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     
@@ -413,7 +460,7 @@ Respond ONLY with valid JSON.`;
   }
 }
 
-async function evaluateFinalInterview(body: VoiceEvaluationRequest & { transcript?: string | TranscriptEntry[] }) {
+async function evaluateFinalInterview(body: VoiceEvaluationRequest & { transcript?: string | TranscriptEntry[] }, traceMeta?: TraceMetadata) {
   const { transcript, jobRole, candidateName } = body;
 
   if (!transcript || (Array.isArray(transcript) && transcript.length === 0)) {
@@ -482,7 +529,15 @@ Return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.HR_INTERVIEW,
+      name: 'evaluate-final-interview',
+      model: 'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata: traceMeta,
+      tags: ['final_evaluation', jobRole || 'unknown'],
+      fn: () => model.generateContent(prompt)
+    });
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     
@@ -515,7 +570,7 @@ function calculateSimilarity(text1: string, text2: string): number {
   return maxLength > 0 ? Math.round((matches / maxLength) * 100) : 0;
 }
 
-async function evaluateConversation(body: VoiceEvaluationRequest) {
+async function evaluateConversation(body: VoiceEvaluationRequest, traceMeta?: TraceMetadata) {
   const { transcript, topic } = body;
 
   if (!transcript) {
@@ -567,7 +622,15 @@ Evaluate the candidate's performance and return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await model.generateContent(prompt);
+    const result = await traceGeminiCall({
+      feature: FEATURES.VOICE_PRACTICE,
+      name: 'evaluate-conversation',
+      model: 'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata: traceMeta,
+      tags: ['conversation', topic || 'unknown'],
+      fn: () => model.generateContent(prompt)
+    });
     const responseText = result.response.text();
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
     

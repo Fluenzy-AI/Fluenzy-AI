@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+import { traceGeminiCall, extractRequestMetadata, FEATURES } from "@/lib/langsmith";
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 const model = genAI?.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -14,12 +16,14 @@ interface ConversationRequest {
   topic: string;
   messages: ConversationMessage[];
   context?: "corporate_assessment" | "training" | "general";
+  sessionId?: string;
+  userId?: string;
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body: ConversationRequest = await req.json();
-    const { topic, messages, context } = body;
+    const { topic, messages, context, sessionId, userId } = body;
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({
@@ -69,8 +73,23 @@ Generate a natural, professional follow-up response or question. Keep it concise
 
 Respond with ONLY the response text, no JSON or formatting.`;
 
+    const traceMeta = extractRequestMetadata(req, {
+      userId: userId,
+      sessionId: sessionId,
+      conversationId: topic,
+    });
+
     try {
-      const result = await model.generateContent(prompt);
+      const result = await traceGeminiCall({
+        feature: FEATURES.AI_CHAT,
+        name: 'conversation-response',
+        model: 'gemini-1.5-flash',
+        systemPrompt: systemContext,
+        userPrompt: prompt,
+        metadata: traceMeta,
+        tags: [context || 'general', topic],
+        fn: () => model.generateContent(prompt)
+      });
       const response = result.response.text().trim();
       
       return NextResponse.json({ response });

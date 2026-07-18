@@ -36,6 +36,31 @@ if (env === "production") {
 
 // ── Paths ──────────────────────────────────────────────────────────────────
 const ROOT = path.resolve(__dirname, "..");
+
+// ── Load Environment Variables from .env ───────────────────────────────────
+const envPath = path.join(ROOT, ".env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf8");
+  envContent.split(/\r?\n/).forEach((line) => {
+    const trimmed = line.trim();
+    if (trimmed && !trimmed.startsWith("#")) {
+      const equalsIdx = trimmed.indexOf("=");
+      if (equalsIdx !== -1) {
+        const key = trimmed.slice(0, equalsIdx).trim();
+        let value = trimmed.slice(equalsIdx + 1).trim();
+        // Remove enclosing single/double quotes if present
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1);
+        }
+        // Set env variable if not already set by system/shell
+        if (process.env[key] === undefined) {
+          process.env[key] = value;
+        }
+      }
+    }
+  });
+}
+
 const BACKEND_DIR = path.join(ROOT, "backend");
 const VENV_DIR = path.join(BACKEND_DIR, "venv");
 const REQUIREMENTS = path.join(BACKEND_DIR, "requirements.txt");

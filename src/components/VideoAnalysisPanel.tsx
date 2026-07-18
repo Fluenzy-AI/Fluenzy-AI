@@ -137,6 +137,13 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
             observation: "Facial tension suggests elevated stress during responses.",
             suggestion: "Pause briefly and use controlled breathing before key answers."
           };
+        case "PHONE_DETECTED":
+          return {
+            issueCode,
+            issueDetected: "Mobile Phone Detected",
+            observation: "A mobile phone was detected in the frame during the interview.",
+            suggestion: "Please keep your mobile phone away to avoid distractions and maintain professionalism."
+          };
         case "NO_FACE":
           return {
             issueCode,
@@ -169,6 +176,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     const alertSet = new Set((newMetrics.alerts || []).map((a) => String(a).toUpperCase()));
 
     if (alertSet.has("NO_FACE") || !newMetrics.face_detected) return "NO_FACE";
+    if (alertSet.has("PHONE_DETECTED")) return "PHONE_DETECTED";
     if (alertSet.has("HIGH_STRESS") || newMetrics.stress_level > 70) return "HIGH_STRESS";
     if (alertSet.has("POOR_POSTURE") || newMetrics.posture < 50) return "POOR_POSTURE";
     if (alertSet.has("LOW_EYE_CONTACT") || newMetrics.eye_contact < 40) return "LOW_EYE_CONTACT";

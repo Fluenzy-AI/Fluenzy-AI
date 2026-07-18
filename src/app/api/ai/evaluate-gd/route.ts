@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
+import { traceGeminiCall, extractRequestMetadata, FEATURES } from "@/lib/langsmith";
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
 
 if (!GEMINI_API_KEY) {
@@ -22,6 +24,7 @@ interface GDEvaluationRequest {
   topic: string;
   userId: string;
   participantName: string;
+  sessionId?: string;
 }
 
 interface ParticipantScore {
@@ -44,7 +47,7 @@ interface ParticipantScore {
 export async function POST(req: NextRequest) {
   try {
     const body: GDEvaluationRequest = await req.json();
-    const { transcript, topic, userId, participantName } = body;
+    const { transcript, topic, userId, participantName, sessionId } = body;
 
     if (!transcript || transcript.length === 0) {
       return NextResponse.json({
@@ -133,8 +136,22 @@ IMPORTANT:
 - The overall score should reflect interview readiness
 - Respond ONLY with valid JSON, no markdown or explanation`;
 
+    const traceMeta = extractRequestMetadata(req, {
+      userId,
+      sessionId,
+      conversationId: topic,
+    });
+
     try {
-      const result = await model.generateContent(prompt);
+      const result = await traceGeminiCall({
+        feature: FEATURES.GROUP_DISCUSSION,
+        name: 'evaluate-gd',
+        model: 'gemini-1.5-flash',
+        userPrompt: prompt,
+        metadata: traceMeta,
+        tags: [topic],
+        fn: () => model.generateContent(prompt)
+      });
       const responseText = result.response.text();
       
       // Parse JSON from response
