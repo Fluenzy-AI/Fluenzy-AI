@@ -295,96 +295,103 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     
     // Close existing connection if any
     if (wsRef.current) {
-      wsRef.current.close();
+      try {
+        wsRef.current.close();
+      } catch (_) {}
     }
     
-    const ws = new WebSocket(wsUrl);
+    try {
+      const ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-      console.log("✅ Connected to behavioral analysis WebSocket");
-      setWsConnected(true);
-      setError(null);
-      
-      // Auto-start analysis after connection
-      if (!isAnalyzing) {
-        setIsAnalyzing(true);
-      }
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        console.log("📨 Received message:", message.type);
+      ws.onopen = () => {
+        console.log("✅ Connected to behavioral analysis WebSocket");
+        setWsConnected(true);
+        setError(null);
         
-        if (message.type === "behavioral_result") {
-          const data = message.data;
-          const newMetrics = data.metrics;
+        // Auto-start analysis after connection
+        if (!isAnalyzing) {
+          setIsAnalyzing(true);
+        }
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message = JSON.parse(event.data);
+          console.log("📨 Received message:", message.type);
           
-          // Backpressure: Mark that previous frame is processed
-          setIsProcessingFrame(false);
-          pendingFrameRef.current = false;
-          
-          setMetrics(newMetrics);
-          setMetricsHistory(prev => [...prev.slice(-100), newMetrics]);
-          timelineRef.current.push({
-            timestamp: new Date().toISOString(),
-            confidence: newMetrics.confidence,
-            eye_contact: newMetrics.eye_contact,
-            posture: newMetrics.posture,
-            engagement: newMetrics.engagement,
-            smile: newMetrics.smile,
-            head_stability: newMetrics.head_stability,
-            stress_level: newMetrics.stress_level,
-            filler_word_count: newMetrics.filler_word_count,
-            face_detected: newMetrics.face_detected,
-          });
-          if (timelineRef.current.length > 1500) {
-            timelineRef.current = timelineRef.current.slice(-1500);
+          if (message.type === "behavioral_result") {
+            const data = message.data;
+            const newMetrics = data.metrics;
+            
+            // Backpressure: Mark that previous frame is processed
+            setIsProcessingFrame(false);
+            pendingFrameRef.current = false;
+            
+            setMetrics(newMetrics);
+            setMetricsHistory(prev => [...prev.slice(-100), newMetrics]);
+            timelineRef.current.push({
+              timestamp: new Date().toISOString(),
+              confidence: newMetrics.confidence,
+              eye_contact: newMetrics.eye_contact,
+              posture: newMetrics.posture,
+              engagement: newMetrics.engagement,
+              smile: newMetrics.smile,
+              head_stability: newMetrics.head_stability,
+              stress_level: newMetrics.stress_level,
+              filler_word_count: newMetrics.filler_word_count,
+              face_detected: newMetrics.face_detected,
+            });
+            if (timelineRef.current.length > 1500) {
+              timelineRef.current = timelineRef.current.slice(-1500);
+            }
+            
+            if (data.annotated_frame) {
+              setAnnotatedFrame(data.annotated_frame);
+            }
+            captureBehavioralSnapshot(newMetrics);
+          } else if (message.type === "busy") {
+            // Backend is busy - drop pending frame and wait
+            console.log("⚠️ Backend busy, dropping frame");
+            setIsProcessingFrame(false);
+            pendingFrameRef.current = false;
+          } else if (message.type === "connected") {
+            console.log("🎉 Behavioral analysis session started:", message.message);
+          } else if (message.type === "error") {
+            console.warn("⚠️ Server behavioral warning:", message.message);
+            setError(message.message);
+            // Also reset processing state on error
+            setIsProcessingFrame(false);
+            pendingFrameRef.current = false;
           }
-          
-          if (data.annotated_frame) {
-            setAnnotatedFrame(data.annotated_frame);
-          }
-          captureBehavioralSnapshot(newMetrics);
-        } else if (message.type === "busy") {
-          // Backend is busy - drop pending frame and wait
-          console.log("⚠️ Backend busy, dropping frame");
-          setIsProcessingFrame(false);
-          pendingFrameRef.current = false;
-        } else if (message.type === "connected") {
-          console.log("🎉 Behavioral analysis session started:", message.message);
-        } else if (message.type === "error") {
-          console.error("❌ Server error:", message.message);
-          setError(message.message);
-          // Also reset processing state on error
+        } catch (e) {
+          console.warn("Error parsing WebSocket message:", e);
+          // Reset processing state on error
           setIsProcessingFrame(false);
           pendingFrameRef.current = false;
         }
-      } catch (e) {
-        console.error("Error parsing WebSocket message:", e);
-        // Reset processing state on error
-        setIsProcessingFrame(false);
-        pendingFrameRef.current = false;
-      }
-    };
+      };
 
-    ws.onclose = (e) => {
-      console.log("🔌 WebSocket closed:", e.code, e.reason);
-      setWsConnected(false);
-      
-      // Auto-reconnect if still analyzing
-      if (isAnalyzing && e.code !== 1000) {
-        console.log("🔄 Attempting to reconnect...");
-        setTimeout(connectWebSocket, 2000);
-      }
-    };
+      ws.onclose = (e) => {
+        console.log("🔌 WebSocket closed:", e.code, e.reason);
+        setWsConnected(false);
+        
+        // Auto-reconnect if still analyzing
+        if (isAnalyzing && e.code !== 1000) {
+          console.log("🔄 Attempting to reconnect...");
+          setTimeout(connectWebSocket, 2000);
+        }
+      };
 
-    ws.onerror = (err) => {
-      console.error("❌ WebSocket error:", err);
-      setError(`Failed to connect to analysis server. Ensure backend is running on ${wsUrl}`);
-    };
+      ws.onerror = (err) => {
+        console.warn("⚠️ WebSocket error connection failed:", err);
+        setError(`Failed to connect to analysis server. Ensure backend is running on ${wsUrl}`);
+      };
 
-    wsRef.current = ws;
+      wsRef.current = ws;
+    } catch (wsErr) {
+      console.warn("⚠️ Failed to initialize WebSocket client:", wsErr);
+      setError(`WebSocket initialization failed. Check your connection URL: ${wsUrl}`);
+    }
   }, [captureBehavioralSnapshot, getBehavioralWsUrl, isAnalyzing]);
 
   // Start camera and behavioral analysis together when interview starts
