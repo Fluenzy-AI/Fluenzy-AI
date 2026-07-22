@@ -221,6 +221,33 @@ const MobileLandingPage = () => {
             </motion.div>
           ))}
         </div>
+
+        {/* Mobile Feature Showcase Screenshots */}
+        <div className="mt-8 space-y-4">
+          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-center text-slate-400">Platform Preview</p>
+          <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-none">
+            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+              <img src="/image/landingimg2.png" alt="AI Interview Room" className="w-full h-auto rounded-xl object-cover" />
+              <p className="mt-2 text-center text-xs font-bold text-cyan-300">Live AI Interview Room</p>
+            </div>
+            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+              <img src="/image/BEHAVIORALMETRICS1.png" alt="Behavioral Analytics" className="w-full h-auto rounded-xl object-cover" />
+              <p className="mt-2 text-center text-xs font-bold text-purple-300">Real-Time Behavioral Analytics</p>
+            </div>
+            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+              <img src="/image/GDAgent.png" alt="GD Coach & Room" className="w-full h-auto rounded-xl object-cover" />
+              <p className="mt-2 text-center text-xs font-bold text-pink-300">GD Agent Simulation Room</p>
+            </div>
+            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+              <img src="/image/ATS.png" alt="ATS Resume Score" className="w-full h-auto rounded-xl object-cover" />
+              <p className="mt-2 text-center text-xs font-bold text-emerald-300">ATS Resume Score Engine</p>
+            </div>
+            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+              <img src="/image/InterviewGuide.png" alt="AI Interview Strategy Guide" className="w-full h-auto rounded-xl object-cover" />
+              <p className="mt-2 text-center text-xs font-bold text-amber-300">AI Strategy & Guide Export</p>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* ── BENEFITS LIST ──────────────────────────────────── */}

@@ -164,33 +164,60 @@ const Features = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6"
+          className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
-          <div className="relative rounded-2xl overflow-hidden border border-red-500/20 shadow-xl bg-card/40 p-2 group hover:border-red-500/40 transition-all">
+          <div className="relative rounded-2xl overflow-hidden border border-purple-500/20 shadow-xl bg-slate-900/60 p-2 group hover:border-purple-500/50 transition-all duration-300">
             <img
               src="/image/landingimg3.png"
               alt="Technical Interview & Coding Evaluation"
               className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
             />
-            <p className="mt-2 text-xs font-bold text-center text-muted-foreground uppercase tracking-wider">Technical & Coding Interview</p>
+            <p className="mt-3 text-xs font-bold text-center text-cyan-300 uppercase tracking-wider">Technical & Coding Interview</p>
           </div>
 
-          <div className="relative rounded-2xl overflow-hidden border border-red-500/20 shadow-xl bg-card/40 p-2 group hover:border-red-500/40 transition-all">
+          <div className="relative rounded-2xl overflow-hidden border border-purple-500/20 shadow-xl bg-slate-900/60 p-2 group hover:border-purple-500/50 transition-all duration-300">
+            <img
+              src="/image/GDAgent.png"
+              alt="GD Agent & AI Group Discussion Room"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <p className="mt-3 text-xs font-bold text-center text-purple-300 uppercase tracking-wider">GD Agent & AI Discussion Room</p>
+          </div>
+
+          <div className="relative rounded-2xl overflow-hidden border border-purple-500/20 shadow-xl bg-slate-900/60 p-2 group hover:border-purple-500/50 transition-all duration-300">
+            <img
+              src="/image/ATS.png"
+              alt="ATS Resume Checker & Score Engine"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <p className="mt-3 text-xs font-bold text-center text-emerald-300 uppercase tracking-wider">ATS Resume Checker & Score</p>
+          </div>
+
+          <div className="relative rounded-2xl overflow-hidden border border-purple-500/20 shadow-xl bg-slate-900/60 p-2 group hover:border-purple-500/50 transition-all duration-300">
+            <img
+              src="/image/AIJobSearch.png"
+              alt="AI Job Search & Auto Apply Matcher"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <p className="mt-3 text-xs font-bold text-center text-amber-300 uppercase tracking-wider">AI Job Matcher & Auto Apply</p>
+          </div>
+
+          <div className="relative rounded-2xl overflow-hidden border border-purple-500/20 shadow-xl bg-slate-900/60 p-2 group hover:border-purple-500/50 transition-all duration-300">
             <img
               src="/image/landingimg4.png"
               alt="Behavioral Analytics & Feedback"
               className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
             />
-            <p className="mt-2 text-xs font-bold text-center text-muted-foreground uppercase tracking-wider">Real-Time Performance Analytics</p>
+            <p className="mt-3 text-xs font-bold text-center text-blue-300 uppercase tracking-wider">Real-Time Performance Analytics</p>
           </div>
 
-          <div className="relative rounded-2xl overflow-hidden border border-red-500/20 shadow-xl bg-card/40 p-2 group hover:border-red-500/40 transition-all">
+          <div className="relative rounded-2xl overflow-hidden border border-purple-500/20 shadow-xl bg-slate-900/60 p-2 group hover:border-purple-500/50 transition-all duration-300">
             <img
-              src="/image/landingimg5.png"
-              alt="GD Coach & Multi-Role Simulation"
+              src="/image/GD.png"
+              alt="Group Discussion Room Simulation"
               className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
             />
-            <p className="mt-2 text-xs font-bold text-center text-muted-foreground uppercase tracking-wider">GD Simulation & Multi-Role Coaching</p>
+            <p className="mt-3 text-xs font-bold text-center text-pink-300 uppercase tracking-wider">GD Simulation & Multi-Role Coaching</p>
           </div>
         </motion.div>
       </div>

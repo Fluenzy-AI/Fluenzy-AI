@@ -69,6 +69,51 @@ const PerformanceEvolution = () => {
             </div>
           </div>
         </div>
+
+        {/* Performance Chart & Metrics Visual Showcase */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          <div className="relative rounded-2xl overflow-hidden border border-cyan-500/20 shadow-2xl bg-slate-900/60 p-2 group hover:border-cyan-500/50 transition-all duration-300">
+            <img
+              src="/image/Chart.png"
+              alt="Performance Breakdown & Growth Trajectory"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+            <div className="p-3 text-center">
+              <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Growth & Performance Metrics</p>
+              <p className="text-[11px] text-slate-400 mt-1">Multi-session score progression and skill gain analytics</p>
+            </div>
+          </div>
+
+          <div className="relative rounded-2xl overflow-hidden border border-cyan-500/20 shadow-2xl bg-slate-900/60 p-2 group hover:border-cyan-500/50 transition-all duration-300">
+            <img
+              src="/image/Chart1.png"
+              alt="Score Progression Chart"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+            <div className="p-3 text-center">
+              <p className="text-xs font-bold text-purple-300 uppercase tracking-wider">Category Score Breakdown</p>
+              <p className="text-[11px] text-slate-400 mt-1">Granular breakdown across Technical, Behavioral & Soft skills</p>
+            </div>
+          </div>
+
+          <div className="relative rounded-2xl overflow-hidden border border-cyan-500/20 shadow-2xl bg-slate-900/60 p-2 group hover:border-cyan-500/50 transition-all duration-300">
+            <img
+              src="/image/Chart2.png"
+              alt="Competency Graph"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+            <div className="p-3 text-center">
+              <p className="text-xs font-bold text-emerald-300 uppercase tracking-wider">Competency Radar Graph</p>
+              <p className="text-[11px] text-slate-400 mt-1">Benchmarking candidate capability profile against FAANG standards</p>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

@@ -56,6 +56,33 @@ const InterviewGuideEngine = () => {
           <p className="mt-5 text-sm text-slate-400">
             Every PDF includes branded analytics, strengths, risk flags, and actionable preparation insights.
           </p>
+
+          {/* Interview Guide Document Screenshots Showcase */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl bg-slate-900/80 p-2 group hover:border-cyan-500/60 transition-all duration-300">
+              <img
+                src="/image/InterviewGuide.png"
+                alt="AI Generated Interview Strategy Guide"
+                className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+              />
+              <div className="p-3 text-center">
+                <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Smart Strategy & Answer Engine</p>
+                <p className="text-[11px] text-slate-400 mt-1">Structured 30s/60s/90s intro, STAR responses & salary negotiation</p>
+              </div>
+            </div>
+
+            <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl bg-slate-900/80 p-2 group hover:border-cyan-500/60 transition-all duration-300">
+              <img
+                src="/image/InterviewGuide1.png"
+                alt="Rapid Memorization Cheat Sheet"
+                className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+              />
+              <div className="p-3 text-center">
+                <p className="text-xs font-bold text-purple-300 uppercase tracking-wider">Rapid Memorization Cheat Sheet</p>
+                <p className="text-[11px] text-slate-400 mt-1">Condensed question bank, core talking points & checklist summary</p>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </div>
     </section>

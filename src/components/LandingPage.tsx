@@ -7,7 +7,6 @@ import FeedbackSection from "@/modules/feedback";
 import Hero from "@/modules/hero";
 import InterviewGuideEngine from "@/modules/interview-guide-engine";
 import PerformanceEvolution from "@/modules/performance-evolution";
-import ProFeatures from "@/modules/pro-features";
 import TrustSection from "@/modules/trust";
 import TrainingShowcase from "@/modules/hero/TrainingShowcase";
 import MobileLandingPage from "@/components/MobileLandingPage";
@@ -72,7 +71,6 @@ const LandingPage = () => {
       <InterviewGuideEngine />
       <AdvancedFeatures />
       <PerformanceEvolution />
-      <ProFeatures />
       <FinalCta />
     </div>
   );
