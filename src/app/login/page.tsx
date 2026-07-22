@@ -51,13 +51,12 @@ function FloatingInput({
   return (
     <div className="space-y-1">
       <div
-        className={`relative rounded-xl border transition-all duration-200 ${
-          error
+        className={`relative rounded-xl border transition-all duration-200 ${error
             ? "border-red-500/60 bg-red-500/5"
             : focused
-            ? "border-violet-500/70 bg-slate-800/80 shadow-[0_0_0_3px_rgba(124,58,237,0.12)]"
-            : "border-white/10 bg-slate-800/60 hover:border-white/20"
-        }`}
+              ? "border-violet-500/70 bg-slate-800/80 shadow-[0_0_0_3px_rgba(124,58,237,0.12)]"
+              : "border-white/10 bg-slate-800/60 hover:border-white/20"
+          }`}
       >
         {Icon && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2">
@@ -69,13 +68,11 @@ function FloatingInput({
         )}
         <label
           htmlFor={id}
-          className={`absolute pointer-events-none font-medium transition-all duration-200 ${
-            Icon ? "left-9" : "left-3.5"
-          } ${
-            floated
+          className={`absolute pointer-events-none font-medium transition-all duration-200 ${Icon ? "left-9" : "left-3.5"
+            } ${floated
               ? "top-1.5 text-[10px] text-violet-400"
               : "top-1/2 -translate-y-1/2 text-sm text-slate-500"
-          }`}
+            }`}
         >
           {label}
         </label>
@@ -87,9 +84,8 @@ function FloatingInput({
           onBlur={() => setFocused(false)}
           onChange={(e) => onChange(e.target.value)}
           autoComplete={autoComplete}
-          className={`w-full bg-transparent pb-2 pt-6 text-sm text-slate-100 outline-none ${
-            Icon ? "pl-9" : "pl-3.5"
-          } ${suffix ? "pr-10" : "pr-3.5"}`}
+          className={`w-full bg-transparent pb-2 pt-6 text-sm text-slate-100 outline-none ${Icon ? "pl-9" : "pl-3.5"
+            } ${suffix ? "pr-10" : "pr-3.5"}`}
         />
         {suffix && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2">{suffix}</div>
@@ -200,12 +196,16 @@ export default function LoginPage() {
           className="mb-8 flex justify-center"
         >
           <Link href="/" className="flex items-center gap-2.5 group">
-            <img 
-              src="/favicon/apple-touch-icon.png" 
-              alt="Fluenzy AI Logo" 
-              className="h-9 w-9 rounded-xl shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-shadow"
-            />
-            <span className="text-xl font-bold tracking-tight">Fluenzy AI</span>
+            <div className="p-1 rounded-xl bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/20 border border-red-500/30 flex items-center justify-center">
+              <img
+                src="/favicon/wthem.png"
+                alt="Fluenzy AI Logo"
+                className="h-8 w-auto rounded-lg object-contain"
+              />
+            </div>
+            <span className="text-xl font-black bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent tracking-tight">
+              Fluenzy AI
+            </span>
           </Link>
         </motion.div>
 
@@ -230,19 +230,25 @@ export default function LoginPage() {
           </div>
 
           {/* ── Google (Primary CTA) ─────────────────────────────────────── */}
-          <motion.button
-            whileTap={{ scale: 0.975 }}
+          <button
+            type="button"
             onClick={handleGoogleSignIn}
             disabled={googleLoading || loading}
-            className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm font-semibold text-slate-100 shadow-sm transition-all duration-200 hover:bg-white/10 hover:border-white/20 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-60"
+            style={{
+              backgroundColor: "#FCFBF8",
+              color: "#1C1917",
+              borderColor: "#E6E2D8",
+              backgroundImage: "none",
+            }}
+            className="google-btn flex w-full items-center justify-center gap-3 rounded-xl border px-5 py-3.5 text-sm font-semibold text-stone-900 shadow-sm transition-all duration-200 hover:bg-stone-100 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
           >
             {googleLoading ? (
-              <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-stone-800 border-t-transparent" />
             ) : (
               <GoogleIcon />
             )}
-            <span>{googleLoading ? "Redirecting…" : "Continue with Google"}</span>
-          </motion.button>
+            <span style={{ color: "#1C1917" }} className="font-semibold">{googleLoading ? "Redirecting…" : "Continue with Google"}</span>
+          </button>
 
           {/* OR divider */}
           <div className="flex items-center gap-3 my-6">

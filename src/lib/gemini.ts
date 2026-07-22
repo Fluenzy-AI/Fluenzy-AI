@@ -1,24 +1,15 @@
 /**
  * Gemini AI Library
- * Wrapper around Google Generative AI for assessment-related tasks
- *
- * LangSmith tracing is injected here via traceGeminiCall().
- * Every call to generateContent() is automatically traced.
+ * Wrapper around Google Generative AI for assessment-related tasks.
+ * All calls are routed through gemini-router for automatic key + model rotation.
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
-// LangSmith observability — fire-and-forget, never breaks existing logic
+import { callGeminiWithFallback, generateJSON, generateText } from "@/lib/gemini-router";
 import { traceGeminiCall, FEATURES } from "@/lib/langsmith";
 
-if (!process.env.GEMINI_API_KEY) {
-  throw new Error("GEMINI_API_KEY environment variable is required");
-}
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-// Models
-const FLASH_MODEL = "gemini-1.5-flash";
-const PRO_MODEL = "gemini-1.5-pro";
+// Model aliases kept for reference / LangSmith tracing metadata
+const FLASH_MODEL = "gemini-2.5-flash";
+const PRO_MODEL   = "gemini-2.5-pro";
 
 export interface MCQQuestion {
   question: string;
@@ -82,24 +73,9 @@ Return ONLY valid JSON array in this exact format:
 Make questions practical, relevant, and at ${difficulty} difficulty level.`;
 
   try {
-    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
-    const result = await traceGeminiCall({
-      feature:    FEATURES.GENERATE_QUESTIONS,
-      name:       'generate-mcq-questions',
-      model:      FLASH_MODEL,
-      userPrompt: prompt,
-      tags:       ['MCQ', topic, difficulty],
-      fn:         () => model.generateContent(prompt),
+    const questions: MCQQuestion[] = await generateJSON<MCQQuestion[]>(prompt, {
+      preferredModel: FLASH_MODEL,
     });
-    const response = result.response.text();
-    
-    // Extract JSON from response (handle markdown code blocks)
-    const jsonMatch = response.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error("Failed to extract JSON from Gemini response");
-    }
-    
-    const questions: MCQQuestion[] = JSON.parse(jsonMatch[0]);
     
     // Validate structure
     questions.forEach((q, i) => {
@@ -123,8 +99,6 @@ export async function generateCodingChallenge(
   topic: string,
   difficulty: "easy" | "medium" | "hard" = "medium"
 ): Promise<CodingQuestion> {
-  const model = genAI.getGenerativeModel({ model: FLASH_MODEL });
-
   const prompt = `Generate a coding challenge on the topic: "${topic}".
 Difficulty level: ${difficulty}.
 
@@ -149,24 +123,9 @@ Return ONLY valid JSON in this exact format:
 }`;
 
   try {
-    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
-    const result = await traceGeminiCall({
-      feature:    FEATURES.CODING_INTERVIEW,
-      name:       'generate-coding-challenge',
-      model:      FLASH_MODEL,
-      userPrompt: prompt,
-      tags:       ['Coding', topic, difficulty],
-      fn:         () => model.generateContent(prompt),
+    const challenge: CodingQuestion = await generateJSON<CodingQuestion>(prompt, {
+      preferredModel: FLASH_MODEL,
     });
-    const response = result.response.text();
-    
-    // Extract JSON from response
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to extract JSON from Gemini response");
-    }
-    
-    const challenge: CodingQuestion = JSON.parse(jsonMatch[0]);
     
     // Validate structure
     if (!challenge.title || !challenge.description || !Array.isArray(challenge.testCases) || 
@@ -190,8 +149,6 @@ export async function evaluateTextAnswer(
   modelAnswer?: string,
   context?: string
 ): Promise<EvaluationResult> {
-  const model = genAI.getGenerativeModel({ model: FLASH_MODEL });
-
   const prompt = `You are an expert evaluator assessing a candidate's answer.
 
 Question: ${question}
@@ -217,24 +174,9 @@ Return ONLY valid JSON:
 }`;
 
   try {
-    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
-    const result = await traceGeminiCall({
-      feature:     FEATURES.INTERVIEW_AI,
-      name:        'evaluate-text-answer',
-      model:       FLASH_MODEL,
-      systemPrompt:'You are an expert evaluator assessing a candidate\'s answer.',
-      userPrompt:  prompt,
-      tags:        ['TEXT', 'evaluation'],
-      fn:          () => model.generateContent(prompt),
+    const evaluation: EvaluationResult = await generateJSON<EvaluationResult>(prompt, {
+      preferredModel: FLASH_MODEL,
     });
-    const response = result.response.text();
-    
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to extract JSON from Gemini response");
-    }
-    
-    const evaluation: EvaluationResult = JSON.parse(jsonMatch[0]);
     
     if (typeof evaluation.score !== 'number' || !evaluation.feedback) {
       throw new Error("Invalid evaluation structure");
@@ -293,8 +235,6 @@ export async function evaluateCodingSubmission(
   testCases: Array<{ input: string; output: string }>,
   description: string
 ): Promise<EvaluationResult> {
-  const model = genAI.getGenerativeModel({ model: FLASH_MODEL });
-
   const prompt = `Evaluate this coding solution:
 
 Language: ${language}
@@ -330,23 +270,9 @@ Return ONLY valid JSON:
 }`;
 
   try {
-    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
-    const result = await traceGeminiCall({
-      feature:    FEATURES.CODING_INTERVIEW,
-      name:       'evaluate-coding-submission',
-      model:      FLASH_MODEL,
-      userPrompt: prompt,
-      tags:       ['CODING', 'evaluation', language],
-      fn:         () => model.generateContent(prompt),
+    const evaluation: EvaluationResult = await generateJSON<EvaluationResult>(prompt, {
+      preferredModel: FLASH_MODEL,
     });
-    const response = result.response.text();
-    
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to extract JSON from Gemini response");
-    }
-    
-    const evaluation: EvaluationResult = JSON.parse(jsonMatch[0]);
     
     if (typeof evaluation.score !== 'number' || !evaluation.feedback) {
       throw new Error("Invalid evaluation structure");
@@ -368,8 +294,6 @@ export async function generateInterviewQuestions(
   previousAnswers?: Array<{ question: string; answer: string }>,
   count: number = 5
 ): Promise<string[]> {
-  const model = genAI.getGenerativeModel({ model: FLASH_MODEL });
-
   const contextPrompt = previousAnswers && previousAnswers.length > 0
     ? `\n\nPrevious conversation:\n${previousAnswers.map(qa => 
         `Q: ${qa.question}\nA: ${qa.answer}`).join('\n\n')}\n\nAsk follow-up questions based on their answers.`
@@ -390,23 +314,9 @@ Return ONLY a JSON array of question strings:
 ["Question 1?", "Question 2?", "Question 3?"]`;
 
   try {
-    // ── LangSmith trace wraps the Gemini call ───────────────────────────────
-    const result = await traceGeminiCall({
-      feature:    FEATURES.INTERVIEW_AI,
-      name:       'generate-interview-questions',
-      model:      FLASH_MODEL,
-      userPrompt: prompt,
-      tags:       ['question-gen', role, experienceLevel],
-      fn:         () => model.generateContent(prompt),
+    const questions: string[] = await generateJSON<string[]>(prompt, {
+      preferredModel: FLASH_MODEL,
     });
-    const response = result.response.text();
-    
-    const jsonMatch = response.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      throw new Error("Failed to extract JSON from Gemini response");
-    }
-    
-    const questions: string[] = JSON.parse(jsonMatch[0]);
     
     if (!Array.isArray(questions) || questions.length === 0) {
       throw new Error("Invalid questions array");
@@ -456,28 +366,12 @@ Return ONLY valid JSON:
 }`;
 
   try {
-    // ── LangSmith trace wraps the Gemini call (PRO model for transcript eval) ─
-    const result = await traceGeminiCall({
-      feature:    FEATURES.INTERVIEW_AI,
-      name:       'evaluate-interview-transcript',
-      model:      PRO_MODEL,
-      userPrompt: prompt,
-      tags:       ['INTERVIEW', 'transcript-eval', role, experienceLevel ?? 'unspecified'],
-      fn:         () => model.generateContent(prompt),
+    const evaluation: EvaluationResult = await generateJSON<EvaluationResult>(prompt, {
+      preferredModel: PRO_MODEL, // transcript eval uses more powerful model
     });
-    const response = result.response.text();
-    
-    const jsonMatch = response.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to extract JSON from Gemini response");
-    }
-    
-    const evaluation: EvaluationResult = JSON.parse(jsonMatch[0]);
-    
     if (typeof evaluation.score !== 'number' || !evaluation.feedback) {
       throw new Error("Invalid evaluation structure");
     }
-    
     return evaluation;
   } catch (error: any) {
     console.error("Gemini transcript evaluation error:", error);

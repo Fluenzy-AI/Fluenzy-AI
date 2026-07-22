@@ -1,11 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { traceGeminiCall, extractRequestMetadata, FEATURES, TraceMetadata } from "@/lib/langsmith";
+import { generateText, generateJSON } from "@/lib/gemini-router";
+import { extractRequestMetadata } from "@/lib/langsmith";
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-
-const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
-const model = genAI?.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 interface VoiceEvaluationRequest {
   type: "read_aloud" | "listen_repeat" | "interview_response" | "extemporaneous" | "listen_summarize" | "conversation" | "final_evaluation";
@@ -79,25 +75,6 @@ async function evaluateReadAloud(body: VoiceEvaluationRequest, traceMeta?: Trace
     });
   }
 
-  if (!model) {
-    // Basic evaluation without AI
-    const similarity = calculateSimilarity(transcript, originalText);
-    return NextResponse.json({
-      scores: {
-        pronunciation: similarity,
-        pace: 70,
-        clarity: similarity,
-        completeness: similarity,
-      },
-      overallScore: similarity,
-      passed: similarity >= 70,
-      feedback: similarity >= 70 
-        ? "Good reading! Your pronunciation was clear." 
-        : "Practice reading aloud more to improve fluency.",
-      highlights: similarity >= 70 ? ["Clear pronunciation"] : [],
-      improvements: similarity < 70 ? ["Work on pronunciation accuracy", "Practice reading speed"] : [],
-    });
-  }
 
   const prompt = `Compare the original text with what was spoken. Evaluate the reading quality.
 
@@ -124,20 +101,8 @@ Return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.VOICE_PRACTICE,
-      name: 'evaluate-read-aloud',
-      model: 'gemini-1.5-flash',
-      userPrompt: prompt,
-      metadata: traceMeta,
-      tags: ['read_aloud'],
-      fn: () => model.generateContent(prompt)
-    });
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error("No JSON in response");
-    return NextResponse.json(JSON.parse(jsonMatch[0]));
+    const evaluation = await generateJSON<any>(prompt);
+    return NextResponse.json(evaluation);
   } catch (error) {
     const similarity = calculateSimilarity(transcript, originalText);
     return NextResponse.json({
@@ -162,16 +127,6 @@ async function evaluateListenRepeat(body: VoiceEvaluationRequest, traceMeta?: Tr
 
   const similarity = calculateSimilarity(transcript, originalText);
 
-  if (!model) {
-    return NextResponse.json({
-      scores: { accuracy: similarity, pronunciation: similarity },
-      overallScore: similarity,
-      passed: similarity >= 70,
-      feedback: similarity >= 70 
-        ? "Good repetition accuracy!" 
-        : "Work on listening comprehension and repetition.",
-    });
-  }
 
   const prompt = `Evaluate how accurately the speaker repeated the original phrase.
 
@@ -194,20 +149,8 @@ Return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.VOICE_PRACTICE,
-      name: 'evaluate-listen-repeat',
-      model: 'gemini-1.5-flash',
-      userPrompt: prompt,
-      metadata: traceMeta,
-      tags: ['listen_repeat'],
-      fn: () => model.generateContent(prompt)
-    });
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error("No JSON in response");
-    return NextResponse.json(JSON.parse(jsonMatch[0]));
+    const evaluation = await generateJSON<any>(prompt);
+    return NextResponse.json(evaluation);
   } catch (error) {
     return NextResponse.json({
       scores: { accuracy: similarity, pronunciation: similarity },
@@ -233,22 +176,6 @@ async function evaluateInterviewResponse(body: VoiceEvaluationRequest, traceMeta
   const wordCount = transcript.split(/\s+/).length;
   const baseScore = Math.min(100, Math.max(40, 50 + wordCount * 2));
 
-  if (!model) {
-    return NextResponse.json({
-      scores: {
-        fluency: baseScore,
-        vocabulary: baseScore,
-        clarity: baseScore,
-        relevance: baseScore - 10,
-        confidence: baseScore,
-      },
-      overallScore: baseScore,
-      passed: baseScore >= 70,
-      feedback: wordCount > 30 
-        ? "Good detailed response!" 
-        : "Try to elaborate more on your answers.",
-    });
-  }
 
   const prompt = `Evaluate this interview response for a ${jobRole || "professional"} position.
 
@@ -275,29 +202,11 @@ Evaluate and return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.HR_INTERVIEW,
-      name: 'evaluate-interview-response',
-      model: 'gemini-1.5-flash',
-      userPrompt: prompt,
-      metadata: traceMeta,
-      tags: ['interview_response', jobRole || 'unknown', phase || 'unknown'],
-      fn: () => model.generateContent(prompt)
-    });
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error("No JSON in response");
-    return NextResponse.json(JSON.parse(jsonMatch[0]));
+    const evaluation = await generateJSON<any>(prompt);
+    return NextResponse.json(evaluation);
   } catch (error) {
     return NextResponse.json({
-      scores: {
-        fluency: baseScore,
-        vocabulary: baseScore,
-        clarity: baseScore,
-        relevance: baseScore - 10,
-        confidence: baseScore,
-      },
+      scores: { fluency: baseScore, vocabulary: baseScore, clarity: baseScore, relevance: baseScore - 10, confidence: baseScore },
       overallScore: baseScore,
       passed: baseScore >= 70,
       feedback: "Response evaluated.",
@@ -320,19 +229,6 @@ async function evaluateExtemporaneous(body: VoiceEvaluationRequest, traceMeta?: 
   const wordsPerMinute = durationSeconds ? (wordCount / durationSeconds) * 60 : 100;
   const baseScore = Math.min(100, Math.max(40, 50 + wordCount));
 
-  if (!model) {
-    return NextResponse.json({
-      scores: {
-        content: baseScore,
-        delivery: wordsPerMinute > 100 && wordsPerMinute < 150 ? 80 : 60,
-        vocabulary: baseScore,
-        confidence: baseScore,
-      },
-      overallScore: baseScore,
-      passed: baseScore >= 70,
-      feedback: `You spoke ${wordCount} words in ${durationSeconds || 60} seconds.`,
-    });
-  }
 
   const prompt = `Evaluate this extemporaneous speech on the topic: "${topic || "General topic"}"
 
@@ -358,28 +254,11 @@ Evaluate and return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.VOICE_PRACTICE,
-      name: 'evaluate-extemporaneous',
-      model: 'gemini-1.5-flash',
-      userPrompt: prompt,
-      metadata: traceMeta,
-      tags: ['extemporaneous', topic || 'unknown'],
-      fn: () => model.generateContent(prompt)
-    });
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error("No JSON in response");
-    return NextResponse.json(JSON.parse(jsonMatch[0]));
+    const evaluation = await generateJSON<any>(prompt);
+    return NextResponse.json(evaluation);
   } catch (error) {
     return NextResponse.json({
-      scores: {
-        content: baseScore,
-        delivery: 70,
-        vocabulary: baseScore,
-        confidence: baseScore,
-      },
+      scores: { content: baseScore, delivery: 70, vocabulary: baseScore, confidence: baseScore },
       overallScore: baseScore,
       passed: baseScore >= 70,
       feedback: "Speech evaluated.",
@@ -400,18 +279,6 @@ async function evaluateListenSummarize(body: VoiceEvaluationRequest, traceMeta?:
 
   const baseScore = Math.min(100, 50 + candidateSummary.split(/\s+/).length);
 
-  if (!model) {
-    return NextResponse.json({
-      scores: {
-        accuracy: baseScore,
-        coherence: baseScore,
-        recall: baseScore - 10,
-      },
-      overallScore: baseScore,
-      passed: baseScore >= 70,
-      feedback: "Summary evaluated.",
-    });
-  }
 
   const prompt = `Evaluate how well the candidate summarized the original passage.
 
@@ -436,20 +303,8 @@ Evaluate and return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.VOICE_PRACTICE,
-      name: 'evaluate-listen-summarize',
-      model: 'gemini-1.5-flash',
-      userPrompt: prompt,
-      metadata: traceMeta,
-      tags: ['listen_summarize'],
-      fn: () => model.generateContent(prompt)
-    });
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error("No JSON in response");
-    return NextResponse.json(JSON.parse(jsonMatch[0]));
+    const evaluation = await generateJSON<any>(prompt);
+    return NextResponse.json(evaluation);
   } catch (error) {
     return NextResponse.json({
       scores: { accuracy: baseScore, coherence: baseScore, recall: baseScore - 10 },
@@ -482,21 +337,6 @@ async function evaluateFinalInterview(body: VoiceEvaluationRequest & { transcrip
     ? Math.round(candidateResponses.reduce((acc, t) => acc + (t.score || 0), 0) / candidateResponses.length)
     : 70;
 
-  if (!model) {
-    return NextResponse.json({
-      scores: {
-        fluency: avgScore,
-        vocabulary: avgScore,
-        clarity: avgScore,
-        relevance: avgScore,
-        confidence: avgScore,
-        overall: avgScore,
-      },
-      feedback: `Interview completed. Overall score: ${avgScore}%.`,
-      highlights: ["Completed the interview"],
-      improvements: ["Practice more technical questions"],
-    });
-  }
 
   const formattedTranscript = Array.isArray(transcript)
     ? transcript.map((t) => `${t.role.toUpperCase()}: ${t.text}`).join("\n")
@@ -529,30 +369,11 @@ Return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.HR_INTERVIEW,
-      name: 'evaluate-final-interview',
-      model: 'gemini-1.5-flash',
-      userPrompt: prompt,
-      metadata: traceMeta,
-      tags: ['final_evaluation', jobRole || 'unknown'],
-      fn: () => model.generateContent(prompt)
-    });
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error("No JSON in response");
-    return NextResponse.json(JSON.parse(jsonMatch[0]));
+    const evaluation = await generateJSON<any>(prompt);
+    return NextResponse.json(evaluation);
   } catch (error) {
     return NextResponse.json({
-      scores: {
-        fluency: avgScore,
-        vocabulary: avgScore,
-        clarity: avgScore,
-        relevance: avgScore,
-        confidence: avgScore,
-        overall: avgScore,
-      },
+      scores: { fluency: avgScore, vocabulary: avgScore, clarity: avgScore, relevance: avgScore, confidence: avgScore, overall: avgScore },
       feedback: `Interview completed with an average score of ${avgScore}%.`,
       highlights: ["Interview completed"],
       improvements: ["Continue practicing interview skills"],
@@ -584,19 +405,6 @@ async function evaluateConversation(body: VoiceEvaluationRequest, traceMeta?: Tr
   const wordCount = transcript.split(/\s+/).length;
   const baseScore = Math.min(100, Math.max(40, 50 + wordCount * 0.5));
 
-  if (!model) {
-    return NextResponse.json({
-      scores: {
-        communication: baseScore,
-        professionalism: baseScore,
-        confidence: baseScore,
-        clarity: baseScore,
-      },
-      overallScore: baseScore,
-      passed: baseScore >= 70,
-      feedback: "Conversation evaluated.",
-    });
-  }
 
   const prompt = `Evaluate this corporate conversation between an AI and a candidate on the topic: "${topic || "Professional communication"}"
 
@@ -622,28 +430,11 @@ Evaluate the candidate's performance and return JSON:
 Respond ONLY with valid JSON.`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.VOICE_PRACTICE,
-      name: 'evaluate-conversation',
-      model: 'gemini-1.5-flash',
-      userPrompt: prompt,
-      metadata: traceMeta,
-      tags: ['conversation', topic || 'unknown'],
-      fn: () => model.generateContent(prompt)
-    });
-    const responseText = result.response.text();
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) throw new Error("No JSON in response");
-    return NextResponse.json(JSON.parse(jsonMatch[0]));
+    const evaluation = await generateJSON<any>(prompt);
+    return NextResponse.json(evaluation);
   } catch (error) {
     return NextResponse.json({
-      scores: {
-        communication: baseScore,
-        professionalism: baseScore,
-        confidence: baseScore,
-        clarity: baseScore,
-      },
+      scores: { communication: baseScore, professionalism: baseScore, confidence: baseScore, clarity: baseScore },
       overallScore: baseScore,
       passed: baseScore >= 70,
       feedback: "Conversation skills evaluated.",

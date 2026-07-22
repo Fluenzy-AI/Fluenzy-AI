@@ -33,31 +33,30 @@ export const metadata: Metadata = {
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen">
-      <section className="pt-32 pb-12 bg-gradient-to-b from-slate-900 to-slate-800">
-        <div className="container mx-auto px-4">
-          <h1 className="text-4xl lg:text-6xl font-bold text-center mb-4">
-            <span className="text-white">FluenzyAI </span>
-            <span className="bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 !bg-clip-text text-transparent">
+    <div className="min-h-screen bg-background text-foreground">
+      <section className="pt-32 pb-12 bg-background border-b border-border">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl lg:text-6xl font-black mb-4 tracking-tight">
+            <span className="text-foreground">FluenzyAI </span>
+            <span className="bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent">
               Pricing Plans
             </span>
           </h1>
-          <p className="text-xl text-slate-300 text-center max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-medium">
             Select the ideal plan to unlock unlimited AI-powered interview preparation and English fluency training. Start free and upgrade as you progress toward career success.
           </p>
         </div>
       </section>
       <Pricing />
-      <section className="relative overflow-hidden bg-slate-950 text-slate-200">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-900/40 via-slate-950 to-slate-950" />
+      <section className="relative overflow-hidden bg-background text-foreground">
         <div className="container mx-auto px-4 py-16 space-y-12 relative z-10">
-          <nav aria-label="Breadcrumb" className="text-sm text-slate-400">
-            <ol className="flex flex-wrap gap-2">
+          <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground">
+            <ol className="flex flex-wrap gap-2 font-medium">
               <li>
-                <a href="/" className="hover:text-slate-200">Home</a>
+                <a href="/" className="hover:text-foreground">Home</a>
               </li>
               <li aria-hidden="true">/</li>
-              <li className="text-slate-300">Pricing</li>
+              <li className="text-foreground font-semibold">Pricing</li>
             </ol>
           </nav>
 

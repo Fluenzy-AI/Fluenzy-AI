@@ -28,8 +28,10 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ session, pathname }) =>
       {/* Sidebar Header (Visible on Desktop) */}
       <div className="p-3 border-b border-white/5 hidden md:flex items-center space-x-3 bg-slate-900/50">
         <Link href="/" className="flex items-center space-x-3">
-          <img src="/favicon/apple-touch-icon.png" alt="Logo" className="h-10 w-auto rounded-lg" />
-          <span className="text-xl font-black bg-gradient-primary !bg-clip-text text-transparent">Fluenzy AI</span>
+          <div className="p-1 rounded-xl bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/20 border border-red-500/30 flex items-center justify-center">
+            <img src="/favicon/wthem.png" alt="Logo" className="h-8 w-auto rounded-lg object-contain" />
+          </div>
+          <span className="text-xl font-black bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent tracking-tight">Fluenzy AI</span>
         </Link>
       </div>
 

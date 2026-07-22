@@ -1,7 +1,6 @@
 // src/lib/jobs/matcher.ts
 import { Job, JobMatch } from '@/types/jobs';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { traceGeminiCall, FEATURES } from '@/lib/langsmith';
+import { generateJSON } from '@/lib/gemini-router';
 
 /**
  * Calculate base match score when no user skills available
@@ -106,52 +105,19 @@ Return ONLY valid JSON (no markdown, no explanation):
 
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      generationConfig: { temperature: 0.1, maxOutputTokens: 256 },
-    });
-
-    // ── LangSmith trace wraps the Gemini call ────────────────────────────────
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error('AbortError: Gemini timeout')), 12000)
-    );
-
-    const resultPromise = traceGeminiCall({
-      feature:    FEATURES.RESUME_ATS,
-      name:       `Job Match: ${job.title} @ ${job.company}`,
-      model:      'gemini-1.5-flash',
-      userPrompt: prompt,
-      metadata:   { job_id: job.id, job_title: job.title, company: job.company as string },
-      fn:         () => model.generateContent(prompt),
-    });
-
-    const result = await Promise.race([resultPromise, timeoutPromise]);
-    const text = result.response.text();
-
-    if (!text) {
-      console.warn('[Matcher] No response from Gemini');
-      return keywordMatch(job, userSkills);
-    }
-
-    // Parse JSON, handling potential markdown code blocks
-    const cleanText = text.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(cleanText);
-
+    const parsed = await generateJSON<{
+      matchScore: number;
+      matchedSkills: string[];
+      missingSkills: string[];
+    }>(prompt);
     return {
       ...job,
-      matchScore:     parsed.matchScore     ?? 0,
-      matchedSkills:  parsed.matchedSkills  ?? [],
-      missingSkills:  parsed.missingSkills  ?? [],
+      matchScore:    parsed.matchScore    ?? 0,
+      matchedSkills: parsed.matchedSkills ?? [],
+      missingSkills: parsed.missingSkills ?? [],
     };
   } catch (error: any) {
-    if (error.name === 'AbortError' || error.message?.includes('AbortError')) {
-      console.warn(`[Matcher] Gemini timeout for job: ${job.id}`);
-    } else {
-      console.warn(`[Matcher] Gemini error for job ${job.id}:`, error.message);
-    }
-
-    // Graceful fallback to keyword matching
+    console.warn(`[Matcher] Gemini error for job ${job.id}:`, error.message);
     return keywordMatch(job, userSkills, searchQuery);
   }
 }

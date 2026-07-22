@@ -40,9 +40,17 @@ function LoginForm() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">F</div>
-            <span className="text-white font-semibold text-lg">Fluenzy AI</span>
+          <Link href="/" className="inline-flex items-center gap-2.5 mb-6">
+            <div className="p-1 rounded-xl bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/20 border border-red-500/30 flex items-center justify-center">
+              <img
+                src="/favicon/wthem.png"
+                alt="Fluenzy AI Logo"
+                className="h-8 w-auto rounded-lg object-contain"
+              />
+            </div>
+            <span className="text-xl font-black bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent tracking-tight">
+              Fluenzy AI
+            </span>
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Candidate Login</h1>
           <p className="text-muted-foreground text-sm mt-1">Track your applications and manage your profile</p>

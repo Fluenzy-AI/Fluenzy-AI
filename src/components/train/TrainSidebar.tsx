@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface NavigationItem {
   title: string;
@@ -61,6 +62,7 @@ export function TrainSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { toggleSidebar } = useSidebar();
+  const { resolvedTheme } = useTheme();
   const [autoApplyStatus, setAutoApplyStatus] = useState<AutoApplySetupStatus>({
     completed: false,
     enabled: false,
@@ -136,7 +138,7 @@ export function TrainSidebar() {
       title: 'Company Tracks',
       icon: Building2,
       href: '/train/company',
-      badge: 'Premium',
+      badge: 'HOT 🔥',
       isActive: pathname === '/train/company',
     },
     {
@@ -222,11 +224,25 @@ export function TrainSidebar() {
     <Sidebar variant="inset">
       <SidebarHeader>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-white" />
+          <div className="flex items-center gap-2.5">
+            <div className={`p-1 rounded-xl transition-all ${
+              resolvedTheme === 'parchment'
+                ? 'bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/25 border border-red-500/30'
+                : resolvedTheme === 'forest'
+                ? 'bg-gradient-to-br from-emerald-600 to-amber-600 shadow-md shadow-emerald-500/25'
+                : resolvedTheme === 'midnight'
+                ? 'bg-gradient-to-br from-purple-600 to-indigo-600 shadow-md shadow-purple-500/25'
+                : 'bg-gradient-to-br from-red-600 to-rose-600 shadow-md'
+            }`}>
+              <img 
+                src="/favicon/apple-touch-icon.png" 
+                alt="Fluenzy AI Logo" 
+                className="w-7 h-7 rounded-lg object-contain"
+              />
             </div>
-            <span className="font-semibold text-lg">Fluenzy AI</span>
+            <span className="font-extrabold text-lg tracking-tight">
+              Fluenzy <span className={resolvedTheme === 'parchment' ? 'text-red-500 font-black' : 'text-primary'}>AI</span>
+            </span>
           </div>
           <SidebarTrigger className="ml-auto" />
         </div>

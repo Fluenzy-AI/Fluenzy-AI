@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { traceGeminiCall, extractRequestMetadata, FEATURES } from "@/lib/langsmith";
-
-const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY || '');
+import { generateJSON } from "@/lib/gemini-router";
 
 export async function POST(request: NextRequest) {
   try {
@@ -112,18 +109,7 @@ Respond in strict JSON:
 
     let report: Record<string, unknown>;
     try {
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-      const result = await traceGeminiCall({
-        feature: FEATURES.MOCK_INTERVIEW,
-        name: isCandidate ? 'evaluate-candidate-session' : 'evaluate-interviewer-session',
-        model: 'gemini-1.5-flash',
-        userPrompt: prompt,
-        metadata: traceMeta,
-        tags: [interviewType, role],
-        fn: () => model.generateContent(prompt)
-      }) as any;
-      const text = result.response.text().replace(/```json\n?|```\n?/g, '').trim();
-      report = JSON.parse(text);
+      report = await generateJSON<Record<string, unknown>>(prompt);
     } catch {
       // Fallback: generate synthetic scores
       report = isCandidate

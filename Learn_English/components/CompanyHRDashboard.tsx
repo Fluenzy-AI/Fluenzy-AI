@@ -113,20 +113,32 @@ const CompanyHRDashboard: React.FC = () => {
   /**
    * Upload file to /api/extract-resume which uses Gemini multimodal to extract
    * text from PDF (text-layer OR scanned), DOCX, and TXT files reliably.
-   *
-   * This replaces the old FileReader.readAsText() approach which silently
-   * produced empty/garbage output for binary PDFs and DOCX (zip) files.
+   * 
+   * Includes client-side TXT/plain-text fallback.
    */
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset state and show loading
     setExtractionError(null);
     setIsExtracting(true);
     setSelection(prev => ({ ...prev, fileName: file.name, resumeText: '' }));
 
-    console.log(`[RESUME_EXTRACT_START] Uploading ${file.name} (${file.size} bytes) to /api/extract-resume`);
+    // Client-side fallback for pure text files
+    if (file.type === 'text/plain') {
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = ev.target?.result as string;
+        setSelection(prev => ({ ...prev, resumeText: text }));
+        setIsExtracting(false);
+      };
+      reader.onerror = () => {
+        setExtractionError("Failed to read text file.");
+        setIsExtracting(false);
+      };
+      reader.readAsText(file);
+      return;
+    }
 
     try {
       const form = new FormData();
@@ -140,28 +152,17 @@ const CompanyHRDashboard: React.FC = () => {
       const data = await res.json();
 
       if (!res.ok) {
-        console.error(`[RESUME_EXTRACT_FAIL] HTTP ${res.status}:`, data.error);
-        setExtractionError(data.error || 'Extraction failed. Please paste your resume text below.');
-        setSelection(prev => ({ ...prev, resumeText: '' }));
+        console.error(`[RESUME_EXTRACT_FAIL] HTTP ${res.status}:`, data.error || data.message);
+        setExtractionError(data.error || 'Server could not process this file. Please try a different format (PDF/DOCX/TXT).');
         return;
       }
 
-      const extractedText: string = data.text || '';
-      console.log(
-        `[RESUME_EXTRACT_OK] method=${data.method}, chars=${extractedText.length}` +
-        (data.warning ? `, warning=${data.warning}` : '') +
-        (extractedText.length > 0 ? `, preview: "${extractedText.slice(0, 80)}..."` : ' (EMPTY!)')
-      );
+      setSelection(prev => ({ ...prev, resumeText: data.text || '' }));
+      if (data.warning) setExtractionError(data.warning);
 
-      if (data.warning) {
-        setExtractionError(data.warning);
-      }
-
-      setSelection(prev => ({ ...prev, resumeText: extractedText }));
     } catch (err) {
-      console.error('[RESUME_EXTRACT_ERROR] Network/parse error:', err);
-      setExtractionError('Could not reach server. Please paste your resume text below.');
-      setSelection(prev => ({ ...prev, resumeText: '' }));
+      console.error('[RESUME_EXTRACT_ERROR]', err);
+      setExtractionError('Connection error during upload. Please check your network.');
     } finally {
       setIsExtracting(false);
     }
@@ -183,23 +184,26 @@ const CompanyHRDashboard: React.FC = () => {
             </button>
             <div className="flex gap-2 w-full sm:w-auto">
               {[1, 2, 3, 4, 5].map(s => (
-                <div key={s} className={`h-1.5 flex-1 sm:flex-none sm:w-12 rounded-full transition-all ${step >= s ? 'bg-primary' : 'bg-border'}`}></div>
+                <div key={s} className={`h-2 flex-1 sm:flex-none sm:w-12 rounded-full transition-all ${step >= s ? 'bg-gradient-to-r from-red-600 to-rose-500 shadow-sm shadow-red-500/30' : 'bg-border'}`}></div>
               ))}
             </div>
           </div>
 
           {/* Main Card */}
-          <div className="bg-card/95 backdrop-blur-xl rounded-3xl sm:rounded-[3rem] border border-border shadow-2xl min-h-[500px] flex flex-col">
+          <div className="bg-card/95 backdrop-blur-2xl rounded-3xl sm:rounded-[3rem] border border-border/80 shadow-2xl min-h-[500px] flex flex-col overflow-hidden">
         {/* Step 1: Company */}
         {step === 1 && (
           <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
             <div className="text-center space-y-2">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold uppercase tracking-wider">
+                🍎 Apple iOS Aesthetic Track Setup
+              </span>
               <h2 className="text-2xl sm:text-3xl font-black text-card-foreground tracking-tight">Select Target Company</h2>
-              <p className="text-muted-foreground font-medium text-sm sm:text-base">Choose a company or add a custom one to unlock its specific HR culture.</p>
+              <p className="text-muted-foreground font-medium text-sm sm:text-base max-w-lg mx-auto">Choose a company or add a custom one to unlock its specific HR & technical culture.</p>
             </div>
             
             {!showCustomForm ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-5 sm:gap-6">
                 {COMPANIES.map(c => (
                   <button
                     key={c.id}
@@ -207,22 +211,22 @@ const CompanyHRDashboard: React.FC = () => {
                       setSelection({ ...selection, company: c.name, companyLogo: c.logo }); 
                       nextStep(); 
                     } }
-                    className={`p-8 rounded-3xl border-2 transition-all flex flex-col items-center justify-center gap-4 hover:shadow-lg hover:-translate-y-0.5 ${
-                      selection.company === c.name ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10' : 'border-border bg-background/60 hover:border-primary/30'
+                    className={`p-6 sm:p-8 rounded-3xl border-2 transition-all flex flex-col items-center justify-center gap-4 hover:shadow-xl hover:-translate-y-1 ${
+                      selection.company === c.name ? 'border-red-500 bg-red-500/10 shadow-xl shadow-red-500/20 ring-2 ring-red-500/30' : 'border-border/80 bg-background/60 hover:border-red-500/40 hover:bg-red-500/5'
                     }`}
                   >
-                    <img src={c.logo} alt={c.name} className="h-8 object-contain" />
-                    <span className="font-bold text-card-foreground">{c.name}</span>
+                    <img src={c.logo} alt={c.name} className="h-9 object-contain" />
+                    <span className="font-bold text-card-foreground text-base sm:text-lg">{c.name}</span>
                   </button>
                 ))}
                 <button 
                   onClick={() => setShowCustomForm(true)}
-                  className="p-8 rounded-3xl border-2 border-dashed border-border flex flex-col items-center justify-center gap-4 hover:border-primary/40 hover:bg-primary/5 transition-all group"
+                  className="p-6 sm:p-8 rounded-3xl border-2 border-dashed border-border/80 flex flex-col items-center justify-center gap-4 hover:border-red-500/50 hover:bg-red-500/5 transition-all group"
                 >
-                  <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center text-muted-foreground group-hover:bg-primary/15 group-hover:text-primary transition-all">
+                  <div className="w-12 h-12 bg-muted rounded-2xl flex items-center justify-center text-muted-foreground group-hover:bg-red-500/15 group-hover:text-red-500 transition-all">
                     <Plus size={24} />
                   </div>
-                  <span className="font-bold text-muted-foreground group-hover:text-primary transition-colors">Add Custom Company</span>
+                  <span className="font-bold text-muted-foreground group-hover:text-red-500 transition-colors text-sm sm:text-base">Add Custom Company</span>
                 </button>
               </div>
             ) : (
@@ -357,30 +361,30 @@ const CompanyHRDashboard: React.FC = () => {
                    className={`p-6 rounded-3xl border-2 flex flex-col items-center text-center gap-4 transition-all ${
                      isLight
                        ? isSelected
-                         ? 'border-indigo-500 bg-indigo-50 shadow-lg shadow-indigo-200/60'
-                         : 'border-slate-200 bg-white hover:border-indigo-300 hover:shadow-md'
+                         ? 'border-red-500 bg-red-50/80 shadow-lg shadow-red-200/60'
+                         : 'border-slate-200 bg-white hover:border-red-300 hover:shadow-md'
                        : isSelected
-                         ? 'border-primary bg-primary/10 shadow-md shadow-primary/10'
-                         : 'border-border bg-background/50 hover:border-primary/30'
+                         ? 'border-red-500 bg-red-500/10 shadow-md shadow-red-500/10'
+                         : 'border-border bg-background/50 hover:border-red-500/30'
                    }`}
                  >
                    <div className={`p-3 rounded-2xl ${
                      isLight
-                       ? isSelected ? 'bg-indigo-500 text-white' : 'bg-slate-100 text-slate-500'
-                       : isSelected ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                       ? isSelected ? 'bg-gradient-to-r from-red-600 to-rose-500 text-white' : 'bg-slate-100 text-slate-500'
+                       : isSelected ? 'bg-red-500 text-white' : 'bg-muted text-muted-foreground'
                    }`}>
                       <d.icon size={24} />
                    </div>
                    <div>
                      <p className={`font-black uppercase tracking-widest text-[10px] mb-1 ${
-                       isLight ? (isSelected ? 'text-indigo-700' : 'text-slate-700') : 'text-card-foreground'
+                       isLight ? (isSelected ? 'text-red-600' : 'text-slate-700') : 'text-card-foreground'
                      }`}>{d.id}</p>
                      <p className={`text-xs font-medium ${
                        isLight ? 'text-slate-500' : 'text-muted-foreground'
                      }`}>{d.desc}</p>
                    </div>
-                   {isSelected && isLight && (
-                     <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
+                   {isSelected && (
+                     <div className="w-5 h-5 rounded-full bg-red-500 flex items-center justify-center">
                        <CheckCircle2 size={12} className="text-white" />
                      </div>
                    )}
@@ -551,10 +555,10 @@ const CompanyHRDashboard: React.FC = () => {
                <button 
                  onClick={() => startInterview(localSettings)}
                  disabled={isExtracting}
-                 className={`px-20 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl transition-all transform ${
+                 className={`px-16 py-4 sm:px-20 sm:py-5 rounded-full font-black uppercase tracking-[0.2em] text-xs shadow-2xl transition-all transform ${
                    isExtracting
                      ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60 shadow-none'
-                     : 'bg-primary text-primary-foreground hover:brightness-110 hover:scale-105 shadow-primary/25'
+                     : 'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-500 hover:to-rose-500 hover:scale-105 shadow-xl shadow-red-600/30'
                  }`}
                >
                  {isExtracting ? (
@@ -574,14 +578,14 @@ const CompanyHRDashboard: React.FC = () => {
         )}
       </div>
 
-      <div className="bg-gradient-to-br from-primary/85 to-secondary/85 rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-10 text-white flex items-center justify-between shadow-2xl overflow-hidden relative">
+      <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-10 text-white flex items-center justify-between shadow-2xl overflow-hidden relative border border-red-500/30">
          <div className="relative z-10 space-y-2">
             <div className="flex items-center gap-2">
-               <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-               <p className="text-[10px] font-black uppercase tracking-widest text-white/70">Live Simulation Status</p>
+               <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+               <p className="text-[10px] font-black uppercase tracking-widest text-white/80">Live Simulation Status</p>
             </div>
             <h3 className="text-xl sm:text-2xl font-black">AI HR Engine Primed</h3>
-            <p className="text-white/85 text-sm max-w-md">Our model has ingested 10,000+ real interview patterns from {selection.company === 'custom' ? selection.customCompany : selection.company} to ensure the highest fidelity round.</p>
+            <p className="text-white/90 text-sm max-w-md">Our model has ingested 10,000+ real interview patterns from {selection.company === 'custom' ? selection.customCompany : selection.company} to ensure the highest fidelity round.</p>
          </div>
          <div className="opacity-10 absolute right-[-20px] top-[-20px] rotate-12 hidden sm:block">
             <Building2 size={240} />

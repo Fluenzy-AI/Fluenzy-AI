@@ -43,27 +43,26 @@ const posts = [
 
 export default function BlogIndexPage() {
   return (
-    <main className="bg-slate-950 text-slate-200">
-      <div className="container mx-auto px-4 py-16 space-y-12">
-        <nav aria-label="Breadcrumb" className="text-sm text-slate-400">
+    <main className="bg-background text-foreground min-h-screen pt-24 pb-16">
+      <div className="container mx-auto px-4 space-y-12">
+        <nav aria-label="Breadcrumb" className="text-sm text-muted-foreground font-medium">
           <ol className="flex flex-wrap gap-2">
             <li>
-              <a href="/" className="hover:text-slate-200">Home</a>
+              <a href="/" className="hover:text-foreground">Home</a>
             </li>
             <li aria-hidden="true">/</li>
-            <li className="text-slate-300">Blog</li>
+            <li className="text-foreground font-semibold">Blog</li>
           </ol>
         </nav>
 
-        <header className="relative overflow-hidden rounded-3xl border border-slate-800/70 bg-gradient-to-br from-slate-900/80 via-slate-900/40 to-slate-950 p-10">
-          <div className="absolute -top-16 right-0 h-56 w-56 rounded-full bg-purple-500/10 blur-3xl" />
-          <div className="absolute bottom-0 left-0 h-56 w-56 rounded-full bg-cyan-500/10 blur-3xl" />
+        <header className="relative overflow-hidden rounded-3xl border border-border bg-card p-8 sm:p-12 shadow-md">
+          <div className="absolute -top-16 right-0 h-56 w-56 rounded-full bg-red-500/10 blur-3xl pointer-events-none" />
           <div className="relative space-y-5 max-w-4xl">
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-400">Fluenzy AI Blog</p>
-            <h1 className="text-3xl md:text-5xl font-bold text-white">
-              Fluenzy AI Blog – Interview Preparation with AI
+            <p className="text-xs uppercase tracking-[0.25em] font-bold text-red-500">Fluenzy AI Blog</p>
+            <h1 className="text-3xl md:text-5xl font-black text-foreground tracking-tight">
+              Fluenzy AI Blog – <span className="bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent">Interview Preparation with AI</span>
             </h1>
-            <p className="text-base leading-relaxed text-slate-300 max-w-3xl">
+            <p className="text-base leading-relaxed text-muted-foreground font-medium max-w-3xl">
               The Fluenzy AI blog is your resource hub for AI interview preparation, FAANG interview practice, and practical
               guidance across communication, HR, and technical interview preparation with AI. Our goal is to share clear,
               actionable strategies that help candidates build confidence and perform at their best in real interviews. Each
@@ -73,13 +72,13 @@ export default function BlogIndexPage() {
             <div className="flex flex-wrap gap-3">
               <a
                 href="/blog/prepare-for-faang-interviews-with-ai"
-                className="rounded-full bg-gradient-to-r from-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950 shadow-lg shadow-purple-500/30 transition hover:shadow-purple-500/50"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 px-5 py-2.5 text-sm font-bold text-white shadow-md hover:scale-[1.02] transition-all"
               >
                 Read the Guide
               </a>
               <a
                 href="/pricing"
-                className="rounded-full border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-400"
+                className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-bold text-foreground hover:bg-muted transition-all"
               >
                 View Pricing
               </a>

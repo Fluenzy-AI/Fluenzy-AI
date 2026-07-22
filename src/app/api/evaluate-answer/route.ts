@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { enforceModuleAccess } from '@/lib/serverAccessCheck';
-
-import { traceGeminiCall, extractRequestMetadata, FEATURES } from '@/lib/langsmith';
+import { generateJSON } from '@/lib/gemini-router';
+import { extractRequestMetadata } from '@/lib/langsmith';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,14 +37,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Question and answer are required' }, { status: 400 });
     }
 
-    // 1. Environment Variable Check (support both GEMINI_API_KEY and NEXT_PUBLIC_GEMINI_API_KEY)
-    const apiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!apiKey) {
-      console.error('CRITICAL: GEMINI_API_KEY is missing in .env');
-      return NextResponse.json({ error: 'API key configuration error' }, { status: 500 });
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
 
     const prompt = `
 You are Fluenzy AI, an advanced AI Interview Coach. Analyze this transcript.
@@ -82,56 +73,9 @@ Provide evaluation in STRICT JSON format:
       conversationId: context,
     });
 
-    // --- SMART MODEL SELECTION & FALLBACK (2026 UPDATED) ---
-    let result;
-    try {
-      // Primary: Gemini 2.5 Pro (State-of-the-art for reasoning)
-      const modelPro = genAI.getGenerativeModel({ 
-        model: 'gemini-2.5-pro', 
-        generationConfig: { responseMimeType: "application/json" } 
-      });
-      
-      result = await traceGeminiCall({
-        feature: FEATURES.INTERVIEW_AI,
-        name: 'evaluate-answer-pro',
-        model: 'gemini-2.5-pro',
-        userPrompt: prompt,
-        metadata: traceMeta,
-        tags: [module || 'unspecified', 'primary'],
-        fn: () => modelPro.generateContent(prompt)
-      });
-    } catch (proError: any) {
-      console.warn("Gemini 2.5 Pro busy or 404, switching to 2.5 Flash...");
-      
-      // Fallback: Gemini 2.5 Flash (Reliable & Fast)
-      const modelFlash = genAI.getGenerativeModel({ 
-        model: 'gemini-2.5-flash',
-        generationConfig: { responseMimeType: "application/json" }
-      });
-      
-      result = await traceGeminiCall({
-        feature: FEATURES.INTERVIEW_AI,
-        name: 'evaluate-answer-flash-fallback',
-        model: 'gemini-2.5-flash',
-        userPrompt: prompt,
-        metadata: traceMeta,
-        tags: [module || 'unspecified', 'fallback'],
-        fn: () => modelFlash.generateContent(prompt)
-      });
-    }
-
-    const response = await result.response;
-    const text = response.text();
-
-    // 2. Safer JSON parsing with Cleanup
-    try {
-      const evaluation = JSON.parse(text);
-      return NextResponse.json(evaluation);
-    } catch (parseError) {
-      // Cleanup backticks if JSON mode wasn't strictly followed by AI
-      const cleanedText = text.replace(/```json\n?|\n?```/g, '').trim();
-      return NextResponse.json(JSON.parse(cleanedText));
-    }
+    // gemini-router: cycles all keys × models automatically (quality-first for answer eval)
+    const evaluation = await generateJSON(prompt, { preferHighCapability: true });
+    return NextResponse.json(evaluation);
 
   } catch (error: any) {
     console.error('Final Evaluation error:', error);

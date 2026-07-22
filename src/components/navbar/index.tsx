@@ -2,7 +2,7 @@
 import { signOut, useSession } from "next-auth/react";
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, Sparkles, X, User, CreditCard, LogOut, Bell, Search, ChevronRight, Building2, Briefcase } from "lucide-react";
+import { Menu, Sparkles, X, User, CreditCard, LogOut, Bell, Search, ChevronRight, Building2, Briefcase, GraduationCap } from "lucide-react";
 
 interface CandidateSession { id: string; name: string; email: string }
 interface CompanyMemberSession { id: string; name: string; email: string; role: string; companyName: string }
@@ -80,7 +80,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
       fetch("/api/candidates/me")
         .then(r => r.ok ? r.json() : null)
         .then(d => { if (d?.candidate) setCandidate(d.candidate); })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [pathname]);
 
@@ -100,7 +100,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
             });
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [pathname]);
 
@@ -114,10 +114,10 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
   // Get the display name and initial
   const displayName = user?.name || 'User';
   const userInitial = displayName.charAt(0).toUpperCase();
-  
+
   // Get the best avatar URL - use custom avatar, then session image, then null
   const avatarUrl = user?.avatar || session?.user?.image || null;
-  
+
   // Determine if we should show the image or fallback
   const showAvatarImage = avatarUrl && !imageError;
 
@@ -155,11 +155,10 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
     <motion.nav
       initial={{ y: -100 }}
       animate={{ y: 0 }}
-      className={`fixed top-0 right-0 z-40 transition-all duration-300 ${showSidebar ? 'md:left-[280px] left-0' : 'left-0'} ${
-        isScrolled
+      className={`fixed top-0 right-0 z-40 transition-all duration-300 ${showSidebar ? 'md:left-[280px] left-0' : 'left-0'} ${isScrolled
           ? 'bg-slate-900/85 backdrop-blur-2xl backdrop-saturate-150 border-b border-white/10 shadow-lg shadow-black/30'
           : 'bg-slate-900/65 backdrop-blur-xl border-b border-white/5'
-      }`}
+        }`}
     >
       <div className="container mx-auto px-3 sm:px-4 md:px-8 xl:px-16 py-2">
         <div className="flex items-center justify-between h-12">
@@ -192,12 +191,14 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
               whileTap={{ scale: 0.98 }}
               onClick={() => window.location.href = "/"}
             >
-              <img
-                src="/favicon/apple-touch-icon.png"
-                alt="Fluenzy AI Logo"
-                className="h-10 w-auto rounded-lg shadow-lg shadow-purple-500/10"
-              />
-              <span className="text-xl font-black bg-gradient-primary !bg-clip-text text-transparent tracking-tight hidden sm:block">
+              <div className="p-1 rounded-xl bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/20 border border-red-500/30">
+                <img
+                  src="/favicon/wthem.png"
+                  alt="Fluenzy AI Logo"
+                  className="h-8 w-auto rounded-lg object-contain"
+                />
+              </div>
+              <span className="text-xl font-black bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent tracking-tight hidden sm:block">
                 Fluenzy AI
               </span>
             </motion.div>
@@ -219,19 +220,19 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-full pr-3 sm:pr-4 p-1 transition-all duration-200 h-auto">
-                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[10px] font-black text-white overflow-hidden uppercase ring-2 ring-white/10">
-                          {showAvatarImage ? (
-                            <img 
-                              src={avatarUrl!} 
-                              alt={displayName} 
-                              className="w-full h-full object-cover"
-                              referrerPolicy="no-referrer"
-                              onError={() => setImageError(true)}
-                            />
-                          ) : (
-                            userInitial
-                          )}
-                       </div>
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[10px] font-black text-white overflow-hidden uppercase ring-2 ring-white/10">
+                        {showAvatarImage ? (
+                          <img
+                            src={avatarUrl!}
+                            alt={displayName}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={() => setImageError(true)}
+                          />
+                        ) : (
+                          userInitial
+                        )}
+                      </div>
                       <span className="hidden sm:inline-block text-xs font-bold text-slate-200 max-w-[80px] truncate">{displayName.split(' ')[0]}</span>
                     </Button>
                   </DropdownMenuTrigger>
@@ -288,7 +289,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                       Dashboard
                     </Link>
                   </div>
-                ): (
+                ) : (
                   <div className="flex items-center gap-2">
                     <Link href="/candidates/login"
                       className="hidden sm:inline-flex h-9 items-center px-4 rounded-full text-[11px] font-bold uppercase tracking-widest border border-white/15 text-slate-300 hover:text-white hover:border-white/30 hover:bg-white/5 transition-all">
@@ -326,14 +327,48 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                   </div>
                 )
               ) : (
-                // Default: Landing page & /jobs pages - show only Sign In button
-                <Button
-                  variant="hero"
-                  className="h-9 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] sm:px-8 sm:text-xs sm:tracking-widest"
-                  onClick={() => router.push("/login")}
-                >
-                  Sign In
-                </Button>
+                // Default: Landing page & public pages - show For Companies, For Colleges & Sign In button
+                <div className="flex items-center gap-1.5 sm:gap-2.5">
+                  <Link
+                    href="/company-portal"
+                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                  >
+                    <Building2 className="w-3.5 h-3.5 text-red-500" />
+                    <span>For Companies</span>
+                  </Link>
+                  <Link
+                    href="/college-portal"
+                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                  >
+                    <GraduationCap className="w-3.5 h-3.5 text-red-500" />
+                    <span>For Colleges</span>
+                  </Link>
+                  <Link
+                    href="/pricing"
+                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                  >
+                    <span>Pricing</span>
+                  </Link>
+                  <Link
+                    href="/hirelens"
+                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                  >
+                    <span>HireLens</span>
+                  </Link>
+                  <Link
+                    href="/blog"
+                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                  >
+                    <span>Blog</span>
+                  </Link>
+                  <Button
+                    variant="hero"
+                    className="h-9 rounded-full px-4 text-[11px] font-black uppercase tracking-[0.2em] sm:px-6 sm:text-xs sm:tracking-widest"
+                    onClick={() => router.push("/login")}
+                  >
+                    Sign In
+                  </Button>
+                </div>
               )
             )}
           </div>

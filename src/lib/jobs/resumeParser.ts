@@ -1,6 +1,5 @@
 // src/lib/jobs/resumeParser.ts
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { traceGeminiCall, FEATURES } from '@/lib/langsmith';
+import { generateJSON } from '@/lib/gemini-router';
 
 export async function extractTextFromPDF(buffer: Buffer): Promise<string> {
   console.log("[Resume] Starting PDF extraction");
@@ -32,22 +31,8 @@ ${resumeText.slice(0, 3000)}
 `;
 
   try {
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-
-    // ── LangSmith trace wraps the Gemini call ────────────────────────────────
-    const result = await traceGeminiCall({
-      feature:    FEATURES.RESUME_ATS,
-      name:       'Resume Skill Extraction',
-      model:      'gemini-1.5-flash',
-      userPrompt: prompt,
-      fn:         () => model.generateContent(prompt),
-    });
-
-    const text = result.response.text();
-    if (!text) throw new Error('No response');
-
-    return JSON.parse(text.replace(/```json|```/g, '').trim());
+    const skills = await generateJSON<string[]>(prompt);
+    return Array.isArray(skills) ? skills : [];
   } catch (err) {
     console.warn('[Resume] Gemini failed, using fallback:', err);
     return fallbackKeywordExtract(resumeText);

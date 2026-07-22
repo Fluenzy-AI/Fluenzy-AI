@@ -1,16 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { generateJSON } from "@/lib/gemini-router";
 
-import { traceGeminiCall, extractRequestMetadata, FEATURES } from "@/lib/langsmith";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-
-if (!GEMINI_API_KEY) {
-  console.warn("GEMINI_API_KEY not configured - AI evaluation will be limited");
-}
-
-const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
-const model = genAI?.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 interface GDTranscriptEntry {
   participantId: string;
@@ -79,26 +69,7 @@ export async function POST(req: NextRequest) {
     const userStats = participantStats.get(userId) || { count: 0, charCount: 0 };
     const talkTimePercent = totalChars > 0 ? Math.round((userStats.charCount / totalChars) * 100) : 0;
 
-    // If no Gemini API, return basic scores
-    if (!model) {
-      const basicScore = calculateBasicScore(transcript, userId);
-      return NextResponse.json({
-        scores: {
-          contentQuality: basicScore,
-          communication: basicScore,
-          leadership: Math.max(0, basicScore - 10),
-          teamwork: basicScore,
-          confidence: basicScore,
-          overall: basicScore,
-        },
-        feedback: `You participated in ${userStats.count} out of ${totalMessages} messages (${talkTimePercent}% of discussion). Continue to engage actively and build on others' points.`,
-        highlights: userStats.count > 0 ? ["Active participation in the discussion"] : [],
-        improvements: userStats.count < totalMessages * 0.2 
-          ? ["Increase participation frequency", "Share more original viewpoints"] 
-          : ["Build more on others' ideas"],
-        talkTimePercent,
-      });
-    }
+
 
     // Format transcript for Gemini
     const formattedTranscript = transcript
@@ -136,32 +107,9 @@ IMPORTANT:
 - The overall score should reflect interview readiness
 - Respond ONLY with valid JSON, no markdown or explanation`;
 
-    const traceMeta = extractRequestMetadata(req, {
-      userId,
-      sessionId,
-      conversationId: topic,
-    });
-
+    const traceMeta = { userId, sessionId };
     try {
-      const result = await traceGeminiCall({
-        feature: FEATURES.GROUP_DISCUSSION,
-        name: 'evaluate-gd',
-        model: 'gemini-1.5-flash',
-        userPrompt: prompt,
-        metadata: traceMeta,
-        tags: [topic],
-        fn: () => model.generateContent(prompt)
-      });
-      const responseText = result.response.text();
-      
-      // Parse JSON from response
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error("No JSON found in response");
-      }
-
-      const evaluation = JSON.parse(jsonMatch[0]);
-
+      const evaluation = await generateJSON<any>(prompt);
       return NextResponse.json({
         ...evaluation,
         talkTimePercent,
@@ -169,9 +117,7 @@ IMPORTANT:
         totalMessages,
       });
     } catch (aiError) {
-      console.error("Gemini evaluation failed:", aiError);
-      
-      // Fallback to basic evaluation
+      console.error("[EVALUATE_GD] Gemini evaluation failed:", aiError);
       const basicScore = calculateBasicScore(transcript, userId);
       return NextResponse.json({
         scores: {

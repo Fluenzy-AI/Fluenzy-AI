@@ -3,16 +3,7 @@
  * Generates professional marketing emails with contextual content
  */
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { traceGeminiCall, FEATURES, TraceMetadata } from "@/lib/langsmith";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-
-if (!GEMINI_API_KEY) {
-  console.warn("GEMINI_API_KEY not set - AI email generation will be disabled");
-}
-
-const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+import { generateJSON } from "@/lib/gemini-router";
 
 export interface AIEmailRequest {
   prompt: string;
@@ -46,11 +37,6 @@ export async function generateMarketingEmail(
   request: AIEmailRequest,
   metadata?: TraceMetadata
 ): Promise<AIEmailResponse> {
-  if (!genAI) {
-    throw new Error("Gemini API is not configured. Please set GEMINI_API_KEY environment variable.");
-  }
-
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   const toneInstructions = getToneInstructions(request.tone || "professional");
   const senderContext = getSenderContext(request.senderType);
@@ -89,36 +75,10 @@ Respond in JSON format with the following structure:
 }`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.AI_CHAT,
-      name: "generate-marketing-email",
-      model: "gemini-2.0-flash",
-      userPrompt: systemPrompt,
-      metadata: metadata,
-      fn: () => model.generateContent(systemPrompt),
-    });
-    const response = result.response;
-    const text = response.text();
-
-    // Parse JSON from response
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to parse AI response");
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
-    // Calculate spam score
+    const parsed = await generateJSON<any>(systemPrompt);
     const spamScore = calculateSpamScore(parsed.subject + " " + parsed.bodyText);
-
-    // Ensure unsubscribe link is present
-    if (!parsed.bodyHtml.includes("{{unsubscribe_link}}")) {
-      parsed.bodyHtml = addUnsubscribeLink(parsed.bodyHtml);
-    }
-    if (!parsed.bodyText.includes("{{unsubscribe_link}}")) {
-      parsed.bodyText += "\n\nUnsubscribe: {{unsubscribe_link}}";
-    }
-
+    if (!parsed.bodyHtml.includes("{{unsubscribe_link}}")) parsed.bodyHtml = addUnsubscribeLink(parsed.bodyHtml);
+    if (!parsed.bodyText.includes("{{unsubscribe_link}}")) parsed.bodyText += "\n\nUnsubscribe: {{unsubscribe_link}}";
     return {
       subject: parsed.subject,
       bodyHtml: parsed.bodyHtml,
@@ -170,23 +130,7 @@ Respond in JSON format:
 }`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.AI_CHAT,
-      name: "generate-email-variations",
-      model: "gemini-2.0-flash",
-      userPrompt: prompt,
-      metadata: metadata,
-      fn: () => model.generateContent(prompt),
-    });
-    const text = result.response.text();
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to parse AI response");
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
+    const parsed = await generateJSON<{ variations: any[] }>(prompt);
     return parsed.variations.map((v: any) => ({
       subject: v.subject,
       bodyHtml: v.bodyHtml,
@@ -240,23 +184,7 @@ Respond in JSON format:
 }`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.AI_CHAT,
-      name: "improve-email-content",
-      model: "gemini-2.0-flash",
-      userPrompt: prompt,
-      metadata: metadata,
-      fn: () => model.generateContent(prompt),
-    });
-    const text = result.response.text();
-
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Failed to parse AI response");
-    }
-
-    const parsed = JSON.parse(jsonMatch[0]);
-
+    const parsed = await generateJSON<any>(prompt);
     return {
       subject: parsed.subject,
       bodyHtml: parsed.bodyHtml,

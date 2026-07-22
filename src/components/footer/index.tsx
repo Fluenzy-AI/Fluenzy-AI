@@ -13,20 +13,14 @@ const Footer = () => {
           {/* Brand Column */}
           <div className="lg:col-span-1">
             <div className="flex items-center space-x-3 mb-4">
-              <img 
-                src="/favicon/apple-touch-icon.png" 
-                alt="Fluenzy AI Logo" 
-                className="h-14 w-auto rounded-lg shadow-lg"
-              />
-              <span
-                className="text-2xl font-black tracking-tight"
-                style={{
-                  background: 'var(--gradient-primary)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}
-              >
+              <div className="p-1 rounded-xl bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/20 border border-red-500/30 flex items-center justify-center">
+                <img
+                  src="/favicon/wthem.png"
+                  alt="Fluenzy AI Logo"
+                  className="h-8 w-auto rounded-lg object-contain"
+                />
+              </div>
+              <span className="text-2xl font-black bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent tracking-tight">
                 Fluenzy AI
               </span>
             </div>
@@ -65,6 +59,16 @@ const Footer = () => {
               <li>
                 <Link href="/hirelens" className="text-muted-foreground hover:text-primary transition-colors text-sm">
                   HireLens Device
+                </Link>
+              </li>
+              <li>
+                <Link href="/company-portal" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+                  Company Portal
+                </Link>
+              </li>
+              <li>
+                <Link href="/college-portal" className="text-muted-foreground hover:text-primary transition-colors text-sm font-medium">
+                  College Portal
                 </Link>
               </li>
               <li>

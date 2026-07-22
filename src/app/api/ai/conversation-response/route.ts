@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-import { traceGeminiCall, extractRequestMetadata, FEATURES } from "@/lib/langsmith";
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
-const model = genAI?.getGenerativeModel({ model: "gemini-1.5-flash" });
+import { generateText } from "@/lib/gemini-router";
+import { extractRequestMetadata } from "@/lib/langsmith";
 
 interface ConversationMessage {
   role: "ai" | "user";
@@ -44,19 +39,7 @@ export async function POST(req: NextRequest) {
       .map((m) => `${m.role === "ai" ? "Interviewer" : "Candidate"}: ${m.content}`)
       .join("\n");
 
-    if (!model) {
-      // Fallback responses without AI
-      const fallbackResponses = [
-        "That's an interesting perspective. Could you elaborate more on that?",
-        "I see your point. How would you apply this in a real workplace scenario?",
-        "That's a thoughtful response. What challenges might you face implementing this approach?",
-        "Good observation. How does your experience relate to this?",
-        "Interesting viewpoint. What would be your next steps based on this?",
-      ];
-      return NextResponse.json({
-        response: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
-      });
-    }
+    // gemini-router handles key + model rotation automatically
 
     const systemContext = context === "corporate_assessment" 
       ? "You are a professional corporate interviewer conducting a voice assessment. Be friendly but professional. Ask follow-up questions to assess the candidate's communication skills, professionalism, and subject matter knowledge."
@@ -80,21 +63,10 @@ Respond with ONLY the response text, no JSON or formatting.`;
     });
 
     try {
-      const result = await traceGeminiCall({
-        feature: FEATURES.AI_CHAT,
-        name: 'conversation-response',
-        model: 'gemini-1.5-flash',
-        systemPrompt: systemContext,
-        userPrompt: prompt,
-        metadata: traceMeta,
-        tags: [context || 'general', topic],
-        fn: () => model.generateContent(prompt)
-      });
-      const response = result.response.text().trim();
-      
-      return NextResponse.json({ response });
+      const response = await generateText(prompt);
+      return NextResponse.json({ response: response.trim() });
     } catch (error) {
-      console.error("Gemini error:", error);
+      console.error("[CONVERSATION_RESPONSE] Gemini error:", error);
       return NextResponse.json({
         response: "That's interesting. Can you tell me more about your perspective on this?",
       });

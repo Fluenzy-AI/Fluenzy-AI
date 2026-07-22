@@ -54,11 +54,19 @@ export const metadata: Metadata = {
     google: "your-google-site-verification-code", // Replace with actual
   },
   icons: {
-    icon: '/favicon/white-removebg-preview1.png',
-    shortcut: '/favicon/white-removebg-preview1.png',
-    apple: '/favicon/white-removebg-preview1.png',
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/android-chrome-192x192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/android-chrome-512x512.png', sizes: '512x512', type: 'image/png' },
+    ],
+    shortcut: '/favicon.ico',
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
   },
-  manifest: '/favicon/site.webmanifest',
+  manifest: '/site.webmanifest',
 };
 
 export const viewport: Viewport = {
@@ -66,7 +74,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: "#5B6CFF",
+  themeColor: "#ef4444",
 };
 
 export default function RootLayout({
@@ -77,13 +85,16 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* PWA Meta Tags */}
-        <link rel="manifest" href="/manifest.json" />
-        <meta name="theme-color" content="#5B6CFF" />
+        {/* Favicon & PWA Meta Tags */}
+        <link rel="manifest" href="/site.webmanifest" />
+        <meta name="theme-color" content="#ef4444" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="FluenzyAI" />
-        <link rel="apple-touch-icon" href="/favicon/white-removebg-preview1.png" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         {/* Razorpay Checkout Script */}
         <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         <script

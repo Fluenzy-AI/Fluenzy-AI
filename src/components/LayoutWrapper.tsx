@@ -44,6 +44,9 @@ import {
   Clock,
   Award,
   Bookmark,
+  Leaf,
+  Coffee,
+  Terminal,
   Trophy
 } from 'lucide-react';
 import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
@@ -93,6 +96,9 @@ const themeOptions: { value: ThemeName; label: string; icon: typeof Moon }[] = [
   { value: 'light', label: 'Light', icon: Sun },
   { value: 'system', label: 'System', icon: Monitor },
   { value: 'midnight', label: 'Night', icon: Moon },
+  { value: 'forest', label: 'Forest', icon: Leaf },
+  { value: 'parchment', label: 'Parchment', icon: Coffee },
+  { value: 'codeterm', label: 'Code', icon: Terminal },
 ];
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
@@ -227,12 +233,20 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         {/* Minimal Super Admin top bar */}
         <header className={`h-14 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-6 sticky top-0 z-30`}>
           <div className="flex items-center gap-3">
-            <img 
-              src={isLight ? "/favicon/wthem.png" : "/favicon/apple-touch-icon.png"} 
-              alt="Fluenzy AI Logo" 
-              className="w-12 h-12 rounded-lg shadow-md"
-            />
-            <span className={`font-bold ${currentTheme.text}`}>Fluenzy AI</span>
+            <div className={`p-1 rounded-xl transition-all ${
+              theme === 'parchment'
+                ? 'bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/25 border border-red-500/30'
+                : 'bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md'
+            }`}>
+              <img 
+                src="/favicon/apple-touch-icon.png" 
+                alt="Fluenzy AI Logo" 
+                className="w-9 h-9 rounded-lg object-contain"
+              />
+            </div>
+            <span className={`font-bold ${currentTheme.text}`}>
+              Fluenzy <span className={theme === 'parchment' ? 'text-red-500 font-black' : currentTheme.accent}>AI</span>
+            </span>
             <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 ml-1">SUPER ADMIN</span>
           </div>
           <div className="flex items-center gap-3">
@@ -246,6 +260,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 {theme === 'light' && <Sun size={18} />}
                 {theme === 'system' && <Monitor size={18} />}
                 {theme === 'midnight' && <Sparkles size={18} />}
+                {theme === 'forest' && <Leaf size={18} />}
+                {theme === 'parchment' && <Coffee size={18} />}
+                {theme === 'codeterm' && <Terminal size={18} />}
               </button>
               <AnimatePresence>
                 {showThemeMenu && (
@@ -376,13 +393,27 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {/* Logo */}
       <div className={`p-4 border-b ${currentTheme.cardBorder} flex items-center justify-between`}>
         <Link href="/" className="flex items-center gap-3">
-          <img 
-            src={isLight ? "/favicon/wthem.png" : "/favicon/apple-touch-icon.png"} 
-            alt="Fluenzy AI Logo" 
-            className="w-14 h-14 rounded-xl shadow-md"
-          />
+          <div className={`p-1.5 rounded-2xl transition-all ${
+            theme === 'parchment'
+              ? 'bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/25 border border-red-500/30'
+              : theme === 'forest'
+              ? 'bg-gradient-to-br from-emerald-600 to-amber-600 shadow-md shadow-emerald-500/25'
+              : theme === 'midnight'
+              ? 'bg-gradient-to-br from-purple-600 to-indigo-600 shadow-md shadow-purple-500/25'
+              : isLight
+              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md'
+              : 'bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md'
+          }`}>
+            <img 
+              src="/favicon/apple-touch-icon.png" 
+              alt="Fluenzy AI Logo" 
+              className="w-11 h-11 rounded-xl object-contain"
+            />
+          </div>
           {!collapsed && (
-            <span className={`font-bold ${currentTheme.text} text-lg`}>Fluenzy AI</span>
+            <span className={`font-extrabold ${currentTheme.text} text-xl tracking-tight`}>
+              Fluenzy <span className={theme === 'parchment' ? 'text-red-500 font-black' : currentTheme.accent}>AI</span>
+            </span>
           )}
         </Link>
         {mobile && (
@@ -411,9 +442,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                   ${isActive
-                    ? isLight
-                      ? 'text-indigo-600 bg-indigo-50 font-semibold border-l-2 border-indigo-400'
-                      : `${currentTheme.accent} bg-cyan-500/10`
+                    ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
                     : isLight
                       ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                       : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
@@ -422,7 +451,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 `}
                 title={collapsed ? item.label : undefined}
               >
-                <item.icon size={20} className={isActive ? isLight ? 'text-indigo-500' : 'text-cyan-400' : ''} />
+                <item.icon size={20} className={isActive ? currentTheme.activeIconColor : ''} />
                 {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
                 {!collapsed && 'badge' in item && item.badge && (
                   <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30">
@@ -432,7 +461,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 {isActive && !('badge' in item && item.badge) && (
                   <motion.div
                     layoutId={mobile ? 'activeIndicator-mobile' : 'activeIndicator-desktop'}
-                    className={`ml-auto w-1.5 h-1.5 rounded-full ${isLight ? 'bg-indigo-500' : 'bg-[#5B6CFF]'}`}
+                    className={`ml-auto w-1.5 h-1.5 rounded-full ${currentTheme.activeIconColor.replace('text-', 'bg-')}`}
                   />
                 )}
               </Link>
@@ -458,8 +487,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                   ${isActive
                     ? isLight
-                      ? 'text-indigo-600 bg-indigo-50 font-semibold border-l-2 border-indigo-400'
-                      : `${currentTheme.accent} bg-cyan-500/10`
+                      ? `${currentTheme.activeIconColor} ${currentTheme.activeNavBg} font-semibold border-l-2 border-indigo-400`
+                      : `${currentTheme.accent} ${currentTheme.activeNavBg}`
                     : isLight
                       ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                       : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
@@ -468,7 +497,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 `}
                 title={collapsed ? item.label : undefined}
               >
-                <item.icon size={20} className={isActive ? isLight ? 'text-indigo-500' : 'text-cyan-400' : ''} />
+                <item.icon size={20} className={isActive ? currentTheme.activeIconColor : ''} />
                 {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
                 {/* Special badge for Auto-Apply Setup */}
                 {!collapsed && item.href === '/train/auto-apply-setup' && (
@@ -506,9 +535,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 className={`
                   flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
                   ${isActive
-                    ? isLight
-                      ? 'text-indigo-600 bg-indigo-50 font-semibold border-l-2 border-indigo-400'
-                      : `${currentTheme.accent} bg-cyan-500/10`
+                    ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
                     : isLight
                       ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                       : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
@@ -517,7 +544,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 `}
                 title={collapsed ? item.label : undefined}
               >
-                <item.icon size={20} className={isActive ? isLight ? 'text-indigo-500' : 'text-cyan-400' : ''} />
+                <item.icon size={20} className={isActive ? currentTheme.activeIconColor : ''} />
                 {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
               </Link>
             );
@@ -558,7 +585,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                       className={`
                         w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors
                         ${theme === option.value
-                          ? isLight ? 'bg-indigo-50 text-indigo-600 font-medium' : 'bg-cyan-500/20 text-cyan-400'
+                          ? isLight ? `${currentTheme.activeNavBg} ${currentTheme.activeIconColor} font-medium` : `${currentTheme.activeNavBg} ${currentTheme.accent}`
                           : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                         }
                       `}
@@ -649,7 +676,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   href="/train/live"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     pathname.startsWith('/train/live')
-                      ? isLight ? 'text-indigo-600 bg-indigo-50 font-semibold' : `${currentTheme.text} bg-white/10`
+                      ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
                       : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                   }`}
                 >
@@ -665,7 +692,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                       href={item.href}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                         isActive
-                          ? isLight ? 'text-indigo-600 bg-indigo-50 font-semibold' : `${currentTheme.text} bg-white/10`
+                          ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
                           : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                       }`}
                     >
@@ -686,6 +713,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   {theme === 'light' && <Sun size={20} />}
                   {theme === 'system' && <Monitor size={20} />}
                   {theme === 'midnight' && <Sparkles size={20} />}
+                  {theme === 'forest' && <Leaf size={20} />}
+                  {theme === 'parchment' && <Coffee size={20} />}
+                  {theme === 'codeterm' && <Terminal size={20} />}
                 </button>
                 
                 <AnimatePresence>
@@ -711,7 +741,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                             className={`
                               w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors
                               ${theme === option.value
-                                ? isLight ? 'bg-indigo-50 text-indigo-600 font-medium' : 'bg-[#5B6CFF]/20 text-[#5B6CFF]'
+                                ? `${currentTheme.activeNavBg} ${currentTheme.accent} font-medium`
                                 : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                               }
                             `}
