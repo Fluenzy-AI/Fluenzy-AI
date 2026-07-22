@@ -77,6 +77,27 @@ const client = new Client({
   apiUrl: LANGSMITH_ENDPOINT,
 });
 
+// ─── Startup diagnostic ───────────────────────────────────────────────────────
+// Logs once at module-load time so you can confirm the env vars that the running
+// process actually sees (not just what's in the .env file on disk).
+if (typeof process !== 'undefined') {
+  const keyStatus = !LANGSMITH_API_KEY
+    ? '❌ MISSING — set LANGSMITH_API_KEY in .env'
+    : LANGSMITH_API_KEY === 'your_langsmith_api_key_here'
+    ? '❌ PLACEHOLDER — replace with your real key from https://smith.langchain.com'
+    : `✅ set (${LANGSMITH_API_KEY.slice(0, 8)}…)`;
+
+  console.log(
+    `[LangSmith] Tracing=${TRACING_ENABLED} | Key=${keyStatus} | Project="${LANGSMITH_PROJECT}" | Env=${APP_ENV}`
+  );
+
+  if (!TRACING_ENABLED && LANGSMITH_API_KEY) {
+    console.warn(
+      '[LangSmith] LANGSMITH_TRACING is not "true" — tracing is disabled. Check .env: LANGSMITH_TRACING=true'
+    );
+  }
+}
+
 // ─── Utility: safely extract text from Gemini result ────────────────────────
 function extractGeminiText(result: unknown): string {
   try {

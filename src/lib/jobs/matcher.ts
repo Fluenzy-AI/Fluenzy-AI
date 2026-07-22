@@ -1,5 +1,7 @@
 // src/lib/jobs/matcher.ts
-import { Job, JobMatch } from "@/types/jobs";
+import { Job, JobMatch } from '@/types/jobs';
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { traceGeminiCall, FEATURES } from '@/lib/langsmith';
 
 /**
  * Calculate base match score when no user skills available
@@ -102,60 +104,53 @@ Return ONLY valid JSON (no markdown, no explanation):
 }
 `;
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 12000); // 12 second timeout
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 256,
-          }
-        }),
-        signal: controller.signal,
-      }
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-1.5-flash',
+      generationConfig: { temperature: 0.1, maxOutputTokens: 256 },
+    });
+
+    // ── LangSmith trace wraps the Gemini call ────────────────────────────────
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('AbortError: Gemini timeout')), 12000)
     );
-    
-    clearTimeout(timeoutId);
-    
-    if (!res.ok) {
-      console.warn(`[Matcher] Gemini API error: ${res.status}`);
-      return keywordMatch(job, userSkills);
-    }
-    
-    const data = await res.json();
-    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
+
+    const resultPromise = traceGeminiCall({
+      feature:    FEATURES.RESUME_ATS,
+      name:       `Job Match: ${job.title} @ ${job.company}`,
+      model:      'gemini-1.5-flash',
+      userPrompt: prompt,
+      metadata:   { job_id: job.id, job_title: job.title, company: job.company as string },
+      fn:         () => model.generateContent(prompt),
+    });
+
+    const result = await Promise.race([resultPromise, timeoutPromise]);
+    const text = result.response.text();
+
     if (!text) {
-      console.warn("[Matcher] No response from Gemini");
+      console.warn('[Matcher] No response from Gemini');
       return keywordMatch(job, userSkills);
     }
-    
+
     // Parse JSON, handling potential markdown code blocks
-    const cleanText = text.replace(/```json|```/g, "").trim();
+    const cleanText = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(cleanText);
-    
-    return { 
-      ...job, 
-      matchScore: parsed.matchScore ?? 0,
-      matchedSkills: parsed.matchedSkills ?? [],
-      missingSkills: parsed.missingSkills ?? [],
+
+    return {
+      ...job,
+      matchScore:     parsed.matchScore     ?? 0,
+      matchedSkills:  parsed.matchedSkills  ?? [],
+      missingSkills:  parsed.missingSkills  ?? [],
     };
   } catch (error: any) {
-    clearTimeout(timeoutId);
-    
-    if (error.name === "AbortError") {
+    if (error.name === 'AbortError' || error.message?.includes('AbortError')) {
       console.warn(`[Matcher] Gemini timeout for job: ${job.id}`);
     } else {
       console.warn(`[Matcher] Gemini error for job ${job.id}:`, error.message);
     }
-    
+
     // Graceful fallback to keyword matching
     return keywordMatch(job, userSkills, searchQuery);
   }

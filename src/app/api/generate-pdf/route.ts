@@ -1083,10 +1083,17 @@ const analyzeSnapshotWithVision = async (
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
     const prompt = `You are a professional interview coach analyzing a single video frame captured during a mock job interview.\n\nLook carefully at this specific image and describe what you actually see:\n1. OBSERVATION: What behavioral issue is visible in THIS frame? Be specific about posture, gaze direction, head angle, shoulder position, facial tension, or expression. Do NOT give a generic description — describe only what is visually present.\n2. SUGGESTION: Give ONE clear, actionable correction the candidate can apply immediately.\n\nSystem flagged issue: ${normalizeIssueLabel(issueCode)}\n\nRespond in this exact format (two lines only):\nOBSERVATION: <specific visual observation>\nSUGGESTION: <one actionable correction>`;
-    const result = await model.generateContent([
-      { text: prompt },
-      { inlineData: { mimeType: "image/jpeg", data: base64Only } },
-    ]);
+    // ── LangSmith trace wraps the multimodal Gemini call ─────────────────────
+    const result = await traceGeminiCall({
+      feature:    FEATURES.MOCK_INTERVIEW,
+      name:       `Frame Observation: ${normalizeIssueLabel(issueCode)}`,
+      model:      'gemini-2.0-flash',
+      userPrompt: prompt,
+      fn: () => model.generateContent([
+        { text: prompt },
+        { inlineData: { mimeType: 'image/jpeg', data: base64Only } },
+      ]),
+    });
     const text = result.response.text().trim();
     const obsMatch = text.match(/OBSERVATION:\s*(.+)/i);
     const suggMatch = text.match(/SUGGESTION:\s*(.+)/i);

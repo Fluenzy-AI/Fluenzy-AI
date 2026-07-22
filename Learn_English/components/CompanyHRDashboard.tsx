@@ -71,16 +71,75 @@ const CompanyHRDashboard: React.FC = () => {
       .map(([key, val]) => `&${key}=${encodeURIComponent(val)}`)
       .join('');
 
-    router.push(`/train/session/${ModuleType.COMPANY_WISE_HR}?company=${encodeURIComponent(company)}&companyLogo=${encodeURIComponent(companyLogo)}&role=${encodeURIComponent(role)}&experience=${encodeURIComponent(selection.experience)}&difficulty=${encodeURIComponent(selection.difficulty)}&roundType=${encodeURIComponent(selection.roundType)}&resumeText=${encodeURIComponent(selection.resumeText)}&isCompanyWise=true${settingsParams}`);
+    // ── Store resume text in sessionStorage, NOT in the URL ──────────────────
+    // URL query params have a ~2 000-char browser limit. An 8 000-char encoded
+    // resume would be truncated mid-percent-sequence, causing URIError on decode.
+    const resumeKey = `resume_${Date.now()}`;
+    if (selection.resumeText) {
+      try {
+        sessionStorage.setItem(resumeKey, selection.resumeText);
+      } catch {
+        // sessionStorage quota exceeded — proceed without resume text
+        console.warn('[CompanyHRDashboard] sessionStorage write failed; resumeText will be omitted.');
+      }
+    }
+
+    router.push(
+      `/train/session/${ModuleType.COMPANY_WISE_HR}` +
+      `?company=${encodeURIComponent(company)}` +
+      `&companyLogo=${encodeURIComponent(companyLogo)}` +
+      `&role=${encodeURIComponent(role)}` +
+      `&experience=${encodeURIComponent(selection.experience)}` +
+      `&difficulty=${encodeURIComponent(selection.difficulty)}` +
+      `&roundType=${encodeURIComponent(selection.roundType)}` +
+      (selection.resumeText ? `&resumeKey=${encodeURIComponent(resumeKey)}` : '') +
+      `&isCompanyWise=true` +
+      settingsParams
+    );
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setSelection({ ...selection, fileName: file.name });
-      setSelection(prev => ({ ...prev, resumeText: `Resume content for ${file.name}. Simulated extraction of skills and projects...` }));
-    }
+    if (!file) return;
+
+    setSelection(prev => ({ ...prev, fileName: file.name, resumeText: '' }));
+
+    const reader = new FileReader();
+
+    reader.onload = (event) => {
+      const raw = event.target?.result;
+      let text = '';
+
+      if (typeof raw === 'string') {
+        // Plain text or best-effort PDF text extraction
+        // Strip common PDF binary garbage while preserving readable words
+        text = raw
+          .replace(/[^\x20-\x7E\n\r\t]/g, ' ')  // drop non-printable bytes
+          .replace(/\s{3,}/g, '\n')               // collapse runs of whitespace
+          .trim();
+      }
+
+      // Cap at 8000 chars so the system instruction stays within Gemini's token limits
+      // while still providing the full resume for almost all real-world resumes.
+      const capped = text.length > 8000 ? text.slice(0, 8000) + '\n[...resume truncated for length]' : text;
+
+      setSelection(prev => ({
+        ...prev,
+        resumeText: capped || `[Could not extract text from ${file.name}. Please paste your resume in the text box below.]`,
+      }));
+    };
+
+    reader.onerror = () => {
+      setSelection(prev => ({
+        ...prev,
+        resumeText: `[File read error for ${file.name}. Please paste your resume text below.]`,
+      }));
+    };
+
+    // readAsText works for .txt and gives best-effort extraction from text-based PDFs/docs
+    reader.readAsText(file);
   };
+
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)] px-4 sm:px-6 lg:px-8 py-6">

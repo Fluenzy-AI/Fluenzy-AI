@@ -42,7 +42,7 @@ export function buildSessionConfig(
 
   // Timing → delay ms
   const timingOption = RESPONSE_TIMING_OPTIONS.find(t => t.id === settings.responseTiming);
-  const responseDelayMs = timingOption?.delayMs ?? 1200;
+  const responseDelayMs = timingOption?.delayMs ?? 150; // default: near-instant
 
   // Compose full system prompt addon
   const systemPromptAddons = [

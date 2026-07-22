@@ -61,6 +61,12 @@ export interface QAPair {
   timestamp: string;
   isStrongMoment?: boolean;
   isWeakMoment?: boolean;
+  // ── Prompt 1 Transcript Reconstruction metadata (interview modules only) ──
+  p1Status?: 'ok' | 'capture_failed' | 'partial';
+  p1Confidence?: 'high' | 'medium' | 'low';
+  p1UnclearSpans?: string[];
+  /** true when Prompt 1 returned capture_failed — exclude this turn from scoring */
+  isCaptureFailed?: boolean;
 }
 
 // Added InterviewQA interface to store structured question-answer pairs with metrics
@@ -74,6 +80,12 @@ export interface InterviewQA {
   timestamp: string;
   isStrongMoment?: boolean;
   isWeakMoment?: boolean;
+  // ── Prompt 1 Transcript Reconstruction metadata (interview modules only) ──
+  p1Status?: 'ok' | 'capture_failed' | 'partial';
+  p1Confidence?: 'high' | 'medium' | 'low';
+  p1UnclearSpans?: string[];
+  /** true when Prompt 1 returned capture_failed — exclude this turn from scoring */
+  isCaptureFailed?: boolean;
 }
 
 export interface SessionRecord {

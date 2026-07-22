@@ -72,6 +72,26 @@ export const VOICE_OPTIONS: VoiceOption[] = [
   },
 ];
 
+// ── Canonical Gemini Live Voice Map ──────────────────────────────────────────
+// SINGLE source of truth: persona key → Gemini Live voiceName + verified gender.
+// VoiceAgent reads this at session-start and passes voiceName in speechConfig.
+// Gender tags are verified against the Gemini Live API voice library.
+//
+// Voice characteristics:
+//   Kore   — firm, confident, clear                (female) → Priya
+//   Charon — informative, calm, professional       (male)   → Arjun
+//   Aoede  — breezy, natural, warm                 (female) → Sarah
+//   Fenrir — excitable, energetic, direct          (male)   → Marcus
+//
+// To change a voice: edit ONLY this map. Never duplicate this mapping elsewhere.
+export const GEMINI_VOICE_MAP: Record<VoiceId, { voiceName: string; gender: 'female' | 'male' }> = {
+  priya:  { voiceName: 'Kore',   gender: 'female' },
+  arjun:  { voiceName: 'Charon', gender: 'male'   },
+  sarah:  { voiceName: 'Aoede',  gender: 'female' },
+  marcus: { voiceName: 'Fenrir', gender: 'male'   },
+};
+
+
 // ── Setting 3: Interview Style ────────────────────────────────────────────────
 export type PressureStyle = 'supportive' | 'professional' | 'pressure';
 
@@ -123,21 +143,21 @@ export const RESPONSE_TIMING_OPTIONS: ResponseTimingOption[] = [
     id: 'instant',
     emoji: '⚡',
     label: 'Instant',
-    delayMs: 300,
+    delayMs: 0,           // was 300ms — zero artificial delay
     useCase: 'Fast-paced stress practice',
   },
   {
     id: 'natural',
     emoji: '⏱️',
     label: 'Natural',
-    delayMs: 1200,
+    delayMs: 150,         // was 1200ms — slight buffer for smooth audio queue
     useCase: 'Mimics real human interviewer pause',
   },
   {
     id: 'thoughtful',
     emoji: '🤔',
     label: 'Thoughtful',
-    delayMs: 2500,
+    delayMs: 600,         // was 2500ms — noticeable but not painful pause
     useCase: 'Beginners who need processing time',
   },
 ];

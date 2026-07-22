@@ -18,20 +18,43 @@ except ImportError:
     print("[LangSmith] SDK not available. Run: pip install langsmith")
 
 # Configuration
-LANGSMITH_API_KEY = os.environ.get("LANGSMITH_API_KEY")
+LANGSMITH_API_KEY = os.environ.get("LANGSMITH_API_KEY", "")
 LANGSMITH_TRACING = os.environ.get("LANGSMITH_TRACING", "false").lower() == "true"
 LANGSMITH_PROJECT = os.environ.get("LANGSMITH_PROJECT", "Fluenzy AI")
 LANGSMITH_ENDPOINT = os.environ.get("LANGSMITH_ENDPOINT", "https://api.smith.langchain.com")
 APP_ENV = os.environ.get("APP_ENV", "development")
 
+# ── Startup diagnostic — log what the process actually sees ──────────────────
+# This fires once at import time. Check server logs to confirm env var values.
+_key_status = (
+    "❌ MISSING"          if not LANGSMITH_API_KEY
+    else "❌ PLACEHOLDER — replace with real key" if LANGSMITH_API_KEY == "your_langsmith_api_key_here"
+    else f"✅ set ({LANGSMITH_API_KEY[:8]}…)"
+)
+print(
+    f"[LangSmith] Tracing={LANGSMITH_TRACING} | Key={_key_status} | "
+    f'Project="{LANGSMITH_PROJECT}" | Endpoint={LANGSMITH_ENDPOINT} | Env={APP_ENV}'
+)
+if LANGSMITH_API_KEY and not LANGSMITH_TRACING:
+    print("[LangSmith] ⚠️  LANGSMITH_TRACING is not 'true' — tracing is disabled. "
+          "Set LANGSMITH_TRACING=true in .env (exact lowercase string).")
+
 # Initialize client
 client: Optional[Client] = None
-if LANGSMITH_AVAILABLE and LANGSMITH_API_KEY and LANGSMITH_TRACING:
+if LANGSMITH_AVAILABLE and LANGSMITH_API_KEY and LANGSMITH_API_KEY != "your_langsmith_api_key_here" and LANGSMITH_TRACING:
     try:
         client = Client(api_url=LANGSMITH_ENDPOINT, api_key=LANGSMITH_API_KEY)
-        print(f"[LangSmith] Initialized client for project: {LANGSMITH_PROJECT}")
+        print(f"[LangSmith] ✅ Client initialized for project: \"{LANGSMITH_PROJECT}\"")
     except Exception as e:
-        print(f"[LangSmith] Initialization failed: {e}")
+        print(f"[LangSmith] ❌ Initialization failed: {e}")
+else:
+    if not LANGSMITH_AVAILABLE:
+        print("[LangSmith] SDK not installed — run: pip install langsmith")
+    elif not LANGSMITH_API_KEY or LANGSMITH_API_KEY == "your_langsmith_api_key_here":
+        print("[LangSmith] No valid API key — traces will be silently dropped.")
+    elif not LANGSMITH_TRACING:
+        print("[LangSmith] LANGSMITH_TRACING != 'true' — traces disabled.")
+
 
 
 def _post_run_async(

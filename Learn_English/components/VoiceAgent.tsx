@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { GoogleGenAI, Modality, StartSensitivity, EndSensitivity } from '@google/genai';
+import { GoogleGenAI, Modality } from '@google/genai';
 import { 
   X, 
   Sparkles,
@@ -17,6 +17,16 @@ import { useTheme } from '../../src/contexts/ThemeContext';
 import InterviewSettingsPanel from '../../src/components/session/InterviewSettingsPanel';
 import { InterviewSettings, DEFAULT_SETTINGS } from '../../src/types/interviewSettings';
 import { buildSessionConfig, settingsFromUrlParams } from '../../src/lib/sessionConfig';
+import { GEMINI_VOICE_MAP } from '../../src/types/interviewSettings';
+import {
+  runTranscriptReconstruction,
+  buildPrompt2Instruction,
+  buildCompanySimulatorInstruction,
+  Prompt2Context,
+  CompanySimulatorContext,
+  PRESSURE_STYLE_TO_PROMPT2,
+  TIMING_TO_PROMPT2,
+} from '../../src/lib/interviewEngine';
 
 // --- Utility Functions for Audio ---
 function decode(base64: string) {
@@ -151,22 +161,67 @@ const VoiceAgent: React.FC<{
   const isHRInterview = type === ModuleType.HR_INTERVIEW;
   const isConversationPractice = type === ModuleType.CONVERSATION_PRACTICE;
   const isGDCoach = type === ModuleType.GD_COACH;
+  // Interview modules use the Prompt 2 system instruction from interviewEngine.ts
+  const isInterviewModule = [
+    ModuleType.COMPANY_WISE_HR,
+    ModuleType.TECH_INTERVIEW,
+    ModuleType.FULL_MOCK,
+    ModuleType.COMPANY_SPECIFIC,
+  ].includes(type as ModuleType);
   const { resolvedTheme } = useTheme();
   const isLight = resolvedTheme === 'light';
 
+  // ── Safe URI decoder ──────────────────────────────────────────────────────────────
+  // decodeURIComponent throws URIError when the URL has been truncated
+  // (e.g. a %2 at the end without two hex digits) or contains bare `%` chars.
+  // This helper swallows the error and falls back to the raw encoded value.
+  const safeDecodeParam = (raw: string | null): string | undefined => {
+    if (!raw) return undefined;
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      console.warn('[VoiceAgent] decodeURIComponent failed for param value, using raw:', raw.slice(0, 40));
+      return raw;
+    }
+  };
+
+  // ── Resume text: stored in sessionStorage to avoid URL length limits ─────────
+  // CompanyHRDashboard writes the text under a short `resumeKey` param.
+  // useRef so it reads once per mount (safe against Strict Mode double-invocation).
+  const resumeKey = searchParams.get('resumeKey');
+  const resumeTextRef = useRef<string | undefined>(
+    // IIFE: runs once synchronously at component initialization time.
+    // useRef does NOT accept a lazy initializer function (unlike useState).
+    (() => {
+      if (!resumeKey || typeof window === 'undefined') return undefined;
+      try {
+        return sessionStorage.getItem(resumeKey) ?? undefined;
+      } catch {
+        return undefined;
+      }
+    })()
+  );
+  // Clean up the sessionStorage entry once after mount so it doesn't persist
+  useEffect(() => {
+    if (resumeKey && typeof window !== 'undefined') {
+      try { sessionStorage.removeItem(resumeKey); } catch { /* ignore */ }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const sessionMeta: any = {
-    lessonId: searchParams.get('lessonId'),
-    lessonTitle: searchParams.get('lessonTitle') ? decodeURIComponent(searchParams.get('lessonTitle')!) : undefined,
-    company: searchParams.get('company') ? decodeURIComponent(searchParams.get('company')!) : undefined,
-    companyLogo: searchParams.get('companyLogo') ? decodeURIComponent(searchParams.get('companyLogo')!) : undefined,
-    role: searchParams.get('role') ? decodeURIComponent(searchParams.get('role')!) : undefined,
-    experience: searchParams.get('experience') ? decodeURIComponent(searchParams.get('experience')!) : undefined,
-    difficulty: searchParams.get('difficulty') ? decodeURIComponent(searchParams.get('difficulty')!) : undefined,
-    roundType: searchParams.get('roundType') ? decodeURIComponent(searchParams.get('roundType')!) : undefined,
-    resumeText: searchParams.get('resumeText') ? decodeURIComponent(searchParams.get('resumeText')!) : undefined,
+    lessonId:      searchParams.get('lessonId'),
+    lessonTitle:   safeDecodeParam(searchParams.get('lessonTitle')),
+    company:       safeDecodeParam(searchParams.get('company')),
+    companyLogo:   safeDecodeParam(searchParams.get('companyLogo')),
+    role:          safeDecodeParam(searchParams.get('role')),
+    experience:    safeDecodeParam(searchParams.get('experience')),
+    difficulty:    safeDecodeParam(searchParams.get('difficulty')),
+    roundType:     safeDecodeParam(searchParams.get('roundType')),
+    resumeText:    resumeTextRef.current,
     isCompanyWise: searchParams.get('isCompanyWise') === 'true',
-    focus: searchParams.get('focus') ? decodeURIComponent(searchParams.get('focus')!) : undefined,
-    level: searchParams.get('level') ? decodeURIComponent(searchParams.get('level')!) : undefined
+    focus:         safeDecodeParam(searchParams.get('focus')),
+    level:         safeDecodeParam(searchParams.get('level')),
   };
 
   // Lesson-specific messaging for English
@@ -457,7 +512,15 @@ const VoiceAgent: React.FC<{
       await inputAudioContextRef.current.resume();
       await outputAudioContextRef.current.resume();
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // echoCancellation prevents AI speaker audio bleeding into the mic,
+      // which was causing the VAD to self-trigger in a response loop.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl:  true,
+        }
+      });
       streamRef.current = stream;
 
     
@@ -495,27 +558,99 @@ const VoiceAgent: React.FC<{
         return 'Advanced';
       };
 
-      const config = buildSessionConfig(getActiveSettings(), sessionMeta);
-      const instruction = `
-        ${SYSTEM_INSTRUCTIONS[type as ModuleType] || 'Senior Interview Coach.'}
-        ${config.systemPromptAddons ? `STRICT STYLE & SPEECH PACE INSTRUCTIONS: ${config.systemPromptAddons}` : ''}
-        ${isEnglishLearning
-          ? `CONTEXT: Lesson Topic: ${sessionMeta?.lessonTitle || 'General English Practice'}, User Proficiency Level: ${user.proficiency}. Focus on teaching English skills, not conducting interviews.`
-          : isHRInterview
-          ? `CONTEXT: HR Lesson Topic: ${sessionMeta?.lessonTitle || 'General HR Interview Practice'}. Focus on HR interview coaching, behavioral questions, and professional communication skills. Do not ask technical or coding questions.`
-          : isConversationPractice
-          ? `CONTEXT: Daily conversation practice. Engage in natural English speaking practice with topics like office small talk, daily life, and casual professional chats. User Proficiency Level: ${user.proficiency}. Be a friendly conversation partner, not an interviewer.`
-          : isGDCoach
-          ? `CONTEXT:
+      // ── System Instruction ────────────────────────────────────────────────
+      // Interview modules: use the full Prompt 2 instruction from interviewEngine.ts.
+      // All other modules: keep existing SYSTEM_INSTRUCTIONS constant.
+      let instruction: string;
+
+      if (isInterviewModule) {
+        if (type === ModuleType.COMPANY_WISE_HR) {
+          // ── Enterprise-Grade Company Interview Simulator (v3.0) ──────────────
+          // Uses the full 10-section spec: resume-anchored, company-specific,
+          // round-type branched, experience-calibrated, intensity-gated verification.
+          const simulatorCtx: CompanySimulatorContext = {
+            target_company:   sessionMeta?.company    || 'Top MNC',
+            round_type:       sessionMeta?.roundType  || 'Technical Interview',
+            job_role:         sessionMeta?.role       || user.jobRole || 'Software Engineer',
+            experience_level: sessionMeta?.experience || user.experienceLevel || 'Fresher',
+            intensity:        sessionMeta?.difficulty || 'Intermediate',
+            resume_text:      sessionMeta?.resumeText || '',
+          };
+
+          instruction = buildCompanySimulatorInstruction(simulatorCtx);
+          console.log('[COMPANY_SIMULATOR_ACTIVE] Enterprise-grade prompt built for:',
+            simulatorCtx.target_company, '/', simulatorCtx.job_role,
+            '| Round:', simulatorCtx.round_type,
+            '| Level:', simulatorCtx.experience_level,
+            '| Intensity:', simulatorCtx.intensity,
+            '| Resume chars:', simulatorCtx.resume_text.length,
+          );
+        } else {
+          // Build candidate context summary from sessionMeta + user profile
+          const candidateCtx = [
+            sessionMeta?.role || user.jobRole ? `Role applying for: ${sessionMeta?.role || user.jobRole}` : '',
+            sessionMeta?.experience ? `Experience level: ${sessionMeta.experience}` : `Experience level: ${user.experienceLevel}`,
+            sessionMeta?.roundType ? `Round type: ${sessionMeta.roundType}` : '',
+            sessionMeta?.resumeText ? `Resume highlights: ${sessionMeta.resumeText.slice(0, 600)}` : '',
+          ].filter(Boolean).join('. ');
+
+          const currentSettings = getActiveSettings();
+          const prompt2Ctx: Prompt2Context = {
+            target_company: sessionMeta?.company || 'Top MNC',
+            target_role:    sessionMeta?.role    || user.jobRole,
+            candidate_name: user.name,
+            candidate_context: candidateCtx || `${user.experienceLevel} level candidate targeting ${sessionMeta?.company || 'top companies'}.`,
+            style:         PRESSURE_STYLE_TO_PROMPT2[currentSettings.pressureStyle] || 'Professional',
+            response_time: TIMING_TO_PROMPT2[currentSettings.responseTiming]        || 'Natural',
+            speed:         currentSettings.voiceSpeed,
+          };
+
+          instruction = buildPrompt2Instruction(prompt2Ctx);
+          console.log('[PROMPT2_ACTIVE] Interview Engine v2.0 system instruction built for:', prompt2Ctx.target_company, '/', prompt2Ctx.target_role);
+          console.log('[PROMPT2_STYLE]', prompt2Ctx.style, '| TIMING:', prompt2Ctx.response_time, '| SPEED:', prompt2Ctx.speed);
+        }
+      } else {
+        const config = buildSessionConfig(getActiveSettings(), sessionMeta);
+        instruction = `
+          ${SYSTEM_INSTRUCTIONS[type as ModuleType] || 'Senior Interview Coach.'}
+          ${config.systemPromptAddons ? `STRICT STYLE & SPEECH PACE INSTRUCTIONS: ${config.systemPromptAddons}` : ''}
+          ${isEnglishLearning
+            ? `CONTEXT: Lesson Topic: ${sessionMeta?.lessonTitle || 'General English Practice'}, User Proficiency Level: ${user.proficiency}. Focus on teaching English skills, not conducting interviews.`
+            : isHRInterview
+            ? `CONTEXT: HR Lesson Topic: ${sessionMeta?.lessonTitle || 'General HR Interview Practice'}. Focus on HR interview coaching, behavioral questions, and professional communication skills. Do not ask technical or coding questions.`
+            : isConversationPractice
+            ? `CONTEXT: Daily conversation practice. Engage in natural English speaking practice with topics like office small talk, daily life, and casual professional chats. User Proficiency Level: ${user.proficiency}. Be a friendly conversation partner, not an interviewer.`
+            : isGDCoach
+            ? `CONTEXT:
           Selected Level: ${getGDLevel()}
           Selected Chapter: ${sessionMeta?.lessonTitle || 'GD Practice'}
           Selected Module ID: ${sessionMeta?.lessonId || 'gd1'}
           
           STRICT INSTRUCTION: Teach ONLY this chapter "${sessionMeta?.lessonTitle}". Do NOT explain what GD is, GD rules, evaluation criteria, or any other chapter. Stay within the scope of this specific chapter only.`
-          : `CONTEXT: Role: ${sessionMeta?.role || user.jobRole}, Company: ${sessionMeta?.company || 'Top MNC'}, Resume: ${sessionMeta?.resumeText || 'General Profile'}.
+            : `CONTEXT: Role: ${sessionMeta?.role || user.jobRole}, Company: ${sessionMeta?.company || 'Top MNC'}, Resume: ${sessionMeta?.resumeText || 'General Profile'}.
         Use your thinking budget to analyze resume projects and company requirements before every question.`
-        }
-      `;
+          }
+        `;
+      }
+
+      // ── Voice Resolution: read fresh at session-start, never from a stale closure ──
+      const activeSettingsAtStart = getActiveSettings();
+      const voiceEntry = GEMINI_VOICE_MAP[activeSettingsAtStart.voiceId];
+
+      // Runtime assertion — fires in DevTools if mapping is ever missing
+      if (!voiceEntry) {
+        console.error(
+          `[VOICE_BUG] No Gemini voice mapping found for voiceId="${activeSettingsAtStart.voiceId}". ` +
+          'Falling back to Aoede (female). Check GEMINI_VOICE_MAP in interviewSettings.ts.'
+        );
+      } else {
+        console.log(
+          `[VOICE_OK] Persona: ${activeSettingsAtStart.voiceId} ` +
+          `→ Gemini voiceName: "${voiceEntry.voiceName}" (${voiceEntry.gender})`
+        );
+      }
+
+      const geminiVoiceName = voiceEntry?.voiceName ?? 'Aoede';
 
       const sessionPromise = ai.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-12-2025',
@@ -524,17 +659,26 @@ const VoiceAgent: React.FC<{
           systemInstruction: instruction,
           outputAudioTranscription: {},
           inputAudioTranscription: {},
-          thinkingConfig: { thinkingBudget: 24576 }, // max budget for 2.5 Flash
-          // Voice Activity Detection settings - prevent AI from interrupting user
+          // Disable thinking budget on Live sessions — full extended thinking
+          // adds 2-5 seconds of per-turn latency before the first audio byte.
+          // The Live API already streams natively; thinking budget is for batch generation.
+          thinkingConfig: { thinkingBudget: 0 },
+          // ── Voice selection: maps persona → Gemini prebuilt voice name ──────
+          // This is the ONLY place voiceName is sent to the provider.
+          // Source of truth: GEMINI_VOICE_MAP in src/types/interviewSettings.ts
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: {
+                voiceName: geminiVoiceName,
+              },
+            },
+          },
+          // ── MANUAL VAD MODE ──────────────────────────────────────────────────
+          // disabled: true means WE control when user speech starts/ends.
+          // The ⚡ button sends activityEnd which ONLY works in manual mode.
+          // In auto mode (disabled:false), activityEnd is silently ignored.
           realtimeInputConfig: {
-            automaticActivityDetection: {
-              disabled: false,
-              // Wait longer before considering user has stopped speaking
-              startOfSpeechSensitivity: StartSensitivity.START_SENSITIVITY_LOW, // Less sensitive to start detecting speech
-              endOfSpeechSensitivity: EndSensitivity.END_SENSITIVITY_LOW, // Wait longer before ending turn (prevents interruption)
-              prefixPaddingMs: 500, // 500ms padding before speech starts
-              silenceDurationMs: 1500, // Wait 1.5 seconds of silence before AI responds
-            }
+            automaticActivityDetection: { disabled: true }
           }
         },
         callbacks: {
@@ -543,34 +687,60 @@ const VoiceAgent: React.FC<{
             const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
             
-            // Track user speech activity for silence detection
-            let speechDetected = false;
-            
+            // ── Manual VAD state ─────────────────────────────────────────────
+            // Mirrors the speech level threshold so we control exactly when
+            // the AI turn starts (activityStart) and ends (activityEnd).
+            // activityEnd is what triggers the AI to generate a response.
+            let vadSpeechActive = false;
+            const SPEECH_THRESHOLD  = 0.008;  // RMS level that counts as speech
+            const SILENCE_MS        = 400;     // ms of silence → send activityEnd
+
             scriptProcessor.onaudioprocess = (e) => {
               const inputData = e.inputBuffer.getChannelData(0);
               const int16 = new Int16Array(inputData.length);
-              
-              // Calculate audio level for speech detection
+
               let sum = 0;
               for (let i = 0; i < inputData.length; i++) {
                 int16[i] = inputData[i] * 32768;
                 sum += Math.abs(inputData[i]);
               }
               const avgLevel = sum / inputData.length;
-              
-              // Detect if user is speaking (threshold ~0.01 for speech)
-              if (avgLevel > 0.01) {
-                lastUserSpeechRef.current = Date.now();
-                if (!speechDetected) {
-                  speechDetected = true;
-                  setIsUserSpeaking(true);
+
+              // Always stream audio to Gemini (required even in manual VAD mode)
+              sessionRef.current?.sendRealtimeInput({
+                audio: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' }
+              });
+
+              // ── GUARD: skip VAD entirely while AI is speaking ──────────────────
+              // Without this guard, the 400ms silence after AI finishes a sentence
+              // would fire activityEnd and trigger another AI response immediately,
+              // causing the AI to talk in an endless loop with no user input.
+              const aiCurrentlySpeaking = sourcesRef.current.size > 0;
+              if (aiCurrentlySpeaking) {
+                // Reset VAD state so we start fresh when AI stops speaking
+                if (vadSpeechActive) {
+                  vadSpeechActive = false;
+                  setIsUserSpeaking(false);
                 }
-              } else if (speechDetected && Date.now() - lastUserSpeechRef.current > 500) {
-                speechDetected = false;
-                setIsUserSpeaking(false);
+                return; // ← do NOT process VAD while AI speaks
               }
-              
-              sessionPromise.then(s => s.sendRealtimeInput({ audio: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' } }));
+
+              if (avgLevel > SPEECH_THRESHOLD) {
+                // ── User is speaking ────────────────────────────────────────
+                lastUserSpeechRef.current = Date.now();
+                if (!vadSpeechActive) {
+                  vadSpeechActive = true;
+                  setIsUserSpeaking(true);
+                  sessionRef.current?.sendRealtimeInput({ activityStart: {} });
+                  console.log('[VAD] activityStart — user speaking');
+                }
+              } else if (vadSpeechActive && Date.now() - lastUserSpeechRef.current > SILENCE_MS) {
+                // ── Silence for 400ms after speech → user done, trigger AI now ──
+                vadSpeechActive = false;
+                setIsUserSpeaking(false);
+                sessionRef.current?.sendRealtimeInput({ activityEnd: {} });
+                console.log('[VAD] activityEnd — user silent for', SILENCE_MS, 'ms, AI responds now');
+              }
             };
             source.connect(scriptProcessor); scriptProcessor.connect(inputAudioContextRef.current!.destination);
             
@@ -578,14 +748,14 @@ const VoiceAgent: React.FC<{
             // This triggers the AI to greet the user immediately
             sessionPromise.then(s => {
               const initialPrompt = isGDCoach 
-                ? `Start teaching the chapter "${sessionMeta?.lessonTitle || 'GD Practice'}". Greet the student briefly and begin the lesson immediately. Speak in a friendly, encouraging tone.`
+                ? `Start teaching the chapter "${sessionMeta?.lessonTitle || 'GD Practice'}". Greet the student briefly, introduce the chapter in one sentence, then ask ONE opening question. Then STOP and wait for the student to respond.`
                 : isEnglishLearning
-                ? `Start the English lesson on "${sessionMeta?.lessonTitle || 'English Practice'}". Greet the student warmly and begin teaching. Be encouraging and patient.`
+                ? `Start the English lesson on "${sessionMeta?.lessonTitle || 'English Practice'}". Greet the student warmly in one sentence, then ask ONE opening question to assess their level. Then STOP and wait for them to answer.`
                 : isConversationPractice
-                ? `Start a friendly conversation. Greet me warmly and ask me about my day or start with a casual topic. Be a friendly conversation partner.`
+                ? `Start a friendly conversation. Greet me in one sentence, then ask me ONE casual question. Then STOP and wait for my response.`
                 : isHRInterview
-                ? `Start the HR interview practice on "${sessionMeta?.lessonTitle || 'HR Interview'}". Greet me professionally and ask your first behavioral question.`
-                : `Start the interview. Greet me professionally and ask your first question based on my profile.`;
+                ? `Start the HR interview. Greet me in one professional sentence, then ask your FIRST question only. Then STOP SPEAKING and wait for my answer.`
+                : `Start the interview. Greet me in one sentence, then ask your FIRST question only. Then STOP SPEAKING immediately and wait for my answer.`;
               
               s.sendRealtimeInput({ text: initialPrompt });
               console.log('[AI_INITIAL_PROMPT] Sent initial prompt to make AI speak first');
@@ -621,11 +791,53 @@ const VoiceAgent: React.FC<{
               lastUserSpeechRef.current = Date.now();
             }
             if (m.serverContent?.turnComplete) {
-              transcriptHistory.current.push({ ...currentQA.current, timestamp: new Date().toLocaleTimeString() });
+              const completedQA = { ...currentQA.current, timestamp: new Date().toLocaleTimeString() };
+              transcriptHistory.current.push(completedQA);
+              const entryIndex = transcriptHistory.current.length - 1;
               currentQA.current = { question: '', answer: '' };
               // Reset last speech time when turn completes to give user time to respond
               lastUserSpeechRef.current = Date.now();
               isFirstChunkOfTurnRef.current = true;
+
+              // ── Prompt 1: Async Transcript Reconstruction (interview modules only) ────
+              // Fired in the background — does NOT block the Live audio stream.
+              // Back-patches the stored history entry once reconstruction resolves.
+              if (isInterviewModule && completedQA.answer.trim()) {
+                // Build conversation context from last 2 stored turns
+                const historyForContext = transcriptHistory.current.slice(-4, -1);
+                const conversationContext = historyForContext
+                  .map(h => `[HR]: ${h.question}\n[Candidate]: ${h.answer}`)
+                  .join('\n\n');
+
+                runTranscriptReconstruction(completedQA.answer, conversationContext)
+                  .then((p1Output) => {
+                    const entry = transcriptHistory.current[entryIndex];
+                    if (!entry) return;
+
+                    // Back-patch the entry with reconstruction metadata
+                    transcriptHistory.current[entryIndex] = {
+                      ...entry,
+                      // Replace raw STT answer with reconstructed text (unless capture failed)
+                      answer: p1Output.status !== 'capture_failed'
+                        ? p1Output.reconstructed_text || entry.answer
+                        : entry.answer,
+                      p1Status:       p1Output.status,
+                      p1Confidence:   p1Output.confidence,
+                      p1UnclearSpans: p1Output.unclear_spans,
+                      isCaptureFailed: p1Output.status === 'capture_failed',
+                    };
+
+                    if (p1Output.status === 'capture_failed') {
+                      // Inject a gentle in-session prompt so the Live AI asks the candidate to repeat.
+                      // This is a text nudge to the already-connected Live session.
+                      console.warn('[PROMPT1] capture_failed — nudging AI to ask for repeat');
+                      sessionRef.current?.sendRealtimeInput({
+                        text: '[CAPTURE_FAILED: the candidate\'s last response was not captured by the microphone. Please ask them politely to repeat their answer before continuing.]',
+                      });
+                    }
+                  })
+                  .catch((err) => console.error('[PROMPT1_BACKPATCH_ERROR]', err));
+              }
             }
             const data = m.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (data) {
@@ -747,6 +959,25 @@ From now on, speak and act strictly according to these new settings!]`
           </div>
         </div>
         <div className="flex items-center gap-1.5 md:gap-2 ml-2">
+          {/* ⚡ Instant Reply — forces AI to respond NOW via activityEnd (manual VAD mode) */}
+          {isActive && (
+            <button
+              id="instant-reply-btn"
+              onClick={() => {
+                if (!sessionRef.current) return;
+                sessionRef.current.sendRealtimeInput({ activityEnd: {} });
+                console.log('[INSTANT_REPLY] activityEnd → AI responds now');
+              }}
+              className={`p-2 rounded-xl border transition-all duration-150 active:scale-90
+                ${ isLight
+                  ? 'border-emerald-400 bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                  : 'border-emerald-500 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                }`}
+              title="Instant Reply — AI responds right now"
+            >
+              <Zap size={16} className="fill-current" />
+            </button>
+          )}
           {(!isEnglishLearning && !isConversationPractice && !isGDCoach) && (
             <button
               onClick={toggleSettings}
