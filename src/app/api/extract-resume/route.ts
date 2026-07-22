@@ -80,7 +80,8 @@ export async function POST(request: NextRequest) {
       let pdfParseText = '';
       try {
         // Dynamic import to avoid edge runtime issues
-        const pdfParse = (await import('pdf-parse')).default;
+        const pdfModule = await import('pdf-parse');
+        const pdfParse = (pdfModule as any).default || pdfModule;
         const parsed   = await pdfParse(buffer);
         pdfParseText   = (parsed.text || '').trim();
         console.log(`[RESUME_EXTRACT] pdf-parse extracted: ${pdfParseText.length} chars`);

@@ -157,6 +157,42 @@ const Features = () => {
             </motion.div>
           ))}
         </motion.div>
+
+        {/* Feature Screenshots Showcase */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          <div className="relative rounded-2xl overflow-hidden border border-red-500/20 shadow-xl bg-card/40 p-2 group hover:border-red-500/40 transition-all">
+            <img
+              src="/image/landingimg3.png"
+              alt="Technical Interview & Coding Evaluation"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <p className="mt-2 text-xs font-bold text-center text-muted-foreground uppercase tracking-wider">Technical & Coding Interview</p>
+          </div>
+
+          <div className="relative rounded-2xl overflow-hidden border border-red-500/20 shadow-xl bg-card/40 p-2 group hover:border-red-500/40 transition-all">
+            <img
+              src="/image/landingimg4.png"
+              alt="Behavioral Analytics & Feedback"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <p className="mt-2 text-xs font-bold text-center text-muted-foreground uppercase tracking-wider">Real-Time Performance Analytics</p>
+          </div>
+
+          <div className="relative rounded-2xl overflow-hidden border border-red-500/20 shadow-xl bg-card/40 p-2 group hover:border-red-500/40 transition-all">
+            <img
+              src="/image/landingimg5.png"
+              alt="GD Coach & Multi-Role Simulation"
+              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+            <p className="mt-2 text-xs font-bold text-center text-muted-foreground uppercase tracking-wider">GD Simulation & Multi-Role Coaching</p>
+          </div>
+        </motion.div>
       </div>
     </section>
   );

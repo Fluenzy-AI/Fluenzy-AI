@@ -4,6 +4,7 @@
  */
 
 import { generateJSON } from "@/lib/gemini-router";
+import { TraceMetadata, traceGeminiCall, FEATURES } from "@/lib/langsmith";
 
 export interface AIEmailRequest {
   prompt: string;
@@ -101,12 +102,6 @@ export async function generateEmailVariations(
   variationCount: number = 3,
   metadata?: TraceMetadata
 ): Promise<AIEmailResponse[]> {
-  if (!genAI) {
-    throw new Error("Gemini API is not configured");
-  }
-
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
   const prompt = `Generate ${variationCount} different email variations for the following request:
 
 ${request.prompt}
@@ -154,12 +149,6 @@ export async function improveEmailContent(
   improvementFocus: "deliverability" | "engagement" | "conversion" | "clarity",
   metadata?: TraceMetadata
 ): Promise<AIEmailResponse> {
-  if (!genAI) {
-    throw new Error("Gemini API is not configured");
-  }
-
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
   const focusInstructions = {
     deliverability: "Reduce spam triggers, improve sender reputation factors, avoid promotional language",
     engagement: "Add more compelling hooks, improve storytelling, increase emotional connection",
@@ -294,12 +283,6 @@ export async function generateSubjectLines(
   count: number = 5,
   metadata?: TraceMetadata
 ): Promise<string[]> {
-  if (!genAI) {
-    return ["Check out what's new at Fluenzy AI", "Your progress update", "Don't miss out!"];
-  }
-
-  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
   const prompt = `Generate ${count} email subject lines for Fluenzy AI (an interview prep platform) based on this context:
 
 ${context}
@@ -313,22 +296,11 @@ Requirements:
 Respond as JSON array: ["subject1", "subject2", ...]`;
 
   try {
-    const result = await traceGeminiCall({
-      feature: FEATURES.AI_CHAT,
-      name: "generate-subject-lines",
-      model: "gemini-2.0-flash",
-      userPrompt: prompt,
-      metadata: metadata,
-      fn: () => model.generateContent(prompt),
-    });
-    const text = result.response.text();
-
-    const jsonMatch = text.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      return ["Check out what's new", "Your Fluenzy AI update", "Important news for you"];
+    const parsed = await generateJSON<string[]>(prompt);
+    if (Array.isArray(parsed)) {
+      return parsed;
     }
-
-    return JSON.parse(jsonMatch[0]);
+    return ["Check out what's new", "Your Fluenzy AI update", "Important news for you"];
   } catch (error) {
     console.error("Subject line generation error:", error);
     return ["Your Fluenzy AI Update", "Important News", "Don't miss this"];

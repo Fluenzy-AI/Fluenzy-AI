@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { generateJSON } from "@/lib/gemini-router";
+import { extractRequestMetadata } from "@/lib/langsmith";
 
 export async function POST(request: NextRequest) {
   try {

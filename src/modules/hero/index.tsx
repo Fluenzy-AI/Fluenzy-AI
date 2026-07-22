@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Play, Sparkles, ArrowRight } from "lucide-react";
-import CareerDashboard from "./CareerDashboard";
 import Link from "next/link";
 
 const headlineWords = ["Train", "Smarter.", "Crack", "FAANG", "Interviews", "with", "AI."];
@@ -163,12 +162,18 @@ const Hero = () => {
         </div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex w-full justify-center mt-4 xl:mt-0"
+          className="flex w-full justify-center mt-4 xl:mt-0 relative"
         >
-          <CareerDashboard />
+          <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-red-500/20 max-w-xl w-full group bg-card/50 p-2 backdrop-blur-md">
+            <img
+              src="/image/landingimg2.png"
+              alt="Fluenzy AI Interview Platform"
+              className="w-full h-auto object-cover rounded-2xl transition-transform duration-500 group-hover:scale-[1.02]"
+            />
+          </div>
         </motion.div>
       </div>
     </section>

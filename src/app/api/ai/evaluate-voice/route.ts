@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateText, generateJSON } from "@/lib/gemini-router";
-import { extractRequestMetadata } from "@/lib/langsmith";
+import { extractRequestMetadata, TraceMetadata } from "@/lib/langsmith";
 
 
 interface VoiceEvaluationRequest {

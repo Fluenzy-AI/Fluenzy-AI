@@ -46,8 +46,6 @@ export async function generateMCQQuestions(
   count: number = 10,
   difficulty: "easy" | "medium" | "hard" = "medium"
 ): Promise<MCQQuestion[]> {
-  const model = genAI.getGenerativeModel({ model: FLASH_MODEL });
-
   const prompt = `Generate ${count} multiple-choice questions on the topic: "${topic}".
 Difficulty level: ${difficulty}.
 
@@ -337,8 +335,6 @@ export async function evaluateInterviewTranscript(
   transcript: Array<{ question: string; answer: string }>,
   experienceLevel?: string
 ): Promise<EvaluationResult> {
-  const model = genAI.getGenerativeModel({ model: PRO_MODEL });
-
   const prompt = `Evaluate this interview for a ${role} position${experienceLevel ? ` (${experienceLevel} level)` : ''}.
 
 Interview Transcript:

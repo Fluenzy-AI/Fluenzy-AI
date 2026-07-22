@@ -163,30 +163,12 @@ const TrainingShowcase = () => {
                 </div>
               </div>
               
-              <div className="bg-slate-950/50 rounded-2xl p-6 border border-white/5 shadow-inner backdrop-blur-2xl">
-                 <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center space-x-3">
-                       <div className="w-3 h-3 rounded-full bg-red-400" />
-                       <div className="w-3 h-3 rounded-full bg-amber-400" />
-                       <div className="w-3 h-3 rounded-full bg-green-400" />
-                    </div>
-                    <div className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">Feedback Terminal</div>
-                 </div>
-                 <div className="space-y-4 font-mono text-sm">
-                    <div className="text-emerald-400 flex items-start space-x-2">
-                       <span className="text-slate-600">&gt;</span>
-                       <span>Analysis complete: Confidence score 84%</span>
-                    </div>
-                    <div className="text-blue-400 flex items-start space-x-2">
-                       <span className="text-slate-600">&gt;</span>
-                       <span>Detected pattern: Strong technical clarity</span>
-                    </div>
-                    <div className="text-amber-400 flex items-start space-x-2">
-                       <span className="text-slate-600">&gt;</span>
-                       <span>Recommendation: Extend behavioral context</span>
-                    </div>
-                    <div className="text-slate-400 animate-pulse">_</div>
-                 </div>
+              <div className="relative rounded-2xl overflow-hidden border border-red-500/20 shadow-2xl bg-card/40 p-2 group">
+                 <img
+                   src="/image/landingimg1.png"
+                   alt="Real-Time AI Feedback Terminal"
+                   className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+                 />
               </div>
             </div>
           </div>
