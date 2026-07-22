@@ -2,6 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Brain, Target, TrendingUp, FileText, Users, Award, GitBranch, Boxes } from "lucide-react";
+import Card3D from "@/components/ui/Card3D";
 
 const AdvancedFeatures = () => {
   const features = [
@@ -89,22 +90,22 @@ const AdvancedFeatures = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.55, delay: index * 0.05 }}
-              whileHover={{ y: -6 }}
               className="group"
-              data-touch-hover
             >
-              <div className="glass relative h-full overflow-hidden rounded-2xl border border-card-border/50 p-6 shadow-xl transition-all duration-500 group-hover:border-purple-500/50 group-hover:shadow-purple-500/20">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
-                <div className="relative z-10">
-                  <div className="relative mb-4">
-                    <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${feature.gradient} p-3 shadow-lg`}>
-                      <feature.icon className="h-full w-full text-white" />
+              <Card3D depth={30} glowColor="rgba(168, 85, 247, 0.3)" className="h-full">
+                <div className="glass relative h-full overflow-hidden rounded-2xl border border-white/10 p-6 shadow-xl transition-all duration-500 group-hover:border-purple-500/50 group-hover:shadow-purple-500/20 bg-slate-900/70">
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-purple-500/5 to-blue-500/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+                  <div className="relative z-10">
+                    <div className="relative mb-4">
+                      <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${feature.gradient} p-3 shadow-lg`}>
+                        <feature.icon className="h-full w-full text-white" />
+                      </div>
                     </div>
+                    <h3 className="mb-2 text-base font-bold text-white">{feature.title}</h3>
+                    <p className="text-sm leading-relaxed text-gray-300">{feature.description}</p>
                   </div>
-                  <h3 className="mb-2 text-base font-bold text-white">{feature.title}</h3>
-                  <p className="text-sm leading-relaxed text-gray-300">{feature.description}</p>
                 </div>
-              </div>
+              </Card3D>
             </motion.div>
           ))}
         </div>

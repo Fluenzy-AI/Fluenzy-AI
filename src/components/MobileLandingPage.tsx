@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Card3D from "@/components/ui/Card3D";
 import {
   Sparkles,
   Play,
@@ -225,26 +226,50 @@ const MobileLandingPage = () => {
         {/* Mobile Feature Showcase Screenshots */}
         <div className="mt-8 space-y-4">
           <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-center text-slate-400">Platform Preview</p>
-          <div className="flex overflow-x-auto gap-4 pb-2 snap-x snap-mandatory scrollbar-none">
-            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
-              <img src="/image/landingimg2.png" alt="AI Interview Room" className="w-full h-auto rounded-xl object-cover" />
-              <p className="mt-2 text-center text-xs font-bold text-cyan-300">Live AI Interview Room</p>
+          <div className="flex overflow-x-auto gap-4 pb-4 snap-x snap-mandatory scrollbar-none">
+            <div className="snap-center shrink-0 w-[85%]">
+              <Card3D depth={30} glowColor="rgba(6, 182, 212, 0.4)">
+                <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+                  <img src="/image/landingimg2.png" alt="AI Interview Room" className="w-full h-auto rounded-xl object-cover" />
+                  <p className="mt-2 text-center text-xs font-bold text-cyan-300">Live AI Interview Room</p>
+                </div>
+              </Card3D>
             </div>
-            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
-              <img src="/image/BEHAVIORALMETRICS1.png" alt="Behavioral Analytics" className="w-full h-auto rounded-xl object-cover" />
-              <p className="mt-2 text-center text-xs font-bold text-purple-300">Real-Time Behavioral Analytics</p>
+
+            <div className="snap-center shrink-0 w-[85%]">
+              <Card3D depth={30} glowColor="rgba(168, 85, 247, 0.4)">
+                <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+                  <img src="/image/BEHAVIORALMETRICS1.png" alt="Behavioral Analytics" className="w-full h-auto rounded-xl object-cover" />
+                  <p className="mt-2 text-center text-xs font-bold text-purple-300">Real-Time Behavioral Analytics</p>
+                </div>
+              </Card3D>
             </div>
-            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
-              <img src="/image/GDAgent.png" alt="GD Coach & Room" className="w-full h-auto rounded-xl object-cover" />
-              <p className="mt-2 text-center text-xs font-bold text-pink-300">GD Agent Simulation Room</p>
+
+            <div className="snap-center shrink-0 w-[85%]">
+              <Card3D depth={30} glowColor="rgba(236, 72, 153, 0.4)">
+                <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+                  <img src="/image/GDAgent.png" alt="GD Coach & Room" className="w-full h-auto rounded-xl object-cover" />
+                  <p className="mt-2 text-center text-xs font-bold text-pink-300">GD Agent Simulation Room</p>
+                </div>
+              </Card3D>
             </div>
-            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
-              <img src="/image/ATS.png" alt="ATS Resume Score" className="w-full h-auto rounded-xl object-cover" />
-              <p className="mt-2 text-center text-xs font-bold text-emerald-300">ATS Resume Score Engine</p>
+
+            <div className="snap-center shrink-0 w-[85%]">
+              <Card3D depth={30} glowColor="rgba(16, 185, 129, 0.4)">
+                <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+                  <img src="/image/ATS.png" alt="ATS Resume Score" className="w-full h-auto rounded-xl object-cover" />
+                  <p className="mt-2 text-center text-xs font-bold text-emerald-300">ATS Resume Score Engine</p>
+                </div>
+              </Card3D>
             </div>
-            <div className="snap-center shrink-0 w-[85%] rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
-              <img src="/image/InterviewGuide.png" alt="AI Interview Strategy Guide" className="w-full h-auto rounded-xl object-cover" />
-              <p className="mt-2 text-center text-xs font-bold text-amber-300">AI Strategy & Guide Export</p>
+
+            <div className="snap-center shrink-0 w-[85%]">
+              <Card3D depth={30} glowColor="rgba(245, 158, 11, 0.4)">
+                <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-slate-900/80 p-2 shadow-lg">
+                  <img src="/image/InterviewGuide.png" alt="AI Interview Strategy Guide" className="w-full h-auto rounded-xl object-cover" />
+                  <p className="mt-2 text-center text-xs font-bold text-amber-300">AI Strategy & Guide Export</p>
+                </div>
+              </Card3D>
             </div>
           </div>
         </div>

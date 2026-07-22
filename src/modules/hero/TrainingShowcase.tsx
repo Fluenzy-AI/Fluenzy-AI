@@ -3,6 +3,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Code, Users, MessageSquare, Briefcase, Zap, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import Card3D from "@/components/ui/Card3D";
 
 const trainingPaths = [
   {
@@ -97,40 +98,41 @@ const TrainingShowcase = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              className="group"
             >
-              <div className={`relative h-full bg-slate-900/40 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2.5rem] p-5 sm:p-8 border border-white/5 hover:border-purple-500/30 transition-all duration-500 shadow-2xl flex flex-col`}>
-                {/* Accent Glow */}
-                <div className={`absolute -inset-px bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-10 transition-opacity duration-500 rounded-[1.5rem] sm:rounded-[2.5rem] pointer-events-none`} />
-                
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-[1.25rem] bg-gradient-to-br ${type.color} flex items-center justify-center mb-5 sm:mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.3)] relative z-10`}>
-                  <type.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white drop-shadow-md" />
-                </div>
-
-                <div className="relative z-10 flex-grow">
-                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-purple-200 group-hover:!bg-clip-text transition-all">
-                    {type.title}
-                  </h3>
-                  <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-5 sm:mb-8 group-hover:text-slate-300 transition-colors">
-                    {type.description}
-                  </p>
-                </div>
-
-                <div className="mt-auto relative z-10 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-                    </span>
-                    <span className="text-[10px] uppercase tracking-tighter font-black text-purple-400/80">Active Neural Path</span>
-                  </div>
+              <Card3D depth={35} glowColor="rgba(168, 85, 247, 0.3)" className="h-full">
+                <div className={`relative h-full bg-slate-900/50 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2.5rem] p-5 sm:p-8 border border-white/10 hover:border-purple-500/40 transition-all duration-500 shadow-2xl flex flex-col`}>
+                  {/* Accent Glow */}
+                  <div className={`absolute -inset-px bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-15 transition-opacity duration-500 rounded-[1.5rem] sm:rounded-[2.5rem] pointer-events-none`} />
                   
-                  <Link href="/login" className="flex items-center space-x-1 text-white group/link">
-                    <span className="text-sm font-bold border-b border-transparent group-hover/link:border-white transition-all">Start Track</span>
-                    <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
-                  </Link>
+                  <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-[1.25rem] bg-gradient-to-br ${type.color} flex items-center justify-center mb-5 sm:mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.3)] relative z-10`}>
+                    <type.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white drop-shadow-md" />
+                  </div>
+
+                  <div className="relative z-10 flex-grow">
+                    <h3 className="text-lg sm:text-2xl font-bold text-white mb-3 sm:mb-4 group-hover:text-transparent group-hover:bg-gradient-to-r group-hover:from-white group-hover:to-purple-200 group-hover:!bg-clip-text transition-all">
+                      {type.title}
+                    </h3>
+                    <p className="text-slate-400 text-sm sm:text-base leading-relaxed mb-5 sm:mb-8 group-hover:text-slate-300 transition-colors">
+                      {type.description}
+                    </p>
+                  </div>
+
+                  <div className="mt-auto relative z-10 flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
+                      </span>
+                      <span className="text-[10px] uppercase tracking-tighter font-black text-purple-400/80">Active Neural Path</span>
+                    </div>
+                    
+                    <Link href="/login" className="flex items-center space-x-1 text-white group/link">
+                      <span className="text-sm font-bold border-b border-transparent group-hover/link:border-white transition-all">Start Track</span>
+                      <ArrowRight className="h-4 w-4 group-hover/link:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              </Card3D>
             </motion.div>
           ))}
         </div>
@@ -142,10 +144,10 @@ const TrainingShowcase = () => {
           transition={{ duration: 0.8, delay: 0.4 }}
           className="mt-10 sm:mt-16 md:mt-24"
         >
-          <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl sm:rounded-3xl md:rounded-[3rem] p-5 sm:p-8 md:p-12 overflow-hidden border border-white/5">
+          <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl sm:rounded-3xl md:rounded-[3rem] p-5 sm:p-8 md:p-12 overflow-hidden border border-white/10 shadow-2xl">
             <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-purple-500/10 to-transparent blur-[80px]" />
             
-<div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-12 items-center">
+            <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10 lg:gap-12 items-center">
               <div>
                 <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white mb-3 sm:mb-5 md:mb-6">Real-Time AI Feedback</h3>
                 <p className="text-slate-400 text-sm sm:text-base md:text-lg leading-relaxed mb-5 sm:gap-6 md:mb-8">
@@ -163,13 +165,15 @@ const TrainingShowcase = () => {
                 </div>
               </div>
               
-              <div className="relative rounded-2xl overflow-hidden border border-red-500/20 shadow-2xl bg-card/40 p-2 group">
-                 <img
-                   src="/image/landingimg1.png"
-                   alt="Real-Time AI Feedback Terminal"
-                   className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
-                 />
-              </div>
+              <Card3D depth={40} glowColor="rgba(239, 68, 68, 0.3)">
+                <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-card/40 p-2 group">
+                   <img
+                     src="/image/landingimg1.png"
+                     alt="Real-Time AI Feedback Terminal"
+                     className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+                   />
+                </div>
+              </Card3D>
             </div>
           </div>
         </motion.div>

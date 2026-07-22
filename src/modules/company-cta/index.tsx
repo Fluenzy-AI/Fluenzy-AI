@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { Building2, LogIn, FilePlus, Users, BarChart3, Briefcase } from "lucide-react";
+import Card3D from "@/components/ui/Card3D";
 
 const STATS = [
   { value: "500+", label: "Companies Hiring" },
@@ -56,12 +57,13 @@ export default function CompanyCta() {
         </div>
 
         {/* Main card */}
-        <div className="bg-gradient-to-br from-[#0d1330] to-[#0f1840] border border-purple-500/20 rounded-3xl p-10 md:p-14 flex flex-col md:flex-row items-center gap-10">
-          {/* Left: features */}
-          <div className="flex-1 space-y-5">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-600 flex items-center justify-center shadow-xl shadow-purple-500/30 mb-2">
-              <Building2 className="w-7 h-7 text-white" />
-            </div>
+        <Card3D depth={40} glowColor="rgba(168, 85, 247, 0.4)">
+          <div className="bg-gradient-to-br from-[#0d1330] to-[#0f1840] border border-purple-500/30 rounded-3xl p-10 md:p-14 flex flex-col md:flex-row items-center gap-10 shadow-2xl">
+            {/* Left: features */}
+            <div className="flex-1 space-y-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-cyan-600 flex items-center justify-center shadow-xl shadow-purple-500/30 mb-2">
+                <Building2 className="w-7 h-7 text-white" />
+              </div>
             <h3 className="text-2xl font-bold text-white">Company Portal</h3>
             <p className="text-slate-400 text-sm leading-relaxed max-w-sm">
               Post jobs, manage applications, and find the best candidates with our AI-powered recruitment platform.
@@ -114,6 +116,7 @@ export default function CompanyCta() {
             </p>
           </div>
         </div>
+        </Card3D>
       </div>
     </section>
   );

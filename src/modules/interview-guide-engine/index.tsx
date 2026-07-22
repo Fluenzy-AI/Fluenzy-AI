@@ -2,6 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { FileText, Download } from "lucide-react";
+import Card3D from "@/components/ui/Card3D";
 
 const guideItems = [
   "Personalized Interview Strategy",
@@ -59,29 +60,33 @@ const InterviewGuideEngine = () => {
 
           {/* Interview Guide Document Screenshots Showcase */}
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl bg-slate-900/80 p-2 group hover:border-cyan-500/60 transition-all duration-300">
-              <img
-                src="/image/InterviewGuide.png"
-                alt="AI Generated Interview Strategy Guide"
-                className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
-              />
-              <div className="p-3 text-center">
-                <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Smart Strategy & Answer Engine</p>
-                <p className="text-[11px] text-slate-400 mt-1">Structured 30s/60s/90s intro, STAR responses & salary negotiation</p>
+            <Card3D depth={40} glowColor="rgba(6, 182, 212, 0.4)">
+              <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl bg-slate-900/80 p-2 group">
+                <img
+                  src="/image/InterviewGuide.png"
+                  alt="AI Generated Interview Strategy Guide"
+                  className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+                />
+                <div className="p-3 text-center">
+                  <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Smart Strategy & Answer Engine</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Structured 30s/60s/90s intro, STAR responses & salary negotiation</p>
+                </div>
               </div>
-            </div>
+            </Card3D>
 
-            <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl bg-slate-900/80 p-2 group hover:border-cyan-500/60 transition-all duration-300">
-              <img
-                src="/image/InterviewGuide1.png"
-                alt="Rapid Memorization Cheat Sheet"
-                className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
-              />
-              <div className="p-3 text-center">
-                <p className="text-xs font-bold text-purple-300 uppercase tracking-wider">Rapid Memorization Cheat Sheet</p>
-                <p className="text-[11px] text-slate-400 mt-1">Condensed question bank, core talking points & checklist summary</p>
+            <Card3D depth={40} glowColor="rgba(168, 85, 247, 0.4)">
+              <div className="relative rounded-2xl overflow-hidden border border-cyan-500/30 shadow-2xl bg-slate-900/80 p-2 group">
+                <img
+                  src="/image/InterviewGuide1.png"
+                  alt="Rapid Memorization Cheat Sheet"
+                  className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+                />
+                <div className="p-3 text-center">
+                  <p className="text-xs font-bold text-purple-300 uppercase tracking-wider">Rapid Memorization Cheat Sheet</p>
+                  <p className="text-[11px] text-slate-400 mt-1">Condensed question bank, core talking points & checklist summary</p>
+                </div>
               </div>
-            </div>
+            </Card3D>
           </div>
         </motion.div>
       </div>

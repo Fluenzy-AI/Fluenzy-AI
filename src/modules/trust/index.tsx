@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { motion } from "framer-motion";
+import Card3D from "@/components/ui/Card3D";
 
 const companies = [
   { name: "Google", logo: "https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg" },
@@ -42,16 +43,18 @@ const TrustSection = () => {
           <div className="mobile-logo-track mobile-logo-track-ltr">
             {[...companies, ...companies].map((company, index) => (
               <div key={`${company.name}-${index}`} className="group relative mx-2 shrink-0">
-                <div className="flex h-24 w-44 md:h-28 md:w-52 items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-4 backdrop-blur-md transition-all duration-300 group-hover:border-white/20 group-hover:bg-white/10 group-active:scale-[0.98]">
-                  <img
-                    src={company.logo}
-                    alt={company.name}
-                    loading="lazy"
-                    className={`h-10 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110 ${
-                      company.name === "Apple" || company.name === "Amazon" ? "invert brightness-200" : "brightness-125"
-                    }`}
-                  />
-                </div>
+                <Card3D depth={25} glowColor="rgba(168, 85, 247, 0.3)">
+                  <div className="flex h-24 w-44 md:h-28 md:w-52 items-center justify-center rounded-2xl border border-white/10 bg-slate-900/60 px-4 backdrop-blur-md transition-all duration-300 group-hover:border-purple-500/40 group-hover:bg-slate-900/90 shadow-xl">
+                    <img
+                      src={company.logo}
+                      alt={company.name}
+                      loading="lazy"
+                      className={`h-10 md:h-12 w-auto object-contain transition-transform duration-300 group-hover:scale-110 ${
+                        company.name === "Apple" || company.name === "Amazon" ? "invert brightness-200" : "brightness-125"
+                      }`}
+                    />
+                  </div>
+                </Card3D>
                 <span className="mt-3 block text-center text-[11px] font-bold uppercase tracking-[0.22em] text-slate-500">
                   {company.name}
                 </span>

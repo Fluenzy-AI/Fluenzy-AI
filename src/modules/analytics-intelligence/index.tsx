@@ -2,6 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Activity, Eye, Gauge, Sparkles, Building2, TrendingUp } from "lucide-react";
+import Card3D from "@/components/ui/Card3D";
 
 const coreMetrics = [
   { label: "Overall Score", value: 92 },
@@ -373,41 +374,47 @@ const AnalyticsIntelligence = () => {
           transition={{ duration: 0.8 }}
           className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
         >
-          <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/60 p-2 group hover:border-purple-500/60 transition-all duration-300">
-            <img
-              src="/image/BEHAVIORALMETRICS1.png"
-              alt="Live AI Video & Behavioral Metrics"
-              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
-            />
-            <div className="p-3 text-center">
-              <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Live Video & Behavioral Analysis</p>
-              <p className="text-[11px] text-slate-400 mt-1">Real-time eye contact, posture, confidence & stress scoring</p>
+          <Card3D depth={35} glowColor="rgba(6, 182, 212, 0.4)">
+            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+              <img
+                src="/image/BEHAVIORALMETRICS1.png"
+                alt="Live AI Video & Behavioral Metrics"
+                className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+              />
+              <div className="p-3 text-center">
+                <p className="text-xs font-bold text-cyan-300 uppercase tracking-wider">Live Video & Behavioral Analysis</p>
+                <p className="text-[11px] text-slate-400 mt-1">Real-time eye contact, posture, confidence & stress scoring</p>
+              </div>
             </div>
-          </div>
+          </Card3D>
 
-          <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/60 p-2 group hover:border-purple-500/60 transition-all duration-300">
-            <img
-              src="/image/BEHAVIORALMETRICS2.png"
-              alt="Speech Tone & Emotion Tracking"
-              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
-            />
-            <div className="p-3 text-center">
-              <p className="text-xs font-bold text-purple-300 uppercase tracking-wider">Speech & Tone Intelligence</p>
-              <p className="text-[11px] text-slate-400 mt-1">Vocal pace, clarity breakdown & emotional regulation AI</p>
+          <Card3D depth={35} glowColor="rgba(168, 85, 247, 0.4)">
+            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+              <img
+                src="/image/BEHAVIORALMETRICS2.png"
+                alt="Speech Tone & Emotion Tracking"
+                className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+              />
+              <div className="p-3 text-center">
+                <p className="text-xs font-bold text-purple-300 uppercase tracking-wider">Speech & Tone Intelligence</p>
+                <p className="text-[11px] text-slate-400 mt-1">Vocal pace, clarity breakdown & emotional regulation AI</p>
+              </div>
             </div>
-          </div>
+          </Card3D>
 
-          <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/60 p-2 group hover:border-purple-500/60 transition-all duration-300">
-            <img
-              src="/image/OverallPerformance1.png"
-              alt="Candidate Overall Performance Scorecard"
-              className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
-            />
-            <div className="p-3 text-center">
-              <p className="text-xs font-bold text-blue-300 uppercase tracking-wider">Overall Performance Scorecard</p>
-              <p className="text-[11px] text-slate-400 mt-1">Comprehensive FAANG-readiness summary & benchmark report</p>
+          <Card3D depth={35} glowColor="rgba(59, 130, 246, 0.4)">
+            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+              <img
+                src="/image/OverallPerformance1.png"
+                alt="Candidate Overall Performance Scorecard"
+                className="w-full h-auto object-cover rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+              />
+              <div className="p-3 text-center">
+                <p className="text-xs font-bold text-blue-300 uppercase tracking-wider">Overall Performance Scorecard</p>
+                <p className="text-[11px] text-slate-400 mt-1">Comprehensive FAANG-readiness summary & benchmark report</p>
+              </div>
             </div>
-          </div>
+          </Card3D>
         </motion.div>
       </div>
     </section>

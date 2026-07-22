@@ -2,6 +2,7 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { CheckCircle, Clock, Zap } from "lucide-react";
+import Card3D from "@/components/ui/Card3D";
 
 const items = [
   {
@@ -95,7 +96,7 @@ const accentMap: Record<string, { border: string; glow: string; iconBg: string; 
 
 const FeedbackSection = () => {
   return (
-    <section className="relative overflow-hidden py-20 md:py-24">
+    <section className="relative overflow-hidden py-20 md:py-24 bg-slate-950">
       <div className="absolute left-1/4 top-0 h-96 w-96 rounded-full bg-purple-500/5 blur-3xl" />
       <div className="absolute bottom-0 right-1/4 h-96 w-96 rounded-full bg-blue-500/5 blur-3xl" />
 
@@ -119,7 +120,7 @@ const FeedbackSection = () => {
         </motion.div>
 
         <div className="mx-auto max-w-6xl">
-          <div className="glass relative overflow-hidden rounded-2xl border border-card-border/50 p-5 shadow-xl sm:p-8">
+          <div className="glass relative overflow-hidden rounded-2xl border border-white/10 p-5 shadow-xl sm:p-8 bg-slate-900/60">
             <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-purple-500/5 to-blue-500/5" />
             <div className="relative z-10 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {items.map((item, index) => {
@@ -132,36 +133,36 @@ const FeedbackSection = () => {
                     whileInView={{ opacity: 1, x: 0, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ type: "spring", stiffness: 100, damping: 18, delay: index * 0.06 }}
-                    whileHover={{ y: -5, scale: 1.02 }}
                     className="group"
-                    data-touch-hover
                   >
-                    <div
-                      className={`relative overflow-hidden rounded-xl border border-card-border/50 p-6 shadow-lg transition-all duration-300 ${styles.border}`}
-                    >
+                    <Card3D depth={30} glowColor="rgba(59, 130, 246, 0.3)" className="h-full">
                       <div
-                        className={`absolute inset-0 rounded-xl bg-gradient-to-br ${styles.glow} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
-                      />
-                      <div className="relative z-10 text-center">
-                        <div className="relative mb-4">
-                          <div className={`mx-auto h-12 w-12 rounded-lg bg-gradient-to-br p-3 shadow-md ${styles.iconBg}`}>
-                            <item.icon className="h-full w-full text-white" />
+                        className={`relative overflow-hidden rounded-xl border border-white/10 p-6 shadow-lg transition-all duration-300 bg-slate-900/80 ${styles.border}`}
+                      >
+                        <div
+                          className={`absolute inset-0 rounded-xl bg-gradient-to-br ${styles.glow} opacity-0 transition-opacity duration-300 group-hover:opacity-100`}
+                        />
+                        <div className="relative z-10 text-center">
+                          <div className="relative mb-4">
+                            <div className={`mx-auto h-12 w-12 rounded-lg bg-gradient-to-br p-3 shadow-md ${styles.iconBg}`}>
+                              <item.icon className="h-full w-full text-white" />
+                            </div>
+                          </div>
+                          <div className="mb-1 text-2xl font-bold text-white">{item.value}</div>
+                          <div className={`mb-2 text-sm font-semibold ${styles.text}`}>{item.title}</div>
+                          <div className="mb-4 text-xs text-gray-300">{item.desc}</div>
+                          <div className="h-1.5 w-full rounded-full bg-slate-700">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              whileInView={{ width: `${item.progress}%` }}
+                              viewport={{ once: true }}
+                              transition={{ duration: 0.65, delay: 0.1 + index * 0.05, ease: "easeInOut" }}
+                              className={`h-1.5 rounded-full bg-gradient-to-r ${styles.iconBg}`}
+                            />
                           </div>
                         </div>
-                        <div className="mb-1 text-2xl font-bold text-white">{item.value}</div>
-                        <div className={`mb-2 text-sm font-semibold ${styles.text}`}>{item.title}</div>
-                        <div className="mb-4 text-xs text-gray-300">{item.desc}</div>
-                        <div className="h-1.5 w-full rounded-full bg-slate-700">
-                          <motion.div
-                            initial={{ width: 0 }}
-                            whileInView={{ width: `${item.progress}%` }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.65, delay: 0.1 + index * 0.05, ease: "easeInOut" }}
-                            className={`h-1.5 rounded-full bg-gradient-to-r ${styles.iconBg}`}
-                          />
-                        </div>
                       </div>
-                    </div>
+                    </Card3D>
                   </motion.div>
                 );
               })}

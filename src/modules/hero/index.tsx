@@ -2,8 +2,10 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, Sparkles, ArrowRight } from "lucide-react";
+import { Play, Sparkles, ArrowRight, ShieldCheck, Cpu, Zap } from "lucide-react";
 import Link from "next/link";
+import Card3D from "@/components/ui/Card3D";
+import TechParticleMesh from "@/components/ui/TechParticleMesh";
 
 const headlineWords = ["Train", "Smarter.", "Crack", "FAANG", "Interviews", "with", "AI."];
 
@@ -29,9 +31,12 @@ const Hero = () => {
   return (
     <section
       id="hero"
-      className="hero-gradient-animate relative overflow-x-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-28 md:pb-20"
+      className="hero-gradient-animate relative overflow-x-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-28 md:pb-20"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-900/80 via-purple-900/60 to-slate-900/80" />
+      {/* 3D Ambient Particle Mesh Background */}
+      <TechParticleMesh />
+
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-purple-950/60 to-slate-950/80 pointer-events-none" />
       <div className="animate-float absolute left-2 top-20 h-40 w-40 rounded-full bg-purple-500/20 blur-3xl sm:left-10 sm:h-64 sm:w-64" />
       <div
         className="animate-float absolute bottom-20 right-2 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl sm:right-10 sm:h-96 sm:w-96"
@@ -60,10 +65,12 @@ const Hero = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
-            className="mb-5 inline-flex max-w-full items-center space-x-2 rounded-full border border-purple-500/30 bg-gradient-to-r from-purple-900/50 to-blue-900/50 px-3 py-2 text-left backdrop-blur-sm sm:mb-6 sm:px-6 sm:py-3"
+            className="mb-5 inline-flex max-w-full items-center space-x-2 rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-900/60 to-blue-900/60 px-4 py-2 text-left backdrop-blur-md shadow-lg shadow-purple-500/10 sm:mb-6 sm:px-6 sm:py-3"
           >
-            <Sparkles className="h-4 w-4 shrink-0 text-purple-400 sm:h-5 sm:w-5" />
-            <span className="break-words text-xs font-medium text-purple-200 sm:text-sm">AI-Powered Interview Training</span>
+            <Sparkles className="h-4 w-4 shrink-0 text-purple-400 sm:h-5 sm:w-5 animate-pulse" />
+            <span className="break-words text-xs font-semibold uppercase tracking-wider text-purple-200 sm:text-sm">
+              AI-Powered Interview Training
+            </span>
           </motion.div>
 
           <motion.div
@@ -88,11 +95,10 @@ const Hero = () => {
                     visible: { opacity: 1, y: 0, filter: "blur(0px)" },
                   }}
                   transition={{ duration: 0.55, ease: "easeInOut" }}
-                  className={`mr-3 inline-block ${
-                    i >= 2 && i <= 4
+                  className={`mr-3 inline-block ${i >= 2 && i <= 4
                       ? "bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 !bg-clip-text text-transparent"
                       : "text-white"
-                  }`}
+                    }`}
                 >
                   {word}
                 </motion.span>
@@ -119,13 +125,13 @@ const Hero = () => {
               <Button
                 size="lg"
                 asChild
-                className="touch-target glow-effect relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-4 font-semibold text-white shadow-xl transition-all duration-300 hover:from-purple-700 hover:to-blue-700 hover:shadow-purple-500/40 sm:w-auto"
+                className="touch-target glow-effect relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-4 font-semibold text-white shadow-2xl transition-all duration-300 hover:from-purple-700 hover:to-blue-700 hover:shadow-purple-500/50 sm:w-auto"
               >
                 <Link href="/login" onMouseDown={triggerRipple}>
                   {ripple && (
                     <span key={ripple.key} className="button-ripple" style={{ left: ripple.x, top: ripple.y }} />
                   )}
-                  <Play className="mr-2 h-4 w-4" />
+                  <Play className="mr-2 h-4 w-4 fill-white" />
                   Train Now
                 </Link>
               </Button>
@@ -161,19 +167,42 @@ const Hero = () => {
           </motion.div>
         </div>
 
+        {/* Interactive Stage Showcase */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+          initial={{ opacity: 0, scale: 0.92, y: 30 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          className="flex w-full justify-center mt-4 xl:mt-0 relative"
+          className="flex w-full justify-center mt-6 xl:mt-0 relative"
         >
-          <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-red-500/20 max-w-xl w-full group bg-card/50 p-2 backdrop-blur-md">
-            <img
-              src="/image/landingimg2.png"
-              alt="Fluenzy AI Interview Platform"
-              className="w-full h-auto object-cover rounded-2xl transition-transform duration-500 group-hover:scale-[1.02]"
-            />
-          </div>
+          {/* Floating Telemetry Badges */}
+          <motion.div
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-6 -left-4 z-30 hidden sm:flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-slate-900/90 px-3.5 py-2 text-xs font-medium text-cyan-300 backdrop-blur-xl shadow-2xl"
+          >
+            <Cpu className="h-4 w-4 text-cyan-400 animate-spin" style={{ animationDuration: "8s" }} />
+            <span>Neural AI Engine Active</span>
+          </motion.div>
+
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -bottom-6 -right-4 z-30 hidden sm:flex items-center gap-2 rounded-xl border border-purple-500/30 bg-slate-900/90 px-3.5 py-2 text-xs font-medium text-purple-300 backdrop-blur-xl shadow-2xl"
+          >
+            <Zap className="h-4 w-4 text-purple-400" />
+            <span>Real-Time Latency &lt; 200ms</span>
+          </motion.div>
+
+          {/* 3D Tilt Card Frame */}
+          <Card3D depth={50} glowColor="rgba(59, 130, 246, 0.5)" className="max-w-xl w-full">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-purple-500/30 bg-slate-900/60 p-2.5 backdrop-blur-xl">
+              <img
+                src="/image/landingimg2.png"
+                alt="Fluenzy AI Interview Platform"
+                className="w-full h-auto object-cover rounded-2xl shadow-inner transition-transform duration-700"
+              />
+            </div>
+          </Card3D>
         </motion.div>
       </div>
     </section>
