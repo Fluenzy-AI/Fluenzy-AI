@@ -195,8 +195,16 @@ const VoiceAgent: React.FC<{
     (() => {
       if (!resumeKey || typeof window === 'undefined') return undefined;
       try {
-        return sessionStorage.getItem(resumeKey) ?? undefined;
+        const val = sessionStorage.getItem(resumeKey) ?? undefined;
+        // ── DIAGNOSTIC LOG: confirm resume made it across the navigation ─────
+        console.log(
+          val
+            ? `[RESUME_READ] Read ${val.length} chars from sessionStorage key "${resumeKey}". Preview: "${val.slice(0, 80)}..."`
+            : `[RESUME_READ] sessionStorage key "${resumeKey}" was null/missing — resume will be empty in system prompt`
+        );
+        return val;
       } catch {
+        console.warn('[RESUME_READ] sessionStorage access threw — resume context will be empty');
         return undefined;
       }
     })()
@@ -576,6 +584,14 @@ const VoiceAgent: React.FC<{
             intensity:        sessionMeta?.difficulty || 'Intermediate',
             resume_text:      sessionMeta?.resumeText || '',
           };
+
+          // ── DIAGNOSTIC LOG: confirm resume length before building system prompt ─
+          console.log(
+            `[RESUME_TO_PROMPT] resume_text length = ${simulatorCtx.resume_text.length} chars` +
+            (simulatorCtx.resume_text.length === 0
+              ? ' ⚠️  EMPTY — AI will ask candidate to describe background verbally'
+              : ` ✓  Preview: "${simulatorCtx.resume_text.slice(0, 80)}..."`)
+          );
 
           instruction = buildCompanySimulatorInstruction(simulatorCtx);
           console.log('[COMPANY_SIMULATOR_ACTIVE] Enterprise-grade prompt built for:',

@@ -18,7 +18,9 @@ import {
   Plus,
   UserCheck,
   Code2,
-  Settings
+  Settings,
+  Loader2,
+  AlertCircle
 } from 'lucide-react';
 import { ModuleType } from '../types';
 import { useTheme } from '../../src/contexts/ThemeContext';
@@ -44,6 +46,9 @@ const CompanyHRDashboard: React.FC = () => {
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [localSettings, setLocalSettings] = useState<InterviewSettings>(DEFAULT_SETTINGS);
+  // isExtracting: true while the /api/extract-resume call is in-flight
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionError, setExtractionError] = useState<string | null>(null);
   const [selection, setSelection] = useState({
     company: '',
     companyLogo: '',
@@ -78,10 +83,17 @@ const CompanyHRDashboard: React.FC = () => {
     if (selection.resumeText) {
       try {
         sessionStorage.setItem(resumeKey, selection.resumeText);
+        // ── DIAGNOSTIC LOG: confirm write before navigating ───────────────────
+        console.log(
+          `[RESUME_STORE] Written ${selection.resumeText.length} chars to sessionStorage key "${resumeKey}". ` +
+          `Preview: "${selection.resumeText.slice(0, 80)}..."`
+        );
       } catch {
         // sessionStorage quota exceeded — proceed without resume text
         console.warn('[CompanyHRDashboard] sessionStorage write failed; resumeText will be omitted.');
       }
+    } else {
+      console.log('[RESUME_STORE] No resume text — session will start without resume context');
     }
 
     router.push(
@@ -98,46 +110,61 @@ const CompanyHRDashboard: React.FC = () => {
     );
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  /**
+   * Upload file to /api/extract-resume which uses Gemini multimodal to extract
+   * text from PDF (text-layer OR scanned), DOCX, and TXT files reliably.
+   *
+   * This replaces the old FileReader.readAsText() approach which silently
+   * produced empty/garbage output for binary PDFs and DOCX (zip) files.
+   */
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Reset state and show loading
+    setExtractionError(null);
+    setIsExtracting(true);
     setSelection(prev => ({ ...prev, fileName: file.name, resumeText: '' }));
 
-    const reader = new FileReader();
+    console.log(`[RESUME_EXTRACT_START] Uploading ${file.name} (${file.size} bytes) to /api/extract-resume`);
 
-    reader.onload = (event) => {
-      const raw = event.target?.result;
-      let text = '';
+    try {
+      const form = new FormData();
+      form.append('file', file);
 
-      if (typeof raw === 'string') {
-        // Plain text or best-effort PDF text extraction
-        // Strip common PDF binary garbage while preserving readable words
-        text = raw
-          .replace(/[^\x20-\x7E\n\r\t]/g, ' ')  // drop non-printable bytes
-          .replace(/\s{3,}/g, '\n')               // collapse runs of whitespace
-          .trim();
+      const res = await fetch('/api/extract-resume', {
+        method: 'POST',
+        body: form,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error(`[RESUME_EXTRACT_FAIL] HTTP ${res.status}:`, data.error);
+        setExtractionError(data.error || 'Extraction failed. Please paste your resume text below.');
+        setSelection(prev => ({ ...prev, resumeText: '' }));
+        return;
       }
 
-      // Cap at 8000 chars so the system instruction stays within Gemini's token limits
-      // while still providing the full resume for almost all real-world resumes.
-      const capped = text.length > 8000 ? text.slice(0, 8000) + '\n[...resume truncated for length]' : text;
+      const extractedText: string = data.text || '';
+      console.log(
+        `[RESUME_EXTRACT_OK] method=${data.method}, chars=${extractedText.length}` +
+        (data.warning ? `, warning=${data.warning}` : '') +
+        (extractedText.length > 0 ? `, preview: "${extractedText.slice(0, 80)}..."` : ' (EMPTY!)')
+      );
 
-      setSelection(prev => ({
-        ...prev,
-        resumeText: capped || `[Could not extract text from ${file.name}. Please paste your resume in the text box below.]`,
-      }));
-    };
+      if (data.warning) {
+        setExtractionError(data.warning);
+      }
 
-    reader.onerror = () => {
-      setSelection(prev => ({
-        ...prev,
-        resumeText: `[File read error for ${file.name}. Please paste your resume text below.]`,
-      }));
-    };
-
-    // readAsText works for .txt and gives best-effort extraction from text-based PDFs/docs
-    reader.readAsText(file);
+      setSelection(prev => ({ ...prev, resumeText: extractedText }));
+    } catch (err) {
+      console.error('[RESUME_EXTRACT_ERROR] Network/parse error:', err);
+      setExtractionError('Could not reach server. Please paste your resume text below.');
+      setSelection(prev => ({ ...prev, resumeText: '' }));
+    } finally {
+      setIsExtracting(false);
+    }
   };
 
 
@@ -435,30 +462,78 @@ const CompanyHRDashboard: React.FC = () => {
               <p className="text-muted-foreground font-medium text-sm sm:text-base">Upload or paste resume content for role-specific questions.</p>
             </div>
             <div className="max-w-xl mx-auto space-y-6">
+               {/* ── File upload zone ─────────────────────────────────────── */}
                <div className="relative group">
                   <input 
                     type="file" 
-                    className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                    disabled={isExtracting}
                     onChange={handleFileChange}
                     accept=".pdf,.doc,.docx,.txt"
                   />
                   <div className={`p-10 border-2 border-dashed rounded-3xl flex flex-col items-center gap-4 transition-all ${
-                    selection.fileName ? 'border-emerald-500/70 bg-emerald-500/10' : 'border-border bg-muted/60 group-hover:border-primary/40'
+                    isExtracting
+                      ? 'border-primary/50 bg-primary/5'
+                      : selection.fileName && selection.resumeText && !extractionError
+                      ? 'border-emerald-500/70 bg-emerald-500/10'
+                      : extractionError
+                      ? 'border-amber-500/60 bg-amber-500/5'
+                      : 'border-border bg-muted/60 group-hover:border-primary/40'
                   }`}>
-                    {selection.fileName ? <CheckCircle2 size={48} className="text-emerald-500" /> : <Upload size={48} className="text-muted-foreground" />}
+                    {isExtracting ? (
+                      <Loader2 size={48} className="text-primary animate-spin" />
+                    ) : selection.fileName && selection.resumeText && !extractionError ? (
+                      <CheckCircle2 size={48} className="text-emerald-500" />
+                    ) : extractionError ? (
+                      <AlertCircle size={48} className="text-amber-400" />
+                    ) : (
+                      <Upload size={48} className="text-muted-foreground" />
+                    )}
                     <div className="text-center">
-                       <p className="font-bold text-card-foreground">{selection.fileName || 'Click to upload PDF / DOC'}</p>
-                       <p className="text-xs text-muted-foreground font-medium mt-1">AI will extract projects & skills automatically.</p>
+                       <p className="font-bold text-card-foreground">
+                         {isExtracting
+                           ? `Extracting ${selection.fileName}...`
+                           : selection.fileName || 'Click to upload PDF / DOC'}
+                       </p>
+                       <p className="text-xs text-muted-foreground font-medium mt-1">
+                         {isExtracting
+                           ? 'AI is reading your resume — this takes a few seconds.'
+                           : selection.resumeText && !extractionError
+                           ? `✓ ${selection.resumeText.length.toLocaleString()} characters extracted`
+                           : 'AI will extract projects & skills automatically.'}
+                       </p>
                     </div>
                   </div>
                </div>
+
+               {/* ── Extraction error / warning banner ────────────────────── */}
+               {extractionError && (
+                 <div className="flex items-start gap-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl px-5 py-4">
+                   <AlertCircle size={18} className="text-amber-400 mt-0.5 flex-shrink-0" />
+                   <p className="text-sm text-amber-300 font-medium">{extractionError}</p>
+                 </div>
+               )}
+
+               {/* ── Paste text area (controlled — always synced with state) ─ */}
                <div className="relative">
                   <div className="absolute top-4 left-4 text-muted-foreground"><FileText size={18} /></div>
                   <textarea 
                     placeholder="Or paste resume summary/text here..."
-                    className="w-full h-32 bg-muted/70 border border-border rounded-3xl p-6 pl-12 font-medium text-sm text-card-foreground outline-none focus:ring-2 focus:ring-primary"
-                    onChange={(e) => setSelection({ ...selection, resumeText: e.target.value })}
+                    className="w-full h-32 bg-muted/70 border border-border rounded-3xl p-6 pl-12 font-medium text-sm text-card-foreground outline-none focus:ring-2 focus:ring-primary resize-none"
+                    value={selection.resumeText}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      // Use functional updater to avoid stale-closure overwrite
+                      setSelection(prev => ({ ...prev, resumeText: val }));
+                      // If user pastes manually, clear any extraction error
+                      if (val.length > 0) setExtractionError(null);
+                    }}
                   />
+                  {selection.resumeText.length > 0 && (
+                    <p className="absolute bottom-3 right-4 text-xs text-muted-foreground">
+                      {selection.resumeText.length.toLocaleString()} chars
+                    </p>
+                  )}
                </div>
             </div>
             
@@ -471,13 +546,29 @@ const CompanyHRDashboard: React.FC = () => {
               </div>
             )}
 
-            <div className="flex justify-center pt-6">
+            <div className="flex flex-col items-center gap-3 pt-6">
+               {/* Guard: disable launch while extraction is in progress */}
                <button 
                  onClick={() => startInterview(localSettings)}
-                 className="bg-primary text-primary-foreground px-20 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl shadow-primary/25 hover:brightness-110 transition-all transform hover:scale-105"
+                 disabled={isExtracting}
+                 className={`px-20 py-5 rounded-[2rem] font-black uppercase tracking-[0.2em] text-xs shadow-2xl transition-all transform ${
+                   isExtracting
+                     ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-60 shadow-none'
+                     : 'bg-primary text-primary-foreground hover:brightness-110 hover:scale-105 shadow-primary/25'
+                 }`}
                >
-                 Launch Real-Time Interview
+                 {isExtracting ? (
+                   <span className="flex items-center gap-2">
+                     <Loader2 size={14} className="animate-spin" />
+                     Extracting Resume...
+                   </span>
+                 ) : 'Launch Real-Time Interview'}
                </button>
+               {!selection.resumeText && !isExtracting && (
+                 <p className="text-xs text-muted-foreground">
+                   Tip: Upload or paste your resume for personalized interview questions
+                 </p>
+               )}
             </div>
           </div>
         )}
