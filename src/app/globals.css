@@ -1119,6 +1119,84 @@
   border-color: hsl(38 14% 85% / 0.6) !important;
 }
 
+/* Theme Toggle Menu Overrides for Parchment Theme - Ultra High Specificity */
+html.parchment .theme-toggle-dropdown,
+html.parchment [data-theme-menu],
+[data-theme="parchment"] .theme-toggle-dropdown,
+[data-theme="parchment"] [data-theme-menu] {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.parchment .theme-toggle-dropdown button,
+html.parchment .theme-toggle-dropdown span,
+html.parchment .theme-toggle-item,
+html.parchment .theme-toggle-item span,
+html.parchment [data-theme-option],
+html.parchment [data-theme-option] span,
+[data-theme="parchment"] .theme-toggle-dropdown button,
+[data-theme="parchment"] .theme-toggle-dropdown span,
+[data-theme="parchment"] .theme-toggle-item,
+[data-theme="parchment"] .theme-toggle-item span,
+[data-theme="parchment"] [data-theme-option],
+[data-theme="parchment"] [data-theme-option] span {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+  background-image: none !important;
+  opacity: 1 !important;
+}
+
+html.parchment .theme-toggle-dropdown svg,
+html.parchment .theme-toggle-item svg,
+html.parchment [data-theme-option] svg,
+[data-theme="parchment"] .theme-toggle-dropdown svg,
+[data-theme="parchment"] .theme-toggle-item svg,
+[data-theme="parchment"] [data-theme-option] svg {
+  color: #000000 !important;
+  stroke: #000000 !important;
+  opacity: 1 !important;
+}
+
+/* Theme Toggle Trigger Button Overrides for Parchment Theme */
+html.parchment .theme-toggle-trigger,
+[data-theme="parchment"] .theme-toggle-trigger {
+  background-color: #ffffff !important;
+  background: #ffffff !important;
+  border: 1px solid #dc2626 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+html.parchment .theme-toggle-trigger svg,
+html.parchment .theme-toggle-trigger *,
+[data-theme="parchment"] .theme-toggle-trigger svg,
+[data-theme="parchment"] .theme-toggle-trigger * {
+  color: #dc2626 !important;
+  stroke: #dc2626 !important;
+  fill: none !important;
+  opacity: 1 !important;
+}
+
+/* Selected item in Parchment theme */
+html.parchment .theme-toggle-dropdown button.theme-toggle-item-selected,
+html.parchment .theme-toggle-dropdown button.theme-toggle-item-selected span,
+html.parchment .theme-toggle-item-selected,
+html.parchment .theme-toggle-item-selected span,
+[data-theme="parchment"] .theme-toggle-item-selected,
+[data-theme="parchment"] .theme-toggle-item-selected span {
+  color: #ef4444 !important;
+  -webkit-text-fill-color: #ef4444 !important;
+  background-color: #fee2e2 !important;
+}
+
+html.parchment .theme-toggle-dropdown button.theme-toggle-item-selected svg,
+html.parchment .theme-toggle-item-selected svg,
+[data-theme="parchment"] .theme-toggle-item-selected svg {
+  color: #ef4444 !important;
+  stroke: #ef4444 !important;
+}
+
 [data-theme="parchment"] h1,
 [data-theme="parchment"] h2,
 [data-theme="parchment"] h3,

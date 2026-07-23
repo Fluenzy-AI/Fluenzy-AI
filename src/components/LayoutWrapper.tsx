@@ -268,24 +268,47 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 {showThemeMenu && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowThemeMenu(false)} />
-                    <motion.div
-                      initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                      className={`absolute right-0 top-full mt-2 w-36 ${currentTheme.cardBg} border ${currentTheme.cardBorder} rounded-xl overflow-hidden shadow-xl z-50`}
-                    >
-                      {themeOptions.map((option) => (
-                        <button
-                          key={option.value}
-                          onClick={() => { setTheme(option.value); setShowThemeMenu(false); }}
-                          className={`w-full flex items-center gap-2 px-3 py-2.5 text-sm transition-colors
-                            ${theme === option.value ? 'bg-[#5B6CFF]/20 text-[#5B6CFF]' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
-                        >
-                          <option.icon size={15} />
-                          {option.label}
-                        </button>
-                      ))}
-                    </motion.div>
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                        className={`absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden shadow-2xl z-50 border ${
+                          theme === 'parchment'
+                            ? 'bg-[#FCFBF8] border-[#E6E2D8] text-[#1C1917]'
+                            : theme === 'light'
+                            ? 'bg-white border-slate-200 text-slate-900'
+                            : 'bg-slate-900 border-slate-700 text-white'
+                        }`}
+                      >
+                        {themeOptions.map((option) => {
+                          const isSelected = theme === option.value;
+                          const colorStyle = theme === 'parchment'
+                            ? { color: isSelected ? '#EF4444' : '#000000' }
+                            : theme === 'light'
+                            ? { color: isSelected ? '#EF4444' : '#0F172A' }
+                            : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
+
+                          return (
+                            <button
+                              key={option.value}
+                              onClick={() => { setTheme(option.value); setShowThemeMenu(false); }}
+                              style={colorStyle}
+                              className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-bold transition-all cursor-pointer ${
+                                isSelected ? 'theme-toggle-item-selected' : ''
+                              } ${
+                                theme === 'parchment'
+                                  ? isSelected ? 'bg-red-100/70 text-[#EF4444] border border-red-300' : 'text-[#000000] hover:bg-slate-100'
+                                  : theme === 'light'
+                                  ? isSelected ? 'bg-red-50 text-red-600' : 'hover:text-red-600 hover:bg-slate-100'
+                                  : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
+                              }`}
+                            >
+                              <option.icon size={16} style={colorStyle} />
+                              <span style={{ ...colorStyle, WebkitTextFillColor: colorStyle.color }}>{option.label}</span>
+                            </button>
+                          );
+                        })}
+                      </motion.div>
                   </>
                 )}
               </AnimatePresence>
@@ -393,26 +416,16 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       {/* Logo */}
       <div className={`p-4 border-b ${currentTheme.cardBorder} flex items-center justify-between`}>
         <Link href="/" className="flex items-center gap-3">
-          <div className={`p-1.5 rounded-2xl transition-all ${
-            theme === 'parchment'
-              ? 'bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/25 border border-red-500/30'
-              : theme === 'forest'
-              ? 'bg-gradient-to-br from-emerald-600 to-amber-600 shadow-md shadow-emerald-500/25'
-              : theme === 'midnight'
-              ? 'bg-gradient-to-br from-purple-600 to-indigo-600 shadow-md shadow-purple-500/25'
-              : isLight
-              ? 'bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md'
-              : 'bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md'
-          }`}>
+          <div className="p-1.5 rounded-xl bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center">
             <img 
-              src="/favicon/apple-touch-icon.png" 
+              src="/white-removebg-preview1.png" 
               alt="Fluenzy AI Logo" 
-              className="w-11 h-11 rounded-xl object-contain"
+              className="w-7 h-7 object-contain"
             />
           </div>
           {!collapsed && (
-            <span className={`font-extrabold ${currentTheme.text} text-xl tracking-tight`}>
-              Fluenzy <span className={theme === 'parchment' ? 'text-red-500 font-black' : currentTheme.accent}>AI</span>
+            <span className="font-extrabold bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400 !bg-clip-text text-transparent text-xl tracking-tight">
+              Fluenzy AI
             </span>
           )}
         </Link>
@@ -573,27 +586,45 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
-                  className={`absolute bottom-full left-0 right-0 mb-2 ${currentTheme.cardBg} border ${currentTheme.cardBorder} rounded-lg overflow-hidden shadow-xl`}
+                  className={`absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden shadow-2xl z-50 border ${
+                    theme === 'parchment'
+                      ? 'bg-[#FCFBF8] border-[#E6E2D8]'
+                      : theme === 'light'
+                      ? 'bg-white border-slate-200'
+                      : 'bg-slate-900 border-slate-700'
+                  }`}
                 >
-                  {themeOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setTheme(option.value);
-                        setShowThemeMenu(false);
-                      }}
-                      className={`
-                        w-full flex items-center gap-2 px-3 py-2 text-sm transition-colors
-                        ${theme === option.value
-                          ? isLight ? `${currentTheme.activeNavBg} ${currentTheme.activeIconColor} font-medium` : `${currentTheme.activeNavBg} ${currentTheme.accent}`
-                          : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
-                        }
-                      `}
-                    >
-                      <option.icon size={16} />
-                      {option.label}
-                    </button>
-                  ))}
+                  {themeOptions.map((option) => {
+                    const isSelected = theme === option.value;
+                    const colorStyle = theme === 'parchment'
+                      ? { color: isSelected ? '#EF4444' : '#000000' }
+                      : theme === 'light'
+                      ? { color: isSelected ? '#EF4444' : '#0F172A' }
+                      : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
+
+                    return (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setTheme(option.value);
+                          setShowThemeMenu(false);
+                        }}
+                        style={colorStyle}
+                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-bold transition-all cursor-pointer ${
+                          isSelected ? 'theme-toggle-item-selected' : ''
+                        } ${
+                          theme === 'parchment'
+                            ? isSelected ? 'bg-red-100/70 text-[#EF4444] border border-red-300' : 'text-[#000000] hover:bg-slate-100'
+                            : theme === 'light'
+                            ? isSelected ? 'bg-red-50 text-red-600' : 'hover:text-red-600 hover:bg-slate-100'
+                            : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
+                        }`}
+                      >
+                        <option.icon size={16} style={colorStyle} />
+                        <span style={{ ...colorStyle, WebkitTextFillColor: colorStyle.color }}>{option.label}</span>
+                      </button>
+                    );
+                  })}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -706,7 +737,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
               <div className="relative">
                 <button
                   onClick={() => setShowThemeMenu(!showThemeMenu)}
-                  className={`p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} transition-colors`}
+                  style={{
+                    color: theme === 'parchment' ? '#ef4444' : isLight ? '#0f172a' : '#f8fafc',
+                  }}
+                  className={`theme-toggle-trigger p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} transition-colors`}
                   title="Change theme"
                 >
                   {theme === 'dark' && <Moon size={20} />}
@@ -714,7 +748,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   {theme === 'system' && <Monitor size={20} />}
                   {theme === 'midnight' && <Sparkles size={20} />}
                   {theme === 'forest' && <Leaf size={20} />}
-                  {theme === 'parchment' && <Coffee size={20} />}
+                  {theme === 'parchment' && <Coffee size={20} style={{ color: '#ef4444', stroke: '#ef4444' }} />}
                   {theme === 'codeterm' && <Terminal size={20} />}
                 </button>
                 
@@ -729,27 +763,46 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className={`absolute right-0 top-full mt-2 w-40 ${currentTheme.cardBg} border ${currentTheme.cardBorder} rounded-xl overflow-hidden shadow-xl z-50`}
+                        className={`theme-toggle-dropdown absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden shadow-2xl z-50 border ${
+                          theme === 'parchment'
+                            ? 'bg-white border-slate-200'
+                            : theme === 'light'
+                            ? 'bg-white border-slate-200'
+                            : 'bg-slate-900 border-slate-700'
+                        }`}
                       >
-                        {themeOptions.map((option) => (
-                          <button
-                            key={option.value}
-                            onClick={() => {
-                              setTheme(option.value);
-                              setShowThemeMenu(false);
-                            }}
-                            className={`
-                              w-full flex items-center gap-3 px-4 py-3 text-sm transition-colors
-                              ${theme === option.value
-                                ? `${currentTheme.activeNavBg} ${currentTheme.accent} font-medium`
-                                : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
-                              }
-                            `}
-                          >
-                            <option.icon size={18} />
-                            {option.label}
-                          </button>
-                        ))}
+                        {themeOptions.map((option) => {
+                          const isSelected = theme === option.value;
+                          const colorStyle = theme === 'parchment'
+                            ? { color: isSelected ? '#EF4444' : '#000000' }
+                            : theme === 'light'
+                            ? { color: isSelected ? '#EF4444' : '#0F172A' }
+                            : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
+
+                          return (
+                            <button
+                              key={option.value}
+                              data-theme-option="true"
+                              onClick={() => {
+                                setTheme(option.value);
+                                setShowThemeMenu(false);
+                              }}
+                              style={colorStyle}
+                              className={`theme-toggle-item w-full flex items-center gap-3 px-4 py-3 text-sm font-bold transition-all cursor-pointer ${
+                                isSelected ? 'theme-toggle-item-selected' : ''
+                              } ${
+                                theme === 'parchment'
+                                  ? isSelected ? 'bg-red-100/70 text-[#EF4444] border border-red-300' : 'text-[#000000] hover:bg-slate-100'
+                                  : theme === 'light'
+                                  ? isSelected ? 'bg-red-50 text-red-600' : 'hover:text-red-600 hover:bg-slate-100'
+                                  : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
+                              }`}
+                            >
+                              <option.icon size={18} style={colorStyle} />
+                              <span style={{ ...colorStyle, WebkitTextFillColor: colorStyle.color }}>{option.label}</span>
+                            </button>
+                          );
+                        })}
                       </motion.div>
                     </>
                   )}

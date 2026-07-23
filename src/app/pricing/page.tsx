@@ -38,7 +38,7 @@ export default function PricingPage() {
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl lg:text-6xl font-black mb-4 tracking-tight">
             <span className="text-foreground">FluenzyAI </span>
-            <span className="bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400 !bg-clip-text text-transparent">
               Pricing Plans
             </span>
           </h1>

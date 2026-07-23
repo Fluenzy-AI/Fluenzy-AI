@@ -21,6 +21,7 @@ import {
   BookmarkCheck,
   History,
 } from "lucide-react";
+import ThemeSelector from "../ThemeSelector";
 
 interface NavItem {
   label: string;
@@ -141,11 +142,11 @@ export default function CandidatePortalLayout({ children, candidate, notificatio
         {/* Logo Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-white/5 flex-shrink-0">
           <Link href="/candidates/dashboard" className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 flex items-center justify-center shadow-lg shadow-violet-500/20 flex-shrink-0">
-              <Sparkles className="w-5 h-5 text-white" />
+            <div className="p-1.5 rounded-xl bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center flex-shrink-0">
+              <img src="/white-removebg-preview1.png" alt="Fluenzy AI Logo" className="w-7 h-7 object-contain" />
             </div>
             <div className="min-w-0">
-              <div className="font-bold text-white text-lg truncate">Fluenzy AI</div>
+              <div className="font-extrabold bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400 !bg-clip-text text-transparent text-lg truncate">Fluenzy AI</div>
               <div className="text-xs text-violet-400 font-medium">Candidate Portal</div>
             </div>
           </Link>
@@ -283,6 +284,7 @@ export default function CandidatePortalLayout({ children, candidate, notificatio
 
             {/* Right side actions */}
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <ThemeSelector />
               {/* Notification bell */}
               <Link
                 href="/candidates/dashboard/notifications"

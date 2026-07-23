@@ -432,14 +432,14 @@ export default function TrainPage() {
             </>
           ) : (
             <>
-              <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-to-br from-red-600/20 to-rose-600/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tl from-amber-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-to-br from-purple-600/20 to-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tl from-indigo-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
             </>
           )}
           
           <div className="relative z-10">
             <h1 className={`text-3xl md:text-4xl lg:text-5xl font-black ${currentTheme.text} mb-3 tracking-tight`}>
-              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-rose-500 to-red-700">{session?.user?.name ? session.user.name.split(' ')[0] : 'User'}</span> 👋
+              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-300">{session?.user?.name ? session.user.name.split(' ')[0] : 'User'}</span> 👋
             </h1>
             <p className={`text-base md:text-lg ${currentTheme.textMuted} max-w-2xl mb-6`}>
               Master your interview skills with AI-powered practice sessions. Select a company or practice module below.
@@ -448,7 +448,7 @@ export default function TrainPage() {
             <div className="flex flex-wrap items-center gap-3">
               <Button
                 asChild
-                className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold px-8 py-4 rounded-full shadow-lg shadow-red-600/25 hover:shadow-red-600/40 transition-all duration-200 hover:-translate-y-0.5"
+                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-8 py-4 rounded-full shadow-lg shadow-purple-600/25 hover:shadow-purple-600/40 transition-all duration-200 hover:-translate-y-0.5"
               >
                 <Link href="/train/company">
                   <Building2 className="mr-2" size={18} />

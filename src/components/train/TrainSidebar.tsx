@@ -225,23 +225,15 @@ export function TrainSidebar() {
       <SidebarHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className={`p-1 rounded-xl transition-all ${
-              resolvedTheme === 'parchment'
-                ? 'bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/25 border border-red-500/30'
-                : resolvedTheme === 'forest'
-                ? 'bg-gradient-to-br from-emerald-600 to-amber-600 shadow-md shadow-emerald-500/25'
-                : resolvedTheme === 'midnight'
-                ? 'bg-gradient-to-br from-purple-600 to-indigo-600 shadow-md shadow-purple-500/25'
-                : 'bg-gradient-to-br from-red-600 to-rose-600 shadow-md'
-            }`}>
+            <div className="p-1.5 rounded-xl bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center">
               <img 
-                src="/favicon/apple-touch-icon.png" 
+                src="/white-removebg-preview1.png" 
                 alt="Fluenzy AI Logo" 
-                className="w-7 h-7 rounded-lg object-contain"
+                className="w-6 h-6 object-contain"
               />
             </div>
-            <span className="font-extrabold text-lg tracking-tight">
-              Fluenzy <span className={resolvedTheme === 'parchment' ? 'text-red-500 font-black' : 'text-primary'}>AI</span>
+            <span className="font-extrabold bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400 !bg-clip-text text-transparent text-lg tracking-tight">
+              Fluenzy AI
             </span>
           </div>
           <SidebarTrigger className="ml-auto" />

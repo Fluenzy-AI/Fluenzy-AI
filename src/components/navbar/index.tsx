@@ -24,6 +24,7 @@ import {
   SheetTrigger,
 } from "../ui/sheet";
 import SidebarContent from "./SidebarContent";
+import ThemeSelector from "../ThemeSelector";
 
 // User type for passed user data
 interface UserData {
@@ -175,8 +176,10 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                 <SheetContent side="left" className="w-[300px] bg-slate-950 border-r border-white/5 p-0 overflow-y-auto">
                   <SheetHeader className="p-3 border-b border-white/5 bg-slate-900/50">
                     <SheetTitle className="flex items-center space-x-3">
-                      <img src="/favicon/apple-touch-icon.png" alt="Logo" className="h-10 w-auto rounded-lg" />
-                      <span className="text-xl font-black bg-gradient-primary !bg-clip-text text-transparent">Menu</span>
+                      <div className="p-1 rounded-lg bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center">
+                        <img src="/white-removebg-preview1.png" alt="Logo" className="h-6 w-auto object-contain" />
+                      </div>
+                      <span className="text-xl font-black bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400 !bg-clip-text text-transparent">Fluenzy AI</span>
                     </SheetTitle>
                   </SheetHeader>
                   <SidebarContent session={session} pathname={pathname} />
@@ -191,14 +194,14 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
               whileTap={{ scale: 0.98 }}
               onClick={() => window.location.href = "/"}
             >
-              <div className="p-1 rounded-xl bg-gradient-to-br from-red-600 to-rose-600 shadow-md shadow-red-500/20 border border-red-500/30">
+              <div className="p-1.5 rounded-xl bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center">
                 <img
-                  src="/favicon/wthem.png"
+                  src="/white-removebg-preview1.png"
                   alt="Fluenzy AI Logo"
-                  className="h-8 w-auto rounded-lg object-contain"
+                  className="h-7 w-auto object-contain"
                 />
               </div>
-              <span className="text-xl font-black bg-gradient-to-r from-red-600 to-rose-600 !bg-clip-text text-transparent tracking-tight hidden sm:block">
+              <span className="text-xl font-black bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400 !bg-clip-text text-transparent tracking-tight hidden sm:block">
                 Fluenzy AI
               </span>
             </motion.div>
@@ -214,6 +217,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
 
           {/* Right section */}
           <div className="flex items-center space-x-1.5 sm:space-x-3">
+            <ThemeSelector />
             {session?.user ? (
               <>
                 {/* Profile Dropdown */}

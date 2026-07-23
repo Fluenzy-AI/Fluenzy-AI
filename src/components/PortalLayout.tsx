@@ -40,13 +40,11 @@ export default function PortalLayout({ children, navItems, title, roleLabel, rol
         {/* Logo */}
         <div className="p-6 border-b border-white/5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-indigo-600 flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+            <div className="p-1.5 rounded-xl bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center flex-shrink-0">
+              <img src="/white-removebg-preview1.png" alt="Fluenzy AI Logo" className="w-7 h-7 object-contain" />
             </div>
             <div>
-              <div className="font-bold text-white text-sm">Fluenzy AI</div>
+              <div className="font-extrabold bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400 !bg-clip-text text-transparent text-sm">Fluenzy AI</div>
               <div className={`text-xs font-medium ${roleColor}`}>{roleLabel}</div>
             </div>
           </div>
