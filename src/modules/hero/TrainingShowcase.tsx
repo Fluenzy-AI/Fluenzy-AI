@@ -100,9 +100,15 @@ const TrainingShowcase = () => {
               transition={{ duration: 0.6, delay: index * 0.1 }}
             >
               <Card3D depth={35} glowColor="rgba(168, 85, 247, 0.3)" className="h-full">
-                <div className={`relative h-full bg-slate-900/50 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2.5rem] p-5 sm:p-8 border border-white/10 hover:border-purple-500/40 transition-all duration-500 shadow-2xl flex flex-col`}>
+                <div className={`relative h-full bg-slate-900/50 backdrop-blur-xl rounded-[1.5rem] sm:rounded-[2.5rem] p-5 sm:p-8 border border-white/10 hover:border-purple-500/40 transition-all duration-500 shadow-2xl flex flex-col group overflow-hidden`}>
                   {/* Accent Glow */}
                   <div className={`absolute -inset-px bg-gradient-to-br ${type.color} opacity-0 group-hover:opacity-15 transition-opacity duration-500 rounded-[1.5rem] sm:rounded-[2.5rem] pointer-events-none`} />
+
+                  {/* ── DESIGNER CORNER BORDER ACCENTS ── */}
+                  <div className="absolute top-3.5 left-3.5 w-4 h-4 border-t-2 border-l-2 border-purple-400/50 rounded-tl-md group-hover:w-6 group-hover:h-6 group-hover:border-purple-300 group-hover:shadow-[0_0_10px_rgba(168,85,247,0.8)] transition-all duration-300 pointer-events-none" />
+                  <div className="absolute top-3.5 right-3.5 w-4 h-4 border-t-2 border-r-2 border-purple-400/50 rounded-tr-md group-hover:w-6 group-hover:h-6 group-hover:border-purple-300 group-hover:shadow-[0_0_10px_rgba(168,85,247,0.8)] transition-all duration-300 pointer-events-none" />
+                  <div className="absolute bottom-3.5 left-3.5 w-4 h-4 border-b-2 border-l-2 border-purple-400/50 rounded-bl-md group-hover:w-6 group-hover:h-6 group-hover:border-purple-300 group-hover:shadow-[0_0_10px_rgba(168,85,247,0.8)] transition-all duration-300 pointer-events-none" />
+                  <div className="absolute bottom-3.5 right-3.5 w-4 h-4 border-b-2 border-r-2 border-purple-400/50 rounded-br-md group-hover:w-6 group-hover:h-6 group-hover:border-purple-300 group-hover:shadow-[0_0_10px_rgba(168,85,247,0.8)] transition-all duration-300 pointer-events-none" />
                   
                   <div className={`w-12 h-12 sm:w-16 sm:h-16 rounded-xl sm:rounded-[1.25rem] bg-gradient-to-br ${type.color} flex items-center justify-center mb-5 sm:mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 shadow-[0_0_30px_rgba(0,0,0,0.3)] relative z-10`}>
                     <type.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white drop-shadow-md" />

@@ -93,8 +93,6 @@ const topQuickLinks = [
 
 const themeOptions: { value: ThemeName; label: string; icon: typeof Moon }[] = [
   { value: 'dark', label: 'Dark', icon: Moon },
-  { value: 'light', label: 'Light', icon: Sun },
-  { value: 'system', label: 'System', icon: Monitor },
   { value: 'midnight', label: 'Night', icon: Moon },
   { value: 'forest', label: 'Forest', icon: Leaf },
   { value: 'parchment', label: 'Parchment', icon: Coffee },
@@ -122,7 +120,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const [pendingFriends, setPendingFriends] = useState(0);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
-  const isLight = resolvedTheme === 'light';
+  const isLight = resolvedTheme === 'parchment';
 
   // Extract user info from planInfo
   const userData = planInfo?.user ? {
@@ -257,8 +255,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 className={`p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5 transition-colors`}
               >
                 {theme === 'dark' && <Moon size={18} />}
-                {theme === 'light' && <Sun size={18} />}
-                {theme === 'system' && <Monitor size={18} />}
                 {theme === 'midnight' && <Sparkles size={18} />}
                 {theme === 'forest' && <Leaf size={18} />}
                 {theme === 'parchment' && <Coffee size={18} />}
@@ -275,8 +271,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                         className={`absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden shadow-2xl z-50 border ${
                           theme === 'parchment'
                             ? 'bg-[#FCFBF8] border-[#E6E2D8] text-[#1C1917]'
-                            : theme === 'light'
-                            ? 'bg-white border-slate-200 text-slate-900'
                             : 'bg-slate-900 border-slate-700 text-white'
                         }`}
                       >
@@ -284,8 +278,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                           const isSelected = theme === option.value;
                           const colorStyle = theme === 'parchment'
                             ? { color: isSelected ? '#EF4444' : '#000000' }
-                            : theme === 'light'
-                            ? { color: isSelected ? '#EF4444' : '#0F172A' }
                             : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
 
                           return (
@@ -298,8 +290,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                               } ${
                                 theme === 'parchment'
                                   ? isSelected ? 'bg-red-100/70 text-[#EF4444] border border-red-300' : 'text-[#000000] hover:bg-slate-100'
-                                  : theme === 'light'
-                                  ? isSelected ? 'bg-red-50 text-red-600' : 'hover:text-red-600 hover:bg-slate-100'
                                   : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
                               }`}
                             >
@@ -589,8 +579,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   className={`absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden shadow-2xl z-50 border ${
                     theme === 'parchment'
                       ? 'bg-[#FCFBF8] border-[#E6E2D8]'
-                      : theme === 'light'
-                      ? 'bg-white border-slate-200'
                       : 'bg-slate-900 border-slate-700'
                   }`}
                 >
@@ -598,8 +586,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                     const isSelected = theme === option.value;
                     const colorStyle = theme === 'parchment'
                       ? { color: isSelected ? '#EF4444' : '#000000' }
-                      : theme === 'light'
-                      ? { color: isSelected ? '#EF4444' : '#0F172A' }
                       : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
 
                     return (
@@ -615,8 +601,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                         } ${
                           theme === 'parchment'
                             ? isSelected ? 'bg-red-100/70 text-[#EF4444] border border-red-300' : 'text-[#000000] hover:bg-slate-100'
-                            : theme === 'light'
-                            ? isSelected ? 'bg-red-50 text-red-600' : 'hover:text-red-600 hover:bg-slate-100'
                             : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
                         }`}
                       >
@@ -744,8 +728,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   title="Change theme"
                 >
                   {theme === 'dark' && <Moon size={20} />}
-                  {theme === 'light' && <Sun size={20} />}
-                  {theme === 'system' && <Monitor size={20} />}
                   {theme === 'midnight' && <Sparkles size={20} />}
                   {theme === 'forest' && <Leaf size={20} />}
                   {theme === 'parchment' && <Coffee size={20} style={{ color: '#ef4444', stroke: '#ef4444' }} />}
@@ -766,8 +748,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                         className={`theme-toggle-dropdown absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden shadow-2xl z-50 border ${
                           theme === 'parchment'
                             ? 'bg-white border-slate-200'
-                            : theme === 'light'
-                            ? 'bg-white border-slate-200'
                             : 'bg-slate-900 border-slate-700'
                         }`}
                       >
@@ -775,8 +755,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                           const isSelected = theme === option.value;
                           const colorStyle = theme === 'parchment'
                             ? { color: isSelected ? '#EF4444' : '#000000' }
-                            : theme === 'light'
-                            ? { color: isSelected ? '#EF4444' : '#0F172A' }
                             : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
 
                           return (
@@ -793,8 +771,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                               } ${
                                 theme === 'parchment'
                                   ? isSelected ? 'bg-red-100/70 text-[#EF4444] border border-red-300' : 'text-[#000000] hover:bg-slate-100'
-                                  : theme === 'light'
-                                  ? isSelected ? 'bg-red-50 text-red-600' : 'hover:text-red-600 hover:bg-slate-100'
                                   : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
                               }`}
                             >

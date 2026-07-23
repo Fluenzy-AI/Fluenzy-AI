@@ -16,7 +16,7 @@ import {
 
 export default function InterviewLandingPage() {
   const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === 'light';
+  const isLight = resolvedTheme === 'parchment';
   const t = themeConfig[resolvedTheme] ?? themeConfig['dark'];
 
   const cards = [

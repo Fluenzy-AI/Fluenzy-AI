@@ -5,7 +5,7 @@ import { useTheme, themeConfig } from '@/contexts/ThemeContext';
 export function TrainNavigation() {
   const { resolvedTheme } = useTheme();
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
-  const isLight = resolvedTheme === 'light';
+  const isLight = resolvedTheme === 'parchment';
 
   return (
     <div className={`border-b ${currentTheme.cardBorder} ${isLight ? 'bg-white/80' : 'bg-slate-900/50'} backdrop-blur-sm`}>

@@ -68,7 +68,7 @@ const LessonCard: React.FC<{ lesson: Lesson; onStart: () => void; isLight: boole
 const HRDashboard: React.FC<{ user: UserProfile }> = ({ user }) => {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === 'light';
+  const isLight = resolvedTheme === 'parchment';
   const [hrLearningPath, setHrLearningPath] = useState(user.hrLearningPath);
 
   useEffect(() => {

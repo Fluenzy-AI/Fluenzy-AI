@@ -1,106 +1,7 @@
 "use client";
 import React from "react";
-import { motion, Variants } from "framer-motion";
-import { Briefcase, Code, Users, Building2, Languages, Bot, ArrowRight } from "lucide-react";
+import { motion } from "framer-motion";
 import Card3D from "@/components/ui/Card3D";
-
-const ecosystem = [
-  {
-    icon: Briefcase,
-    title: "HR Interview Coach",
-    points: [
-      "Behavioral questions",
-      "STAR method detection",
-      "Leadership principle mapping",
-      "Company-personalized answers",
-      "Perfect answer AI rewriting",
-    ],
-    gradient: "from-orange-500 to-amber-500",
-    badge: "Behavioral",
-  },
-  {
-    icon: Code,
-    title: "Technical Mastery",
-    points: [
-      "DSA challenges",
-      "System design evaluation",
-      "API architecture questions",
-      "Database decision testing",
-      "AI model deployment reasoning",
-    ],
-    gradient: "from-emerald-500 to-cyan-500",
-    badge: "Engineering",
-  },
-  {
-    icon: Users,
-    title: "GD Agent",
-    points: [
-      "AI-powered group discussion simulator",
-      "Multi-role simulation",
-      "Speaking time analytics",
-      "Dominance tracking",
-      "Engagement tracking",
-    ],
-    gradient: "from-violet-500 to-pink-500",
-    badge: "Collaboration",
-  },
-  {
-    icon: Building2,
-    title: "Company Tracks",
-    points: [
-      "Google, Amazon, Microsoft preparation",
-      "Company-wise readiness scoring",
-      "Cultural alignment evaluation",
-      "Role-specific strategy layers",
-      "Interview-loop modeling",
-    ],
-    gradient: "from-blue-500 to-cyan-500",
-    badge: "Strategy",
-  },
-  {
-    icon: Languages,
-    title: "English Learning & Daily Conversation",
-    points: [
-      "Business English",
-      "Fluency training",
-      "Grammar correction",
-      "Professional communication polishing",
-      "Workplace speaking drills",
-    ],
-    gradient: "from-sky-500 to-indigo-500",
-    badge: "Communication",
-  },
-  {
-    icon: Bot,
-    title: "Real-Time AI Interviewer",
-    points: [
-      "Live interview simulation",
-      "Follow-up dynamic questioning",
-      "Resume-aware questions",
-      "Experience-based difficulty calibration",
-      "Performance intelligence feedback",
-    ],
-    gradient: "from-purple-500 to-blue-500",
-    badge: "Intelligence",
-  },
-];
-
-const containerVariants: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08 },
-  },
-};
-
-const cardVariants: Variants = {
-  hidden: { opacity: 0, y: 28 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
-  },
-};
 
 const Features = () => {
   return (
@@ -119,55 +20,13 @@ const Features = () => {
           <h2 className="fluid-h2 font-bold text-white">AI Interview Intelligence Operating System</h2>
         </motion.div>
 
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-40px" }}
-          className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
-        >
-          {ecosystem.map((feature) => (
-            <motion.div key={feature.title} variants={cardVariants} className="group">
-              <Card3D depth={30} glowColor="rgba(59, 130, 246, 0.3)" className="h-full">
-                <div className="relative h-full overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-slate-900/80 to-slate-800/60 p-6 shadow-2xl transition-all duration-500 group-hover:border-white/20 group-hover:shadow-purple-500/15">
-                  <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 transition-opacity duration-500 group-hover:opacity-10`} />
-                  <div className="relative z-10">
-                    <div className="mb-4 flex items-center justify-between">
-                      <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${feature.gradient} p-3 shadow-lg`}>
-                        <feature.icon className="h-full w-full text-white" />
-                      </div>
-                      <span className="rounded-full border border-white/20 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-300">
-                        {feature.badge}
-                      </span>
-                    </div>
-
-                    <h3 className="mb-3 text-lg font-bold text-white">{feature.title}</h3>
-                    <div className="space-y-1.5">
-                      {feature.points.map((point) => (
-                        <div key={point} className="text-sm text-slate-300">
-                          • {point}
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-5 flex items-center gap-1.5 text-xs font-semibold text-slate-400 transition group-hover:text-white">
-                      <span>Explore Capability</span>
-                      <ArrowRight className="h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1" />
-                    </div>
-                  </div>
-                </div>
-              </Card3D>
-            </motion.div>
-          ))}
-        </motion.div>
-
         {/* Feature Screenshots Showcase */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.8 }}
-          className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           <Card3D depth={40} glowColor="rgba(6, 182, 212, 0.4)">
             <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl bg-slate-900/80 p-2 group transition-all duration-300">
@@ -241,3 +100,4 @@ const Features = () => {
 };
 
 export default Features;
+

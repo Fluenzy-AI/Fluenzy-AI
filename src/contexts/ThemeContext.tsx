@@ -2,96 +2,49 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 
-export type ThemeName = 'dark' | 'light' | 'system' | 'midnight' | 'forest' | 'parchment' | 'codeterm';
+export type ThemeName = 'dark' | 'midnight' | 'forest' | 'parchment' | 'codeterm';
 
 interface ThemeContextType {
   theme: ThemeName;
   setTheme: (theme: ThemeName) => void;
-  resolvedTheme: 'dark' | 'light' | 'midnight' | 'forest' | 'parchment' | 'codeterm';
+  resolvedTheme: ThemeName;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
-const getSystemTheme = (): 'dark' | 'light' => {
-  if (typeof window !== 'undefined') {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-  }
-  return 'dark';
-};
+const validThemes: ThemeName[] = ['dark', 'midnight', 'forest', 'parchment', 'codeterm'];
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<ThemeName>('dark');
-  const [resolvedTheme, setResolvedTheme] = useState<'dark' | 'light' | 'midnight' | 'forest' | 'parchment' | 'codeterm'>('dark');
+  const [resolvedTheme, setResolvedTheme] = useState<ThemeName>('dark');
 
   const setTheme = useCallback((newTheme: ThemeName) => {
-    setThemeState(newTheme);
+    const targetTheme = validThemes.includes(newTheme) ? newTheme : 'dark';
+    setThemeState(targetTheme);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('fluenzy-theme', newTheme);
+      localStorage.setItem('fluenzy-theme', targetTheme);
     }
   }, []);
 
   useEffect(() => {
     // Get saved theme or default to dark
-    const savedTheme = localStorage.getItem('fluenzy-theme') as ThemeName | null;
-    const initialTheme = savedTheme || 'dark';
+    const savedTheme = localStorage.getItem('fluenzy-theme') as any;
+    const initialTheme = validThemes.includes(savedTheme) ? savedTheme : 'dark';
     setThemeState(initialTheme);
   }, []);
 
   useEffect(() => {
-    const updateResolvedTheme = () => {
-      let resolved: 'dark' | 'light' | 'midnight' | 'forest' | 'parchment' | 'codeterm';
-      
-      if (theme === 'system') {
-        resolved = getSystemTheme();
-      } else if (theme === 'midnight') {
-        resolved = 'midnight';
-      } else if (theme === 'forest') {
-        resolved = 'forest';
-      } else if (theme === 'parchment') {
-        resolved = 'parchment';
-      } else if (theme === 'codeterm') {
-        resolved = 'codeterm';
-      } else {
-        resolved = theme;
-      }
-      
-      setResolvedTheme(resolved);
-    };
-
-    updateResolvedTheme();
-
-    // Listen for system theme changes
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handleChange = () => {
-      if (theme === 'system') {
-        updateResolvedTheme();
-      }
-    };
-
-    mediaQuery.addEventListener('change', handleChange);
-    return () => mediaQuery.removeEventListener('change', handleChange);
+    const currentTheme = validThemes.includes(theme) ? theme : 'dark';
+    setResolvedTheme(currentTheme);
   }, [theme]);
 
   useEffect(() => {
     // Apply theme to document
     const root = document.documentElement;
-    
-    // Get the actual theme to apply (considering 'system' and 'midnight')
-    let actualTheme = theme;
-    if (theme === 'system') {
-      actualTheme = getSystemTheme();
-    } else if (theme === 'midnight') {
-      actualTheme = 'midnight';
-    } else if (theme === 'forest') {
-      actualTheme = 'forest';
-    } else if (theme === 'parchment') {
-      actualTheme = 'parchment';
-    } else if (theme === 'codeterm') {
-      actualTheme = 'codeterm';
-    }
+    const actualTheme = validThemes.includes(theme) ? theme : 'dark';
     
     // Remove all theme classes first
-    root.classList.remove('light', 'dark', 'midnight', 'forest', 'parchment', 'codeterm');
+    root.classList.remove('light', 'dark', 'midnight', 'forest', 'parchment', 'codeterm', 'system');
     
     // Add the current theme class
     root.classList.add(actualTheme);
@@ -117,41 +70,13 @@ export function useTheme() {
 
 // Helper function to get the actual theme name
 export const getActualTheme = (theme: ThemeName): string => {
-  if (theme === 'system') {
-    if (typeof window !== 'undefined') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return 'dark';
-  }
-  return theme;
+  return validThemes.includes(theme) ? theme : 'dark';
 };
 
 // Theme configurations for different styles
 export const themeConfig = {
   dark: {
     name: 'Dark',
-    background: 'bg-[#0F172A]',
-    cardBg: 'bg-[#1E293B]',
-    cardBorder: 'border-white/[0.08]',
-    text: 'text-white',
-    textMuted: 'text-slate-400',
-    accent: 'text-[#5B6CFF]',
-    activeNavBg: 'bg-indigo-500/10',
-    activeIconColor: 'text-indigo-400',
-  },
-  light: {
-    name: 'Light',
-    background: 'bg-[#F8FAFC]',
-    cardBg: 'bg-white',
-    cardBorder: 'border-[#E2E8F0]',
-    text: 'text-[#0F172A]',
-    textMuted: 'text-[#64748B]',
-    accent: 'text-[#5B6CFF]',
-    activeNavBg: 'bg-indigo-50',
-    activeIconColor: 'text-indigo-500',
-  },
-  system: {
-    name: 'System',
     background: 'bg-[#0F172A]',
     cardBg: 'bg-[#1E293B]',
     cardBorder: 'border-white/[0.08]',
@@ -206,4 +131,5 @@ export const themeConfig = {
     activeIconColor: 'text-[#CC4125]',
   },
 };
+
 

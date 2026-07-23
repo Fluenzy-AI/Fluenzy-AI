@@ -41,7 +41,7 @@ const CompanyHRDashboard: React.FC = () => {
   const router = useRouter();
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === 'light';
+  const isLight = resolvedTheme === 'parchment';
   const [step, setStep] = useState(1);
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [showSettings, setShowSettings] = useState(false);

@@ -258,14 +258,14 @@ export default function PortalSidebar({ onOpenCommandPalette }: PortalSidebarPro
       <div className="border-t border-[var(--portal-border)] p-2 space-y-1">
         {/* Theme toggle */}
         <button
-          onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+          onClick={() => setTheme(resolvedTheme === "dark" ? "parchment" : "dark")}
           className={cn(
             "w-full flex items-center gap-3 rounded-md transition-colors",
             "text-[var(--portal-text-muted)] hover:text-[var(--portal-text-secondary)]",
             "hover:bg-[var(--portal-sidebar-hover)]",
             collapsed ? "p-2 justify-center" : "px-3 py-2"
           )}
-          title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          title={resolvedTheme === "dark" ? "Switch to parchment mode" : "Switch to dark mode"}
         >
           {resolvedTheme === "dark" ? (
             <Sun className="w-4 h-4 flex-shrink-0" />

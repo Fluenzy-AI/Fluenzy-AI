@@ -167,13 +167,14 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('fluenzy-theme') || 'dark';
-                  var actualTheme = theme;
-                  if (theme === 'system') {
-                    actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                  var validThemes = ['dark', 'midnight', 'forest', 'parchment', 'codeterm'];
+                  var theme = localStorage.getItem('fluenzy-theme');
+                  if (!validThemes.includes(theme)) {
+                    theme = 'dark';
                   }
-                  document.documentElement.classList.add(actualTheme);
-                  document.documentElement.setAttribute('data-theme', actualTheme);
+                  document.documentElement.classList.remove('light', 'system');
+                  document.documentElement.classList.add(theme);
+                  document.documentElement.setAttribute('data-theme', theme);
                 } catch (e) {}
               })();
             `,

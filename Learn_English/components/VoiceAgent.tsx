@@ -169,7 +169,7 @@ const VoiceAgent: React.FC<{
     ModuleType.COMPANY_SPECIFIC,
   ].includes(type as ModuleType);
   const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === 'light';
+  const isLight = resolvedTheme === 'parchment';
 
   // ── Safe URI decoder ──────────────────────────────────────────────────────────────
   // decodeURIComponent throws URIError when the URL has been truncated

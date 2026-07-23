@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -352,7 +352,7 @@ const InterviewGuidePageContent = () => {
   }, []);
 
   const igThemeVars =
-    resolvedTheme === "light"
+    resolvedTheme === "parchment"
       ? ({
           "--ig-bg": "#f3f5f8",
           "--ig-surface": "#ffffff",

@@ -2,13 +2,11 @@
 
 import React, { useState } from "react";
 import { useTheme, ThemeName } from "@/contexts/ThemeContext";
-import { Moon, Sun, Monitor, Sparkles, Leaf, Coffee, Terminal } from "lucide-react";
+import { Moon, Sparkles, Leaf, Coffee, Terminal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const themeOptions: { value: ThemeName; label: string; icon: any }[] = [
   { value: "dark", label: "Dark", icon: Moon },
-  { value: "light", label: "Light", icon: Sun },
-  { value: "system", label: "System", icon: Monitor },
   { value: "midnight", label: "Night", icon: Sparkles },
   { value: "forest", label: "Forest", icon: Leaf },
   { value: "parchment", label: "Parchment", icon: Coffee },
@@ -23,22 +21,19 @@ export function ThemeSelector({ className }: { className?: string }) {
   const ActiveIcon = activeOption.icon;
 
   const isParchment = theme === "parchment";
-  const isLight = theme === "light";
 
   return (
     <div className={`relative ${className || ""}`}>
       <button
         onClick={() => setOpen(!open)}
         style={{
-          backgroundColor: isParchment ? "#ffffff" : isLight ? "#ffffff" : "#0f172a",
-          borderColor: isParchment ? "#ef4444" : isLight ? "#cbd5e1" : "#334155",
-          color: isParchment ? "#ef4444" : isLight ? "#0f172a" : "#f8fafc",
+          backgroundColor: isParchment ? "#ffffff" : "#0f172a",
+          borderColor: isParchment ? "#ef4444" : "#334155",
+          color: isParchment ? "#ef4444" : "#f8fafc",
         }}
         className={`theme-toggle-trigger p-2 rounded-xl border transition-all flex items-center justify-center shadow-sm cursor-pointer ${
           isParchment
             ? "bg-white border-red-500 text-red-500 hover:bg-red-50"
-            : isLight
-            ? "bg-white border-slate-200 text-slate-900 hover:bg-slate-100"
             : "bg-[#0f172a] border-slate-700/60 text-slate-100 hover:bg-[#1e293b] hover:text-white"
         }`}
         title="Change Theme"
@@ -47,8 +42,8 @@ export function ThemeSelector({ className }: { className?: string }) {
         <ActiveIcon
           className="w-4 h-4 flex-shrink-0"
           style={{
-            color: isParchment ? "#ef4444" : isLight ? "#ef4444" : "#a855f7",
-            stroke: isParchment ? "#ef4444" : isLight ? "#ef4444" : "#a855f7",
+            color: isParchment ? "#ef4444" : "#a855f7",
+            stroke: isParchment ? "#ef4444" : "#a855f7",
           }}
         />
       </button>
@@ -64,8 +59,6 @@ export function ThemeSelector({ className }: { className?: string }) {
               className={`theme-toggle-dropdown absolute right-0 top-full mt-2 w-48 rounded-2xl shadow-2xl z-[9999] p-1.5 space-y-1 border ${
                 isParchment
                   ? "bg-white border-slate-200"
-                  : isLight
-                  ? "bg-white border-slate-200"
                   : "bg-[#0f172a] border-slate-700/80"
               }`}
             >
@@ -74,8 +67,6 @@ export function ThemeSelector({ className }: { className?: string }) {
                 const isSelected = theme === opt.value;
                 const textColor = isParchment
                   ? (isSelected ? "#EF4444" : "#000000")
-                  : isLight
-                  ? (isSelected ? "#EF4444" : "#0F172A")
                   : (isSelected ? "#e9d5ff" : "#f1f5f9");
 
                 return (
@@ -94,10 +85,6 @@ export function ThemeSelector({ className }: { className?: string }) {
                         ? isSelected
                           ? "bg-red-100/70 border border-red-300"
                           : "hover:bg-slate-100 text-[#000000]"
-                        : isLight
-                        ? isSelected
-                          ? "bg-red-50 border border-red-200"
-                          : "hover:bg-slate-100 text-slate-900"
                         : isSelected
                           ? "bg-purple-600/30 border border-purple-500/40"
                           : "hover:bg-[#1e293b] text-slate-100"
@@ -128,3 +115,4 @@ export function ThemeSelector({ className }: { className?: string }) {
 }
 
 export default ThemeSelector;
+

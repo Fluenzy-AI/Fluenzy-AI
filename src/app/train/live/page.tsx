@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useState, type ElementType } from 'react';
 import { useSession } from 'next-auth/react';
@@ -96,7 +96,7 @@ interface UsageData {
 export default function LiveGDPage() {
   const { data: session } = useSession();
   const { resolvedTheme } = useTheme();
-  const isLight = resolvedTheme === 'light';
+  const isLight = resolvedTheme === 'parchment';
   const currentTheme = themeConfig[resolvedTheme] ?? themeConfig['dark'];
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [loading, setLoading] = useState(true);

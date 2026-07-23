@@ -39,7 +39,7 @@ const HRPageClient = () => {
 
   return (
     <div className={`${
-      resolvedTheme === "light"
+      resolvedTheme === "parchment"
         ? "bg-gradient-to-br from-pink-50/60 via-white to-violet-50/40 rounded-3xl border border-slate-200 shadow-sm"
         : `${currentTheme.cardBg} backdrop-blur-xl rounded-3xl border ${currentTheme.cardBorder} shadow-2xl`
     } p-6 md:p-8 lg:p-12 theme-transition`}>
