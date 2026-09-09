@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
+import SideChatBot from '@/components/chat/SideChatBot';
 import NotificationBell from '@/components/NotificationBell';
 import NotificationBadge from '@/components/NotificationBadge';
 import {
@@ -999,6 +1000,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           {!hideFooter && !hideNav && <Footer />}
         </main>
       </div>
+      <SideChatBot />
     </div>
   );
 }

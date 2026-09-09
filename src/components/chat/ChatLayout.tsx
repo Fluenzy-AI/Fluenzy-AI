@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MessageSquare,
@@ -14,7 +15,9 @@ import {
   Pin,
   Archive,
   Bell,
-  Trash2
+  Trash2,
+  Sparkles,
+  Bot
 } from "lucide-react";
 import { ChatSidebar } from "./ChatSidebar";
 import { ChatMessages } from "./ChatMessages";
@@ -23,6 +26,50 @@ import { FriendRequestPanel } from "./FriendRequestPanel";
 import { useChatSocket } from "@/hooks/useChatSocket";
 import type { ConversationListItem, MessageWithDetails } from "@/modules/chat/types/chat.types";
 
+export const FLUENZY_AI_BOT_ID = "fluenzy-ai-assistant";
+
+const FLUENZY_AI_CONVERSATION: ConversationListItem = {
+  id: FLUENZY_AI_BOT_ID,
+  name: "Fluenzy AI Assistant",
+  avatar: "/logo.png",
+  type: "DIRECT",
+  lastMessage: "Hi! How can I help you with your career, interview prep, GD, or resume today?",
+  lastMessageAt: new Date(),
+  unreadCount: 0,
+  isPinned: true,
+  isMuted: false,
+  isArchived: false,
+  participants: [
+    { id: FLUENZY_AI_BOT_ID, name: "Fluenzy AI Assistant", avatar: "/logo.png" }
+  ]
+};
+
+const INITIAL_AI_MESSAGES: MessageWithDetails[] = [
+  {
+    id: "welcome-msg",
+    conversationId: FLUENZY_AI_BOT_ID,
+    senderId: FLUENZY_AI_BOT_ID,
+    content: `👋 **Hello! I'm Fluenzy AI** — your enterprise career & communication coach.
+
+I can help you with:
+• 🎯 **Technical & HR Interview Prep**
+• 🗣️ **Group Discussion (GD) Strategies & Topics**
+• 📄 **Resume ATS Optimization**
+• 💬 **English Communication & Corporate Voice**
+
+What would you like to practice or learn today?`,
+    type: "TEXT",
+    status: "SEEN",
+    createdAt: new Date(),
+    sender: {
+      id: FLUENZY_AI_BOT_ID,
+      name: "Fluenzy AI Assistant",
+      avatar: "/logo.png"
+    },
+    reactions: []
+  } as unknown as MessageWithDetails
+];
+
 interface ChatLayoutProps {
   userId: string;
   userName: string;
@@ -30,12 +77,16 @@ interface ChatLayoutProps {
 }
 
 export function ChatLayout({ userId, userName, initialConversations = [] }: ChatLayoutProps) {
-  // ============================================
-  // STATE MANAGEMENT (STRICT STRUCTURE)
-  // ============================================
+  const searchParams = useSearchParams();
 
   // Sidebar State
-  const [conversations, setConversations] = useState<ConversationListItem[]>(initialConversations);
+  const [conversations, setConversations] = useState<ConversationListItem[]>(() => {
+    const list = [...initialConversations];
+    if (!list.some(c => c.id === FLUENZY_AI_BOT_ID)) {
+      list.unshift(FLUENZY_AI_CONVERSATION);
+    }
+    return list;
+  });
   const [friendRequests, setFriendRequests] = useState<any[]>([]);
 
   // Chat Selection State
@@ -44,6 +95,7 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
 
   // Chat Messages State (MAIN BUSINESS LOGIC)
   const [messages, setMessages] = useState<MessageWithDetails[]>([]);
+  const [aiMessages, setAiMessages] = useState<MessageWithDetails[]>(INITIAL_AI_MESSAGES);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [messageError, setMessageError] = useState<string | null>(null);
 
@@ -54,6 +106,18 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
 
   // Refs for cleanup
   const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Read URL search params (e.g. ?bot=ai)
+  useEffect(() => {
+    const botParam = searchParams.get('bot');
+    const convParam = searchParams.get('conversationId');
+
+    if (botParam === 'ai' || botParam === 'fluenzy' || convParam === FLUENZY_AI_BOT_ID) {
+      setSelectedConversationId(FLUENZY_AI_BOT_ID);
+    } else if (convParam) {
+      setSelectedConversationId(convParam);
+    }
+  }, [searchParams]);
 
   // ============================================
   // SOCKET SETUP
@@ -168,25 +232,37 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
   }, []);
 
   // ============================================
-  // CRITICAL FIX: SYNC CHAT SELECTION
+  // SYNC CHAT SELECTION
   // ============================================
-  // When selectedConversationId changes, update selectedConversation
   useEffect(() => {
     if (selectedConversationId) {
       const conv = conversations.find(c => c.id === selectedConversationId);
-      setSelectedConversation(conv || null);
+      if (conv) {
+        setSelectedConversation(conv);
+      } else if (selectedConversationId === FLUENZY_AI_BOT_ID) {
+        setSelectedConversation(FLUENZY_AI_CONVERSATION);
+      } else {
+        setSelectedConversation(null);
+      }
     } else {
       setSelectedConversation(null);
     }
   }, [selectedConversationId, conversations]);
 
   // ============================================
-  // CRITICAL FIX: FETCH MESSAGES WHEN CONVERSATION CHANGES
+  // FETCH MESSAGES WHEN CONVERSATION CHANGES
   // ============================================
   useEffect(() => {
     if (!selectedConversationId) {
       setMessages([]);
       setMessageError(null);
+      return;
+    }
+
+    if (selectedConversationId === FLUENZY_AI_BOT_ID) {
+      setIsLoadingMessages(false);
+      setMessageError(null);
+      setMessages(aiMessages);
       return;
     }
 
@@ -250,11 +326,11 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
     // Cleanup
     return () => {
       abortController.abort();
-      if (selectedConversation?.id) {
+      if (selectedConversation?.id && selectedConversation.id !== FLUENZY_AI_BOT_ID) {
         leaveConversation(selectedConversation.id);
       }
     };
-  }, [selectedConversationId, selectedConversation?.id, joinConversation, leaveConversation]);
+  }, [selectedConversationId, selectedConversation?.id, joinConversation, leaveConversation, aiMessages]);
 
   // ============================================
   // HANDLE CONVERSATION SELECTION
@@ -443,6 +519,79 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
   ) => {
     if (!selectedConversationId) return;
 
+    if (selectedConversationId === FLUENZY_AI_BOT_ID) {
+      const userMsgId = `user-ai-${Date.now()}`;
+      const userMsg = {
+        id: userMsgId,
+        conversationId: FLUENZY_AI_BOT_ID,
+        senderId: userId,
+        content,
+        type: 'TEXT',
+        status: 'SENT',
+        createdAt: new Date(),
+        sender: { id: userId, name: userName, avatar: null },
+        reactions: []
+      } as unknown as MessageWithDetails;
+
+      const updatedUserMsgs = [...messages, userMsg];
+      setMessages(updatedUserMsgs);
+      setAiMessages(updatedUserMsgs);
+      setIsLoadingMessages(true);
+
+      try {
+        const historyForApi = updatedUserMsgs
+          .filter(m => m.id !== 'welcome-msg')
+          .map(m => ({
+            role: m.senderId === userId ? ('user' as const) : ('assistant' as const),
+            content: m.content || ''
+          }));
+
+        const res = await fetch('/api/ai/ask-fluenzy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: content,
+            history: historyForApi.slice(-10)
+          })
+        });
+
+        const data = await res.json();
+        const replyText = data.reply || data.error || "Sorry, I couldn't process your request right now.";
+
+        const aiReplyMsg = {
+          id: `ai-reply-${Date.now()}`,
+          conversationId: FLUENZY_AI_BOT_ID,
+          senderId: FLUENZY_AI_BOT_ID,
+          content: replyText,
+          type: 'TEXT',
+          status: 'SEEN',
+          createdAt: new Date(),
+          sender: {
+            id: FLUENZY_AI_BOT_ID,
+            name: "Fluenzy AI Assistant",
+            avatar: "/logo.png"
+          },
+          reactions: []
+        } as unknown as MessageWithDetails;
+
+        const finalMsgs = [...updatedUserMsgs, aiReplyMsg];
+        setMessages(finalMsgs);
+        setAiMessages(finalMsgs);
+
+        // Update sidebar preview
+        setConversations(prev => prev.map(conv =>
+          conv.id === FLUENZY_AI_BOT_ID
+            ? { ...conv, lastMessage: replyText.slice(0, 60) + '...', lastMessageAt: new Date() }
+            : conv
+        ));
+      } catch (error) {
+        console.error("AI Bot error:", error);
+      } finally {
+        setIsLoadingMessages(false);
+      }
+      return;
+    }
+
     try {
       const body: any = {
         conversationId: selectedConversationId,
@@ -498,7 +647,7 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
     } catch (error) {
       console.error("Failed to send message:", error);
     }
-  }, [selectedConversationId, emitMessage]);
+  }, [selectedConversationId, emitMessage, userId, userName, messages]);
 
   // ============================================
   // RENDER
@@ -574,7 +723,7 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
               )}
 
               {/* Chat Header */}
-              <div className="h-12 sm:h-16 px-2 sm:px-4 border-b border-white/5 flex items-center justify-between bg-slate-900/50">
+              <div className={`h-12 sm:h-16 px-2 sm:px-4 border-b flex items-center justify-between ${selectedConversation.id === FLUENZY_AI_BOT_ID ? 'bg-gradient-to-r from-purple-950/80 to-indigo-950/80 border-purple-500/20' : 'bg-slate-900/50 border-white/5'}`}>
                 <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
                   <button
                     onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -583,31 +732,45 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
                     <MessageSquare size={18} className="sm:w-5 sm:h-5" />
                   </button>
 
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {selectedConversation.avatar ? (
-                      <img
-                        src={selectedConversation.avatar}
-                        alt={selectedConversation.name}
-                        className="w-full h-full object-cover"
-                        crossOrigin="anonymous"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
-                      />
-                    ) : (
-                      <span className="text-white font-bold text-xs sm:text-sm">
-                        {selectedConversation.name.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                  </div>
+                  {selectedConversation.id === FLUENZY_AI_BOT_ID ? (
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 flex items-center justify-center flex-shrink-0 ring-2 ring-purple-400/40 shadow-lg shadow-purple-500/30">
+                      <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center overflow-hidden flex-shrink-0">
+                      {selectedConversation.avatar ? (
+                        <img
+                          src={selectedConversation.avatar}
+                          alt={selectedConversation.name}
+                          className="w-full h-full object-cover"
+                          crossOrigin="anonymous"
+                          referrerPolicy="no-referrer"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <span className="text-white font-bold text-xs sm:text-sm">
+                          {selectedConversation.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   <div className="min-w-0 flex-1">
-                    <h2 className="font-semibold text-white text-xs sm:text-sm truncate">
+                    <h2 className="font-semibold text-white text-xs sm:text-sm truncate flex items-center gap-1.5">
                       {selectedConversation.name}
+                      {selectedConversation.id === FLUENZY_AI_BOT_ID && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 text-[9px] font-bold tracking-wide border border-purple-500/30">
+                          <Sparkles className="w-2.5 h-2.5" />
+                          AI
+                        </span>
+                      )}
                     </h2>
                     <p className="text-[10px] sm:text-xs text-slate-500">
-                      {selectedConversation.type === 'GROUP'
+                      {selectedConversation.id === FLUENZY_AI_BOT_ID
+                        ? '✨ Powered by Gemini · Always active'
+                        : selectedConversation.type === 'GROUP'
                         ? `${selectedConversation.participants?.length || 0} members`
                         : isConnected ? 'Online' : 'Offline'}
                     </p>
@@ -615,15 +778,19 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
                 </div>
 
                 <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 relative">
-                  <button className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
-                    <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
-                  </button>
-                  <button
-                    onClick={() => setShowSettings(!showSettings)}
-                    className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
-                  >
-                    <Settings size={18} />
-                  </button>
+                  {selectedConversation.id !== FLUENZY_AI_BOT_ID && (
+                    <button className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors">
+                      <Search size={16} className="sm:w-[18px] sm:h-[18px]" />
+                    </button>
+                  )}
+                  {selectedConversation.id !== FLUENZY_AI_BOT_ID && (
+                    <button
+                      onClick={() => setShowSettings(!showSettings)}
+                      className="p-1.5 sm:p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-colors"
+                    >
+                      <Settings size={18} />
+                    </button>
+                  )}
 
                   {/* Settings Panel - Simple Dropdown */}
                   <AnimatePresence>
@@ -764,10 +931,32 @@ export function ChatLayout({ userId, userName, initialConversations = [] }: Chat
               )}
 
               {/* Input */}
+              {selectedConversation.id === FLUENZY_AI_BOT_ID && messages.length <= 1 && (
+                <div className="px-3 pb-2 flex flex-wrap gap-2">
+                  {[
+                    "How to crack Google interview? 🎯",
+                    "Best GD strategies? 🗣️",
+                    "Optimize my resume for ATS 📄",
+                    "Improve my English fluency 💬",
+                  ].map((chip) => (
+                    <button
+                      key={chip}
+                      onClick={() => handleSendMessage(chip)}
+                      className="px-3 py-1.5 rounded-full border border-purple-500/40 bg-purple-500/10 text-purple-300 text-xs font-medium hover:bg-purple-500/20 hover:border-purple-400/60 transition-all active:scale-95"
+                    >
+                      {chip}
+                    </button>
+                  ))}
+                </div>
+              )}
               <ChatInput
                 onSend={handleSendMessage}
                 conversationId={selectedConversation.id}
-                onTyping={(isTyping) => sendTyping(selectedConversation.id, isTyping)}
+                onTyping={(isTyping) => {
+                  if (selectedConversation.id !== FLUENZY_AI_BOT_ID) {
+                    sendTyping(selectedConversation.id, isTyping);
+                  }
+                }}
               />
             </>
           ) : (

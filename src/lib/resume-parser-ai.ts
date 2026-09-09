@@ -277,7 +277,7 @@ export async function parseResumeWithAI(
     }
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-3.8-flash",
       generationConfig: {
         temperature: 0.1,
         topP: 0.8,
@@ -291,7 +291,7 @@ export async function parseResumeWithAI(
     const result = await traceGeminiCall({
       feature: FEATURES.RESUME_ATS,
       name: "parse-resume-with-ai",
-      model: "gemini-1.5-flash",
+      model: "gemini-3.8-flash",
       userPrompt: prompt,
       metadata: metadata,
       fn: () => model.generateContent(prompt),

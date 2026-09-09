@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
     );
 
     // Generate AI feedback using Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
     const durationMinutes = sessionDurationSeconds ? Math.round(sessionDurationSeconds / 60) : null;
 
@@ -138,7 +138,7 @@ Return ONLY valid JSON in this exact format:
     const result = await traceGeminiCall({
       feature: FEATURES.BEHAVIORAL_ANALYSIS,
       name: 'generate-video-feedback',
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.8-flash',
       userPrompt: prompt,
       metadata: traceMeta,
       tags: [jobRole || 'general'],

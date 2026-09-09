@@ -180,8 +180,11 @@ export const MODEL_CATALOGUE: ModelConfig[] = [
   { id: 'gpt-4-turbo',      name: 'GPT-4 Turbo',       provider: 'OpenAI',    inputPricePer1M: 10.00, outputPricePer1M: 30.00, contextWindow: 128_000,   maxOutput: 4_096  },
   { id: 'claude-3-5-sonnet',name: 'Claude 3.5 Sonnet', provider: 'Anthropic', inputPricePer1M: 3.00,  outputPricePer1M: 15.00, contextWindow: 200_000,   maxOutput: 8_192  },
   { id: 'claude-3-haiku',   name: 'Claude 3 Haiku',    provider: 'Anthropic', inputPricePer1M: 0.25,  outputPricePer1M: 1.25,  contextWindow: 200_000,   maxOutput: 4_096  },
-  { id: 'gemini-1-5-pro',   name: 'Gemini 1.5 Pro',    provider: 'Google',    inputPricePer1M: 1.25,  outputPricePer1M: 5.00,  contextWindow: 1_000_000, maxOutput: 8_192  },
-  { id: 'gemini-1-5-flash', name: 'Gemini 1.5 Flash',  provider: 'Google',    inputPricePer1M: 0.075, outputPricePer1M: 0.30,  contextWindow: 1_000_000, maxOutput: 8_192  },
+  { id: 'gemini-3-8-flash', name: 'Gemini 3.8 Flash',  provider: 'Google',    inputPricePer1M: 0.10,  outputPricePer1M: 0.40,  contextWindow: 1_000_000, maxOutput: 8_192  },
+  { id: 'gemini-3-7-flash', name: 'Gemini 3.7 Flash',  provider: 'Google',    inputPricePer1M: 0.08,  outputPricePer1M: 0.35,  contextWindow: 1_000_000, maxOutput: 8_192  },
+  { id: 'gemini-3-6-flash', name: 'Gemini 3.6 Flash',  provider: 'Google',    inputPricePer1M: 0.075, outputPricePer1M: 0.30,  contextWindow: 1_000_000, maxOutput: 8_192  },
+  { id: 'gemini-2-5-pro',   name: 'Gemini 2.5 Pro',    provider: 'Google',    inputPricePer1M: 1.25,  outputPricePer1M: 5.00,  contextWindow: 1_000_000, maxOutput: 8_192  },
+  { id: 'gemini-2-5-flash', name: 'Gemini 2.5 Flash',  provider: 'Google',    inputPricePer1M: 0.075, outputPricePer1M: 0.30,  contextWindow: 1_000_000, maxOutput: 8_192  },
 ];
 
 // ── Task Classifier ────────────────────────────────────────────────────────────

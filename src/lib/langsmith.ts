@@ -198,7 +198,7 @@ export async function traceGeminiCall<T>(params: TraceGeminiCallParams<T>): Prom
   const {
     feature,
     name,
-    model     = 'gemini-1.5-flash',
+    model     = 'gemini-3.8-flash',
     systemPrompt,
     userPrompt,
     metadata  = {},
@@ -282,7 +282,7 @@ export async function traceGeminiStream<T extends { stream: AsyncGenerator<any, 
   const {
     feature,
     name,
-    model     = 'gemini-1.5-flash',
+    model     = 'gemini-3.8-flash',
     systemPrompt,
     userPrompt,
     metadata  = {},

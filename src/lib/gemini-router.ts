@@ -72,8 +72,22 @@ function getSupportedModels(preferHighCapability = false, preferredModel?: strin
   }
 
   if (baseModels.length === 0) {
-    const cheapFirst = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'];
-    const qualityFirst = ['gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+    const cheapFirst = [
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash',
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+    ];
+    const qualityFirst = [
+      'gemini-3.8-flash',
+      'gemini-2.5-pro',
+      'gemini-3.7-flash',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash',
+      'gemini-2.5-flash',
+    ];
     baseModels = preferHighCapability ? qualityFirst : cheapFirst;
   }
 
@@ -86,7 +100,14 @@ function getSupportedModels(preferHighCapability = false, preferredModel?: strin
 
   // If all configured models were marked invalid, fall back to safe standard defaults
   if (validModels.length === 0) {
-    return ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro'].filter((m) => !invalidModels.has(m));
+    return [
+      'gemini-3.8-flash',
+      'gemini-3.7-flash',
+      'gemini-3.6-flash',
+      'gemini-3.5-flash',
+      'gemini-2.5-flash',
+      'gemini-2.5-pro',
+    ].filter((m) => !invalidModels.has(m));
   }
 
   return validModels;

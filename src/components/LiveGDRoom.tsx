@@ -506,7 +506,7 @@ export default function LiveGDRoom({ roomData: initialRoomData, userId, agoraUid
                </button>
             </div>
             <button
-              onClick={() => { window.location.href = '/train/chat'; }}
+              onClick={() => { window.dispatchEvent(new CustomEvent('open-side-chatbot')); }}
               className="fixed right-5 md:right-10 bottom-8 z-50 w-16 h-16 md:w-20 md:h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 shadow-[0_0_25px_rgba(124,58,237,0.7)] flex flex-col items-center justify-center font-bold"
             >
               <Sparkles size={22} />

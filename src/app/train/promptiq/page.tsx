@@ -1433,7 +1433,7 @@ export default function PromptIQPage() {
                     <p className={`text-sm font-bold ${dark ? 'text-white' : 'text-slate-900'}`}>
                       Gemini AI Validation
                     </p>
-                    <p className="text-[10px] text-slate-500">Independent semantic evaluation · gemini-1.5-flash</p>
+                    <p className="text-[10px] text-slate-500">Independent semantic evaluation · gemini-3.8-flash</p>
                   </div>
                 </div>
                 {geminiResult?.available && analysis && (() => {

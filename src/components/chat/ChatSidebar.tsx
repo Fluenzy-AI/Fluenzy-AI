@@ -12,7 +12,9 @@ import {
   Pin,
   Archive,
   MoreHorizontal,
-  Loader2
+  Loader2,
+  Sparkles,
+  Bot
 } from "lucide-react";
 import type { ConversationListItem } from "@/modules/chat/types/chat.types";
 import { formatRelativeTime } from "@/modules/chat/utils/chat.utils";
@@ -48,7 +50,24 @@ export function ChatSidebar({
         const res = await fetch('/api/chat/conversations');
         if (res.ok) {
           const data = await res.json();
-          onConversationsChange(data.conversations || []);
+          const loaded = data.conversations || [];
+          const hasAi = loaded.some((c: any) => c.id === 'fluenzy-ai-assistant');
+          if (!hasAi) {
+            loaded.unshift({
+              id: 'fluenzy-ai-assistant',
+              name: 'Fluenzy AI Assistant',
+              avatar: '/logo.png',
+              type: 'DIRECT',
+              lastMessage: 'Hi! How can I help you with your career today?',
+              lastMessageAt: new Date(),
+              unreadCount: 0,
+              isPinned: true,
+              isMuted: false,
+              isArchived: false,
+              participants: []
+            });
+          }
+          onConversationsChange(loaded);
         }
       } catch (error) {
         console.error("Failed to load conversations:", error);
@@ -286,6 +305,7 @@ interface ConversationItemProps {
 
 function ConversationItem({ conversation, isSelected, onClick }: ConversationItemProps) {
   const [showMenu, setShowMenu] = useState(false);
+  const isAiBot = conversation.id === 'fluenzy-ai-assistant';
 
   return (
     <div
@@ -302,11 +322,15 @@ function ConversationItem({ conversation, isSelected, onClick }: ConversationIte
         {/* Avatar */}
         <div className="relative flex-shrink-0">
           <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center overflow-hidden ${
-            conversation.type === 'GROUP'
+            isAiBot
+              ? 'bg-gradient-to-tr from-purple-600 via-indigo-500 to-pink-500 shadow-md shadow-purple-500/20 ring-2 ring-purple-500/30'
+              : conversation.type === 'GROUP'
               ? 'bg-gradient-to-br from-blue-500 to-cyan-500'
               : 'bg-gradient-to-br from-purple-500 to-pink-500'
           }`}>
-            {conversation.avatar ? (
+            {isAiBot ? (
+              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white animate-pulse" />
+            ) : conversation.avatar ? (
               <img
                 src={conversation.avatar}
                 alt={conversation.name}

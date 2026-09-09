@@ -665,7 +665,16 @@ export default function MobileTrainPage() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: i * 0.03, type: 'spring', stiffness: 300, damping: 22 }}
               >
-                <Link href={f.href} className="flex flex-col items-center gap-2 active:opacity-75">
+                <Link
+                  href={f.href}
+                  onClick={(e) => {
+                    if (f.href === '/train/chat') {
+                      e.preventDefault();
+                      window.dispatchEvent(new CustomEvent('open-side-chatbot'));
+                    }
+                  }}
+                  className="flex flex-col items-center gap-2 active:opacity-75"
+                >
                   <div className="relative">
                     <div
                       className="w-[72px] h-[72px] rounded-[22px] flex items-center justify-center border-0 outline-none shadow-sm"
@@ -756,7 +765,7 @@ export default function MobileTrainPage() {
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.7, type: 'spring', stiffness: 300, damping: 20 }}
-        onClick={() => router.push('/train/chat')}
+        onClick={() => window.dispatchEvent(new CustomEvent('open-side-chatbot'))}
         className="fixed right-5 z-[210] sm:hidden w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 active:scale-95 shadow-xl"
         style={{
           bottom: '80px',

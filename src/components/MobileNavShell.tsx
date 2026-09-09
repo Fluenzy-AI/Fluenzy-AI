@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -176,7 +176,7 @@ export default function MobileNavShell({ children, activeHref }: MobileNavShellP
 
       {/* ASK AI FAB */}
       <motion.button initial={{scale:0,opacity:0}} animate={{scale:1,opacity:1}} transition={{delay:0.5,type:"spring",stiffness:300,damping:20}}
-        onClick={()=>router.push("/train/chat")}
+        onClick={() => window.dispatchEvent(new CustomEvent('open-side-chatbot'))}
         className="fixed right-5 z-[210] sm:hidden w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 active:scale-95 shadow-xl"
         style={{bottom:"80px",background:"linear-gradient(135deg,#7C3AED 0%,#4F46E5 100%)",boxShadow:"0 8px 24px rgba(124,58,237,0.45)",border:"1.5px solid rgba(255,255,255,0.3)"}}>
         <Sparkles size={18} className="text-white"/>

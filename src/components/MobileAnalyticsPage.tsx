@@ -809,7 +809,7 @@ const MobileAnalyticsPage = ({ loading = false, summary, insights, trends, histo
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.7, type: 'spring', stiffness: 300, damping: 20 }}
-        onClick={() => router.push('/train/chat')}
+        onClick={() => window.dispatchEvent(new CustomEvent('open-side-chatbot'))}
         className="fixed right-5 z-[210] sm:hidden w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 active:scale-95 shadow-xl"
         style={{
           bottom: '80px',

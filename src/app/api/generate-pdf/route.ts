@@ -268,7 +268,7 @@ const evaluateAnswerWithAI = async (
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-3.8-flash",
       generationConfig: { responseMimeType: "application/json", temperature: 0.3 },
     });
 
@@ -315,7 +315,7 @@ Return JSON:
     const result = await traceGeminiCall({
       feature: FEATURES.INTERVIEW_AI,
       name: "evaluate-answer-pdf-v1",
-      model: "gemini-2.0-flash",
+      model: "gemini-3.8-flash",
       userPrompt: prompt,
       metadata: metadata,
       fn: () => model.generateContent(prompt),
@@ -702,7 +702,7 @@ const evaluateAnswerWithAIV2 = async (
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash",
+      model: "gemini-3.8-flash",
       generationConfig: { responseMimeType: "application/json", temperature: 0.2 },
     });
 
@@ -770,7 +770,7 @@ OTHER RULES:
     const result = await traceGeminiCall({
       feature: FEATURES.INTERVIEW_AI,
       name: "evaluate-answer-pdf-v2",
-      model: "gemini-2.0-flash",
+      model: "gemini-3.8-flash",
       userPrompt: prompt,
       metadata: metadata,
       fn: () => model.generateContent(prompt),

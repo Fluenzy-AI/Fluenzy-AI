@@ -325,7 +325,7 @@ export default function MobileSessionPage() {
       <motion.button
         initial={{ scale: 0, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        onClick={() => triggerSafeNavigate('/train/chat')}
+        onClick={() => window.dispatchEvent(new CustomEvent('open-side-chatbot'))}
         className="fixed right-5 z-[210] sm:hidden w-14 h-14 rounded-full flex flex-col items-center justify-center gap-0.5 active:scale-95"
         style={{
           bottom: '80px',

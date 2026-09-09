@@ -210,7 +210,7 @@ export default function LiveMobileGDRoom({
           {isSpeakerMuted ? <VolumeX /> : <Volume2 />}
         </button>
         <button onClick={onEndSession} className="flex h-12 min-w-0 flex-1 items-center justify-center gap-1 rounded-full px-3 font-bold sm:h-14 sm:flex-none sm:px-5" style={{ background: danger, color: '#FFFFFF' }}><PhoneOff size={18} /> <span>End</span></button>
-        <button onClick={() => { window.location.href = '/train/chat'; }} className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full shadow-[0_0_20px_rgba(124,58,237,0.65)] sm:h-14 sm:w-14" style={{ background: accent, color: '#FFFFFF' }}><Sparkles size={18} /><span className="text-[8px] font-bold">Ask AI</span></button>
+        <button onClick={() => { window.dispatchEvent(new CustomEvent('open-side-chatbot')); }} className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-full shadow-[0_0_20px_rgba(124,58,237,0.65)] sm:h-14 sm:w-14" style={{ background: accent, color: '#FFFFFF' }}><Sparkles size={18} /><span className="text-[8px] font-bold">Ask AI</span></button>
       </div>
 
       <nav className="fixed bottom-0 left-0 right-0 z-30 h-16 flex items-end justify-around" style={{ paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}>
