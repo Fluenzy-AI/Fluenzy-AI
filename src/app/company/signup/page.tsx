@@ -161,8 +161,8 @@ export default function CompanySignupPage() {
 
         {/* Logo */}
         <div className="relative z-10 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-white text-lg shadow-lg shadow-indigo-500/30">
-            F
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl border border-purple-400/20 bg-slate-900/90 shadow-lg shadow-purple-900/20">
+            <img src="/white-removebg-preview1.png" alt="Fluenzy AI" className="h-8 w-auto object-contain" />
           </div>
           <span className="text-white font-semibold text-lg tracking-tight">Fluenzy AI</span>
         </div>
@@ -218,21 +218,26 @@ export default function CompanySignupPage() {
       {/* ── RIGHT FORM PANEL ── */}
       <div className="flex-1 flex flex-col min-h-screen bg-[#080d1a] overflow-y-auto">
         {/* Mobile back link */}
-        <div className="lg:hidden px-6 pt-6">
-          <Link href="/" className="inline-flex items-center gap-1.5 text-slate-400 hover:text-slate-200 text-sm transition-colors">
-            <ArrowLeft className="w-4 h-4" /> Back to Fluenzy AI
-          </Link>
+        <div className="border-b border-white/10 bg-[#0b1222]/80 px-5 py-4 backdrop-blur-xl lg:hidden">
+          <div className="flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-purple-400/20 bg-slate-900/90"><img src="/white-removebg-preview1.png" alt="Fluenzy AI" className="h-7 w-auto object-contain" /></span>
+              <span className="text-base font-black text-white">Fluenzy <span className="text-indigo-300">AI</span></span>
+            </Link>
+            <Link href="/company/login" className="rounded-lg border border-white/15 px-3 py-2 text-xs font-bold text-slate-300">Sign in</Link>
+          </div>
+          <Link href="/" className="mt-4 inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"><ArrowLeft className="h-4 w-4" /> Back to Fluenzy AI</Link>
         </div>
 
-        <div className="flex-1 flex items-start justify-center px-6 py-10 lg:py-12">
+        <div className="flex-1 flex items-start justify-center px-4 py-7 sm:px-6 lg:py-12">
           <div className="w-full max-w-lg">
             {/* Header */}
-            <div className="flex items-center gap-4 mb-8">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl shadow-indigo-500/25 flex-shrink-0">
+            <div className="flex items-center gap-3 sm:gap-4 mb-7">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-xl shadow-indigo-500/25 flex-shrink-0">
                 <Building2 className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Register Your Company</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Become a Company Partner</h2>
                 <p className="text-slate-400 text-sm mt-0.5">Free to sign up — Start posting jobs in minutes</p>
               </div>
             </div>
@@ -267,7 +272,7 @@ export default function CompanySignupPage() {
             )}
 
             {/* Card */}
-            <div className="bg-[#0d1427]/70 border border-slate-700/40 rounded-2xl p-8 backdrop-blur-sm shadow-2xl">
+            <div className="bg-[#0d1427]/70 border border-slate-700/40 rounded-2xl p-5 sm:p-8 backdrop-blur-sm shadow-2xl">
 
               {/* ── STEP 1: Registration Form ── */}
               {step === "form" && (

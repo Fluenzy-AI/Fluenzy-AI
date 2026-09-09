@@ -84,11 +84,7 @@ function LoginContent() {
         {/* Logo */}
         <div className="relative z-10">
           <Link href="/" className="inline-flex items-center gap-3">
-            <img 
-              src="/favicon/apple-touch-icon.png" 
-              alt="Fluenzy AI Logo" 
-              className="w-16 h-16 rounded-xl shadow-lg shadow-indigo-500/30"
-            />
+            <img src="/white-removebg-preview1.png" alt="Fluenzy AI Logo" className="h-14 w-14 rounded-xl object-contain shadow-lg shadow-indigo-500/30" />
             <span className="text-white font-bold text-xl">Fluenzy AI</span>
           </Link>
         </div>
@@ -138,10 +134,19 @@ function LoginContent() {
       </div>
 
       {/* ── Right login panel ── */}
-      <div className="flex-1 flex flex-col justify-center items-center px-6 py-12 relative overflow-auto">
+      <div className="flex-1 flex flex-col justify-center items-center bg-[#0a0f1e] px-4 py-0 relative overflow-auto sm:px-6 lg:py-12">
         <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600/8 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="w-full max-w-md relative">
+        <div className="relative w-full max-w-md lg:rounded-3xl lg:border lg:border-white/10 lg:bg-white/[0.02] lg:p-8 lg:shadow-2xl">
+          <div className="mb-7 flex items-center justify-between border-b border-white/10 pb-4 lg:hidden">
+            <Link href="/" className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl border border-purple-400/20 bg-slate-900/90">
+                <img src="/white-removebg-preview1.png" alt="Fluenzy AI" className="h-7 w-auto object-contain" />
+              </span>
+              <span className="text-base font-black text-white">Fluenzy <span className="text-indigo-300">AI</span></span>
+            </Link>
+            <Link href="/college-portal" className="rounded-lg border border-white/15 px-3 py-2 text-xs font-bold text-slate-300">Partner portal</Link>
+          </div>
           {/* Mobile back link */}
           <Link href="/" className="lg:hidden inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm mb-6 transition-colors">
             <ArrowLeft className="w-4 h-4" /> Back to Fluenzy AI
@@ -154,7 +159,7 @@ function LoginContent() {
                 <Building2 className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">College Admin Portal</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">College Admin Login</h2>
                 <p className="text-slate-400 text-sm">Sign in to manage your institution</p>
               </div>
             </div>

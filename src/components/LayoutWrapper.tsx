@@ -227,14 +227,22 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     isEmbedded;
   const isLiveTrainingRoute =
     pathname.startsWith('/train/live') || pathname.startsWith('/train/live-gd');
+  const isAuthPage =
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/register') ||
+    pathname === '/company/login' ||
+    pathname === '/college/login' ||
+    pathname === '/company/signup' ||
+    pathname === '/college/signup';
   const hideNav =
     isEmbedded ||
     isReportPrintMode ||
+    isAuthPage ||
     (isLiveTrainingRoute && isMobileViewport !== false) ||
     (pathname.startsWith('/install') && isMobileViewport !== false);
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/register');
   const isSuperAdminPage = pathname.startsWith('/superadmin');
   const isCollegePage = pathname.startsWith('/college');
+  const isCompanyPortalLanding = pathname === '/company-portal';
   const isPortalPage = pathname.startsWith('/portal');
   const isCandidatePage = pathname.startsWith('/candidates');
 
@@ -395,6 +403,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   // ── College Portal: completely separate layout (no main-site nav) ──────────
   if (isCollegePage) {
+    return <>{children}</>;
+  }
+  if (isCompanyPortalLanding) {
     return <>{children}</>;
   }
   // ────────────────────────────────────────────────────────────────────────────
