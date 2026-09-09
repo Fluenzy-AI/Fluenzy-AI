@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
@@ -79,9 +79,10 @@ const SIDEBAR_SECTIONS = [
   },
 ];
 
-/* â”€â”€â”€ Types â”€â”€â”€ */
+/* ─── Types ─── */
 interface MobileAnalyticsProps {
-  summary: {
+  loading?: boolean;
+  summary?: {
     communicationScore: number;
     confidenceScore: number;
     grammarScore: number;
@@ -94,17 +95,17 @@ interface MobileAnalyticsProps {
     totalQuestions: number;
     completionRate: number;
   };
-  insights: {
+  insights?: {
     focusAreas: string[];
     tips: string[];
     mostPracticed: Array<{ name: string; count: number }>;
     commonGrammarIssues: string[];
   };
-  trends: Array<{ date: string; communication: number; confidence: number; grammar: number; technical: number }>;
-  history: {
+  trends?: Array<{ date: string; communication: number; confidence: number; grammar: number; technical: number }>;
+  history?: {
     sessions: Array<{ sessionId: string; company: string; module: string; date: string; score: number; status: string }>;
   };
-  advanced: {
+  advanced?: {
     communication: { speakingWpm: number; fillerRate: number; sentenceStructureScore: number; toneConsistency: number };
     grammar: { beforeAfter: { before: number; after: number }; errorFrequency: number };
     coach: { strengths: string[]; weaknesses: string[]; plan7Day: string[]; nextSessionFocus: string; readinessSummary: string };
@@ -114,7 +115,7 @@ interface MobileAnalyticsProps {
   range?: string;
 }
 
-/* â”€â”€â”€ Score Ring â”€â”€â”€ */
+/* ─── Score Ring ─── */
 const MiniRing = ({ score, color, label }: { score: number; color: string; label: string }) => {
   const r = 28;
   const stroke = 5;
@@ -200,7 +201,7 @@ function RadarTick({ x, y, payload, textAnchor }: { x?: number; y?: number; payl
    MobileAnalyticsPage \u2014 \u2264640 px
    Same top/bottom nav as MobileTrainPage (Light/Dark/Night/Forest/Parchment/Code)
 \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550 */
-const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onRangeChange, range = "all" }: MobileAnalyticsProps) => {
+const MobileAnalyticsPage = ({ loading = false, summary, insights, trends, history, advanced, onRangeChange, range = "all" }: MobileAnalyticsProps) => {
   const { data: session } = useSession();
   const router = useRouter();
   const { theme, setTheme, resolvedTheme } = useTheme();
@@ -276,19 +277,27 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
   };
 
   /* \u2500\u2500 Analytics data \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */
-  const recentSessions = history.sessions.slice(0, 5);
-  const latestTrend = trends.slice(-5);
+  /* ── Analytics data (safe guards for optional props) ────────── */
+  const recentSessions = history?.sessions.slice(0, 5) ?? [];
+  const latestTrend = trends?.slice(-5) ?? [];
   const communicationRadar = [
-    { metric: 'Communication', score: Number(summary.communicationScore.toFixed(1)) },
-    { metric: 'Confidence',    score: Number(summary.confidenceScore.toFixed(1))    },
-    { metric: 'Grammar',       score: Number(summary.grammarScore.toFixed(1))       },
-    { metric: 'Speaking Pace', score: Number(advanced.communication.speakingWpm.toFixed(1)) },
-    { metric: 'Sentence',      score: Number(advanced.communication.sentenceStructureScore.toFixed(1)) },
-    { metric: 'Tone',          score: Number(advanced.communication.toneConsistency.toFixed(1)) },
+    { metric: 'Communication', score: Number((summary?.communicationScore ?? 0).toFixed(1)) },
+    { metric: 'Confidence',    score: Number((summary?.confidenceScore    ?? 0).toFixed(1)) },
+    { metric: 'Grammar',       score: Number((summary?.grammarScore       ?? 0).toFixed(1)) },
+    { metric: 'Speaking Pace', score: Number((advanced?.communication.speakingWpm          ?? 0).toFixed(1)) },
+    { metric: 'Sentence',      score: Number((advanced?.communication.sentenceStructureScore ?? 0).toFixed(1)) },
+    { metric: 'Tone',          score: Number((advanced?.communication.toneConsistency       ?? 0).toFixed(1)) },
   ];
-  const overallColor = summary.overallScore >= 80 ? '#22c55e' : summary.overallScore >= 60 ? '#38bdf8' : '#f97316';
+  const overallScore = summary?.overallScore ?? 0;
+  const overallColor = overallScore >= 80 ? '#22c55e' : overallScore >= 60 ? '#38bdf8' : '#f97316';
   const bodyPaddingBottom = isLight ? '96px' : '80px';
   const surfaceStyle = { background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.05)', border: `1px solid ${borderHex}` };
+
+  /* ── Skeleton shimmer style ─────────────────────────────── */
+  const skimBase = isLight
+    ? 'bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200'
+    : 'bg-gradient-to-r from-white/5 via-white/10 to-white/5';
+  const skim = `${skimBase} animate-pulse rounded-xl`;
 
   return (
     <div className="fixed inset-0 z-[200] flex flex-col sm:hidden" style={{ background: pageBgHex }}>
@@ -403,12 +412,70 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
         </div>
       </header>
 
-      {/* \u2500\u2500 SCROLLABLE BODY \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
+      {/* ── SCROLLABLE BODY ─────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto" style={{ paddingBottom: bodyPaddingBottom }}>
 
-        {/* \u2500\u2500 PAGE HEADER \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
-        <div className="relative overflow-hidden px-5 pb-8 pt-5"
-          style={{ background: isLight ? pageBgHex : 'linear-gradient(to bottom, rgba(88,28,135,0.15), transparent)' }}>
+        {loading ? (
+          /* ── SKELETON (shown instantly while API loads) ── */
+          <div className="px-5 pt-6 space-y-5">
+            {/* title skeleton */}
+            <div className={`h-4 w-40 ${skim}`} />
+            <div className={`h-7 w-56 ${skim}`} />
+            <div className={`h-3 w-44 ${skim}`} />
+            {/* full-width link skeleton */}
+            <div className={`h-12 w-full ${skim}`} />
+            {/* overall ring card skeleton */}
+            <div className="flex items-center gap-5 rounded-2xl p-4" style={surfaceStyle}>
+              <div className={`h-[88px] w-[88px] rounded-full ${skim}`} />
+              <div className="flex-1 space-y-2">
+                <div className={`h-4 w-24 ${skim}`} />
+                <div className={`h-6 w-32 ${skim}`} />
+                <div className={`h-3 w-36 ${skim}`} />
+              </div>
+            </div>
+            {/* 3 skill rings */}
+            <div className="grid grid-cols-3 gap-3">
+              {[0,1,2].map(i => (
+                <div key={i} className="rounded-2xl p-3 flex flex-col items-center gap-2" style={surfaceStyle}>
+                  <div className={`h-14 w-14 rounded-full ${skim}`} />
+                  <div className={`h-3 w-16 ${skim}`} />
+                </div>
+              ))}
+            </div>
+            {/* 4 metric cards */}
+            <div className="grid grid-cols-2 gap-3">
+              {[0,1,2,3].map(i => (
+                <div key={i} className="rounded-2xl px-3 py-3 flex items-center gap-2.5" style={surfaceStyle}>
+                  <div className={`h-8 w-8 rounded-xl shrink-0 ${skim}`} />
+                  <div className="flex-1 space-y-1.5">
+                    <div className={`h-2.5 w-16 ${skim}`} />
+                    <div className={`h-4 w-12 ${skim}`} />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* 3 stat cards */}
+            <div className="grid grid-cols-3 gap-3">
+              {[0,1,2].map(i => (
+                <div key={i} className="rounded-xl p-3 text-center" style={surfaceStyle}>
+                  <div className={`h-6 w-8 mx-auto ${skim} mb-1`} />
+                  <div className={`h-2.5 w-14 mx-auto ${skim}`} />
+                </div>
+              ))}
+            </div>
+            {/* accordion skeletons */}
+            {[0,1,2].map(i => (
+              <div key={i} className="rounded-2xl p-4" style={surfaceStyle}>
+                <div className="flex items-center justify-between">
+                  <div className={`h-4 w-32 ${skim}`} />
+                  <div className={`h-4 w-4 ${skim}`} />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <>
+
           <motion.div
             initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
             className="mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-bold"
@@ -463,7 +530,7 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
               {(() => {
                 const r = 44, stroke = 7, nr = r - stroke / 2;
                 const circ = nr * 2 * Math.PI;
-                const offset = circ - (Math.max(0, Math.min(100, summary.overallScore)) / 100) * circ;
+                const offset = circ - (Math.max(0, Math.min(100, summary?.overallScore ?? 0)) / 100) * circ;
                 return (
                   <>
                     <svg height={r * 2} width={r * 2} className="-rotate-90">
@@ -472,28 +539,27 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
                         strokeDasharray={`${circ} ${circ}`} style={{ strokeDashoffset: offset }} r={nr} cx={r} cy={r} />
                     </svg>
                     <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-xl font-black" style={{ color: textHex }}>
-                      {Math.round(summary.overallScore)}
+                      {Math.round(summary?.overallScore ?? 0)}
                     </span>
                   </>
                 );
               })()}
             </div>
             <div>
-              <StatusBadge status={summary.overallStatus} />
+              <StatusBadge status={summary?.overallStatus ?? ''} />
               <p className="text-lg font-black mt-1" style={{ color: textHex }}>Overall Score</p>
-              <p className="text-xs" style={{ color: mutedHex }}>{summary.totalSessions} sessions Â· {formatDur(summary.totalDurationMinutes)} practice</p>
+              <p className="text-xs" style={{ color: mutedHex }}>{summary?.totalSessions ?? 0} sessions · {formatDur(summary?.totalDurationMinutes ?? 0)} practice</p>
             </div>
           </motion.div>
-        </div>
 
         {/* \u2500\u2500 CORE SKILLS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
         <section className="px-5 pt-6 pb-4">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] mb-3" style={{ color: accentHex }}>Core Skills</p>
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Communication', score: summary.communicationScore, color: '#a78bfa' },
-              { label: 'Confidence',    score: summary.confidenceScore,    color: '#38bdf8' },
-              { label: 'Grammar',       score: summary.grammarScore,       color: '#34d399' },
+              { label: 'Communication', score: summary?.communicationScore ?? 0, color: '#a78bfa' },
+              { label: 'Confidence',    score: summary?.confidenceScore ?? 0,    color: '#38bdf8' },
+              { label: 'Grammar',       score: summary?.grammarScore ?? 0,       color: '#34d399' },
             ].map(({ label, score, color }) => (
               <motion.div key={label} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                 className="rounded-2xl p-3 flex flex-col items-center" style={surfaceStyle}>
@@ -503,10 +569,10 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
           </div>
           <div className="grid grid-cols-2 gap-3 mt-3">
             {[
-              { icon: Mic,          label: 'Speaking Pace',   value: `${advanced.communication.speakingWpm.toFixed(1)} WPM`, color: 'from-orange-500 to-amber-500'  },
-              { icon: BookOpen,     label: 'Vocabulary',      value: `${Math.round(summary.vocabularyScore ?? 0)}`,          color: 'from-purple-500 to-pink-500'   },
-              { icon: MessageSquare,label: 'Tone Consistency',value: `${Math.round(advanced.communication.toneConsistency)}%`,color:'from-cyan-500 to-blue-500'      },
-              { icon: Target,       label: 'Completion Rate', value: `${summary.completionRate}%`,                           color: 'from-emerald-500 to-teal-500'  },
+              { icon: Mic,          label: 'Speaking Pace',   value: `${(advanced?.communication.speakingWpm ?? 0).toFixed(1)} WPM`, color: 'from-orange-500 to-amber-500'  },
+              { icon: BookOpen,     label: 'Vocabulary',      value: `${Math.round(summary?.vocabularyScore ?? 0)}`,                  color: 'from-purple-500 to-pink-500'   },
+              { icon: MessageSquare,label: 'Tone Consistency',value: `${Math.round(advanced?.communication.toneConsistency ?? 0)}%`,  color: 'from-cyan-500 to-blue-500'     },
+              { icon: Target,       label: 'Completion Rate', value: `${summary?.completionRate ?? 0}%`,                              color: 'from-emerald-500 to-teal-500'  },
             ].map(({ icon: Icon, label, value, color }) => (
               <div key={label} className="rounded-2xl px-3 py-3 flex items-center gap-2.5" style={surfaceStyle}>
                 <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${color}`}>
@@ -525,9 +591,9 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
         <section className="px-5 py-2">
           <div className="grid grid-cols-3 gap-3">
             {[
-              { label: 'Sessions',  value: summary.totalSessions },
-              { label: 'Questions', value: summary.totalQuestions },
-              { label: 'Practice',  value: formatDur(summary.totalDurationMinutes) },
+              { label: 'Sessions',  value: summary?.totalSessions ?? 0 },
+              { label: 'Questions', value: summary?.totalQuestions ?? 0 },
+              { label: 'Practice',  value: formatDur(summary?.totalDurationMinutes ?? 0) },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-xl p-3 text-center" style={surfaceStyle}>
                 <p className="text-lg font-extrabold" style={{ color: textHex }}>{value}</p>
@@ -570,7 +636,7 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
         <section className="px-5 space-y-3 pb-4">
           <Accordion title="AI Coach Tips" icon={Brain} defaultOpen textHex={textHex} mutedHex={mutedHex} borderHex={borderHex}>
             <div className="space-y-2">
-              {insights.tips.length > 0 ? insights.tips.map((tip, i) => (
+              {insights?.tips && insights.tips.length > 0 ? insights.tips.map((tip, i) => (
                 <div key={i} className="flex gap-2.5 rounded-xl px-3 py-2.5" style={surfaceStyle}>
                   <Zap className="h-3.5 w-3.5 text-yellow-400 shrink-0 mt-0.5" />
                   <p className="text-xs leading-relaxed" style={{ color: mutedHex }}>{tip}</p>
@@ -581,7 +647,7 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
 
           <Accordion title="Focus Areas" icon={Target} textHex={textHex} mutedHex={mutedHex} borderHex={borderHex}>
             <div className="space-y-2">
-              {insights.focusAreas.length > 0 ? insights.focusAreas.map((area) => (
+              {insights?.focusAreas && insights.focusAreas.length > 0 ? insights.focusAreas.map((area) => (
                 <div key={area} className="flex items-center justify-between rounded-xl px-3 py-2.5"
                   style={{ border: `1px solid ${accentHex}30`, background: `${accentHex}12` }}>
                   <span className="text-xs font-semibold" style={{ color: isLight ? accentHex : '#c4b5fd' }}>{area}</span>
@@ -591,7 +657,7 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
             </div>
           </Accordion>
 
-          {advanced.coach.plan7Day.length > 0 && (
+          {advanced?.coach && advanced.coach.plan7Day.length > 0 && (
             <Accordion title="7-Day Improvement Plan" icon={Activity} textHex={textHex} mutedHex={mutedHex} borderHex={borderHex}>
               <ol className="space-y-2">
                 {advanced.coach.plan7Day.map((step, i) => (
@@ -604,7 +670,7 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
             </Accordion>
           )}
 
-          {(advanced.coach.strengths.length > 0 || advanced.coach.weaknesses.length > 0) && (
+          {advanced?.coach && (advanced.coach.strengths.length > 0 || advanced.coach.weaknesses.length > 0) && (
             <Accordion title="Strengths &amp; Weaknesses" icon={Award} textHex={textHex} mutedHex={mutedHex} borderHex={borderHex}>
               {advanced.coach.strengths.length > 0 && (
                 <div className="mb-3">
@@ -637,7 +703,7 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
             </Accordion>
           )}
 
-          {(advanced.grammar.beforeAfter.before > 0 || advanced.grammar.beforeAfter.after > 0) && (
+          {advanced?.grammar && (advanced.grammar.beforeAfter.before > 0 || advanced.grammar.beforeAfter.after > 0) && (
             <Accordion title="Grammar Progress" icon={BookOpen} textHex={textHex} mutedHex={mutedHex} borderHex={borderHex}>
               <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-xl p-3 text-center" style={surfaceStyle}>
@@ -678,7 +744,7 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
 
         {/* \u2500\u2500 RADAR CHARTS \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}
         <section className="px-4 pb-4 space-y-4">
-          {advanced.behavioral?.hasData && advanced.behavioral.compositeRadar.length > 0 && (
+          {advanced?.behavioral?.hasData && advanced.behavioral.compositeRadar.length > 0 && (
             <div className="rounded-2xl p-4" style={surfaceStyle}>
               <p className="text-sm font-bold mb-2" style={{ color: textHex }}>Body Language Composite Radar</p>
               <div style={{ width: '100%', height: '260px' }}>
@@ -715,7 +781,7 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
           <div className="rounded-3xl p-5 text-center"
             style={{ border: `1px solid ${accentHex}40`, background: `linear-gradient(135deg,${accentHex}18,rgba(59,130,246,0.12))` }}>
             <p className="text-xs mb-1" style={{ color: mutedHex }}>Next Focus Area</p>
-            <h3 className="text-base font-extrabold mb-3" style={{ color: textHex }}>{advanced.coach.nextSessionFocus || 'Keep practicing!'}</h3>
+            <h3 className="text-base font-extrabold mb-3" style={{ color: textHex }}>{advanced?.coach?.nextSessionFocus || 'Keep practicing!'}</h3>
             <Link
               href="/train"
               className="flex min-h-[48px] w-full items-center justify-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-lg active:scale-[0.97]"
@@ -734,6 +800,8 @@ const MobileAnalyticsPage = ({ summary, insights, trends, history, advanced, onR
             </Link>
           </div>
         </section>
+        </>
+        )}
       </div>
 
       {/* \u2500\u2500 ASK AI FAB (exact same as MobileTrainPage) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500 */}

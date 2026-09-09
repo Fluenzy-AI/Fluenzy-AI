@@ -298,6 +298,21 @@ function RadarCustomTick({ x, y, payload, textAnchor }: { x?: number; y?: number
   );
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Module-level cache so navigating back to Analytics is instant.
+   Data is served from cache immediately; a silent background
+   refresh runs in the background to keep it fresh.
+───────────────────────────────────────────────────────────── */
+const _analyticsCache = new Map<string, { data: AnalyticsResponse; ts: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCached(key: string): AnalyticsResponse | null {
+  const entry = _analyticsCache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) { _analyticsCache.delete(key); return null; }
+  return entry.data;
+}
+
 function AnalyticsDashboardPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -305,15 +320,19 @@ function AnalyticsDashboardPageContent() {
   const isEmbeddedView = searchParams.get("embed") === "1";
   const isPublicView = searchParams.get("public") === "1";
   const publicUsername = searchParams.get("username") || "";
-  const [data, setData] = useState<AnalyticsResponse | null>(null);
-  const [loading, setLoading] = useState(true);
   const [range, setRange] = useState(() => searchParams.get("range") || "all");
+
+  // ── Cache-aware initial state ─────────────────────────────
+  const cacheKey = `${isPublicView ? publicUsername : '__me__'}|${range}`;
+  const [data, setData] = useState<AnalyticsResponse | null>(() => getCached(cacheKey));
+  const [loading, setLoading] = useState(() => getCached(cacheKey) === null);
 
   useEffect(() => {
     if (!isPublicView && status === "unauthenticated") router.push("/");
   }, [isPublicView, status, router]);
 
   useEffect(() => {
+    const key = `${isPublicView ? publicUsername : '__me__'}|${range}`;
     const fetchData = async (silent = false) => {
       if (!silent) setLoading(true);
       try {
@@ -324,14 +343,28 @@ function AnalyticsDashboardPageContent() {
           params.set("username", publicUsername);
         }
         const res = await fetch(`/api/analytics?${params.toString()}`);
-        if (res.ok) { setData(await res.json()); setLastUpdated(new Date()); }
+        if (res.ok) {
+          const json = await res.json();
+          _analyticsCache.set(key, { data: json, ts: Date.now() });
+          setData(json);
+          setLastUpdated(new Date());
+        }
       } finally {
         if (!silent) setLoading(false);
       }
     };
+
     if ((isPublicView && publicUsername) || status === "authenticated") {
-      fetchData(false);
-      // Auto-refresh every 30 seconds so radar charts always show latest data
+      const cached = getCached(key);
+      if (cached) {
+        // Cache hit — update state instantly then silently refresh in background
+        setData(cached);
+        setLoading(false);
+        fetchData(true);
+      } else {
+        fetchData(false);
+      }
+      // Keep auto-refresh every 30 s
       const interval = setInterval(() => fetchData(true), 30000);
       return () => clearInterval(interval);
     }
@@ -421,23 +454,25 @@ function AnalyticsDashboardPageContent() {
     if (searchParamsObj.get("view") === "full") setForceFullView(true);
   }, [searchParamsObj]);
 
-  if (loading) return <div className="max-w-screen-2xl mx-auto px-4 py-12 text-white">Loading analytics...</div>;
-  if ((!session?.user && !isPublicView) || !data) return <div className="max-w-screen-2xl mx-auto px-4 py-12 text-white">No analytics data available yet.</div>;
-
-  // ── Render mobile page on small screens ──────────────────────
+  // ── Render mobile page on small screens IMMEDIATELY (skeleton while loading) ──
   if (isMobile && !forceFullView) {
     return (
       <MobileAnalyticsPage
-        summary={data.summary}
-        insights={data.insights}
-        trends={data.trends}
-        history={data.history}
-        advanced={data.advanced}
+        loading={loading || !data}
+        summary={data?.summary}
+        insights={data?.insights}
+        trends={data?.trends}
+        history={data?.history}
+        advanced={data?.advanced}
         range={range}
         onRangeChange={setRange}
       />
     );
   }
+
+  // Desktop loading/empty guards
+  if (loading) return <div className="max-w-screen-2xl mx-auto px-4 py-12 text-white">Loading analytics...</div>;
+  if ((!session?.user && !isPublicView) || !data) return <div className="max-w-screen-2xl mx-auto px-4 py-12 text-white">No analytics data available yet.</div>;
 
   const { summary, distributions, trends, activity, insights, charts, textReport, advanced, history } = data;
   const handleOpenPrintableReport = () => {
