@@ -24,6 +24,21 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import ProfileSkeleton from "./ProfileSkeleton";
+import MobileProfilePage from "@/components/MobileProfilePage";
+
+/* ─── Module-level profile cache (5-minute TTL) ───────────────────────── */
+const _profileCache = new Map<string, { data: ProfileData; ts: number }>();
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+function getCachedProfile(): ProfileData | null {
+  const entry = _profileCache.get("__me__");
+  if (!entry) return null;
+  if (Date.now() - entry.ts > CACHE_TTL_MS) {
+    _profileCache.delete("__me__");
+    return null;
+  }
+  return entry.data;
+}
 
 interface PlanInfo {
   plan: string;
@@ -82,8 +97,18 @@ type SectionType =
 export default function ProfileClient() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profileData, setProfileData] = useState<ProfileData | null>(() => getCachedProfile());
+  const [loading, setLoading] = useState<boolean>(() => getCachedProfile() === null);
+
+  // Mobile detection
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 640);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<SectionType | null>(null);
   const [editingItem, setEditingItem] = useState<any>(null);
@@ -139,25 +164,34 @@ export default function ProfileClient() {
     }
   }, [status, router]);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch("/api/profile");
-        if (response.ok) {
-          const data = await response.json();
-          setProfileData(data);
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      } finally {
-        setLoading(false);
+  const fetchProfile = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
+    try {
+      const response = await fetch("/api/profile");
+      if (response.ok) {
+        const data = await response.json();
+        _profileCache.set("__me__", { data, ts: Date.now() });
+        setProfileData(data);
       }
-    };
-
-    if (session?.user) {
-      fetchProfile();
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      if (!silent) setLoading(false);
     }
-  }, [session]);
+  }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      const cached = getCachedProfile();
+      if (cached) {
+        setProfileData(cached);
+        setLoading(false);
+        fetchProfile(true);
+      } else {
+        fetchProfile(false);
+      }
+    }
+  }, [session, fetchProfile]);
 
   // Populate local form states from server data
   useEffect(() => {
@@ -265,6 +299,16 @@ export default function ProfileClient() {
     }
     return days;
   }, [activityMap]);
+
+  if (isMobile) {
+    return (
+      <MobileProfilePage
+        loading={loading || !profileData}
+        profileData={profileData}
+        onRefresh={() => fetchProfile(true)}
+      />
+    );
+  }
 
   if (status === "loading" || loading || !profileData) {
     return <ProfileSkeleton />;
