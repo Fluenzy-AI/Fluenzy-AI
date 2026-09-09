@@ -1,7 +1,7 @@
-// FluenzyAI Service Worker v2.0
-const CACHE_NAME = 'fluenzyai-v2';
-const STATIC_CACHE = 'fluenzyai-static-v2';
-const IMAGE_CACHE = 'fluenzyai-images-v2';
+// FluenzyAI Service Worker v2.0.1
+const CACHE_NAME = 'fluenzyai-v2.0.1';
+const STATIC_CACHE = 'fluenzyai-static-v2.0.1';
+const IMAGE_CACHE = 'fluenzyai-images-v2.0.1';
 
 // Assets to pre-cache on install
 const PRECACHE_ASSETS = [
