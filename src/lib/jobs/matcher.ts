@@ -143,6 +143,37 @@ export async function matchJobs(
     )
   );
   
-  // Sort by match score descending
-  return results.sort((a, b) => b.matchScore - a.matchScore);
+  // Sort by title relevance to search query first, then matchScore descending
+  return results.sort((a, b) => {
+    if (searchQuery) {
+      const q = searchQuery.trim().toLowerCase();
+      const titleA = (a.title || "").toLowerCase();
+      const titleB = (b.title || "").toLowerCase();
+
+      // 1. Exact title match gets top priority
+      const exactA = titleA === q;
+      const exactB = titleB === q;
+      if (exactA && !exactB) return -1;
+      if (!exactA && exactB) return 1;
+
+      // 2. Title contains exact query string
+      const containsA = titleA.includes(q);
+      const containsB = titleB.includes(q);
+      if (containsA && !containsB) return -1;
+      if (!containsA && containsB) return 1;
+
+      // 3. Count matching search terms in title
+      const queryTerms = q.split(/\s+/).filter(t => t.length >= 2);
+      if (queryTerms.length > 0) {
+        const termsMatchedA = queryTerms.filter(t => titleA.includes(t)).length;
+        const termsMatchedB = queryTerms.filter(t => titleB.includes(t)).length;
+
+        if (termsMatchedA !== termsMatchedB) {
+          return termsMatchedB - termsMatchedA;
+        }
+      }
+    }
+
+    return b.matchScore - a.matchScore;
+  });
 }

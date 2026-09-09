@@ -16,9 +16,10 @@ interface PWAInstallPromptEvent extends CustomEvent {
 interface PWAInstallButtonProps {
   className?: string;
   style?: CSSProperties;
+  onInstalled?: () => void;
 }
 
-export default function PWAInstallButton({ className = "", style }: PWAInstallButtonProps) {
+export default function PWAInstallButton({ className = "", style, onInstalled }: PWAInstallButtonProps) {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -39,6 +40,9 @@ export default function PWAInstallButton({ className = "", style }: PWAInstallBu
       setIsInstalled(true);
       setInstallPrompt(null);
       setMessage(null);
+      if (onInstalled) {
+        onInstalled();
+      }
     };
 
     updateInstalledState();
@@ -57,11 +61,15 @@ export default function PWAInstallButton({ className = "", style }: PWAInstallBu
       window.removeEventListener("appinstalled", handleAppInstalled);
       mediaQuery.removeEventListener("change", updateInstalledState);
     };
-  }, []);
+  }, [onInstalled]);
 
   const handleInstall = async () => {
     if (isInstalled) {
-      setMessage("FluenzyAI is already installed on this device.");
+      if (onInstalled) {
+        onInstalled();
+      } else {
+        setMessage("FluenzyAI is already installed on this device.");
+      }
       return;
     }
 
@@ -75,6 +83,9 @@ export default function PWAInstallButton({ className = "", style }: PWAInstallBu
     setInstallPrompt(null);
     if (choice.outcome === "accepted") {
       setMessage("FluenzyAI is being installed.");
+      if (onInstalled) {
+        onInstalled();
+      }
     }
   };
 

@@ -16,10 +16,10 @@ import {
   Download, FileText, CheckCircle2, Globe, Github, Linkedin,
   Award, FolderKanban, Zap, Save, ChevronRight, Activity, Loader2,
   ArrowLeft, Copy, Eye, EyeOff, ShieldCheck, Check, ChevronLeft,
-  Share2, Sparkle, CheckCircle, Flame
+  Share2, Sparkle
 } from 'lucide-react';
 
-/* ─── Theme option list (same as MobileTrainPage) ───────────────────────── */
+/* ─── Theme option list (exact same as MobileTrainPage) ─────────────────── */
 const THEME_OPTIONS: { value: ThemeName; label: string; icon: typeof Moon }[] = [
   { value: 'light', label: 'Light', icon: Sun },
   { value: 'dark', label: 'Dark', icon: Moon },
@@ -29,7 +29,7 @@ const THEME_OPTIONS: { value: ThemeName; label: string; icon: typeof Moon }[] = 
   { value: 'codeterm', label: 'Code', icon: Terminal },
 ];
 
-/* ─── Bottom tabs (same as MobileTrainPage — Profile highlighted) ───────── */
+/* ─── Bottom tabs (exact same as MobileTrainPage — Profile highlighted) ─── */
 const TABS = [
   { label: 'Quick Links', icon: Link2, href: '/train', tabColor: '#8B5CF6' },
   { label: 'Practice', icon: Target, href: '/train/hr', tabColor: '#10B981' },
@@ -38,7 +38,7 @@ const TABS = [
   { label: 'Profile', icon: User, href: '/profile', tabColor: '#0EA5E9' },
 ];
 
-/* ─── Sidebar sections (same as MobileTrainPage) ────────────────────────── */
+/* ─── Sidebar sections (exact same as MobileTrainPage) ──────────────────── */
 const SIDEBAR_SECTIONS = [
   {
     title: 'MAIN',
@@ -192,51 +192,72 @@ export default function MobileProfilePage({
   const [itemSubTitle, setItemSubTitle] = useState('');
   const [addingItem, setAddingItem] = useState(false);
 
-  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
+  // ── Perfect Theme Resolution (matching MobileTrainPage exactly) ──────────
+  const activeTheme = theme || resolvedTheme || 'dark';
+  const t = activeTheme as string;
+  const isLight = t === 'light' || t === 'parchment';
+
   const firstName = session?.user?.name?.split(' ')[0] || 'there';
   const avatarUrl = profileData?.user?.image || session?.user?.image;
 
-  /* ── Enterprise theme tokens ───────────────────────────────────────── */
+  /* ── Per-theme colour tokens (identical to MobileTrainPage) ───────────── */
   const ACCENT: Record<string, string> = {
-    light: '#6D28D9', parchment: '#6D28D9',
-    dark: '#8B5CF6', midnight: '#8B5CF6',
-    forest: '#F59E0B', codeterm: '#CC4125',
+    light: '#5A2D82',
+    parchment: '#5A2D82',
+    dark: '#7C3AED',
+    midnight: '#7C3AED',
+    forest: '#F59E0B',
+    codeterm: '#CC4125',
   };
   const CARD_BG: Record<string, string> = {
-    light: '#FFFFFF', parchment: '#FFFFFF',
-    dark: '#111625', midnight: 'rgba(15,39,68,0.95)',
-    forest: 'rgba(17,28,20,0.95)', codeterm: '#141414',
+    light: '#F8FAFC',
+    parchment: '#FFFFFF',
+    dark: '#161B2E',
+    midnight: 'rgba(15,39,68,0.95)',
+    forest: 'rgba(17,28,20,0.95)',
+    codeterm: '#141414',
   };
   const PAGE_BG: Record<string, string> = {
-    light: '#F8FAFC', parchment: 'hsl(42 18% 93%)',
-    dark: '#090D16', midnight: '#07111E',
-    forest: '#070D09', codeterm: '#0A0A0A',
+    light: '#FFFFFF',
+    parchment: 'hsl(42 18% 93%)',
+    dark: '#0D0F1A',
+    midnight: '#0a1929',
+    forest: '#0b140e',
+    codeterm: '#0D0D0D',
   };
   const TEXT_HEX: Record<string, string> = {
-    light: '#0F172A', parchment: '#212529',
-    dark: '#F8FAFC', midnight: '#F8FAFC',
-    forest: '#e8e4d9', codeterm: '#F0EDE8',
+    light: '#0F0B2E',
+    parchment: '#212529',
+    dark: '#F1F5F9',
+    midnight: '#F1F5F9',
+    forest: '#e8e4d9',
+    codeterm: '#F0EDE8',
   };
   const MUTED_HEX: Record<string, string> = {
-    light: '#64748B', parchment: '#6C757D',
-    dark: '#94A3B8', midnight: '#94A3B8',
-    forest: '#9aad8e', codeterm: '#888580',
+    light: '#475569',
+    parchment: '#525860',
+    dark: '#94A3B8',
+    midnight: '#94A3B8',
+    forest: '#9aad8e',
+    codeterm: '#888580',
   };
   const BORDER_HEX: Record<string, string> = {
-    light: '#E2E8F0', parchment: '#E9ECEF',
-    dark: 'rgba(255,255,255,0.08)', midnight: 'rgba(255,255,255,0.08)',
-    forest: 'rgba(180,120,30,0.2)', codeterm: 'rgba(204,65,37,0.25)',
+    light: '#E5E7EB',
+    parchment: '#E9ECEF',
+    dark: 'rgba(255,255,255,0.08)',
+    midnight: 'rgba(255,255,255,0.08)',
+    forest: 'rgba(180,120,30,0.2)',
+    codeterm: 'rgba(204,65,37,0.25)',
   };
 
-  const t = resolvedTheme as string;
-  const accentHex = ACCENT[t] ?? '#8B5CF6';
-  const cardBgHex = CARD_BG[t] ?? '#111625';
-  const pageBgHex = PAGE_BG[t] ?? '#090D16';
-  const textHex = TEXT_HEX[t] ?? '#F8FAFC';
-  const mutedHex = MUTED_HEX[t] ?? '#94A3B8';
-  const borderHex = BORDER_HEX[t] ?? 'rgba(255,255,255,0.08)';
+  const accentHex = ACCENT[t] ?? (isLight ? '#5A2D82' : '#7C3AED');
+  const cardBgHex = CARD_BG[t] ?? (isLight ? '#FFFFFF' : '#161B2E');
+  const pageBgHex = PAGE_BG[t] ?? (isLight ? 'hsl(42 18% 93%)' : '#0D0F1A');
+  const textHex = TEXT_HEX[t] ?? (isLight ? '#212529' : '#F1F5F9');
+  const mutedHex = MUTED_HEX[t] ?? (isLight ? '#525860' : '#94A3B8');
+  const borderHex = BORDER_HEX[t] ?? (isLight ? '#E9ECEF' : 'rgba(255,255,255,0.08)');
 
-  /* ── Logo helper ─────────────────────────────────────────────────────── */
+  /* ── Logo container helper ───────────────────────────────────────────── */
   const LogoContainer = () => (
     <div className="flex items-center justify-center shrink-0">
       <img
@@ -247,7 +268,7 @@ export default function MobileProfilePage({
     </div>
   );
 
-  /* ── Theme icon helper ───────────────────────────────────────────────── */
+  /* ── Theme Icon Helper ────────────────────────────────────────────────── */
   const ThemeIcon = () => {
     const iconColor = isLight ? '#1C1917' : '#F8FAFC';
     const icons: Record<ThemeName, React.ReactNode> = {
@@ -261,7 +282,7 @@ export default function MobileProfilePage({
     return <>{icons[theme] || <Moon size={18} style={{ color: iconColor, stroke: iconColor }} />}</>;
   };
 
-  // Activity heatmap calculation
+  // Heatmap days calculation
   const heatmapDays = useMemo(() => {
     const activityMap = profileData?.activity ?? {};
     const days: { key: string; count: number }[] = [];
@@ -276,10 +297,10 @@ export default function MobileProfilePage({
     return days;
   }, [profileData?.activity]);
 
-  // Profile Strength Calculator
+  // Profile Strength Progress
   const profileStrength = useMemo(() => {
     if (!profileData) return { score: 0, label: 'Basic' };
-    let points = 20; // base for account
+    let points = 20;
     if (profileData.user.name) points += 10;
     if (profileData.profile.headline) points += 10;
     if (profileData.profile.bio) points += 10;
@@ -288,11 +309,11 @@ export default function MobileProfilePage({
     if (profileData.sections.skills.length > 0) points += 10;
     if (profileData.sections.experiences.length > 0) points += 15;
     const finalScore = Math.min(points, 100);
-    const label = finalScore > 85 ? 'All Star Profile' : finalScore > 65 ? 'Strong Profile' : 'Intermediate';
+    const label = finalScore > 85 ? 'All Star' : finalScore > 65 ? 'Strong' : 'Intermediate';
     return { score: finalScore, label };
   }, [profileData]);
 
-  // Open Sub-View & pre-fill form fields
+  // Open Sub-View with pre-populated fields
   const openSubView = (type: SubViewType) => {
     if (!profileData) return;
     if (type === 'basic') {
@@ -313,7 +334,7 @@ export default function MobileProfilePage({
     setActiveSubView(type);
   };
 
-  // Handlers for forms
+  // Save Handlers
   const handleSaveBasic = async () => {
     setSavingBasic(true);
     try {
@@ -338,7 +359,7 @@ export default function MobileProfilePage({
       }
       setActiveSubView(null);
     } catch {
-      toast.error('Error saving info');
+      toast.error('Error saving basic info');
     } finally {
       setSavingBasic(false);
     }
@@ -362,7 +383,7 @@ export default function MobileProfilePage({
       }
       setActiveSubView(null);
     } catch {
-      toast.error('Error saving links');
+      toast.error('Error saving social links');
     } finally {
       setSavingSocials(false);
     }
@@ -380,13 +401,13 @@ export default function MobileProfilePage({
           body: JSON.stringify({ publicProfileEnabled: publicEnabled, publicSections }),
         });
         if (res.ok) {
-          toast.success('Public profile privacy updated');
+          toast.success('Public profile settings updated');
           if (onRefresh) onRefresh();
         }
       }
       setActiveSubView(null);
     } catch {
-      toast.error('Error updating privacy');
+      toast.error('Error updating public settings');
     } finally {
       setSavingPublic(false);
     }
@@ -481,20 +502,19 @@ export default function MobileProfilePage({
     const url = `${window.location.origin}/u/${profileData.profile.username}`;
     navigator.clipboard.writeText(url);
     setCopiedLink(true);
-    toast.success('Public profile link copied!');
+    toast.success('Public link copied to clipboard');
     setTimeout(() => setCopiedLink(false), 2000);
   };
 
-  /* ── ENTERPRISE GROUPED SECTIONS DATA ───────────────────────────────── */
+  /* ── ENTERPRISE CATEGORY GROUPS ─────────────────────────────────────── */
   const CATEGORY_GROUPS = [
     {
       groupTitle: 'IDENTITY & CONTACT',
-      groupIcon: User,
       items: [
         {
           id: 'basic',
           title: 'Basic Information',
-          desc: 'Name, username, headline & hiring badge',
+          desc: 'Name, username, headline & hiring status',
           icon: User,
           gradient: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
           badge: profileData?.profile.openToWork ? 'HIRING' : undefined,
@@ -517,7 +537,6 @@ export default function MobileProfilePage({
     },
     {
       groupTitle: 'CAREER & EXPERTISE',
-      groupIcon: Award,
       items: [
         {
           id: 'skills',
@@ -558,7 +577,6 @@ export default function MobileProfilePage({
     },
     {
       groupTitle: 'ACCOUNT & PRIVACY',
-      groupIcon: ShieldCheck,
       items: [
         {
           id: 'plan',
@@ -570,7 +588,7 @@ export default function MobileProfilePage({
         {
           id: 'public',
           title: 'Public Profile Privacy',
-          desc: profileData?.profile.publicProfileEnabled ? 'Public URL enabled' : 'Profile is private',
+          desc: profileData?.profile.publicProfileEnabled ? 'Public link enabled' : 'Profile is private',
           icon: ShieldCheck,
           gradient: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
           badge: profileData?.profile.publicProfileEnabled ? 'PUBLIC' : 'PRIVATE',
@@ -588,14 +606,14 @@ export default function MobileProfilePage({
 
   return (
     <div className="fixed inset-0 z-[200] flex flex-col sm:hidden" style={{ background: pageBgHex }}>
-      {/* ── TOP HEADER ─────────────────────────────────────────────────── */}
+      {/* ── TOP HEADER (identical to MobileTrainPage) ──────────────────── */}
       <header
         className="flex items-center justify-between px-4 shrink-0"
         style={{
           height: '56px',
           background: isLight ? pageBgHex : cardBgHex,
           borderBottom: isLight ? 'none' : `1px solid ${borderHex}`,
-          boxShadow: isLight ? 'none' : '0 1px 8px rgba(0,0,0,0.18)',
+          boxShadow: isLight ? 'none' : '0 1px 6px rgba(0,0,0,0.12)',
         }}
       >
         <div className="flex items-center gap-2.5">
@@ -603,18 +621,19 @@ export default function MobileProfilePage({
             <button
               onClick={() => setActiveSubView(null)}
               className="flex items-center justify-center w-9 h-9 rounded-xl active:opacity-70"
-              style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)' }}
+              style={{ background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }}
               aria-label="Back to Profile"
             >
-              <ArrowLeft size={20} style={{ color: textHex }} />
+              <ArrowLeft size={20} style={{ color: isLight ? '#0F172A' : '#F8FAFC', stroke: isLight ? '#0F172A' : '#F8FAFC' }} />
             </button>
           ) : (
             <button
               onClick={() => setSidebarOpen(true)}
               className="flex items-center justify-center w-9 h-9 rounded-xl active:opacity-70"
+              style={{ background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)' }}
               aria-label="Menu"
             >
-              <Menu size={22} style={{ color: textHex }} />
+              <Menu size={22} style={{ color: isLight ? '#0F172A' : '#F8FAFC', stroke: isLight ? '#0F172A' : '#F8FAFC' }} />
             </button>
           )}
 
@@ -637,10 +656,11 @@ export default function MobileProfilePage({
           <div className="relative">
             <button
               onClick={() => setThemeMenuOpen((o) => !o)}
-              className="flex items-center justify-center w-9 h-9 rounded-xl active:opacity-70"
+              className="p-2 rounded-xl active:opacity-60 flex items-center justify-center border shadow-sm transition-transform active:scale-95"
               style={{
-                background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
-                border: `1px solid ${borderHex}`,
+                color: isLight ? '#1C1917' : '#F8FAFC',
+                background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.08)',
+                borderColor: isLight ? '#CBD5E1' : borderHex,
               }}
               aria-label="Theme"
             >
@@ -649,29 +669,42 @@ export default function MobileProfilePage({
 
             <AnimatePresence>
               {themeMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.92, y: -4 }}
-                  animate={{ opacity: 1, scale: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.92, y: -4 }}
-                  transition={{ duration: 0.15 }}
-                  className="absolute right-0 top-11 z-50 w-36 rounded-2xl py-1.5 shadow-2xl"
-                  style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}
-                >
-                  {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-                    <button
-                      key={value}
-                      onClick={() => { setTheme(value); setThemeMenuOpen(false); }}
-                      className="flex w-full items-center gap-2.5 px-3.5 py-2.5 text-sm active:opacity-70"
-                      style={{
-                        color: resolvedTheme === value ? accentHex : textHex,
-                        fontWeight: resolvedTheme === value ? 700 : 400,
-                        background: resolvedTheme === value ? `${accentHex}14` : 'transparent',
-                      }}
-                    >
-                      <Icon size={14} /> {label}
-                    </button>
-                  ))}
-                </motion.div>
+                <>
+                  <div className="fixed inset-0 z-[300]" onClick={() => setThemeMenuOpen(false)} />
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95, y: 4 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95, y: 4 }}
+                    transition={{ duration: 0.15 }}
+                    className="absolute right-0 top-11 z-[310] w-40 rounded-xl overflow-hidden shadow-2xl py-1"
+                    style={{
+                      background: isLight ? '#FFFFFF' : cardBgHex,
+                      border: `1px solid ${isLight ? '#CBD5E1' : borderHex}`,
+                    }}
+                  >
+                    {THEME_OPTIONS.map((opt) => {
+                      const active = theme === opt.value;
+                      const itemTextColor = active ? accentHex : (isLight ? '#1C1917' : '#E2E8F0');
+                      const itemIconColor = active ? accentHex : (isLight ? '#475569' : '#94A3B8');
+
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => { setTheme(opt.value); setThemeMenuOpen(false); }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-2.5 text-sm font-extrabold transition-colors"
+                          style={{
+                            color: itemTextColor,
+                            WebkitTextFillColor: itemTextColor,
+                            background: active ? `${accentHex}18` : 'transparent',
+                          }}
+                        >
+                          <opt.icon size={15} style={{ color: itemIconColor }} />
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </motion.div>
+                </>
               )}
             </AnimatePresence>
           </div>
@@ -681,12 +714,13 @@ export default function MobileProfilePage({
             <button
               className="flex items-center justify-center w-9 h-9 rounded-xl active:opacity-70"
               style={{
-                background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                color: isLight ? '#0F172A' : '#F8FAFC',
+                background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
                 border: `1px solid ${borderHex}`,
               }}
               aria-label="Notifications"
             >
-              <Bell size={18} style={{ color: textHex }} />
+              <Bell size={18} style={{ color: isLight ? '#0F172A' : '#F8FAFC', stroke: isLight ? '#0F172A' : '#F8FAFC' }} />
             </button>
             <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[9px] font-black text-white">
               3
@@ -712,22 +746,21 @@ export default function MobileProfilePage({
       {/* ── SCROLLABLE BODY ────────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto px-3.5 py-3 space-y-4" style={{ paddingBottom: '90px' }}>
 
-        {/* SKELETON LOADER */}
+        {/* LOADING SKELETON */}
         {loading || !profileData ? (
           <div className="space-y-4 animate-pulse">
             <div className="rounded-3xl p-5 space-y-3" style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}>
               <div className="flex items-center gap-3.5">
-                <div className="w-16 h-16 rounded-2xl bg-white/10 shrink-0" />
+                <div className="w-16 h-16 rounded-2xl bg-current opacity-10 shrink-0" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-5 w-36 rounded bg-white/10" />
-                  <div className="h-3.5 w-48 rounded bg-white/10" />
+                  <div className="h-5 w-36 rounded bg-current opacity-10" />
+                  <div className="h-3.5 w-48 rounded bg-current opacity-10" />
                 </div>
               </div>
-              <div className="h-2 w-full rounded bg-white/10 pt-2" />
             </div>
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-32 w-full rounded-3xl bg-white/10" />
+                <div key={i} className="h-32 w-full rounded-3xl bg-current opacity-10" />
               ))}
             </div>
           </div>
@@ -738,7 +771,7 @@ export default function MobileProfilePage({
                ═════════════════════════════════════════════════════════════ */}
             {activeSubView === null && (
               <motion.div
-                key="main-profile-enterprise"
+                key="main-profile-theme-aware"
                 initial={{ opacity: 0, scale: 0.98 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
@@ -747,26 +780,27 @@ export default function MobileProfilePage({
               >
                 {/* ── ENTERPRISE HERO PROFILE CARD ───────────────────────── */}
                 <div
-                  className="rounded-3xl overflow-hidden relative shadow-xl p-4 space-y-3.5"
+                  className="rounded-3xl overflow-hidden relative shadow-md p-4 space-y-4"
                   style={{
                     background: cardBgHex,
                     border: `1px solid ${borderHex}`,
-                    backgroundImage: isLight
-                      ? 'radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.05), transparent 60%)'
-                      : 'radial-gradient(circle at 10% 10%, rgba(124, 58, 237, 0.18), transparent 60%)',
                   }}
                 >
-                  <div className="flex items-start justify-between gap-3 pt-0.5">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      {/* Avatar with glowing ring */}
+                  {/* Top Gradient Ribbon */}
+                  <div
+                    className="absolute top-0 left-0 right-0 h-1.5"
+                    style={{ background: 'linear-gradient(90deg,#7C3AED,#3B82F6,#10B981)' }}
+                  />
+
+                  {/* Header Row: Avatar + User Info */}
+                  <div className="flex items-start justify-between gap-3 pt-1">
+                    <div className="flex items-start gap-3.5 flex-1 min-w-0">
+                      {/* Avatar */}
                       <div className="relative shrink-0">
                         <div
-                          className="w-16 h-16 rounded-2xl overflow-hidden border-2 shadow-lg flex items-center justify-center"
+                          className="w-16 h-16 rounded-2xl overflow-hidden border-2 shadow-sm flex items-center justify-center"
                           style={{
                             borderColor: profileData.profile.openToWork ? '#10B981' : accentHex,
-                            boxShadow: profileData.profile.openToWork
-                              ? '0 0 16px rgba(16,185,129,0.35)'
-                              : '0 0 16px rgba(124,58,237,0.35)',
                             background: 'linear-gradient(135deg,#7C3AED,#4F46E5)',
                           }}
                         >
@@ -777,54 +811,54 @@ export default function MobileProfilePage({
                           )}
                         </div>
                         {profileData.profile.openToWork && (
-                          <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-md bg-emerald-500 text-[8px] font-extrabold text-white shadow-md">
+                          <span className="absolute -bottom-1 -right-1 px-1.5 py-0.5 rounded-full bg-emerald-500 text-[8px] font-black text-white shadow-md border-2" style={{ borderColor: cardBgHex }}>
                             HIRING
                           </span>
                         )}
                       </div>
 
-                      {/* Name & Headline */}
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h2 className="text-base font-black truncate" style={{ color: textHex }}>
+                      {/* User Info */}
+                      <div className="flex-1 min-w-0 pr-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h2 className="text-base font-black tracking-tight" style={{ color: textHex, WebkitTextFillColor: textHex }}>
                             {profileData.user.name}
                           </h2>
-                          <CheckCircle2 size={15} className="text-purple-500 fill-purple-500/20 shrink-0" />
+                          <CheckCircle2 size={16} className="shrink-0" style={{ color: accentHex, stroke: accentHex }} />
                         </div>
-                        <p className="text-xs font-semibold truncate opacity-80" style={{ color: mutedHex }}>
-                          @{profileData.profile.username || 'user'}
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                          <span className="text-xs font-semibold" style={{ color: mutedHex, WebkitTextFillColor: mutedHex }}>
+                            @{profileData.profile.username || 'user'}
+                          </span>
+                          <span
+                            className="px-2 py-0.5 rounded-lg text-[9px] font-black shrink-0 shadow-sm flex items-center gap-1 text-white"
+                            style={{ background: 'linear-gradient(135deg,#7C3AED,#4F46E5)', color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}
+                          >
+                            <Zap size={10} style={{ color: '#FFFFFF', stroke: '#FFFFFF', fill: '#FFFFFF' }} />
+                            {profileData.planInfo.planName}
+                          </span>
+                        </div>
                         {profileData.profile.headline && (
-                          <p className="text-xs font-medium line-clamp-1 mt-0.5" style={{ color: textHex }}>
+                          <p className="text-xs font-medium leading-tight mt-1 line-clamp-2" style={{ color: textHex, WebkitTextFillColor: textHex }}>
                             {profileData.profile.headline}
                           </p>
                         )}
                       </div>
                     </div>
-
-                    {/* Plan Pill */}
-                    <span
-                      className="px-2.5 py-1 rounded-xl text-[10px] font-black shrink-0 shadow-sm flex items-center gap-1"
-                      style={{
-                        background: 'linear-gradient(135deg,#7C3AED,#4F46E5)',
-                        color: '#FFFFFF',
-                      }}
-                    >
-                      <Zap size={11} className="fill-white" />
-                      {profileData.planInfo.planName}
-                    </span>
                   </div>
 
-                  {/* Profile Strength Progress Meter */}
-                  <div className="p-3 rounded-2xl space-y-1.5" style={{ background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)' }}>
-                    <div className="flex items-center justify-between text-[11px] font-bold">
-                      <span className="flex items-center gap-1" style={{ color: textHex }}>
-                        <Sparkle size={12} className="text-purple-500" />
+                  {/* Profile Strength Progress Bar */}
+                  <div
+                    className="p-3 rounded-2xl space-y-1.5 shadow-inner"
+                    style={{ background: isLight ? 'rgba(0,0,0,0.03)' : 'rgba(255,255,255,0.04)' }}
+                  >
+                    <div className="flex items-center justify-between text-[11px] font-extrabold">
+                      <span className="flex items-center gap-1.5" style={{ color: textHex, WebkitTextFillColor: textHex }}>
+                        <Sparkle size={13} style={{ color: accentHex, stroke: accentHex }} />
                         Profile Strength: {profileStrength.label}
                       </span>
-                      <span style={{ color: accentHex }}>{profileStrength.score}%</span>
+                      <span style={{ color: accentHex, WebkitTextFillColor: accentHex }}>{profileStrength.score}%</span>
                     </div>
-                    <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: isLight ? '#E2E8F0' : 'rgba(255,255,255,0.1)' }}>
+                    <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: isLight ? '#CBD5E1' : 'rgba(255,255,255,0.1)' }}>
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -835,33 +869,50 @@ export default function MobileProfilePage({
                     </div>
                   </div>
 
-                  {/* Quick Actions Row */}
-                  <div className="grid grid-cols-3 gap-2 pt-1 border-t" style={{ borderColor: borderHex }}>
+                  {/* Quick Actions Bar */}
+                  <div className="grid grid-cols-3 gap-2 pt-1.5 border-t" style={{ borderColor: borderHex }}>
                     <button
                       onClick={copyPublicLink}
-                      className="py-2 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex }}
+                      className="py-2.5 px-2 rounded-2xl text-[10px] font-extrabold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                      style={{
+                        background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)',
+                        color: textHex,
+                        WebkitTextFillColor: textHex,
+                        border: `1px solid ${isLight ? '#CBD5E1' : borderHex}`,
+                      }}
                     >
-                      <Share2 size={12} style={{ color: accentHex }} />
+                      <Share2 size={13} style={{ color: accentHex, stroke: accentHex }} />
                       Share Link
                     </button>
+
                     {profileData.profile.username && (
                       <Link
                         href={`/u/${profileData.profile.username}`}
                         target="_blank"
-                        className="py-2 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
-                        style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex }}
+                        className="py-2.5 px-2 rounded-2xl text-[10px] font-extrabold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                        style={{
+                          background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)',
+                          color: textHex,
+                          WebkitTextFillColor: textHex,
+                          border: `1px solid ${isLight ? '#CBD5E1' : borderHex}`,
+                        }}
                       >
-                        <ExternalLink size={12} style={{ color: accentHex }} />
+                        <ExternalLink size={13} style={{ color: accentHex, stroke: accentHex }} />
                         Public View
                       </Link>
                     )}
+
                     <button
                       onClick={() => openSubView('basic')}
-                      className="py-2 px-2 rounded-xl text-[10px] font-bold flex items-center justify-center gap-1 active:scale-95 transition-transform"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex }}
+                      className="py-2.5 px-2 rounded-2xl text-[10px] font-extrabold flex items-center justify-center gap-1.5 active:scale-95 transition-transform"
+                      style={{
+                        background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)',
+                        color: textHex,
+                        WebkitTextFillColor: textHex,
+                        border: `1px solid ${isLight ? '#CBD5E1' : borderHex}`,
+                      }}
                     >
-                      <Pencil size={12} style={{ color: accentHex }} />
+                      <Pencil size={13} style={{ color: accentHex, stroke: accentHex }} />
                       Edit Bio
                     </button>
                   </div>
@@ -871,54 +922,74 @@ export default function MobileProfilePage({
                 <div className="space-y-4">
                   {CATEGORY_GROUPS.map((group) => (
                     <div key={group.groupTitle} className="space-y-1.5">
-                      <p className="text-[10px] font-black uppercase tracking-widest px-2 opacity-75" style={{ color: mutedHex }}>
+                      <p
+                        className="text-[10px] font-black uppercase tracking-widest px-2"
+                        style={{ color: isLight ? accentHex : mutedHex, WebkitTextFillColor: isLight ? accentHex : mutedHex }}
+                      >
                         {group.groupTitle}
                       </p>
 
-                      {/* Inset Group Container */}
+                      {/* Group Container */}
                       <div
-                        className="rounded-3xl overflow-hidden shadow-md divide-y divide-white/5"
+                        className="rounded-3xl overflow-hidden shadow-md"
                         style={{
                           background: cardBgHex,
                           border: `1px solid ${borderHex}`,
                         }}
                       >
-                        {group.items.map((item) => {
+                        {group.items.map((item, idx) => {
                           const Icon = item.icon;
+                          const isLast = idx === group.items.length - 1;
                           return (
                             <button
                               key={item.id}
                               onClick={() => openSubView(item.id as SubViewType)}
-                              className="w-full flex items-center justify-between p-3.5 text-left active:opacity-75 transition-all"
-                              style={{ background: 'transparent' }}
+                              className={`w-full flex items-center justify-between p-3.5 text-left active:opacity-75 transition-all ${!isLast ? 'border-b' : ''
+                                }`}
+                              style={{
+                                borderColor: isLight ? '#E9ECEF' : borderHex,
+                                background: 'transparent',
+                              }}
                             >
                               <div className="flex items-center gap-3.5 min-w-0 pr-2">
-                                {/* 3D Gradient Icon Box */}
+                                {/* Small Circular Outline Icon Badge (matching reference UI) */}
                                 <div
-                                  className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-md"
-                                  style={{ background: item.gradient }}
+                                  className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 shadow-sm transition-transform group-active:scale-95"
+                                  style={{
+                                    background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+                                    border: `1px solid ${isLight ? 'rgba(0,0,0,0.1)' : borderHex}`,
+                                  }}
                                 >
-                                  <Icon size={19} className="text-white" />
+                                  <Icon size={17} style={{ color: textHex, stroke: textHex }} />
                                 </div>
 
                                 <div className="min-w-0">
                                   <div className="flex items-center gap-2">
-                                    <h3 className="text-xs font-black truncate" style={{ color: textHex }}>
+                                    <h3
+                                      className="text-xs font-extrabold truncate"
+                                      style={{ color: textHex, WebkitTextFillColor: textHex }}
+                                    >
                                       {item.title}
                                     </h3>
                                     {item.badge && (
-                                      <span className="px-1.5 py-0.2 rounded text-[8px] font-black bg-emerald-500/20 text-emerald-400">
+                                      <span
+                                        className="px-1.5 py-0.2 rounded text-[8px] font-black"
+                                        style={{ background: `${accentHex}20`, color: accentHex, WebkitTextFillColor: accentHex }}
+                                      >
                                         {item.badge}
                                       </span>
                                     )}
                                   </div>
-                                  <p className="text-[10px] font-medium truncate mt-0.5 opacity-80" style={{ color: mutedHex }}>
+                                  <p
+                                    className="text-[10px] font-medium truncate mt-0.5"
+                                    style={{ color: mutedHex, WebkitTextFillColor: mutedHex }}
+                                  >
                                     {item.desc}
                                   </p>
                                 </div>
                               </div>
 
-                              <ChevronRight size={17} className="shrink-0" style={{ color: mutedHex }} />
+                              <ChevronRight size={16} className="shrink-0" style={{ color: isLight ? '#64748B' : mutedHex, stroke: isLight ? '#64748B' : mutedHex }} />
                             </button>
                           );
                         })}
@@ -943,7 +1014,7 @@ export default function MobileProfilePage({
                   <button onClick={() => setActiveSubView(null)} className="flex items-center gap-1 text-xs font-extrabold" style={{ color: accentHex }}>
                     <ChevronLeft size={16} /> Back to Sections
                   </button>
-                  <h3 className="text-sm font-black" style={{ color: textHex }}>Basic Information</h3>
+                  <h3 className="text-sm font-black" style={{ color: textHex, WebkitTextFillColor: textHex }}>Basic Information</h3>
                 </div>
 
                 <div className="rounded-3xl p-4 space-y-3.5 shadow-md" style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}>
@@ -954,7 +1025,7 @@ export default function MobileProfilePage({
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                      style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                     />
                   </div>
                   <div>
@@ -964,7 +1035,7 @@ export default function MobileProfilePage({
                       value={editUsername}
                       onChange={(e) => setEditUsername(e.target.value)}
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                      style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                     />
                   </div>
                   <div>
@@ -975,7 +1046,7 @@ export default function MobileProfilePage({
                       onChange={(e) => setEditHeadline(e.target.value)}
                       placeholder="e.g. Aspiring Data Scientist | Python Dev"
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                      style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                     />
                   </div>
                   <div>
@@ -986,7 +1057,7 @@ export default function MobileProfilePage({
                       onChange={(e) => setEditBio(e.target.value)}
                       placeholder="Brief bio about your professional career..."
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none resize-none"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                      style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                     />
                   </div>
                   <div className="flex items-center gap-2.5 pt-1">
@@ -1029,7 +1100,7 @@ export default function MobileProfilePage({
                   <button onClick={() => setActiveSubView(null)} className="flex items-center gap-1 text-xs font-extrabold" style={{ color: accentHex }}>
                     <ChevronLeft size={16} /> Back to Sections
                   </button>
-                  <h3 className="text-sm font-black" style={{ color: textHex }}>Resumes & ATS CV</h3>
+                  <h3 className="text-sm font-black" style={{ color: textHex, WebkitTextFillColor: textHex }}>Resumes & ATS CV</h3>
                 </div>
 
                 <div className="rounded-3xl p-4 space-y-3 shadow-md" style={{ background: cardBgHex, border: `1px dashed ${borderHex}` }}>
@@ -1065,7 +1136,7 @@ export default function MobileProfilePage({
                         style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}
                       >
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(124,58,237,0.12)', color: accentHex }}>
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${accentHex}18`, color: accentHex }}>
                             <FileText size={20} />
                           </div>
                           <div className="min-w-0">
@@ -1117,13 +1188,13 @@ export default function MobileProfilePage({
                   <button onClick={() => setActiveSubView(null)} className="flex items-center gap-1 text-xs font-extrabold" style={{ color: accentHex }}>
                     <ChevronLeft size={16} /> Back to Sections
                   </button>
-                  <h3 className="text-sm font-black" style={{ color: textHex }}>Social Links</h3>
+                  <h3 className="text-sm font-black" style={{ color: textHex, WebkitTextFillColor: textHex }}>Social Links</h3>
                 </div>
 
                 <div className="rounded-3xl p-4 space-y-3.5 shadow-md" style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}>
                   <div>
                     <label className="font-bold text-xs flex items-center gap-1.5 mb-1" style={{ color: textHex }}>
-                      <Github size={14} /> GitHub Profile URL
+                      <Github size={14} style={{ color: isLight ? accentHex : textHex, stroke: isLight ? accentHex : textHex }} /> GitHub Profile URL
                     </label>
                     <input
                       type="text"
@@ -1131,13 +1202,13 @@ export default function MobileProfilePage({
                       onChange={(e) => setEditGithub(e.target.value)}
                       placeholder="https://github.com/username"
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                      style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                     />
                   </div>
 
                   <div>
                     <label className="font-bold text-xs flex items-center gap-1.5 mb-1" style={{ color: textHex }}>
-                      <Linkedin size={14} /> LinkedIn Profile URL
+                      <Linkedin size={14} style={{ color: isLight ? accentHex : textHex, stroke: isLight ? accentHex : textHex }} /> LinkedIn Profile URL
                     </label>
                     <input
                       type="text"
@@ -1145,13 +1216,13 @@ export default function MobileProfilePage({
                       onChange={(e) => setEditLinkedin(e.target.value)}
                       placeholder="https://linkedin.com/in/username"
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                      style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                     />
                   </div>
 
                   <div>
                     <label className="font-bold text-xs flex items-center gap-1.5 mb-1" style={{ color: textHex }}>
-                      <Globe size={14} /> Personal Portfolio URL
+                      <Globe size={14} style={{ color: isLight ? accentHex : textHex, stroke: isLight ? accentHex : textHex }} /> Personal Portfolio URL
                     </label>
                     <input
                       type="text"
@@ -1159,13 +1230,13 @@ export default function MobileProfilePage({
                       onChange={(e) => setEditPortfolio(e.target.value)}
                       placeholder="https://yourwebsite.com"
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                      style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                     />
                   </div>
 
                   <div>
                     <label className="font-bold text-xs flex items-center gap-1.5 mb-1" style={{ color: textHex }}>
-                      <Code size={14} /> LeetCode / Coding Profile URL
+                      <Code size={14} style={{ color: isLight ? accentHex : textHex, stroke: isLight ? accentHex : textHex }} /> LeetCode Profile URL
                     </label>
                     <input
                       type="text"
@@ -1173,7 +1244,7 @@ export default function MobileProfilePage({
                       onChange={(e) => setEditLeetcode(e.target.value)}
                       placeholder="https://leetcode.com/username"
                       className="w-full px-3.5 py-2.5 rounded-xl text-xs outline-none"
-                      style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                      style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                     />
                   </div>
                 </div>
@@ -1204,7 +1275,7 @@ export default function MobileProfilePage({
                   <button onClick={() => setActiveSubView(null)} className="flex items-center gap-1 text-xs font-extrabold" style={{ color: accentHex }}>
                     <ChevronLeft size={16} /> Back to Sections
                   </button>
-                  <h3 className="text-sm font-black capitalize" style={{ color: textHex }}>{activeSubView}</h3>
+                  <h3 className="text-sm font-black capitalize" style={{ color: textHex, WebkitTextFillColor: textHex }}>{activeSubView}</h3>
                 </div>
 
                 <div className="rounded-3xl p-4 space-y-3 shadow-md" style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}>
@@ -1215,7 +1286,7 @@ export default function MobileProfilePage({
                     onChange={(e) => setItemTitle(e.target.value)}
                     placeholder="Title / Name"
                     className="w-full px-3 py-2 rounded-xl text-xs outline-none"
-                    style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                    style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                   />
                   <input
                     type="text"
@@ -1223,7 +1294,7 @@ export default function MobileProfilePage({
                     onChange={(e) => setItemSubTitle(e.target.value)}
                     placeholder="Subtitle / Description"
                     className="w-full px-3 py-2 rounded-xl text-xs outline-none"
-                    style={{ background: isLight ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${borderHex}` }}
+                    style={{ background: isLight ? '#FFFFFF' : 'rgba(255,255,255,0.06)', color: textHex, border: `1px solid ${isLight ? '#CBD5E1' : borderHex}` }}
                   />
                   <button
                     onClick={() => { setAddItemType(activeSubView as string); handleAddSectionSubmit(); }}
@@ -1251,7 +1322,7 @@ export default function MobileProfilePage({
                             {it.name || it.title || 'Untitled'}
                           </p>
                           {(it.subtitle || it.description) && (
-                            <p className="text-[11px] truncate mt-0.5 opacity-80" style={{ color: mutedHex }}>
+                            <p className="text-[11px] truncate mt-0.5" style={{ color: mutedHex }}>
                               {it.subtitle || it.description}
                             </p>
                           )}
@@ -1285,7 +1356,7 @@ export default function MobileProfilePage({
                   <button onClick={() => setActiveSubView(null)} className="flex items-center gap-1 text-xs font-extrabold" style={{ color: accentHex }}>
                     <ChevronLeft size={16} /> Back to Sections
                   </button>
-                  <h3 className="text-sm font-black" style={{ color: textHex }}>Plan & Billing</h3>
+                  <h3 className="text-sm font-black" style={{ color: textHex, WebkitTextFillColor: textHex }}>Plan & Billing</h3>
                 </div>
 
                 <div className="rounded-3xl p-4 space-y-3 shadow-md" style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}>
@@ -1335,7 +1406,7 @@ export default function MobileProfilePage({
                   <button onClick={() => setActiveSubView(null)} className="flex items-center gap-1 text-xs font-extrabold" style={{ color: accentHex }}>
                     <ChevronLeft size={16} /> Back to Sections
                   </button>
-                  <h3 className="text-sm font-black" style={{ color: textHex }}>Public Privacy</h3>
+                  <h3 className="text-sm font-black" style={{ color: textHex, WebkitTextFillColor: textHex }}>Public Privacy</h3>
                 </div>
 
                 <div className="rounded-3xl p-4 space-y-3.5 shadow-md" style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}>
@@ -1398,7 +1469,7 @@ export default function MobileProfilePage({
                   <button onClick={() => setActiveSubView(null)} className="flex items-center gap-1 text-xs font-extrabold" style={{ color: accentHex }}>
                     <ChevronLeft size={16} /> Back to Sections
                   </button>
-                  <h3 className="text-sm font-black" style={{ color: textHex }}>Activity Matrix</h3>
+                  <h3 className="text-sm font-black" style={{ color: textHex, WebkitTextFillColor: textHex }}>Activity Matrix</h3>
                 </div>
 
                 <div className="rounded-3xl p-4 space-y-3 shadow-md" style={{ background: cardBgHex, border: `1px solid ${borderHex}` }}>
@@ -1413,12 +1484,12 @@ export default function MobileProfilePage({
                       const count = day.count;
                       const bg =
                         count === 0
-                          ? isLight ? '#E2E8F0' : 'rgba(255,255,255,0.06)'
+                          ? isLight ? '#CBD5E1' : 'rgba(255,255,255,0.08)'
                           : count < 3
-                          ? '#A78BFA'
-                          : count < 6
-                          ? '#8B5CF6'
-                          : '#6D28D9';
+                            ? '#A78BFA'
+                            : count < 6
+                              ? '#8B5CF6'
+                              : '#6D28D9';
                       return (
                         <div
                           key={day.key}
@@ -1457,7 +1528,7 @@ export default function MobileProfilePage({
         </span>
       </motion.button>
 
-      {/* ── BOTTOM TAB BAR ─────────────────────────────────────────────── */}
+      {/* ── BOTTOM TAB BAR (identical to MobileTrainPage — Profile highlighted) ── */}
       <nav
         className="fixed bottom-0 left-0 right-0 z-[210] sm:hidden flex items-end justify-around"
         style={{ height: '64px', paddingBottom: 'env(safe-area-inset-bottom, 4px)' }}
@@ -1493,9 +1564,8 @@ export default function MobileProfilePage({
               <Link
                 key={tab.label}
                 href={tab.href}
-                className={`flex flex-col items-center justify-center gap-0.5 min-w-[54px] flex-1 active:opacity-75 ${
-                  isHome ? '-mt-5' : 'pb-1'
-                }`}
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-[54px] flex-1 active:opacity-75 ${isHome ? '-mt-5' : 'pb-1'
+                  }`}
                 aria-label={tab.label}
               >
                 {isHome ? (
@@ -1520,7 +1590,7 @@ export default function MobileProfilePage({
         </div>
       </nav>
 
-      {/* ── SIDEBAR DRAWER ─────────────────────────────────────────────── */}
+      {/* ── SIDEBAR DRAWER (identical to MobileTrainPage) ─────────────── */}
       <AnimatePresence>
         {sidebarOpen && (
           <>

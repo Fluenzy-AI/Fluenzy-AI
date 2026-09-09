@@ -1,104 +1,241 @@
 "use client";
 
 import { JobMatch } from "@/types/jobs";
-import { Bookmark, ExternalLink, MapPin, Briefcase, Clock } from "lucide-react";
 
 interface Props {
   job: JobMatch;
   onSave: (job: JobMatch) => void;
   onApply: (job: JobMatch) => void;
   isSaved?: boolean;
+  theme?: string;
 }
 
-export function JobCard({ job, onSave, onApply, isSaved }: Props) {
-  const scoreColor = job.matchScore >= 70 
-    ? "text-green-500" 
-    : job.matchScore >= 40 
-    ? "text-yellow-500" 
-    : "text-red-400";
+export function JobCard({ job, onSave, onApply, isSaved, theme = "dark" }: Props) {
+  const isLight = theme === 'light';
+  const isParchment = theme === 'parchment';
+  const isForest = theme === 'forest';
+  const isCode = theme === 'code';
 
-  const scoreBg = job.matchScore >= 70 
-    ? "bg-green-500/10 border-green-500/30" 
-    : job.matchScore >= 40 
-    ? "bg-yellow-500/10 border-yellow-500/30" 
-    : "bg-red-500/10 border-red-500/30";
+  // Dynamic Theme Colors
+  let bgStyle = { background: '#1E293B', borderColor: '#334155' };
+  let titleColor = '#F8FAFC';
+  let companyColor = '#94A3B8';
+  let mutedColor = '#64748B';
+  let badgeBg = 'rgba(255,255,255,0.06)';
+  let primaryBtnBg = 'linear-gradient(135deg, #3B82F6, #6366F1)';
+  let accentHex = '#818CF8';
+
+  if (isLight) {
+    bgStyle = { background: '#FFFFFF', borderColor: '#E2E8F0' };
+    titleColor = '#0F172A';
+    companyColor = '#475569';
+    mutedColor = '#64748B';
+    badgeBg = '#F1F5F9';
+    primaryBtnBg = 'linear-gradient(135deg, #2563EB, #4F46E5)';
+    accentHex = '#4F46E5';
+  } else if (isParchment) {
+    bgStyle = { background: '#FBF7EE', borderColor: '#E2D7C5' };
+    titleColor = '#2D241E';
+    companyColor = '#786C5E';
+    mutedColor = '#A39585';
+    badgeBg = 'rgba(120,108,94,0.12)';
+    primaryBtnBg = 'linear-gradient(135deg, #9A3412, #C2410C)';
+    accentHex = '#9A3412';
+  } else if (isForest) {
+    bgStyle = { background: '#064E3B', borderColor: '#047857' };
+    titleColor = '#ECFDF5';
+    companyColor = '#A7F3D0';
+    mutedColor = '#6EE7B7';
+    badgeBg = 'rgba(255,255,255,0.08)';
+    primaryBtnBg = 'linear-gradient(135deg, #059669, #10B981)';
+    accentHex = '#34D399';
+  } else if (isCode) {
+    bgStyle = { background: '#0A0F0D', borderColor: '#1F2937' };
+    titleColor = '#22C55E';
+    companyColor = '#4ADE80';
+    mutedColor = '#10B981';
+    badgeBg = 'rgba(34,197,94,0.1)';
+    primaryBtnBg = 'linear-gradient(135deg, #16A34A, #15803D)';
+    accentHex = '#22C55E';
+  }
+
+  // Match score colors
+  const matchPercent = job.matchScore || 0;
+  const isHighMatch = matchPercent >= 75;
+  const isMediumMatch = matchPercent >= 45;
+
+  let scoreStyle = {
+    bg: 'rgba(16, 185, 129, 0.12)',
+    border: 'rgba(16, 185, 129, 0.3)',
+    text: '#10B981',
+  };
+  if (!isHighMatch && isMediumMatch) {
+    scoreStyle = {
+      bg: 'rgba(245, 158, 11, 0.12)',
+      border: 'rgba(245, 158, 11, 0.3)',
+      text: '#F59E0B',
+    };
+  } else if (!isHighMatch && !isMediumMatch) {
+    scoreStyle = {
+      bg: 'rgba(244, 63, 94, 0.12)',
+      border: 'rgba(244, 63, 94, 0.3)',
+      text: '#F43F5E',
+    };
+  }
+
+  // Location clean-up
+  const isRemoteClean = job.remote || job.location?.toLowerCase().includes('remote');
+  const displayLocation = job.location && !job.location.toLowerCase().includes('remote') 
+    ? job.location 
+    : (isRemoteClean ? 'Remote' : 'Flexible');
 
   return (
-    <div className="rounded-2xl border border-gray-700 bg-gray-800/50 p-5 hover:border-gray-600 transition-all hover:bg-gray-800/80">
-      <div className="flex justify-between items-start gap-3">
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-white text-lg truncate">{job.title}</h3>
-          <p className="text-sm text-gray-400 mt-0.5">{job.company}</p>
-          <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
-            <MapPin className="h-3.5 w-3.5" />
-            <span>{job.location}</span>
+    <div 
+      className="rounded-2xl border p-3 shadow-xs transition-all duration-150 space-y-2 relative overflow-hidden"
+      style={{
+        background: bgStyle.background,
+        borderColor: bgStyle.borderColor,
+      }}
+    >
+      {/* ── HEADER: TITLE + MATCH SCORE (NO AVATAR OR ICONS) ── */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h3 
+            className="font-bold text-sm tracking-tight leading-tight truncate"
+            style={{ color: titleColor, WebkitTextFillColor: titleColor }}
+            title={job.title}
+          >
+            {job.title}
+          </h3>
+          
+          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] truncate">
+            <span className="font-semibold truncate" style={{ color: companyColor, WebkitTextFillColor: companyColor }}>
+              {job.company}
+            </span>
+            <span style={{ color: mutedColor }}>•</span>
+            <span className="font-medium truncate" style={{ color: mutedColor, WebkitTextFillColor: mutedColor }}>
+              {displayLocation}
+            </span>
           </div>
-          {job.salary && (
-            <p className="text-sm text-green-400 font-medium mt-1">{job.salary}</p>
-          )}
         </div>
-        <div className={`flex flex-col items-center px-3 py-2 rounded-xl border ${scoreBg}`}>
-          <span className={`text-2xl font-bold ${scoreColor}`}>{job.matchScore}%</span>
-          <span className="text-xs text-gray-400">match</span>
+
+        {/* Match Score Text Pill */}
+        <div 
+          className="flex items-center px-2 py-0.5 rounded-lg border shrink-0 text-[11px] font-black"
+          style={{
+            background: scoreStyle.bg,
+            borderColor: scoreStyle.border,
+            color: scoreStyle.text,
+          }}
+        >
+          {matchPercent}% match
         </div>
       </div>
 
-      {/* Matched Skills */}
-      {job.matchedSkills.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-3">
-          {job.matchedSkills.slice(0, 4).map(s => (
-            <span key={s} className="bg-green-500/20 text-green-400 text-xs px-2 py-0.5 rounded-full font-medium">
-              {s}
+      {/* ── SALARY & BADGES STRIP (NO ICONS) ── */}
+      <div className="flex items-center gap-1.5 flex-wrap text-[10px]">
+        {job.salary && (
+          <span 
+            className="px-2 py-0.5 rounded-md font-bold"
+            style={{
+              background: 'rgba(16, 185, 129, 0.15)',
+              color: isLight ? '#047857' : (isParchment ? '#15803D' : '#34D399'),
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+            }}
+          >
+            {job.salary}
+          </span>
+        )}
+
+        {isRemoteClean && (
+          <span 
+            className="px-2 py-0.5 rounded-md font-semibold"
+            style={{ background: badgeBg, color: titleColor }}
+          >
+            Remote
+          </span>
+        )}
+
+        {job.jobType && (
+          <span 
+            className="px-2 py-0.5 rounded-md font-semibold capitalize"
+            style={{ background: badgeBg, color: titleColor }}
+          >
+            {job.jobType}
+          </span>
+        )}
+
+        {job.postedAt && (
+          <span 
+            className="text-[10px] font-medium ml-auto opacity-70"
+            style={{ color: mutedColor }}
+          >
+            {new Date(job.postedAt).toLocaleDateString(undefined, { month: 'numeric', day: 'numeric' })}
+          </span>
+        )}
+      </div>
+
+      {/* ── SKILLS CHIPS (NO ICONS) ── */}
+      {((job.matchedSkills && job.matchedSkills.length > 0) || (job.missingSkills && job.missingSkills.length > 0)) && (
+        <div className="flex items-center gap-1 flex-wrap text-[10px] pt-0.5">
+          {job.matchedSkills?.slice(0, 3).map((skill) => (
+            <span 
+              key={skill}
+              className="px-1.5 py-0.5 rounded-md font-semibold"
+              style={{
+                background: 'rgba(16, 185, 129, 0.12)',
+                color: isLight ? '#065F46' : (isParchment ? '#166534' : '#6EE7B7'),
+              }}
+            >
+              {skill}
             </span>
           ))}
-          {job.missingSkills.slice(0, 2).map(s => (
-            <span key={s} className="bg-red-500/20 text-red-400 text-xs px-2 py-0.5 rounded-full">
-              {s} ✗
+
+          {job.missingSkills?.slice(0, 1).map((skill) => (
+            <span 
+              key={skill}
+              className="px-1.5 py-0.5 rounded-md font-medium opacity-70"
+              style={{
+                background: 'rgba(244, 63, 94, 0.12)',
+                color: isLight ? '#9F1239' : (isParchment ? '#991B1B' : '#FDA4AF'),
+              }}
+            >
+              {skill}
             </span>
           ))}
         </div>
       )}
 
-      {/* Badges */}
-      <div className="flex gap-2 mt-3">
-        {job.remote && (
-          <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-            <MapPin className="h-3 w-3" /> Remote
-          </span>
-        )}
-        {job.jobType && (
-          <span className="bg-purple-500/20 text-purple-400 text-xs px-2 py-0.5 rounded-full flex items-center gap-1">
-            <Briefcase className="h-3 w-3" /> {job.jobType}
-          </span>
-        )}
-        {job.postedAt && (
-          <span className="text-xs text-gray-500 flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {new Date(job.postedAt).toLocaleDateString()}
-          </span>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2 mt-4">
+      {/* ── ACTION BUTTONS (NO ICONS) ── */}
+      <div className="flex items-center gap-1.5 pt-0.5">
         <a 
           href={job.applyLink} 
           target="_blank" 
           rel="noopener noreferrer"
           onClick={() => onApply(job)}
-          className="flex-1 bg-blue-600 text-white text-sm font-medium px-4 py-2.5 rounded-xl text-center hover:bg-blue-500 transition-colors flex items-center justify-center gap-2"
+          className="flex-1 text-white text-xs font-bold py-1.5 px-3 rounded-xl text-center active:scale-[0.98] transition-transform shadow-xs"
+          style={{
+            background: primaryBtnBg,
+          }}
         >
-          Apply Now <ExternalLink className="h-4 w-4" />
+          Apply Now
         </a>
+
         <button 
           onClick={() => onSave(job)}
-          className={`px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors flex items-center gap-2 ${
-            isSaved 
-              ? "bg-gray-700 text-gray-300 border-gray-600" 
-              : "bg-transparent text-blue-400 border-blue-500/50 hover:bg-blue-500/10"
-          }`}
+          className="px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95 shrink-0"
+          style={{
+            background: isSaved 
+              ? (isLight ? '#F1F5F9' : 'rgba(255,255,255,0.12)')
+              : 'transparent',
+            borderColor: isSaved 
+              ? accentHex 
+              : bgStyle.borderColor,
+            color: isSaved 
+              ? accentHex 
+              : titleColor,
+          }}
         >
-          <Bookmark className={`h-4 w-4 ${isSaved ? "fill-current" : ""}`} />
           {isSaved ? "Saved" : "Save"}
         </button>
       </div>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Smartphone, Monitor, Share2, Copy, Check } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useTheme, ThemeName } from "@/contexts/ThemeContext";
@@ -41,7 +41,7 @@ const MOBILE_THEME_COLORS: Record<ThemeName, {
 
 export default function InstallPage() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [linkCopied, setLinkCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
@@ -61,6 +61,27 @@ export default function InstallPage() {
   const shareStyles = resolvedTheme === "light" || resolvedTheme === "parchment"
     ? { background: "linear-gradient(90deg, #5B21B6, #7C3AED)", color: "#FFFFFF", borderColor: "#7C3AED", boxShadow: "0 10px 25px rgba(91,33,182,0.2)" }
     : { color: colors.accent, borderColor: `${colors.accent}66`, background: isLight ? "rgba(255,255,255,0.5)" : `${colors.accent}08` };
+
+  const handlePostInstallRedirect = useCallback(() => {
+    if (session?.user) {
+      router.replace("/train");
+    } else {
+      router.replace("/");
+    }
+  }, [session, router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || status === "loading") return;
+
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      Boolean((window.navigator as Navigator & { standalone?: boolean }).standalone) ||
+      document.referrer.includes("android-app://");
+
+    if (isStandalone) {
+      handlePostInstallRedirect();
+    }
+  }, [session, status, handlePostInstallRedirect]);
 
   useEffect(() => {
     setCanShare(typeof navigator.share === "function");
@@ -217,6 +238,7 @@ export default function InstallPage() {
             <PWAInstallButton
               className={installButtonClass}
               style={installStyles}
+              onInstalled={handlePostInstallRedirect}
             />
           </div>
           <p className="mx-auto mt-6 max-w-sm text-xs leading-5" style={{ color: colors.muted }}>
@@ -245,7 +267,7 @@ export default function InstallPage() {
               Use the native browser install prompt to launch FluenzyAI like a desktop app, with the same account and features.
             </p>
             <div className="mt-8">
-              <PWAInstallButton className={installButtonClass} style={installStyles} />
+              <PWAInstallButton className={installButtonClass} style={installStyles} onInstalled={handlePostInstallRedirect} />
             </div>
             <div className="mt-8 flex flex-wrap justify-center gap-2.5 text-xs sm:text-sm" style={{ color: colors.muted }}>
               <span className="inline-flex items-center gap-2 rounded-full border px-3 py-2" style={{ borderColor: colors.border, background: `${colors.accent}08` }}><CheckCircle2 className="h-4 w-4 text-emerald-400" />No separate download</span>
