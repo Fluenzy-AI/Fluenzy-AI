@@ -44,7 +44,7 @@ function getStableUserId(sessionUserId: string | undefined): string {
   if (typeof window === 'undefined') {
     return sessionUserId || `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   }
-  
+
   // Try sessionStorage first (survives page reloads during session)
   const stored = window.sessionStorage.getItem('gd_userId');
   if (stored) return stored;
@@ -83,19 +83,35 @@ const TABS = [
 
 export interface MobileliveGDPageProps {
   fixedParticipantCount?: number;
+  labelTitle?: string;
+  labelSubtitle?: string;
+  labelSectionSetup?: string;
+  labelConfigure?: string;
+  labelParticipants?: string;
+  labelParticipantFixed?: string;
+  redirectOnEnd?: string;
 }
 
-export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPageProps = {}) {
+export default function LiveGDPage({
+  fixedParticipantCount,
+  labelTitle,
+  labelSubtitle,
+  labelSectionSetup,
+  labelConfigure,
+  labelParticipants,
+  labelParticipantFixed,
+  redirectOnEnd,
+}: MobileliveGDPageProps = {}) {
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
   const { theme, setTheme, resolvedTheme } = useTheme();
 
   // Generate stable user ID that persists during session (client-side only)
-  const [userId, setUserId] = useState<string>(() => 
+  const [userId, setUserId] = useState<string>(() =>
     getStableUserId(session?.user?.id)
   );
   const [userName, setUserName] = useState(() => session?.user?.name || 'Guest User');
-  
+
   // Generate numeric UID for Agora (stable too)
   const [agoraUid, setAgoraUid] = useState<number>(() => {
     if (typeof window === 'undefined') return Math.floor(Math.random() * 1000000);
@@ -129,7 +145,7 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
   const [error, setError] = useState<React.ReactNode | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
-  
+
   // Socket connection
   const [socket, setSocket] = useState<Socket | null>(null);
   const [socketConnected, setSocketConnected] = useState(false);
@@ -153,7 +169,7 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
   // Initialize socket connection
   useEffect(() => {
     console.log('[Page] Initializing socket connection...');
-    
+
     const socketInstance = io({
       path: '/api/socket/io',
       addTrailingSlash: false,
@@ -202,11 +218,11 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
       console.log('[Page] Channel:', data.channelName);
       console.log('[Page] Participants:', data.participants);
       console.log('[Page] Current userId:', userId);
-      
+
       // Check if current user is in the participants list
       const isParticipant = data.participants.some(p => p.odlUserId === userId);
       console.log('[Page] Is current user a participant?:', isParticipant);
-      
+
       if (isParticipant) {
         // Ensure sessionId is set (use roomId as fallback)
         const roomDataWithSession = {
@@ -243,7 +259,7 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
     console.log('[Page] Joining queue...');
     console.log('[Page] Using userId:', userId);
     console.log('[Page] Using agoraUid:', agoraUid);
-    
+
     setGdStatus('queue');
     setError(null);
 
@@ -269,7 +285,7 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
   const clearOldSessions = async () => {
     setIsClearing(true);
     setError(null);
-    
+
     try {
       const response = await fetch('/api/gd/match', {
         method: 'POST',
@@ -663,11 +679,12 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
   if (gdStatus === 'matched' && roomData) {
     // Active video room — full-screen, no chrome
     return (
-      <LiveGDRoom 
+      <LiveGDRoom
         roomData={roomData}
         userId={userId}
         agoraUid={agoraUid}
         largeVideoLayout={fixedParticipantCount === 2}
+        redirectOnEnd={redirectOnEnd}
       />
     );
   }
@@ -765,9 +782,9 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
             <span className="w-1.5 h-1.5 rounded-full" style={{ background: accentHex }} />
             Practice room
           </div>
-          <h1 className="text-[25px] font-black tracking-tight mb-1" style={{ color: textHex }}>Live Group Discussion</h1>
+          <h1 className="text-[25px] font-black tracking-tight mb-1" style={{ color: textHex }}>{labelTitle ?? 'Live Group Discussion'}</h1>
           <p className="text-[13px]" style={{ color: mutedHex }}>
-            Join random GD sessions with real participants
+            {labelSubtitle ?? 'Join random GD sessions with real participants'}
           </p>
 
           <div className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-bold border shadow-sm" style={{
@@ -791,8 +808,8 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
         <div className="rounded-[24px] p-4 mb-5 border shadow-sm" style={{ background: cardBgHex, borderColor: borderHex, boxShadow: isLight ? '0 10px 28px rgba(43,35,25,0.08)' : undefined }}>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] mb-1" style={{ color: accentHex }}>Session setup</p>
-              <h2 className="text-[17px] font-black" style={{ color: textHex }}>Configure your GD</h2>
+              <p className="text-[10px] font-black uppercase tracking-[0.14em] mb-1" style={{ color: accentHex }}>{labelSectionSetup ?? 'Session setup'}</p>
+              <h2 className="text-[17px] font-black" style={{ color: textHex }}>{labelConfigure ?? 'Configure your GD'}</h2>
             </div>
             <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: `${accentHex}14`, color: accentHex }}>
               <Target size={19} />
@@ -801,10 +818,10 @@ export default function LiveGDPage({ fixedParticipantCount }: MobileliveGDPagePr
 
           <div className="mb-5">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: mutedHex }}>Participants</label>
+              <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: mutedHex }}>{labelParticipants ?? 'Participants'}</label>
               {fixedParticipantCount ? (
                 <div className="w-full rounded-2xl px-4 py-3.5 text-sm font-semibold" style={{ background: pageBgHex, color: textHex, border: `1px solid ${borderHex}` }}>
-                  2 Participants
+                  {labelParticipantFixed ?? '2 Participants'}
                 </div>
               ) : (
                 <select
