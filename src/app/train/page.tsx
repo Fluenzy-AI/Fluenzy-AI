@@ -21,7 +21,8 @@ import {
   Lock,
   Target,
   Zap,
-  Brain
+  Brain,
+  Heart,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useTheme, themeConfig } from '@/contexts/ThemeContext';
@@ -34,6 +35,7 @@ const UNLIMITED_MODULES = new Set([
   'latest_topics',
   'gdPrivate',  // GD Private - unlimited
   'gdRandom',   // GD Random - unlimited
+  'live-red-heart', // HeartSync - unlimited
 ]);
 // LIMITED modules (show real remaining count): hr, gdCoach, technical, company, daily, english, corporateVoice
 
@@ -90,6 +92,31 @@ interface Module {
 // Default modules - NO HARDCODED session values, will be fetched from API
 const modules: Module[] = [
   {
+    type: 'live-red-heart',
+    title: 'HeartSync',
+    description: 'Connect randomly in a live 1-on-1 video conversation — share ideas and practice speaking anonymously',
+    icon: Heart,
+    color: 'text-pink-400',
+    gradient: 'from-pink-500 to-rose-500',
+    href: '/train/live-red-heart',
+    badge: '❤️ LIVE',
+    isLocked: false,
+    sessions: 'Unlimited',
+    isUnlimited: true,
+  },
+  {
+    type: 'company',
+    title: 'Company Tracks',
+    description: 'Prepare for FAANG, Startups, or MNCs with curated company HR rounds',
+    icon: Building2,
+    color: 'text-red-500',
+    gradient: 'from-red-500 to-rose-600',
+    href: '/train/company',
+    badge: '🔥 HOT TRACK',
+    isLocked: false,
+    sessions: '-', // Will be updated from API
+  },
+  {
     type: 'hr',
     title: 'HR Interview',
     description: 'Practice behavioral questions with AI-powered HR simulations',
@@ -134,18 +161,6 @@ const modules: Module[] = [
     gradient: 'from-emerald-500 to-teal-500',
     href: '/train/technical',
     badge: 'Advanced',
-    isLocked: false,
-    sessions: '-', // Will be updated from API
-  },
-  {
-    type: 'company',
-    title: 'Company Tracks',
-    description: 'Prepare for FAANG, Startups, or MNCs with curated company HR rounds',
-    icon: Building2,
-    color: 'text-red-500',
-    gradient: 'from-red-500 to-rose-600',
-    href: '/train/company',
-    badge: '🔥 HOT TRACK',
     isLocked: false,
     sessions: '-', // Will be updated from API
   },
@@ -447,96 +462,6 @@ export default function TrainPage() {
           <div className="absolute bottom-0 left-0 w-[320px] h-[320px] bg-gradient-to-r from-purple-100/60 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '1s' }} />
         </div>
       )}
-      {/* Hero Section - Apple Aesthetic */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="mb-8"
-      >
-        {/* Background Glow Effect */}
-        <div className="relative">
-          {isLightMode ? (
-            <>
-              <div className="absolute -top-16 -left-8 w-80 h-80 bg-gradient-to-br from-red-200/50 to-rose-100/40 rounded-full blur-3xl pointer-events-none animate-pulse" style={{ animationDuration: '6s' }} />
-              <div className="absolute top-0 right-4 w-64 h-64 bg-gradient-to-bl from-amber-100/60 to-rose-50/40 rounded-full blur-3xl pointer-events-none" />
-            </>
-          ) : (
-            <>
-              <div className="absolute -top-20 -left-20 w-96 h-96 bg-gradient-to-br from-purple-600/20 to-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="absolute -bottom-20 -right-20 w-96 h-96 bg-gradient-to-tl from-indigo-500/10 to-transparent rounded-full blur-3xl pointer-events-none" />
-            </>
-          )}
-          
-          <div className="relative z-10">
-            <h1 className={`text-3xl md:text-4xl lg:text-5xl font-black ${currentTheme.text} mb-3 tracking-tight`}>
-              Welcome back, <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-indigo-400 to-purple-300">{session?.user?.name ? session.user.name.split(' ')[0] : 'User'}</span> 👋
-            </h1>
-            <p className={`text-base md:text-lg ${currentTheme.textMuted} max-w-2xl mb-6`}>
-              Master your interview skills with AI-powered practice sessions. Select a company or practice module below.
-            </p>
-            
-            <div className="flex flex-wrap items-center gap-3">
-              <Button
-                asChild
-                className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold px-8 py-4 rounded-full shadow-lg shadow-purple-600/25 hover:shadow-purple-600/40 transition-all duration-200 hover:-translate-y-0.5"
-              >
-                <Link href="/train/company">
-                  <Building2 className="mr-2" size={18} />
-                  Start Company Tracks
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                className="border-red-500/30 text-foreground font-semibold px-6 py-4 rounded-full hover:bg-red-500/10 transition-all"
-              >
-                <Link href="/train/hr">
-                  <Sparkles className="mr-2 text-red-500" size={18} />
-                  HR Practice
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Featured Apple-Style Spotlight Card for Company Tracks */}
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="mb-10 relative overflow-hidden rounded-3xl border border-red-500/30 bg-gradient-to-r from-red-500/10 via-rose-500/5 to-amber-500/10 backdrop-blur-2xl p-6 md:p-8 shadow-xl shadow-red-500/5 group cursor-pointer"
-        onClick={() => router.push('/train/company')}
-      >
-        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-red-500/10 rounded-full blur-3xl pointer-events-none group-hover:bg-red-500/20 transition-all duration-500" />
-        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/15 border border-red-500/30 text-red-500 text-xs font-extrabold tracking-wider uppercase">
-              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-              FEATURED TRACKS • APPLE & TECH LEADERS
-            </div>
-            <h2 className="text-2xl md:text-3xl font-black tracking-tight text-foreground">
-              Prepare for Apple, FAANG & Top MNCs
-            </h2>
-            <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-              Curated company-wise interview simulations calibrated to the exact culture fit and technical bars of Apple, Google, Microsoft, Meta, Amazon, TCS & top tech firms.
-            </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              {['🍏 Apple', '🔍 Google', '💻 Microsoft', '♾️ Meta', '📦 Amazon', '🏢 TCS'].map((company) => (
-                <span key={company} className="px-3 py-1 rounded-xl bg-background/80 border border-border/70 text-xs font-bold text-foreground shadow-sm">
-                  {company}
-                </span>
-              ))}
-            </div>
-          </div>
-          <div className="shrink-0">
-            <Button className="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold px-7 py-3.5 rounded-full shadow-lg shadow-red-600/30 transition-all duration-300 group-hover:scale-105">
-              <Building2 className="mr-2" size={18} />
-              Explore Company Tracks →
-            </Button>
-          </div>
-        </div>
-      </motion.div>
 
       {/* Module Cards Grid */}
       <div className="mb-8">
