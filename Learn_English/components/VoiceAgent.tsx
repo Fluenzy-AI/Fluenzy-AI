@@ -120,6 +120,7 @@ const HumanAvatar = ({
 
 const VoiceAgent: React.FC<{ 
   user: UserProfile; 
+  type?: ModuleType;
   onSessionEnd: (u: UserProfile) => void; 
   onInterviewStart?: () => void;
   showSettings?: boolean;
@@ -127,13 +128,15 @@ const VoiceAgent: React.FC<{
   hideEndButton?: boolean;
 }> = ({ 
   user, 
+  type: propType,
   onSessionEnd, 
   onInterviewStart,
   showSettings,
   onShowSettingsChange,
   hideEndButton = false
 }) => {
-  const { type } = useParams<{ type: string }>();
+  const { type: paramType } = useParams<{ type: string }>();
+  const type = propType || (paramType as ModuleType);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isActive, setIsActive] = useState(false);
@@ -1077,7 +1080,9 @@ From now on, speak and act strictly according to these new settings!]`
               : 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border-slate-700/50 shadow-2xl'
           }`}>
             {/* Large Full-Width AI HR Coach Image */}
-            <div className="w-full relative rounded-2xl overflow-hidden aspect-[16/9] max-h-56 shadow-xl border border-slate-700/50 mb-2 bg-slate-950">
+            <div className={`w-full relative rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 mb-2 bg-slate-950 ${
+              hideEndButton && type !== ModuleType.COMPANY_WISE_HR && type !== ModuleType.COMPANY_SPECIFIC ? 'h-64 sm:h-80' : 'aspect-[16/9] max-h-56'
+            }`}>
               <img
                 src="/image/img.png"
                 alt="AI Coach"

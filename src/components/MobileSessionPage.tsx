@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -11,7 +11,7 @@ import {
 import { useTheme } from '@/contexts/ThemeContext';
 import VoiceAgent from '../../Learn_English/components/VoiceAgent';
 import VideoAnalysisPanel from './VideoAnalysisPanel';
-import { UserProfile } from '../../Learn_English/types';
+import { UserProfile, ModuleType } from '../../Learn_English/types';
 import { INITIAL_USER } from '../../Learn_English/constants';
 import { ThemeName } from '@/contexts/ThemeContext';
 import {
@@ -41,8 +41,13 @@ const TABS = [
 export default function MobileSessionPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const params = useParams();
   const searchParams = useSearchParams();
   const { theme, setTheme, resolvedTheme } = useTheme();
+
+  const rawType = (params?.type as string) || 'HR_INTERVIEW';
+  const sessionType = (rawType in ModuleType ? (ModuleType as any)[rawType] : rawType) as ModuleType;
+  const isCompanyWise = sessionType === ModuleType.COMPANY_WISE_HR || rawType === 'COMPANY_WISE_HR';
 
   const company = searchParams.get('company') || 'Google';
   const role = searchParams.get('role') || 'Software Engineer';
@@ -285,11 +290,14 @@ export default function MobileSessionPage() {
 
         {/* ── 3. SINGLE PRIMARY WORKSPACE: AI HR VOICE AGENT & START INTERVIEW ─ */}
         <div
-          className="rounded-xl border p-2 shadow-md overflow-hidden"
+          className={`rounded-xl border p-2 shadow-md overflow-hidden ${
+            !isCompanyWise ? 'min-h-[calc(100vh-180px)] flex flex-col justify-center' : ''
+          }`}
           style={{ background: cardBgHex, borderColor: borderHex }}
         >
           <VoiceAgent
             user={user}
+            type={sessionType}
             onSessionEnd={handleEndInterview}
             onInterviewStart={handleStartInterview}
             showSettings={showSettings}
@@ -298,27 +306,30 @@ export default function MobileSessionPage() {
           />
         </div>
 
-        {/* ── 4. LIVE ANALYSIS SECTION HEADER ───────────────────────────────── */}
-        <div className="pt-0 flex items-center justify-between">
-          <h3 className="font-extrabold text-xs tracking-tight" style={{ color: textHex }}>
-            Original AI Video & Expression Analysis
-          </h3>
-          <span className="text-[8px] font-extrabold px-2 py-0.5 rounded-full text-white force-white" style={{ background: isInterviewActive ? '#10B981' : accentHex, color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}>
-            {isInterviewActive ? 'Live Stream' : 'Idle'}
-          </span>
-        </div>
+        {/* ── 4. REAL-TIME AI VIDEO ANALYSIS PANEL (ONLY FOR COMPANY_WISE_HR) ─ */}
+        {isCompanyWise && (
+          <>
+            <div className="pt-0 flex items-center justify-between">
+              <h3 className="font-extrabold text-xs tracking-tight" style={{ color: textHex }}>
+                Original AI Video & Expression Analysis
+              </h3>
+              <span className="text-[8px] font-extrabold px-2 py-0.5 rounded-full text-white force-white" style={{ background: isInterviewActive ? '#10B981' : accentHex, color: '#FFFFFF', WebkitTextFillColor: '#FFFFFF' }}>
+                {isInterviewActive ? 'Live Stream' : 'Idle'}
+              </span>
+            </div>
 
-        {/* ── 5. ORIGINAL REAL-TIME CANDIDATE AI VIDEO ANALYSIS PANEL ───────── */}
-        <div
-          className="rounded-xl border shadow-md overflow-hidden"
-          style={{ background: cardBgHex, borderColor: borderHex }}
-        >
-          <VideoAnalysisPanel
-            sessionId={sessionId}
-            isActive={isInterviewActive}
-            isCompact={false}
-          />
-        </div>
+            <div
+              className="rounded-xl border shadow-md overflow-hidden"
+              style={{ background: cardBgHex, borderColor: borderHex }}
+            >
+              <VideoAnalysisPanel
+                sessionId={sessionId}
+                isActive={isInterviewActive}
+                isCompact={false}
+              />
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── 8. FLOATING ASK AI BUTTON ─────────────────────────────────────── */}

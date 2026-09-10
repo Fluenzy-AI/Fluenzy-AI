@@ -416,10 +416,7 @@ export default function MobileTrainPage() {
             <Menu size={22} style={{ color: isLight ? '#0F172A' : '#F8FAFC', stroke: isLight ? '#0F172A' : '#F8FAFC' }} />
           </button>
           <LogoContainer />
-          <span
-            className="font-black text-lg tracking-tight"
-            style={{ background: 'linear-gradient(90deg,#7C3AED,#4F46E5)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
-          >
+          <span className="font-black text-lg tracking-tight bg-gradient-to-r from-violet-600 via-indigo-600 to-pink-500 bg-clip-text text-transparent">
             Fluenzy AI
           </span>
         </div>
