@@ -336,11 +336,11 @@ export default function SideChatBot() {
           className={`fixed bottom-6 right-6 z-[9990] hidden sm:flex items-center gap-2.5 px-4 py-3 rounded-full ${styles.sendBtn} shadow-lg border border-white/20 transition-all group`}
           aria-label="Open Fluenzy AI Assistant"
         >
-          <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-slate-900/40 border border-white/30 overflow-hidden p-1">
+          <div className="relative shrink-0">
             <img
               src="/white-removebg-preview1.png"
               alt="Fluenzy AI Logo"
-              className="w-full h-full object-contain"
+              className="w-8 h-8 object-contain"
               onError={(e) => {
                 (e.target as HTMLElement).style.display = "none";
               }}
@@ -359,17 +359,17 @@ export default function SideChatBot() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ duration: 0.25, ease: "easeOut" }}
-            className={`fixed right-3 sm:right-6 z-[9999] w-[350px] sm:w-[380px] max-w-[calc(100vw-24px)] ${styles.windowBg} rounded-2xl overflow-hidden flex flex-col ${isMinimized ? "bottom-4 h-[60px]" : "bottom-4 sm:bottom-6 h-[560px] max-h-[calc(100vh-80px)]"
+            className={`fixed right-3 sm:right-6 z-[9999] w-[350px] sm:w-[380px] max-w-[calc(100vw-24px)] ${styles.windowBg} rounded-2xl overflow-hidden flex flex-col ${isMinimized ? "bottom-20 sm:bottom-6 h-[60px]" : "bottom-20 sm:bottom-6 h-[520px] sm:h-[560px] max-h-[calc(100vh-100px)]"
               }`}
           >
             {/* Header Bar */}
             <div className={`${styles.headerBg} px-4 py-3 flex items-center justify-between shadow-md shrink-0 select-none`}>
               <div className="flex items-center gap-2.5 min-w-0">
-                <div className="relative flex items-center justify-center w-8 h-8 rounded-full bg-slate-900/50 border border-white/30 shrink-0 overflow-hidden p-1">
+                <div className="relative shrink-0">
                   <img
                     src="/white-removebg-preview1.png"
                     alt="Fluenzy AI Logo"
-                    className="w-full h-full object-contain"
+                    className="w-8 h-8 object-contain"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = "none";
                     }}
@@ -420,16 +420,14 @@ export default function SideChatBot() {
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
                   {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center py-6 px-2 space-y-5 animate-in fade-in duration-300">
-                      {/* Fluenzy AI Official Bot Logo Circle */}
+                      {/* Fluenzy AI Official Bot Logo */}
                       <div className="relative">
-                        <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-purple-500/40 shadow-lg bg-slate-900 p-2 flex items-center justify-center">
-                          <img
-                            src="/white-removebg-preview1.png"
-                            alt="Fluenzy AI Logo"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                        <span className="absolute bottom-0 right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-slate-900" />
+                        <img
+                          src="/white-removebg-preview1.png"
+                          alt="Fluenzy AI Logo"
+                          className="w-16 h-16 object-contain"
+                        />
+                        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-slate-900" />
                       </div>
 
                       {/* Welcome Greeting */}
@@ -467,13 +465,11 @@ export default function SideChatBot() {
                           }`}
                       >
                         {msg.role === "assistant" && (
-                          <div className="w-7 h-7 rounded-full bg-slate-900 border border-purple-500/40 flex items-center justify-center shrink-0 mt-1 shadow-sm overflow-hidden p-1">
-                            <img
-                              src="/white-removebg-preview1.png"
-                              alt="Fluenzy AI"
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
+                          <img
+                            src="/white-removebg-preview1.png"
+                            alt="Fluenzy AI"
+                            className="w-7 h-7 object-contain shrink-0 mt-1"
+                          />
                         )}
                         <div
                           className={`group relative max-w-[84%] rounded-2xl px-4 py-3 text-xs leading-relaxed ${msg.role === "user"
@@ -499,13 +495,11 @@ export default function SideChatBot() {
                   {/* Loading indicator */}
                   {loading && (
                     <div className="flex gap-2.5 justify-start items-center animate-pulse">
-                      <div className="w-7 h-7 rounded-full bg-slate-900 border border-purple-500/40 flex items-center justify-center shrink-0 p-1">
-                        <img
-                          src="/white-removebg-preview1.png"
-                          alt="Fluenzy AI"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
+                      <img
+                        src="/white-removebg-preview1.png"
+                        alt="Fluenzy AI"
+                        className="w-7 h-7 object-contain shrink-0"
+                      />
                       <div className={`${styles.aiBubble} rounded-2xl rounded-tl-xs px-4 py-3 text-xs flex items-center gap-1.5`}>
                         <span>Fluenzy AI thinking</span>
                         <span className="flex gap-1 items-center ml-1">
@@ -521,30 +515,39 @@ export default function SideChatBot() {
                 </div>
 
                 {/* Input Footer */}
-                <div className={`${styles.inputFooter} p-3 shrink-0`}>
+                <div className={`${styles.inputFooter} border-t px-3 py-3 shrink-0`}>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
                       handleSend();
                     }}
-                    className={`flex items-center gap-2 ${styles.inputContainer} rounded-xl px-3 py-1.5 transition-colors`}
+                    className={`flex items-center gap-3 w-full h-[60px] ${styles.inputContainer} rounded-2xl px-4 py-2.5 transition-all border shadow-sm`}
                   >
                     <input
                       type="text"
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       placeholder="Type a message..."
-                      className={`flex-1 bg-transparent text-xs ${styles.inputText} focus:outline-none py-1`}
+                      className={`flex-1 text-sm sm:text-base ${styles.inputText} outline-none focus:outline-none border-0 focus:ring-0 w-full h-full font-medium`}
+                      style={{
+                        background: 'transparent',
+                        backgroundColor: 'transparent',
+                        border: 'none',
+                        outline: 'none',
+                        boxShadow: 'none',
+                        height: '100%',
+                        width: '100%',
+                      }}
                     />
                     <button
                       type="submit"
                       disabled={!inputMessage.trim() || loading}
-                      className={`p-1.5 rounded-lg ${styles.sendBtn} disabled:opacity-40 transition-colors shrink-0`}
+                      className={`w-11 h-11 rounded-xl flex items-center justify-center ${styles.sendBtn} disabled:opacity-40 transition-all shrink-0 active:scale-95 shadow-md`}
                     >
-                      <Send size={14} />
+                      <Send size={19} />
                     </button>
                   </form>
-                  <p className={`text-[10px] ${styles.subText} text-center pt-2 font-semibold tracking-wide`}>
+                  <p className={`text-[10px] ${styles.subText} text-center pt-2 font-semibold tracking-wide opacity-80`}>
                     Powered by Fluenzy AI
                   </p>
                 </div>
