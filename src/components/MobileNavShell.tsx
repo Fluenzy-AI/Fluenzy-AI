@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import { useTheme, ThemeName } from "@/contexts/ThemeContext";
+import NotificationBell from "@/components/NotificationBell";
 import {
   Menu, Bell, Home, Link2, BarChart3, User,
   Sun, Moon, Leaf, Coffee, Terminal, Sparkles, X, LogOut,
@@ -152,13 +153,7 @@ export default function MobileNavShell({ children, activeHref }: MobileNavShellP
               )}
             </AnimatePresence>
           </div>
-          <div className="relative">
-            <button className="flex items-center justify-center w-9 h-9 rounded-xl active:opacity-70"
-              style={{background:isLight?"rgba(0,0,0,0.04)":"rgba(255,255,255,0.06)",border:`1px solid ${borderHex}`}} aria-label="Notifications">
-              <Bell size={18} style={{color:textHex}}/>
-            </button>
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[9px] font-black text-white">3</span>
-          </div>
+          <NotificationBell isDark={!isLight} iconSize={18} />
           <button onClick={()=>router.push("/profile")}
             className="w-9 h-9 rounded-xl overflow-hidden border-2 flex items-center justify-center active:opacity-80"
             style={{borderColor:"#C4B5FD",background:"linear-gradient(135deg,#7C3AED,#4F46E5)"}} aria-label="Profile">
@@ -183,35 +178,88 @@ export default function MobileNavShell({ children, activeHref }: MobileNavShellP
         <span className="text-[9px] font-black text-white leading-none">Ask AI</span>
       </motion.button>
 
-      {/* BOTTOM TAB BAR */}
-      <div className="fixed bottom-0 left-0 right-0 z-[205] sm:hidden" style={{height:"64px"}}>
-        <svg viewBox="0 0 390 64" fill="none" preserveAspectRatio="none" className="absolute inset-0 w-full h-full"
-          style={{filter:"drop-shadow(0 -2px 12px rgba(0,0,0,0.3))"}}>
-          <path d="M0 20 Q80 20 130 20 Q155 20 160 0 Q165 -14 195 -14 Q225 -14 230 0 Q235 20 260 20 Q310 20 390 20 L390 64 L0 64 Z"
-            fill={isLight?"#FFFFFF":cardBgHex} stroke={borderHex} strokeWidth="1"/>
-        </svg>
-        <div className="relative flex h-full items-end pb-2 justify-around px-1">
-          {TABS.map((tab,idx)=>{
-            const isHome=idx===2;
-            const isActive=cur===tab.href||(tab.href!=="/train"&&cur.startsWith(tab.href));
-            const Icon=tab.icon;
-            if(isHome) return(
-              <Link key={tab.label} href={tab.href} className="flex flex-col items-center justify-center relative" style={{marginBottom:"18px"}}>
-                <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
-                  style={{background:"linear-gradient(135deg,#7C3AED,#4F46E5)",boxShadow:"0 4px 16px rgba(124,58,237,0.5)"}}>
-                  <Home size={24} className="text-white"/>
-                </div>
-              </Link>
-            );
-            return(
-              <Link key={tab.label} href={tab.href} className="flex flex-col items-center gap-0.5 min-w-[52px] py-1">
-                <Icon size={20} style={{color:isActive?tab.tabColor:mutedHex,strokeWidth:isActive?2.5:1.8}}/>
-                <span className="text-[9px] font-semibold" style={{color:isActive?tab.tabColor:mutedHex}}>{tab.label}</span>
+      {/* BOTTOM TAB BAR — matches MobileTrainPage exactly */}
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-[205] sm:hidden flex items-end justify-around"
+        style={{
+          height: '64px',
+          paddingBottom: 'env(safe-area-inset-bottom, 4px)',
+        }}
+      >
+        {/* Downward concave scoop SVG background */}
+        <div className="absolute inset-0 w-full h-full pointer-events-none overflow-hidden">
+          <svg
+            viewBox="0 0 375 64"
+            preserveAspectRatio="none"
+            className="w-full h-full"
+            style={{
+              filter: isLight
+                ? 'drop-shadow(0px -4px 12px rgba(0,0,0,0.08))'
+                : 'drop-shadow(0px -4px 16px rgba(0,0,0,0.3))',
+            }}
+          >
+            <path
+              d="M 0,0 L 132,0 C 152,0 160,24 187.5,24 C 215,24 223,0 243,0 L 375,0 L 375,64 L 0,64 Z"
+              fill={isLight ? '#FFFFFF' : cardBgHex}
+              stroke={isLight ? '#E2E8F0' : borderHex}
+              strokeWidth="1"
+            />
+          </svg>
+        </div>
+
+        {/* Tab Items */}
+        <div className="relative z-10 flex items-center justify-around w-full h-full pt-1 px-1">
+          {TABS.map((tab) => {
+            const isHome    = tab.label === 'Home';
+            const isActive  = cur === tab.href || (tab.href !== '/train' && cur.startsWith(tab.href));
+            const accentColor   = isLight ? '#7C3AED' : accentHex;
+            const inactiveColor = isLight ? '#475569' : mutedHex;
+            const iconColor = isActive && !isHome ? tab.tabColor : (isHome ? accentColor : inactiveColor);
+            const textColor = isActive && !isHome ? tab.tabColor : (isHome ? accentColor : inactiveColor);
+            const Icon = tab.icon;
+
+            return (
+              <Link
+                key={tab.label}
+                href={tab.href}
+                className={`flex flex-col items-center justify-center gap-0.5 min-w-[54px] flex-1 active:opacity-75 ${isHome ? '-mt-5' : 'pb-1'}`}
+                aria-label={tab.label}
+              >
+                {isHome ? (
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 shrink-0"
+                    style={{
+                      backgroundColor: '#7C3AED',
+                      background: '#7C3AED',
+                      boxShadow: '0 6px 16px rgba(124, 58, 237, 0.45)',
+                    }}
+                  >
+                    <Home
+                      size={22}
+                      strokeWidth={2.2}
+                      style={{ color: '#FFFFFF', stroke: '#FFFFFF', fill: 'none' }}
+                    />
+                  </div>
+                ) : (
+                  <Icon size={22} style={{ color: iconColor, stroke: iconColor }} />
+                )}
+                <span
+                  className="font-extrabold"
+                  style={{
+                    fontSize: '10px',
+                    color: textColor,
+                    WebkitTextFillColor: textColor,
+                    marginTop: isHome ? '1px' : '0px',
+                  }}
+                >
+                  {tab.label}
+                </span>
               </Link>
             );
           })}
         </div>
-      </div>
+      </nav>
+
 
       {/* SIDEBAR DRAWER */}
       <AnimatePresence>

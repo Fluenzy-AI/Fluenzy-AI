@@ -422,7 +422,7 @@ export default function DesktopLiveRedHeartPage() {
         />
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-6 py-4">
 
         {/* ── Back navigation ── */}
         <motion.div initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} className="mb-6">
@@ -441,7 +441,7 @@ export default function DesktopLiveRedHeartPage() {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-10"
+          className="text-center mb-4"
         >
           <div className="flex justify-center mb-4">
             <PulsingHeart size={64} />

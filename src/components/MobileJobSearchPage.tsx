@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useTheme, themeConfig, ThemeName } from '@/contexts/ThemeContext';
+import NotificationBell from '@/components/NotificationBell';
 import { JobCard } from '@/components/jobs/JobCard';
 import { JobMatch, PLAN_LIMITS, UserPlan } from '@/types/jobs';
 import {
@@ -359,22 +360,7 @@ export default function MobileJobSearchPage({
           </div>
 
           {/* Notifications */}
-          <div className="relative">
-            <button
-              className="flex items-center justify-center w-9 h-9 rounded-xl active:opacity-70"
-              style={{
-                color: isLight ? '#0F172A' : '#F8FAFC',
-                background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
-                border: `1px solid ${borderHex}`,
-              }}
-              aria-label="Notifications"
-            >
-              <Bell size={18} style={{ color: isLight ? '#0F172A' : '#F8FAFC', stroke: isLight ? '#0F172A' : '#F8FAFC' }} />
-            </button>
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-purple-600 text-[9px] font-black text-white">
-              3
-            </span>
-          </div>
+          <NotificationBell isDark={!isLight} iconSize={18} />
 
           {/* Profile Avatar */}
           <button

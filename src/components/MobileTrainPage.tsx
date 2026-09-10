@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import NotificationBell from '@/components/NotificationBell';
 import {
   Menu, Bell, ChevronRight, Home, Link2, Heart,
   BarChart3, User, Target, Users, Code,
@@ -484,23 +485,7 @@ export default function MobileTrainPage() {
           </div>
 
           {/* Bell */}
-          <Link
-            href="/notifications"
-            className="relative p-2 rounded-xl active:opacity-60 flex items-center justify-center"
-            style={{
-              color: isLight ? '#0F172A' : '#F8FAFC',
-              background: isLight ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)',
-            }}
-            aria-label="Notifications"
-          >
-            <Bell size={20} style={{ color: isLight ? '#0F172A' : '#F8FAFC', stroke: isLight ? '#0F172A' : '#F8FAFC' }} />
-            <span
-              className="absolute -top-0.5 -right-0.5 w-5 h-5 text-white text-[9px] font-black rounded-full flex items-center justify-center"
-              style={{ background: '#7C3AED' }}
-            >
-              3
-            </span>
-          </Link>
+          <NotificationBell isDark={!isLight} iconSize={20} />
 
           {/* Avatar */}
           <button
