@@ -152,7 +152,7 @@ export interface ThemePalette {
 
 const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
   light: {
-    headerBg: 'rgba(255,255,255,0.92)',
+    headerBg: '#FFFFFF',
     headerText: '#1E293B',
     headerIcon: '#1E293B',
     headerBorder: 'rgba(0,0,0,0.08)',
@@ -188,7 +188,7 @@ const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
     pathShadow: '#FDE68A',
   },
   dark: {
-    headerBg: 'rgba(15,23,42,0.92)',
+    headerBg: '#0F172A',
     headerText: '#F8FAFC',
     headerIcon: '#F8FAFC',
     headerBorder: 'rgba(255,255,255,0.08)',
@@ -224,7 +224,7 @@ const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
     pathShadow: '#A5B4FC',
   },
   midnight: {
-    headerBg: 'rgba(10,25,41,0.92)',
+    headerBg: '#0A1929',
     headerText: '#F8FAFC',
     headerIcon: '#F8FAFC',
     headerBorder: 'rgba(255,255,255,0.08)',
@@ -260,7 +260,7 @@ const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
     pathShadow: '#BAE6FD',
   },
   forest: {
-    headerBg: 'rgba(11,20,14,0.92)',
+    headerBg: '#0B140E',
     headerText: '#E8E4D9',
     headerIcon: '#E8E4D9',
     headerBorder: 'rgba(217,119,6,0.2)',
@@ -296,7 +296,7 @@ const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
     pathShadow: '#FDE68A',
   },
   parchment: {
-    headerBg: 'rgba(244,241,234,0.94)',
+    headerBg: '#F4F1EA',
     headerText: '#1C1917',
     headerIcon: '#1C1917',
     headerBorder: '#E6E2D8',
@@ -332,7 +332,7 @@ const THEME_PALETTES: Record<ThemeName, ThemePalette> = {
     pathShadow: '#FEF3C7',
   },
   codeterm: {
-    headerBg: 'rgba(13,13,13,0.94)',
+    headerBg: '#0D0D0D',
     headerText: '#F0EDE8',
     headerIcon: '#F0EDE8',
     headerBorder: 'rgba(204,65,37,0.25)',

@@ -241,6 +241,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     isAuthPage ||
     (isLiveTrainingRoute && isMobileViewport !== false) ||
     (pathname.startsWith('/install') && isMobileViewport !== false);
+
+  const isMobilePageWithOwnHeader = !!isMobileViewport && [
+    '/train', '/analytics', '/profile', '/billing', '/ats', '/interview-guide', '/history'
+  ].some(path => pathname.startsWith(path));
+
   const isSuperAdminPage = pathname.startsWith('/superadmin');
   const isCollegePage = pathname.startsWith('/college');
   const isCompanyPortalLanding = pathname === '/company-portal';
@@ -695,303 +700,304 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         {/* Main Content */}
         <main className={`flex-1 min-w-0 overflow-x-hidden flex flex-col min-h-screen ${showSidebar ? 'lg:pl-0' : ''}`}>
           {/* Top Navbar */}
-          <header className={`h-16 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-4 sticky top-0 z-30`}>
-            {/* Left - Mobile Menu + Breadcrumb */}
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setMobileMenuOpen(true)}
-                className={`lg:hidden p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
-              >
-                <Menu size={20} />
-              </button>
-
-              {/* Breadcrumb */}
-              <div className="hidden sm:flex items-center gap-2 text-sm">
-                <Link href="/train" className={`${currentTheme.textMuted} hover:${currentTheme.text} transition-colors`}>
-                  Train
-                </Link>
-                {pathname !== '/train' && (
-                  <>
-                    <ChevronRight size={14} className={currentTheme.textMuted} />
-                    <span className={`${currentTheme.text} font-medium`}>
-                      {navItems.find(n => n.href === pathname)?.label || 'Page'}
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Right - Actions */}
-            <div className="flex items-center gap-2">
-              {/* Quick Links */}
-              <div className="hidden lg:flex items-center gap-1 mr-1">
-                {/* Live Link */}
-                <Link
-                  href="/train/live"
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith('/train/live')
-                      ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
-                      : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
-                    }`}
-                >
-                  <Radio size={14} />
-                  Live
-                </Link>
-
-                {topQuickLinks.map((item) => {
-                  const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
-                  return (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
-                          ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
-                          : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
-                        }`}
-                    >
-                      {item.label}
-                    </Link>
-                  );
-                })}
-              </div>
-
-              {/* Theme Toggle */}
-              <div className="relative">
+          {!isMobilePageWithOwnHeader && (
+            <header className={`h-16 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-4 sticky top-0 z-30`}>
+              {/* Left - Mobile Menu + Breadcrumb */}
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setShowThemeMenu(!showThemeMenu)}
-                  style={{
-                    color: isLight ? '#5B21E6' : '#f8fafc',
-                  }}
-                  className={`theme-toggle-trigger p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-[#5B21E6]/10' : 'hover:bg-white/5'} transition-colors`}
-                  title="Change theme"
+                  onClick={() => setMobileMenuOpen(true)}
+                  className={`lg:hidden p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
                 >
-                  {theme === 'dark' && <Moon size={20} />}
-                  {theme === 'midnight' && <Sparkles size={20} />}
-                  {theme === 'forest' && <Leaf size={20} />}
-                  {theme === 'parchment' && <Coffee size={20} style={{ color: '#ef4444', stroke: '#ef4444' }} />}
-                  {theme === 'codeterm' && <Terminal size={20} />}
-                  {theme === 'light' && <Sun size={20} style={{ color: '#5B21E6', stroke: '#5B21E6' }} />}
+                  <Menu size={20} />
                 </button>
 
-                <AnimatePresence>
-                  {showThemeMenu && (
+                {/* Breadcrumb */}
+                <div className="hidden sm:flex items-center gap-2 text-sm">
+                  <Link href="/train" className={`${currentTheme.textMuted} hover:${currentTheme.text} transition-colors`}>
+                    Train
+                  </Link>
+                  {pathname !== '/train' && (
                     <>
-                      <div
-                        className="fixed inset-0 z-40"
-                        onClick={() => setShowThemeMenu(false)}
-                      />
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className={`theme-toggle-dropdown absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden shadow-2xl z-50 border ${isLight
-                            ? 'bg-white border-[#E5E0FF]'
-                            : 'bg-slate-900 border-slate-700'
-                          }`}
-                      >
-                        {themeOptions.map((option) => {
-                          const isSelected = theme === option.value;
-                          const colorStyle = isLight
-                            ? { color: isSelected ? '#5B21E6' : '#374151' }
-                            : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
-
-                          return (
-                            <button
-                              key={option.value}
-                              data-theme-option="true"
-                              onClick={() => {
-                                setTheme(option.value);
-                                setShowThemeMenu(false);
-                              }}
-                              style={colorStyle}
-                              className={`theme-toggle-item w-full flex items-center gap-3 px-4 py-3 text-sm font-bold transition-all cursor-pointer ${isSelected ? 'theme-toggle-item-selected' : ''
-                                } ${isLight
-                                  ? isSelected ? 'bg-[#5B21E6]/10 text-[#5B21E6]' : 'text-slate-700 hover:bg-slate-100'
-                                  : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
-                                }`}
-                            >
-                              <option.icon size={18} style={colorStyle} />
-                              <span style={{ ...colorStyle, WebkitTextFillColor: colorStyle.color }}>{option.label}</span>
-                            </button>
-                          );
-                        })}
-                      </motion.div>
+                      <ChevronRight size={14} className={currentTheme.textMuted} />
+                      <span className={`${currentTheme.text} font-medium`}>
+                        {navItems.find(n => n.href === pathname)?.label || 'Page'}
+                      </span>
                     </>
                   )}
-                </AnimatePresence>
+                </div>
               </div>
 
-              {/* Messages */}
-              <Link
-                href="/train/chat"
-                className={`p-2 rounded-lg transition-colors relative ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
-                aria-label={unreadMessages > 0 ? `Messages, ${unreadMessages} unread` : 'Messages'}
-              >
-                <MessageSquare size={20} />
-                <NotificationBadge count={unreadMessages} />
-              </Link>
+              {/* Right - Actions */}
+              <div className="flex items-center gap-2">
+                {/* Quick Links */}
+                <div className="hidden lg:flex items-center gap-1 mr-1">
+                  {/* Live Link */}
+                  <Link
+                    href="/train/live"
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith('/train/live')
+                        ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
+                        : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                      }`}
+                  >
+                    <Radio size={14} />
+                    Live
+                  </Link>
 
-              {/* Friends */}
-              <Link
-                href="/train/friends"
-                className={`p-2 rounded-lg transition-colors relative ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
-                aria-label={pendingFriends > 0 ? `Friends, ${pendingFriends} pending` : 'Friends'}
-              >
-                <Users size={20} />
-                <NotificationBadge count={pendingFriends} />
-              </Link>
+                  {topQuickLinks.map((item) => {
+                    const isActive = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
+                            ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
+                            : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                          }`}
+                      >
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                </div>
 
-              {/* Notifications */}
-              <NotificationBell isDark={!isLight} />
-
-              {/* Profile Menu - Advanced SaaS Panel */}
-              {session?.user && (
+                {/* Theme Toggle */}
                 <div className="relative">
                   <button
-                    onClick={() => setShowProfileMenu(!showProfileMenu)}
-                    className={`flex items-center gap-2 p-1.5 rounded-xl ${currentTheme.cardBg} border ${currentTheme.cardBorder} ${isLight ? 'hover:border-indigo-300 hover:shadow-md' : 'hover:border-[#5B6CFF]/30'} transition-all duration-200`}
+                    onClick={() => setShowThemeMenu(!showThemeMenu)}
+                    style={{
+                      color: isLight ? '#5B21E6' : '#f8fafc',
+                    }}
+                    className={`theme-toggle-trigger p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-[#5B21E6]/10' : 'hover:bg-white/5'} transition-colors`}
+                    title="Change theme"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
-                      {showAvatarImage ? (
-                        <img
-                          src={avatarUrl!}
-                          alt={displayName}
-                          className="w-full h-full object-cover"
-                          referrerPolicy="no-referrer"
-                          onError={() => setImageError(true)}
-                        />
-                      ) : (
-                        userInitial
-                      )}
-                    </div>
-                    <ChevronDown size={14} className={`hidden sm:block ${currentTheme.textMuted}`} />
+                    {theme === 'dark' && <Moon size={20} />}
+                    {theme === 'midnight' && <Sparkles size={20} />}
+                    {theme === 'forest' && <Leaf size={20} />}
+                    {theme === 'parchment' && <Coffee size={20} style={{ color: '#ef4444', stroke: '#ef4444' }} />}
+                    {theme === 'codeterm' && <Terminal size={20} />}
+                    {theme === 'light' && <Sun size={20} style={{ color: '#5B21E6', stroke: '#5B21E6' }} />}
                   </button>
 
                   <AnimatePresence>
-                    {showProfileMenu && (
+                    {showThemeMenu && (
                       <>
-                        {/* Backdrop */}
                         <div
                           className="fixed inset-0 z-40"
-                          onClick={() => setShowProfileMenu(false)}
+                          onClick={() => setShowThemeMenu(false)}
                         />
                         <motion.div
                           initial={{ opacity: 0, y: 10, scale: 0.95 }}
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                          className={`absolute right-0 top-full mt-3 w-80 lg:w-96 ${currentTheme.cardBg} border ${currentTheme.cardBorder} rounded-2xl overflow-hidden shadow-2xl z-50`}
+                          className={`theme-toggle-dropdown absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden shadow-2xl z-50 border ${isLight
+                              ? 'bg-white border-[#E5E0FF]'
+                              : 'bg-slate-900 border-slate-700'
+                            }`}
                         >
-                          {/* User Info Section */}
-                          <div className={`p-5 border-b ${currentTheme.cardBorder} bg-gradient-to-r from-[#5B6CFF]/10 to-[#8B5CF6]/10`}>
-                            <div className="flex items-start gap-4">
-                              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden">
-                                {showAvatarImage ? (
-                                  <img
-                                    src={avatarUrl!}
-                                    alt={displayName}
-                                    className="w-full h-full object-cover"
-                                    referrerPolicy="no-referrer"
-                                    onError={() => setImageError(true)}
-                                  />
-                                ) : (
-                                  userInitial
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <p className={`font-bold ${currentTheme.text} text-lg truncate`}>{displayName}</p>
-                                  {planInfo?.isUnlimited && (
-                                    <Crown size={18} className="text-amber-400 flex-shrink-0" />
-                                  )}
-                                </div>
-                                <p className={`text-sm ${currentTheme.textMuted} truncate`}>{userData?.email || session?.user?.email}</p>
-                                <div className="flex items-center gap-2 mt-2">
-                                  <span className={`px-3 py-1 rounded-full text-xs font-semibold ${planInfo?.plan === 'Pro' ? 'bg-[#5B6CFF]/20 text-[#5B6CFF] border border-[#5B6CFF]/30' :
-                                      planInfo?.plan === 'Standard' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                                        'bg-slate-500/20 text-slate-400 border border-slate-500/30'
-                                    }`}>
-                                    {planInfo?.plan || 'Free'} Plan
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          {themeOptions.map((option) => {
+                            const isSelected = theme === option.value;
+                            const colorStyle = isLight
+                              ? { color: isSelected ? '#5B21E6' : '#374151' }
+                              : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
 
-                          {/* Quick Actions */}
-                          {planInfo?.plan !== 'Free' && (
-                            <div className={`p-5 border-b ${isLight ? 'border-slate-200 border-dashed' : 'border-dashed border-white/10'}`}>
-                              <h4 className={`text-xs font-semibold uppercase tracking-wider ${currentTheme.textMuted} mb-3`}>
-                                Subscription
-                              </h4>
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className={`font-semibold ${currentTheme.text}`}>
-                                    {planInfo?.planName || 'Pro Plan'}
-                                  </p>
-                                  <p className={`text-xs ${currentTheme.textMuted}`}>
-                                    {planInfo?.isUnlimited ? 'Unlimited sessions' : `₹${planInfo?.price}/month`}
-                                  </p>
-                                </div>
-                                <button
-                                  onClick={() => {
-                                    setShowProfileMenu(false);
-                                    window.location.href = '/billing';
-                                  }}
-                                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-sm font-semibold hover:from-cyan-600 hover:to-purple-600 transition-all"
-                                >
-                                  Manage
-                                </button>
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Action Buttons */}
-                          <div className={`p-3 ${isLight ? 'bg-slate-50 border-t border-slate-100' : 'bg-black/20'}`}>
-                            <div className="grid grid-cols-2 gap-2">
-                              <Link
-                                href="/profile"
-                                onClick={() => setShowProfileMenu(false)}
-                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
-                              >
-                                <User size={16} />
-                                Profile
-                              </Link>
-                              <Link
-                                href="/billing"
-                                onClick={() => setShowProfileMenu(false)}
-                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
-                              >
-                                <CreditCard size={16} />
-                                Billing
-                              </Link>
-                              <Link
-                                href="/history"
-                                onClick={() => setShowProfileMenu(false)}
-                                className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
-                              >
-                                <History size={16} />
-                                History
-                              </Link>
+                            return (
                               <button
+                                key={option.value}
+                                data-theme-option="true"
                                 onClick={() => {
-                                  setShowProfileMenu(false);
-                                  signOut();
+                                  setTheme(option.value);
+                                  setShowThemeMenu(false);
                                 }}
-                                className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+                                style={colorStyle}
+                                className={`theme-toggle-item w-full flex items-center gap-3 px-4 py-3 text-sm font-bold transition-all cursor-pointer ${isSelected ? 'theme-toggle-item-selected' : ''
+                                  } ${isLight
+                                    ? isSelected ? 'bg-[#5B21E6]/10 text-[#5B21E6]' : 'text-slate-700 hover:bg-slate-100'
+                                    : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
+                                  }`}
                               >
-                                <LogOut size={16} />
-                                Logout
+                                <option.icon size={18} style={colorStyle} />
+                                <span style={{ ...colorStyle, WebkitTextFillColor: colorStyle.color }}>{option.label}</span>
                               </button>
-                            </div>
-                          </div>
+                            );
+                          })}
                         </motion.div>
                       </>
                     )}
                   </AnimatePresence>
                 </div>
-              )}
-            </div>
-          </header>
 
+                {/* Messages */}
+                <Link
+                  href="/train/chat"
+                  className={`p-2 rounded-lg transition-colors relative ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
+                  aria-label={unreadMessages > 0 ? `Messages, ${unreadMessages} unread` : 'Messages'}
+                >
+                  <MessageSquare size={20} />
+                  <NotificationBadge count={unreadMessages} />
+                </Link>
+
+                {/* Friends */}
+                <Link
+                  href="/train/friends"
+                  className={`p-2 rounded-lg transition-colors relative ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
+                  aria-label={pendingFriends > 0 ? `Friends, ${pendingFriends} pending` : 'Friends'}
+                >
+                  <Users size={20} />
+                  <NotificationBadge count={pendingFriends} />
+                </Link>
+
+                {/* Notifications */}
+                <NotificationBell isDark={!isLight} />
+
+                {/* Profile Menu - Advanced SaaS Panel */}
+                {session?.user && (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowProfileMenu(!showProfileMenu)}
+                      className={`flex items-center gap-2 p-1.5 rounded-xl ${currentTheme.cardBg} border ${currentTheme.cardBorder} ${isLight ? 'hover:border-indigo-300 hover:shadow-md' : 'hover:border-[#5B6CFF]/30'} transition-all duration-200`}
+                    >
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-sm overflow-hidden">
+                        {showAvatarImage ? (
+                          <img
+                            src={avatarUrl!}
+                            alt={displayName}
+                            className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
+                            onError={() => setImageError(true)}
+                          />
+                        ) : (
+                          userInitial
+                        )}
+                      </div>
+                      <ChevronDown size={14} className={`hidden sm:block ${currentTheme.textMuted}`} />
+                    </button>
+
+                    <AnimatePresence>
+                      {showProfileMenu && (
+                        <>
+                          {/* Backdrop */}
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setShowProfileMenu(false)}
+                          />
+                          <motion.div
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                            className={`absolute right-0 top-full mt-3 w-80 lg:w-96 ${currentTheme.cardBg} border ${currentTheme.cardBorder} rounded-2xl overflow-hidden shadow-2xl z-50`}
+                          >
+                            {/* User Info Section */}
+                            <div className={`p-5 border-b ${currentTheme.cardBorder} bg-gradient-to-r from-[#5B6CFF]/10 to-[#8B5CF6]/10`}>
+                              <div className="flex items-start gap-4">
+                                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center text-white font-bold text-2xl shadow-lg overflow-hidden">
+                                  {showAvatarImage ? (
+                                    <img
+                                      src={avatarUrl!}
+                                      alt={displayName}
+                                      className="w-full h-full object-cover"
+                                      referrerPolicy="no-referrer"
+                                      onError={() => setImageError(true)}
+                                    />
+                                  ) : (
+                                    userInitial
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <p className={`font-bold ${currentTheme.text} text-lg truncate`}>{displayName}</p>
+                                    {planInfo?.isUnlimited && (
+                                      <Crown size={18} className="text-amber-400 flex-shrink-0" />
+                                    )}
+                                  </div>
+                                  <p className={`text-sm ${currentTheme.textMuted} truncate`}>{userData?.email || session?.user?.email}</p>
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${planInfo?.plan === 'Pro' ? 'bg-[#5B6CFF]/20 text-[#5B6CFF] border border-[#5B6CFF]/30' :
+                                        planInfo?.plan === 'Standard' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                          'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+                                      }`}>
+                                      {planInfo?.plan || 'Free'} Plan
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Quick Actions */}
+                            {planInfo?.plan !== 'Free' && (
+                              <div className={`p-5 border-b ${isLight ? 'border-slate-200 border-dashed' : 'border-dashed border-white/10'}`}>
+                                <h4 className={`text-xs font-semibold uppercase tracking-wider ${currentTheme.textMuted} mb-3`}>
+                                  Subscription
+                                </h4>
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className={`font-semibold ${currentTheme.text}`}>
+                                      {planInfo?.planName || 'Pro Plan'}
+                                    </p>
+                                    <p className={`text-xs ${currentTheme.textMuted}`}>
+                                      {planInfo?.isUnlimited ? 'Unlimited sessions' : `₹${planInfo?.price}/month`}
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() => {
+                                      setShowProfileMenu(false);
+                                      window.location.href = '/billing';
+                                    }}
+                                    className="px-4 py-2 rounded-lg bg-gradient-to-r from-cyan-500 to-purple-500 text-white text-sm font-semibold hover:from-cyan-600 hover:to-purple-600 transition-all"
+                                  >
+                                    Manage
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className={`p-3 ${isLight ? 'bg-slate-50 border-t border-slate-100' : 'bg-black/20'}`}>
+                              <div className="grid grid-cols-2 gap-2">
+                                <Link
+                                  href="/profile"
+                                  onClick={() => setShowProfileMenu(false)}
+                                  className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
+                                >
+                                  <User size={16} />
+                                  Profile
+                                </Link>
+                                <Link
+                                  href="/billing"
+                                  onClick={() => setShowProfileMenu(false)}
+                                  className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
+                                >
+                                  <CreditCard size={16} />
+                                  Billing
+                                </Link>
+                                <Link
+                                  href="/history"
+                                  onClick={() => setShowProfileMenu(false)}
+                                  className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${isLight ? 'text-slate-600 hover:text-indigo-600 hover:bg-indigo-50' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`}`}
+                                >
+                                  <History size={16} />
+                                  History
+                                </Link>
+                                <button
+                                  onClick={() => {
+                                    setShowProfileMenu(false);
+                                    signOut();
+                                  }}
+                                  className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors"
+                                >
+                                  <LogOut size={16} />
+                                  Logout
+                                </button>
+                              </div>
+                            </div>
+                          </motion.div>
+                        </>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            </header>
+          )}
           {/* Page Content */}
           <div className="flex-1 overflow-y-auto">
             {children}
