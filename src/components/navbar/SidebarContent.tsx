@@ -41,47 +41,47 @@ const SidebarContent: React.FC<SidebarContentProps> = ({ session, pathname }) =>
           {session?.user ? (
             <>
               <div className="space-y-1 mb-2">
-                <Link 
-                  href="/train" 
+                <Link
+                  href="/train"
                   className={`flex items-center px-4 py-3 text-sm font-bold rounded-xl transition-all ${pathname.startsWith('/train') ? 'bg-purple-500/10 text-white' : 'text-slate-300 hover:text-white hover:bg-white/5'}`}
                 >
                   <Target className={`mr-3 h-4 w-4 ${pathname.startsWith('/train') ? 'text-purple-400' : 'text-slate-500'}`} />
                   Train Now
                 </Link>
                 <div className="ml-6 space-y-1 border-l border-white/5 pl-4 pb-2">
-                   <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-2 mt-2">Practice</h3>
-                   <Link href="/train/hr" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/hr' ? 'text-purple-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> HR Interview Coach
-                   </Link>
-                   <Link href="/train/gd-coach" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/gd-coach' ? 'text-teal-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> GD Coach
-                   </Link>
-                   <Link href="/train/gd" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/gd' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> GD Agent
-                   </Link>
-                   <Link href="/train/technical" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/technical' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Technical Mastery
-                   </Link>
-                   <Link href="/train/company" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/company' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Company Track
-                   </Link>
-                   <Link href="/train/daily" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/daily' ? 'text-sky-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Daily Conversation
-                   </Link>
-                   <Link href="/train/latest-topics" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/latest-topics' ? 'text-lime-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Latest Company Topics
-                   </Link>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-2 mt-2">Practice</h3>
+                  <Link href="/train/hr" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/hr' ? 'text-purple-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> HR Interview Coach
+                  </Link>
+                  <Link href="/train/gd-coach" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/gd-coach' ? 'text-teal-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> GD Coach
+                  </Link>
+                  <Link href="/train/gd" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/gd' ? 'text-indigo-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> GD Agent
+                  </Link>
+                  <Link href="/train/technical" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/technical' ? 'text-emerald-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Technical Mastery
+                  </Link>
+                  <Link href="/train/company" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/company' ? 'text-amber-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Company Track
+                  </Link>
+                  <Link href="/train/daily" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/daily' ? 'text-sky-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Daily Conversation
+                  </Link>
+                  <Link href="/train/latest-topics" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/latest-topics' ? 'text-lime-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Latest Company Topics
+                  </Link>
 
-                   <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-2 mt-4">Learning</h3>
-                   <Link href="/train/english" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/english' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Essential Modules
-                   </Link>
-                   <Link href="/train/vocabulary" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/vocabulary' ? 'text-orange-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Vocabulary Booster
-                   </Link>
-                   <Link href="/train/corporate-voice" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/corporate-voice' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
-                     <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Voice Practice
-                   </Link>
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-600 mb-2 mt-4">Learning</h3>
+                  <Link href="/train/english" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/english' ? 'text-blue-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Essential Modules
+                  </Link>
+                  <Link href="/train/vocabulary" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/vocabulary' ? 'text-orange-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Vocabulary Booster
+                  </Link>
+                  <Link href="/train/corporate-voice" className={`flex items-center text-xs py-1 transition-colors ${pathname === '/train/corporate-voice' ? 'text-cyan-400 font-bold' : 'text-slate-400 hover:text-white'}`}>
+                    <ChevronRight className="h-3 w-3 mr-2 opacity-50" /> Voice Practice
+                  </Link>
                 </div>
               </div>
 

@@ -157,12 +157,12 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       className={`fixed top-0 right-0 z-40 transition-all duration-300 ${showSidebar ? 'md:left-[280px] left-0' : 'left-0'} ${isScrolled
-          ? 'bg-slate-900/85 backdrop-blur-2xl backdrop-saturate-150 border-b border-white/10 shadow-lg shadow-black/30'
-          : 'bg-slate-900/65 backdrop-blur-xl border-b border-white/5'
+        ? 'bg-slate-900/85 backdrop-blur-2xl backdrop-saturate-150 border-b border-white/10 shadow-lg shadow-black/30'
+        : 'bg-slate-900/65 backdrop-blur-xl border-b border-white/5'
         }`}
     >
-      <div className="container mx-auto px-3 sm:px-4 md:px-8 xl:px-16 py-2">
-        <div className="flex items-center justify-between h-12">
+      <div className="container mx-auto px-3 sm:px-4 md:px-8 xl:px-16 py-1.5">
+        <div className="flex items-center justify-between h-11">
           {/* Left section */}
           <div className="flex min-w-0 items-center space-x-2 sm:space-x-4">
             {/* Mobile Sidebar Trigger */}
@@ -332,36 +332,36 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                 )
               ) : (
                 // Default: Landing page & public pages - show For Companies, For Colleges & Sign In button
-                <div className="flex items-center gap-1.5 sm:gap-2.5">
+                <div className="flex items-center gap-1.5 sm:gap-2">
                   <Link
                     href="/company-portal"
-                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
                   >
-                    <Building2 className="w-3.5 h-3.5 text-red-500" />
+                    <Building2 className="w-3.5 h-3.5 text-cyan-400" />
                     <span>For Companies</span>
                   </Link>
                   <Link
                     href="/college-portal"
-                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
                   >
-                    <GraduationCap className="w-3.5 h-3.5 text-red-500" />
+                    <GraduationCap className="w-3.5 h-3.5 text-cyan-400" />
                     <span>For Colleges</span>
                   </Link>
                   <Link
                     href="/pricing"
-                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
                   >
                     <span>Pricing</span>
                   </Link>
                   <Link
                     href="/hirelens"
-                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
                   >
                     <span>HireLens</span>
                   </Link>
                   <Link
                     href="/blog"
-                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-slate-300 hover:text-white border border-white/10 hover:border-red-500/40 hover:bg-red-500/10 transition-all"
+                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
                   >
                     <span>Blog</span>
                   </Link>

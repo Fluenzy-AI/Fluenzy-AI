@@ -6,9 +6,9 @@ import { Play, Sparkles, ArrowRight, ShieldCheck, Cpu, Zap } from "lucide-react"
 import Link from "next/link";
 import Card3D from "@/components/ui/Card3D";
 import PWAInstallButton from "@/components/PWAInstallButton";
-import TechParticleMesh from "@/components/ui/TechParticleMesh";
+import GlobeNetworkBackground from "@/components/ui/GlobeNetworkBackground";
 
-const headlineWords = ["Train", "Smarter.", "Crack", "FAANG", "Interviews", "with", "AI."];
+const headlineWords = ["Train", "Smarter.", "Crack", "MAANG", "Interviews", "with", "AI."];
 
 const Hero = () => {
   const [ripple, setRipple] = useState<{ x: number; y: number; key: number } | null>(null);
@@ -32,15 +32,15 @@ const Hero = () => {
   return (
     <section
       id="hero"
-      className="hero-gradient-animate relative overflow-x-hidden bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950 pt-20 pb-12 sm:pt-24 sm:pb-16 md:pt-28 md:pb-20"
+      className="hero-gradient-animate relative overflow-x-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 pt-12 pb-10 sm:pt-14 sm:pb-12 md:pt-16 md:pb-16"
     >
-      {/* 3D Ambient Particle Mesh Background */}
-      <TechParticleMesh />
+      {/* 3D Globe Network Background (Three.js r128) */}
+      <GlobeNetworkBackground />
 
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-purple-950/60 to-slate-950/80 pointer-events-none" />
-      <div className="animate-float absolute left-2 top-20 h-40 w-40 rounded-full bg-purple-500/20 blur-3xl sm:left-10 sm:h-64 sm:w-64" />
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/50 via-slate-900/40 to-slate-950/60 pointer-events-none" />
+      <div className="animate-float absolute left-2 top-10 h-40 w-40 rounded-full bg-cyan-600/10 blur-3xl sm:left-10 sm:h-64 sm:w-64" />
       <div
-        className="animate-float absolute bottom-20 right-2 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl sm:right-10 sm:h-96 sm:w-96"
+        className="animate-float absolute bottom-20 right-2 h-48 w-48 rounded-full bg-blue-600/10 blur-3xl sm:right-10 sm:h-96 sm:w-96"
         style={{ animationDelay: "-1s" }}
       />
       <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/10 blur-3xl animate-pulse sm:h-96 sm:w-96" />
@@ -62,17 +62,7 @@ const Hero = () => {
 
       <div className="container relative z-10 mx-auto grid grid-cols-1 items-start gap-8 px-4 sm:px-6 md:px-8 xl:grid-cols-2 xl:items-center xl:gap-14 xl:px-16">
         <div className="text-center xl:text-left">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5 }}
-            className="mb-5 inline-flex max-w-full items-center space-x-2 rounded-full border border-purple-500/40 bg-gradient-to-r from-purple-900/60 to-blue-900/60 px-4 py-2 text-left backdrop-blur-md shadow-lg shadow-purple-500/10 sm:mb-6 sm:px-6 sm:py-3"
-          >
-            <Sparkles className="h-4 w-4 shrink-0 text-purple-400 sm:h-5 sm:w-5 animate-pulse" />
-            <span className="break-words text-xs font-semibold uppercase tracking-wider text-purple-200 sm:text-sm">
-              AI-Powered Interview Training
-            </span>
-          </motion.div>
+
 
           <motion.div
             initial="hidden"
@@ -97,7 +87,7 @@ const Hero = () => {
                   }}
                   transition={{ duration: 0.55, ease: "easeInOut" }}
                   className={`mr-3 inline-block ${i >= 2 && i <= 4
-                      ? "bg-gradient-to-r from-purple-400 via-blue-400 to-cyan-400 !bg-clip-text text-transparent"
+                      ? "bg-gradient-to-r from-cyan-400 via-blue-400 to-teal-300 !bg-clip-text text-transparent"
                       : "text-white"
                     }`}
                 >
@@ -126,14 +116,14 @@ const Hero = () => {
               <Button
                 size="lg"
                 asChild
-                className="touch-target glow-effect relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-purple-600 to-blue-600 px-8 py-4 font-semibold text-white shadow-2xl transition-all duration-300 hover:from-purple-700 hover:to-blue-700 hover:shadow-purple-500/50 sm:w-auto"
+                className="touch-target relative w-full overflow-hidden rounded-xl bg-cyan-400 px-8 py-4 font-bold text-slate-950 shadow-lg shadow-cyan-500/25 transition-all duration-300 hover:bg-cyan-300 sm:w-auto"
               >
                 <Link href="/login" onMouseDown={triggerRipple}>
                   {ripple && (
                     <span key={ripple.key} className="button-ripple" style={{ left: ripple.x, top: ripple.y }} />
                   )}
-                  <Play className="mr-2 h-4 w-4 fill-white" />
-                  Train Now
+                  <Play className="mr-2 h-4 w-4 fill-slate-950" />
+                  Train Now →
                 </Link>
               </Button>
             </motion.div>
@@ -143,14 +133,13 @@ const Hero = () => {
                 variant="outline"
                 size="lg"
                 onClick={() => scrollToSection("features")}
-                className="touch-target w-full rounded-xl border-purple-500/40 px-8 py-4 text-purple-200 backdrop-blur-md transition-all duration-300 hover:border-purple-400 hover:bg-purple-500/10 sm:w-auto"
+                className="touch-target w-full rounded-xl border-slate-700/60 bg-slate-900/60 px-8 py-4 text-slate-200 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/40 hover:bg-cyan-500/10 sm:w-auto"
               >
-                Explore Features
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Explore Features ↓
               </Button>
             </motion.div>
 
-            <PWAInstallButton className="touch-target inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-purple-400/40 bg-white/5 px-6 py-4 font-semibold text-purple-100 backdrop-blur-md transition hover:border-purple-300 hover:bg-purple-500/10 sm:w-auto" />
+            <PWAInstallButton className="touch-target inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-700/60 bg-slate-900/60 px-6 py-4 font-semibold text-slate-200 backdrop-blur-md transition hover:border-cyan-400/40 hover:bg-cyan-500/10 sm:w-auto" />
           </motion.div>
 
           <motion.div
@@ -160,8 +149,8 @@ const Hero = () => {
             className="mt-8 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-400 sm:mt-10 sm:gap-8 sm:text-sm xl:justify-start"
           >
             <div className="group flex cursor-default items-center space-x-3">
-              <div className="h-2.5 w-2.5 rounded-full bg-purple-400 shadow-[0_0_10px_rgba(168,85,247,0.5)] animate-pulse" />
-              <span className="transition-colors group-hover:text-purple-300">AI Interviewer & GD Agent</span>
+              <div className="h-2.5 w-2.5 rounded-full bg-cyan-400 shadow-[0_0_10px_rgba(6,182,212,0.5)] animate-pulse" />
+              <span className="transition-colors group-hover:text-cyan-300">AI Interviewer & GD Agent</span>
             </div>
             <div className="group flex cursor-default items-center space-x-3">
               <div className="h-2.5 w-2.5 rounded-full bg-blue-400 shadow-[0_0_10px_rgba(59,130,246,0.5)] animate-pulse" />
@@ -190,15 +179,15 @@ const Hero = () => {
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -bottom-6 -right-4 z-30 hidden sm:flex items-center gap-2 rounded-xl border border-purple-500/30 bg-slate-900/90 px-3.5 py-2 text-xs font-medium text-purple-300 backdrop-blur-xl shadow-2xl"
+            className="absolute -bottom-6 -right-4 z-30 hidden sm:flex items-center gap-2 rounded-xl border border-blue-500/30 bg-slate-900/90 px-3.5 py-2 text-xs font-medium text-blue-300 backdrop-blur-xl shadow-2xl"
           >
-            <Zap className="h-4 w-4 text-purple-400" />
+            <Zap className="h-4 w-4 text-blue-400" />
             <span>Real-Time Latency &lt; 200ms</span>
           </motion.div>
 
           {/* 3D Tilt Card Frame */}
-          <Card3D depth={50} glowColor="rgba(59, 130, 246, 0.5)" className="max-w-xl w-full">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-purple-500/30 bg-slate-900/60 p-2.5 backdrop-blur-xl">
+          <Card3D depth={50} glowColor="rgba(6, 182, 212, 0.4)" className="max-w-xl w-full">
+            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-cyan-500/30 bg-slate-900/60 p-2.5 backdrop-blur-xl">
               <img
                 src="/image/landingimg2.png"
                 alt="Fluenzy AI Interview Platform"

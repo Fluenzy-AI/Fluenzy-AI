@@ -52,10 +52,10 @@ function FloatingInput({
     <div className="space-y-1">
       <div
         className={`relative rounded-xl border transition-all duration-200 ${error
-            ? "border-red-500/60 bg-red-500/5"
-            : focused
-              ? "border-violet-500/70 bg-slate-800/80 shadow-[0_0_0_3px_rgba(124,58,237,0.12)]"
-              : "border-white/10 bg-slate-800/60 hover:border-white/20"
+          ? "border-red-500/60 bg-red-500/5"
+          : focused
+            ? "border-violet-500/70 bg-slate-800/80 shadow-[0_0_0_3px_rgba(124,58,237,0.12)]"
+            : "border-white/10 bg-slate-800/60 hover:border-white/20"
           }`}
       >
         {Icon && (
