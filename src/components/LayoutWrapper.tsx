@@ -242,7 +242,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     (isLiveTrainingRoute && isMobileViewport !== false) ||
     (pathname.startsWith('/install') && isMobileViewport !== false);
 
-  const isMobilePageWithOwnHeader = !!isMobileViewport && [
+  const isMobilePageWithOwnHeader = isMobileViewport !== false && [
     '/train', '/analytics', '/profile', '/billing', '/ats', '/interview-guide', '/history'
   ].some(path => pathname.startsWith(path));
 
