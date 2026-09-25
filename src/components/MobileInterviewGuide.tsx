@@ -412,10 +412,10 @@ export default function MobileInterviewGuide({
   };
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#090e1a] text-slate-200 flex flex-col">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-transparent text-slate-200 flex flex-col">
 
       {/* ── STICKY TOP BAR ────────────────────────────── */}
-      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#090e1a]/90 backdrop-blur-xl px-4 py-3 w-full overflow-x-hidden">
+      <div className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl px-4 py-3 w-full overflow-x-hidden">
         <div className="flex items-center gap-3">
           <button onClick={onNewRoadmap}
             className="w-9 h-9 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center text-slate-400 hover:text-white active:scale-95 transition-all flex-shrink-0">

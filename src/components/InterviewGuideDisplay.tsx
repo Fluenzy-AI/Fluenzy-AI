@@ -120,10 +120,10 @@ export default function InterviewGuideDisplay({
   const listDot = "flex gap-2.5 items-start text-sm text-slate-300 leading-relaxed";
 
   return (
-    <div className="min-h-screen bg-[#090e1a] text-slate-200">
+    <div className="min-h-screen bg-transparent text-slate-200">
 
       {/* ── TOP HEADER ─────────────────────────────────────── */}
-      <div className="sticky top-0 z-30 border-b border-white/10 bg-[#090e1a]/90 backdrop-blur-xl px-4 py-3 md:px-6">
+      <div className="sticky top-0 z-30 border-b border-white/10 bg-slate-950/80 backdrop-blur-xl px-4 py-3 md:px-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center flex-shrink-0">

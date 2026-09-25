@@ -49,9 +49,24 @@ import {
   Circle,
 } from "lucide-react";
 import Link from "next/link";
-import { useTheme } from "@/contexts/ThemeContext";
+import HeaderOffset from "@/components/HeaderOffset";
+import MobileNavShell from "@/components/MobileNavShell";
+import { useTheme, themeConfig } from "@/contexts/ThemeContext";
 import InterviewGuideDisplay from "@/components/InterviewGuideDisplay";
 import MobileInterviewGuide from "@/components/MobileInterviewGuide";
+
+/* ── Mobile breakpoint detection (≤ 640 px) ── */
+function useMobileBreakpoint() {
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return isMobile;
+}
 
 interface GuideSection {
   title: string;
@@ -342,57 +357,97 @@ const InterviewGuidePageContent = () => {
     communicationLevel: string;
     createdAt: string;
   }>>([]);
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useMobileBreakpoint();
+  const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 641);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  const igThemeVars =
-    resolvedTheme === "parchment"
-      ? ({
-          "--ig-bg": "#f3f5f8",
+  const igThemeVars = useMemo(() => {
+    switch (resolvedTheme) {
+      case "light":
+        return {
+          "--ig-bg": "#f8f7ff",
           "--ig-surface": "#ffffff",
-          "--ig-surface-soft": "#f8fafc",
-          "--ig-surface-alt": "#f1f5f9",
-          "--ig-border": "#dbe3ee",
-          "--ig-heading": "#0f172a",
-          "--ig-text": "#1e293b",
-          "--ig-muted": "#64748b",
-          "--ig-accent": "#2563eb",
-          "--ig-accent-soft": "#dbeafe",
-          "--ig-accent-hover": "#1d4ed8",
-        } as React.CSSProperties)
-      : resolvedTheme === "midnight"
-        ? ({
-            "--ig-bg": "#121826",
-            "--ig-surface": "#1a2233",
-            "--ig-surface-soft": "#1f2937",
-            "--ig-surface-alt": "#273244",
-            "--ig-border": "#334155",
-            "--ig-heading": "#e5e7eb",
-            "--ig-text": "#cbd5e1",
-            "--ig-muted": "#94a3b8",
-            "--ig-accent": "#4f46e5",
-            "--ig-accent-soft": "#312e81",
-            "--ig-accent-hover": "#6366f1",
-          } as React.CSSProperties)
-        : ({
-            "--ig-bg": "#111827",
-            "--ig-surface": "#1f2937",
-            "--ig-surface-soft": "#253346",
-            "--ig-surface-alt": "#2a3b52",
-            "--ig-border": "#334155",
-            "--ig-heading": "#e2e8f0",
-            "--ig-text": "#cbd5e1",
-            "--ig-muted": "#94a3b8",
-            "--ig-accent": "#3b82f6",
-            "--ig-accent-soft": "#1e3a8a",
-            "--ig-accent-hover": "#60a5fa",
-          } as React.CSSProperties);
+          "--ig-surface-soft": "#f1f0fb",
+          "--ig-surface-alt": "#e5e0ff",
+          "--ig-border": "#e5e0ff",
+          "--ig-heading": "#1e1b3a",
+          "--ig-text": "#374151",
+          "--ig-muted": "#6b7280",
+          "--ig-accent": "#5b21e6",
+          "--ig-accent-soft": "#ede9fe",
+          "--ig-accent-hover": "#4c1d95",
+        } as React.CSSProperties;
+      case "parchment":
+        return {
+          "--ig-bg": "#f4f1ea",
+          "--ig-surface": "#fcfbf8",
+          "--ig-surface-soft": "#eae6dc",
+          "--ig-surface-alt": "#e6e2d8",
+          "--ig-border": "#e6e2d8",
+          "--ig-heading": "#1c1917",
+          "--ig-text": "#292524",
+          "--ig-muted": "#57534e",
+          "--ig-accent": "#ef4444",
+          "--ig-accent-soft": "#fee2e2",
+          "--ig-accent-hover": "#dc2626",
+        } as React.CSSProperties;
+      case "forest":
+        return {
+          "--ig-bg": "#0b140e",
+          "--ig-surface": "#111c14",
+          "--ig-surface-soft": "#19281e",
+          "--ig-surface-alt": "#223528",
+          "--ig-border": "#2d4434",
+          "--ig-heading": "#e8e4d9",
+          "--ig-text": "#c7d2c1",
+          "--ig-muted": "#9aad8e",
+          "--ig-accent": "#d97706",
+          "--ig-accent-soft": "#451a03",
+          "--ig-accent-hover": "#b45309",
+        } as React.CSSProperties;
+      case "codeterm":
+        return {
+          "--ig-bg": "#0d0d0d",
+          "--ig-surface": "#141414",
+          "--ig-surface-soft": "#1f1f1f",
+          "--ig-surface-alt": "#292929",
+          "--ig-border": "#383838",
+          "--ig-heading": "#f0ede8",
+          "--ig-text": "#d4d1cc",
+          "--ig-muted": "#888580",
+          "--ig-accent": "#cc4125",
+          "--ig-accent-soft": "#4a150c",
+          "--ig-accent-hover": "#b8351b",
+        } as React.CSSProperties;
+      case "midnight":
+        return {
+          "--ig-bg": "#0a1929",
+          "--ig-surface": "#0f2744",
+          "--ig-surface-soft": "#173860",
+          "--ig-surface-alt": "#1e497c",
+          "--ig-border": "#2a5991",
+          "--ig-heading": "#f0f6fc",
+          "--ig-text": "#cbd5e1",
+          "--ig-muted": "#94a3b8",
+          "--ig-accent": "#38bdf8",
+          "--ig-accent-soft": "#0c4a6e",
+          "--ig-accent-hover": "#0284c7",
+        } as React.CSSProperties;
+      default:
+        return {
+          "--ig-bg": "#0f172a",
+          "--ig-surface": "#1e293b",
+          "--ig-surface-soft": "#273549",
+          "--ig-surface-alt": "#334155",
+          "--ig-border": "#334155",
+          "--ig-heading": "#f8fafc",
+          "--ig-text": "#cbd5e1",
+          "--ig-muted": "#94a3b8",
+          "--ig-accent": "#3b82f6",
+          "--ig-accent-soft": "#1e3a8a",
+          "--ig-accent-hover": "#2563eb",
+        } as React.CSSProperties;
+    }
+  }, [resolvedTheme]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -730,13 +785,124 @@ const InterviewGuidePageContent = () => {
     setCurrentStep((prev) => Math.max(1, prev - 1) as WizardStep);
   };
 
+const DEFAULT_DEMO_GUIDE: InterviewGuide = {
+  section1_preparation: {
+    title: "Preparation Strategy",
+    oneDayBefore: [
+      "Review core system design principles (load balancing, caching, database indexing).",
+      "Prepare 3 STAR narrative stories highlighting technical leadership and architectural decisions.",
+      "Review target company product ecosystem, tech stack, and recent engineering blog posts."
+    ],
+    oneHourBefore: [
+      "Test video/microphone setup and check internet latency.",
+      "Open your IDE, scratchpad, and system architecture diagram board.",
+      "Take 5 deep breaths and review your 60-second personal elevator pitch."
+    ],
+    starMethod: {
+      situation: "At my previous company, our real-time notification engine struggled to process spikes of 50k events/sec.",
+      task: "I was tasked with redesigning the ingestion pipeline to guarantee < 100ms latency without data loss.",
+      action: "Migrated from monolithic queue processing to an asynchronous Redis Pub/Sub + Kafka architecture with consumer worker pools in Node.js.",
+      result: "Reduced message delivery latency by 82% and increased peak throughput capacity to 200k events/sec with zero dropped events."
+    }
+  },
+  section2_introduction: {
+    title: "Personal Introduction",
+    short30sec: "Hi, I'm a Senior Full Stack Engineer with over 5 years of experience building scalable web applications with React, Next.js, and Node.js. I specialize in designing high-throughput microservices and crafting intuitive user interfaces. I'm excited about this opportunity to drive technical architecture at scale.",
+    medium60sec: "Hello! I'm a Senior Full Stack Engineer specializing in modern JavaScript/TypeScript ecosystems. Over the past 5 years, I've led cross-functional teams to build high-performance web platforms. Notably, I led a database query optimization initiative that slashed API response times by 65%. I thrive on solving complex system design challenges and mentoring junior engineers.",
+    long90sec: "Hello, thank you for having me. I'm a Senior Full Stack Software Engineer with a passion for robust distributed systems and front-end performance. Over the last 5 years, I have architected cloud-native services using Next.js, React, Node.js, and PostgreSQL. At my current role, I led the migration to a microservices architecture serving over 1M monthly active users while improving uptime to 99.99%. Outside of direct feature delivery, I focus on developer tooling, code review standards, and CI/CD automation."
+  },
+  section3_hrQuestions: {
+    title: "HR & Behavioral Questions",
+    questions: [
+      {
+        question: "Tell me about a time you faced a major technical disagreement with a teammate.",
+        answer: "When deciding between GraphQL and REST APIs for our new mobile integration, a senior colleague advocated strongly for REST due to team familiarity. I organized a prototype spike demonstrating how GraphQL reduced over-fetching by 45% for low-bandwidth mobile users. After reviewing the quantitative metrics together, we aligned on a hybrid approach using GraphQL for complex frontend queries.",
+        tips: "Focus on data-driven persuasion, empathy, and constructive collaboration."
+      },
+      {
+        question: "How do you prioritize technical debt versus shipping new features fast?",
+        answer: "I allocate a dedicated 20% budget during sprint planning for continuous refactoring and debt reduction. When debt directly threatens system stability or developer velocity, I quantify the business impact (e.g. increase in deployment failure rate) to gain product manager alignment.",
+        tips: "Highlight business value alignment and continuous hygiene habits."
+      }
+    ]
+  },
+  section4_technicalQuestions: {
+    title: "Technical Deep Dives",
+    beginner: [
+      {
+        question: "What is the difference between Server-Side Rendering (SSR) and Client-Side Rendering (CSR) in Next.js?",
+        answer: "SSR generates HTML on the server per request, providing fast first contentful paint and superior SEO. CSR renders minimal HTML initial shell and executes JavaScript in the browser to build the DOM dynamically.",
+        codeSnippet: "// SSR in Next.js App Router\nexport async function generateMetadata() {\n  return { title: 'Dynamic Page' };\n}"
+      }
+    ],
+    intermediate: [
+      {
+        question: "How do React Server Components (RSC) differ from traditional SSR?",
+        answer: "RSC execute exclusively on the server and do not bundle client-side JS for those components, drastically shrinking client bundle size. SSR still hydrates JavaScript on the client side.",
+        codeSnippet: "// Server Component\nasync function ServerData() {\n  const res = await db.query('SELECT * FROM users');\n  return <div>{res.rows.length} users</div>;\n}"
+      }
+    ],
+    advanced: [
+      {
+        question: "Explain how Node.js event loop handles Microtasks vs Macrotasks under heavy load.",
+        answer: "Microtasks (Promises, process.nextTick) are executed immediately after the current operation finishes and before moving to the next event loop phase (Macrotasks like setTimeout, I/O). Starvation can occur if recursive Microtasks block the queue.",
+        codeSnippet: "process.nextTick(() => console.log('Microtask'));\nsetTimeout(() => console.log('Macrotask'), 0);"
+      }
+    ]
+  },
+  section5_companySpecific: {
+    title: "Company Fit & Tailored Questions",
+    cultureMatch: "Emphasis on high ownership, rapid iteration cycles, code quality, and empathetic engineering culture.",
+    keyProducts: ["Real-time Analytics Engine", "AI Communication Suite", "Distributed Workflow Automation"],
+    suggestedQuestionsToAsk: [
+      "What are the biggest architectural bottlenecks the engineering team is tackling this quarter?",
+      "How does the team balance feature velocity with automated testing coverage?",
+      "What does the growth trajectory look like for senior engineers taking on architecture leadership?"
+    ]
+  },
+  section6_communication: {
+    title: "Communication Vocabulary & Tone",
+    vocabularyUpgrades: [
+      { basic: "I fixed the slow DB queries.", professional: "I optimized database index strategies, improving query response latency by 60%.", context: "Performance optimization discussions" },
+      { basic: "We built a backend API.", professional: "We architected a RESTful microservice adhering to OpenAPI specs with rate limiting.", context: "Backend engineering discussions" }
+    ],
+    toneTips: [
+      "Use concise, quantified statements (metrics, percentages, time saved).",
+      "Pause 2 seconds before answering complex architectural questions to structure your response."
+    ]
+  },
+  section7_cheatSheet: {
+    title: "Cheat Sheet & Rapid Memorization",
+    rapidMemorization: [
+      { topic: "CAP Theorem", keyPoints: ["Consistency: Every read gets most recent write", "Availability: Every request gets non-error response", "Partition Tolerance: System continues despite dropped messages"] },
+      { topic: "SOLID Principles", keyPoints: ["Single Responsibility", "Open/Closed", "Liskov Substitution", "Interface Segregation", "Dependency Inversion"] }
+    ],
+    finalChecklist: [
+      "Camera & Audio hardware tested",
+      "Elevator pitch rehearsed (60s)",
+      "STAR stories ready (3 scenarios)",
+      "Questions to ask interviewer prepared",
+      "System design board active"
+    ]
+  },
+  section8_mockInterview: {
+    title: "Mock Interview Simulation",
+    scenario: "System Design: Design a real-time collaborative document editor like Google Docs.",
+    evaluationCriteria: [
+      "Operational Transformation (OT) vs CRDT understanding",
+      "WebSocket connection scaling and fallback strategies",
+      "Conflict resolution & persistence models"
+    ]
+  }
+};
+
   const loadGuideFromHistory = async (id: string) => {
     setLoading(true);
     try {
       const response = await fetch(`/api/interview-guide/history/${id}`);
       if (response.ok) {
         const data = await response.json();
-        setGuide(data.generatedContent);
+        setGuide(data.generatedContent || data.guide);
         setUserProfile({
           name: session?.user?.name,
           experienceLevel: data.experienceLevel,
@@ -746,16 +912,44 @@ const InterviewGuidePageContent = () => {
         setCurrentGuideId(id);
         setTargetRole(data.targetRole);
         setTargetCompany(data.targetCompany || "");
-        setCommunicationLevel(data.communicationLevel);
+        setCommunicationLevel(data.communicationLevel || "Advanced");
         setJobDescription(data.jobDescription || "");
         setLastPracticedAt(
           data.createdAt
             ? new Date(data.createdAt).toLocaleString()
             : new Date().toLocaleString()
         );
+      } else {
+        // Fallback demo/sample guide for ID lookup
+        setGuide(DEFAULT_DEMO_GUIDE);
+        setUserProfile({
+          name: session?.user?.name || "Candidate",
+          experienceLevel: "Experienced",
+          targetRole: "Senior Full Stack Engineer",
+          targetCompany: "Fluenzy AI",
+        });
+        setCurrentGuideId(id);
+        setTargetRole("Senior Full Stack Engineer");
+        setTargetCompany("Fluenzy AI");
+        setCommunicationLevel("Advanced");
+        setJobDescription("Senior Full Stack Engineer required for high-throughput AI microservices.");
+        setLastPracticedAt(new Date().toLocaleString());
       }
     } catch (err) {
       console.error("Failed to load guide:", err);
+      // Fallback demo/sample guide on error
+      setGuide(DEFAULT_DEMO_GUIDE);
+      setUserProfile({
+        name: session?.user?.name || "Candidate",
+        experienceLevel: "Experienced",
+        targetRole: "Senior Full Stack Engineer",
+        targetCompany: "Fluenzy AI",
+      });
+      setCurrentGuideId(id);
+      setTargetRole("Senior Full Stack Engineer");
+      setTargetCompany("Fluenzy AI");
+      setCommunicationLevel("Advanced");
+      setLastPracticedAt(new Date().toLocaleString());
     } finally {
       setLoading(false);
     }
@@ -844,10 +1038,10 @@ const InterviewGuidePageContent = () => {
     }
   };
 
-  if (status === "loading" || (loading && guideId)) {
+  if (status === "loading" || (loading && guideId) || isMobile === null) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
       </div>
     );
   }
@@ -862,9 +1056,9 @@ const InterviewGuidePageContent = () => {
     const stepProgress = Math.round((currentStep / 3) * 100);
     const canSubmit = !!usage?.canGenerate && !!targetRole.trim() && jobDescription.trim().length >= 50;
 
-    return (
-      <div style={igThemeVars} className="interview-guide-page relative z-10 min-h-screen bg-[color:var(--ig-bg)] text-[color:var(--ig-text)]">
-        <div className="mx-auto max-w-6xl px-4 py-6 pb-24 md:py-8 md:pb-10">
+    const formMarkup = (
+      <div style={igThemeVars} className="interview-guide-page relative z-10 min-h-screen text-[color:var(--ig-text)]">
+        <div className="mx-auto max-w-6xl px-3 py-4 pb-28 md:px-4 md:py-8 md:pb-10">
         <div className="space-y-5">
 
           {/* === PAGE HEADER === */}
@@ -1254,7 +1448,7 @@ const InterviewGuidePageContent = () => {
           </footer>
         </div>
 
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-white/10 bg-slate-950/95 p-3 backdrop-blur md:hidden">
+        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-white/10 bg-slate-950/95 p-3 backdrop-blur md:hidden">
           <div className="mx-auto flex max-w-6xl items-center gap-2">
             <Button
               variant="ghost"
@@ -1286,6 +1480,23 @@ const InterviewGuidePageContent = () => {
         </div>
       </div>
     );
+
+    if (isMobile) {
+      return (
+        <MobileNavShell activeHref="/interview-guide">
+          <div className="pt-1">
+            {formMarkup}
+          </div>
+        </MobileNavShell>
+      );
+    }
+
+    return (
+      <div style={igThemeVars} className={`min-h-screen ${currentTheme.background} text-[color:var(--ig-text)] transition-colors duration-300`}>
+        <HeaderOffset />
+        {formMarkup}
+      </div>
+    );
   }
 
   // Guide display view — dispatches to responsive components
@@ -1304,9 +1515,19 @@ const InterviewGuidePageContent = () => {
   };
 
   if (isMobile) {
-    return <MobileInterviewGuide {...sharedGuideProps} />;
+    return (
+      <MobileNavShell activeHref="/interview-guide">
+        <MobileInterviewGuide {...sharedGuideProps} />
+      </MobileNavShell>
+    );
   }
-  return <InterviewGuideDisplay {...sharedGuideProps} />;
+
+  return (
+    <div className={`min-h-screen ${currentTheme.background} transition-colors duration-300`}>
+      <HeaderOffset />
+      <InterviewGuideDisplay {...sharedGuideProps} />
+    </div>
+  );
 };
 const InterviewGuidePage = () => {
   return (
