@@ -219,7 +219,7 @@ const FEATURES = [
 /* ─── Bottom tabs — each has its own icon color ──────────────────────────── */
 const TABS = [
   { label: 'Quick Links', icon: Link2, href: '/train', tabColor: '#8B5CF6' },
-  { label: 'Practice', icon: Target, href: '/train/hr', tabColor: '#10B981' },
+  { label: 'Practice', icon: Target, href: '/train/practice', tabColor: '#10B981' },
   { label: 'Home', icon: Home, href: '/train', tabColor: '#7C3AED' },
   { label: 'Analytics', icon: BarChart3, href: '/analytics', tabColor: '#F97316' },
   { label: 'Profile', icon: User, href: '/profile', tabColor: '#0EA5E9' },

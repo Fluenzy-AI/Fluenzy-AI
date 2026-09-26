@@ -25,7 +25,7 @@ const THEME_OPTIONS: { value: ThemeName; label: string; icon: typeof Moon }[] = 
 
 const TABS = [
   { label: "Quick Links", icon: Link2, href: "/train", tabColor: "#8B5CF6" },
-  { label: "Practice", icon: Target, href: "/train/hr", tabColor: "#10B981" },
+  { label: "Practice", icon: Target, href: "/train/practice", tabColor: "#10B981" },
   { label: "Home", icon: Home, href: "/train", tabColor: "#7C3AED" },
   { label: "Analytics", icon: BarChart3, href: "/analytics", tabColor: "#F97316" },
   { label: "Profile", icon: User, href: "/profile", tabColor: "#0EA5E9" },
@@ -125,8 +125,7 @@ export default function MobileNavShell({ children, activeHref }: MobileNavShellP
           <div className="flex items-center justify-center shrink-0">
             <img src="/white-removebg-preview1.png" alt="Fluenzy AI" className="w-9 h-9 object-contain" />
           </div>
-          <span className="text-base font-black tracking-tight"
-            style={{ background: "linear-gradient(90deg,#7C3AED,#C084FC)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          <span className="font-black text-lg tracking-tight bg-gradient-to-r from-violet-600 via-indigo-600 to-pink-500 bg-clip-text text-transparent">
             Fluenzy AI
           </span>
         </div>
@@ -214,11 +213,13 @@ export default function MobileNavShell({ children, activeHref }: MobileNavShellP
         <div className="relative z-10 flex items-center justify-around w-full h-full pt-1 px-1">
           {TABS.map((tab) => {
             const isHome = tab.label === 'Home';
-            const isActive = cur === tab.href || (tab.href !== '/train' && cur.startsWith(tab.href));
-            const accentColor = isLight ? '#7C3AED' : accentHex;
-            const inactiveColor = isLight ? '#475569' : mutedHex;
-            const iconColor = isActive && !isHome ? tab.tabColor : (isHome ? accentColor : inactiveColor);
-            const textColor = isActive && !isHome ? tab.tabColor : (isHome ? accentColor : inactiveColor);
+            const isCurrentPage = cur === tab.href || (tab.href !== '/train' && cur.startsWith(tab.href)) || (activeHref && activeHref.startsWith(tab.href));
+            const activeColor = isLight ? '#7C3AED' : accentHex;
+            const inactiveIconColor = isLight ? '#475569' : mutedHex;
+            const inactiveTextColor = isLight ? '#334155' : mutedHex;
+
+            const iconColor = isCurrentPage && !isHome ? tab.tabColor : (isHome ? activeColor : inactiveIconColor);
+            const textColor = isCurrentPage && !isHome ? tab.tabColor : (isHome ? activeColor : inactiveTextColor);
             const Icon = tab.icon;
 
             return (

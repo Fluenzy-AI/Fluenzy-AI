@@ -7,6 +7,8 @@ import { io, Socket } from 'socket.io-client';
 import Link from 'next/link';
 import InterviewReport from '@/components/InterviewReport';
 import type { ReportPayload } from '@/components/LiveInterviewRoom';
+import { useTheme, themeConfig } from '@/contexts/ThemeContext';
+import MobileNavShell from '@/components/MobileNavShell';
 import {
   ArrowLeft,
   UserCheck,
@@ -26,7 +28,7 @@ const LiveInterviewRoom = dynamic(() => import('@/components/LiveInterviewRoom')
       <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
     </div>
   ),
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }) as any;
 
 type Step = 'select-type' | 'select-role' | 'queue' | 'matched';
@@ -39,6 +41,18 @@ interface RoomData {
   interviewType: InterviewType;
   topic: string;
   participants: { userId: string; userName: string; role: Role }[];
+}
+
+function useMobileBreakpoint() {
+  const [isMobile, setIsMobile] = useState<boolean | null>(null);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    setIsMobile(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isMobile;
 }
 
 function getStableUserId(): string {
@@ -62,6 +76,10 @@ function getStableAgoraUid(): number {
 
 export default function LiveInterviewPage() {
   const { data: session } = useSession();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'parchment' || resolvedTheme === 'light';
+  const t = themeConfig[resolvedTheme] ?? themeConfig['dark'];
+  const isMobile = useMobileBreakpoint();
 
   const [userId] = useState(() => getStableUserId());
   const [agoraUid] = useState(() => getStableAgoraUid());
@@ -114,7 +132,7 @@ export default function LiveInterviewPage() {
     });
 
     return () => { s.disconnect(); clearTimer(); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const clearTimer = () => {
@@ -191,13 +209,13 @@ export default function LiveInterviewPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-slate-950 text-white">
+  const content = (
+    <div className={`min-h-screen ${t.background} ${t.text} transition-colors duration-300`}>
       {/* ── Hero gradient background ─────────────────────────────────────── */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(99,102,241,0.12),transparent_60%)] pointer-events-none" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_80%,rgba(139,92,246,0.08),transparent_60%)] pointer-events-none" />
 
-      <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-10">
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-8">
         {/* ── Step indicator ──────────────────────────────────────────────── */}
         <div className="w-full max-w-xl mb-8">
           <div className="flex items-center gap-0 justify-center">
@@ -208,9 +226,8 @@ export default function LiveInterviewPage() {
               return (
                 <React.Fragment key={label}>
                   <div className="flex flex-col items-center gap-1">
-                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                      done ? 'bg-indigo-500 text-white' : active ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-slate-800 text-slate-500 border border-slate-700'
-                    }`}>
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${done ? 'bg-indigo-500 text-white' : active ? 'bg-indigo-600 text-white ring-4 ring-indigo-500/20' : 'bg-slate-800 text-slate-500 border border-slate-700'
+                      }`}>
                       {done ? '✓' : idx + 1}
                     </div>
                     <span className={`text-[10px] font-medium ${active ? 'text-indigo-400' : done ? 'text-slate-400' : 'text-slate-600'}`}>{label}</span>
@@ -313,11 +330,10 @@ export default function LiveInterviewPage() {
                     <button
                       key={value}
                       onClick={() => setRole(value)}
-                      className={`relative flex flex-col items-start p-6 rounded-2xl border transition-all duration-200 text-left ${
-                        selected
+                      className={`relative flex flex-col items-start p-6 rounded-2xl border transition-all duration-200 text-left ${selected
                           ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
                           : 'border-slate-800 bg-slate-900/80 hover:border-slate-700 hover:bg-slate-800/60'
-                      }`}
+                        }`}
                     >
                       {selected && (
                         <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center">
@@ -401,4 +417,10 @@ export default function LiveInterviewPage() {
       </div>
     </div>
   );
+
+  if (isMobile) {
+    return <MobileNavShell activeHref="/train/live">{content}</MobileNavShell>;
+  }
+
+  return content;
 }

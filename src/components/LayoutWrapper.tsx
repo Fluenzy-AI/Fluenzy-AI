@@ -243,7 +243,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     (pathname.startsWith('/install') && isMobileViewport !== false);
 
   const isMobilePageWithOwnHeader = isMobileViewport !== false && [
-    '/train', '/analytics', '/profile', '/billing', '/ats', '/interview-guide', '/history'
+    '/train', '/analytics', '/profile', '/billing', '/ats', '/interview-guide', '/history', '/practice'
   ].some(path => pathname.startsWith(path));
 
   const isSuperAdminPage = pathname.startsWith('/superadmin');
@@ -265,8 +265,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <header className={`h-14 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-6 sticky top-0 z-30`}>
           <div className="flex items-center gap-3">
             <div className={`p-1 rounded-xl transition-all ${isLight
-                ? 'bg-[#F0EDFF] border border-[#C4B5FD]'
-                : 'bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md'
+              ? 'bg-[#F0EDFF] border border-[#C4B5FD]'
+              : 'bg-gradient-to-br from-indigo-600 to-purple-600 shadow-md'
               }`}>
               <img
                 src="/favicon/apple-touch-icon.png"
@@ -302,8 +302,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 8, scale: 0.95 }}
                       className={`absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden shadow-2xl z-50 border ${isLight
-                          ? 'bg-white border-[#E5E0FF] text-[#1E1B3A]'
-                          : 'bg-slate-900 border-slate-700 text-white'
+                        ? 'bg-white border-[#E5E0FF] text-[#1E1B3A]'
+                        : 'bg-slate-900 border-slate-700 text-white'
                         }`}
                     >
                       {themeOptions.map((option) => {
@@ -324,8 +324,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                               setShowThemeMenu(false);
                             }}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm font-extrabold transition-colors ${isSelected
-                                ? (isLight ? 'bg-purple-100/80' : 'bg-purple-900/30')
-                                : (isLight ? 'hover:bg-slate-100' : 'hover:bg-slate-800')
+                              ? (isLight ? 'bg-purple-100/80' : 'bg-purple-900/30')
+                              : (isLight ? 'hover:bg-slate-100' : 'hover:bg-slate-800')
                               }`}
                             style={{
                               color: itemTextColor,
@@ -449,8 +449,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       <div className={`p-4 border-b ${currentTheme.cardBorder} flex items-center justify-between`}>
         <Link href="/" className="flex items-center gap-3">
           <div className={`p-1.5 rounded-xl ${isLight
-              ? 'bg-[#F0EDFF] border border-[#C4B5FD]'
-              : 'bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20'
+            ? 'bg-[#F0EDFF] border border-[#C4B5FD]'
+            : 'bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20'
             } flex items-center justify-center`}>
             <img
               src={isLight ? '/favicon/apple-touch-icon.png' : '/white-removebg-preview1.png'}
@@ -460,8 +460,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           </div>
           {!collapsed && (
             <span className={`font-extrabold !bg-clip-text text-transparent text-xl tracking-tight ${isLight
-                ? 'bg-gradient-to-r from-[#5B21E6] via-[#7C3AED] to-[#5B21E6]'
-                : 'bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400'
+              ? 'bg-gradient-to-r from-[#5B21E6] via-[#7C3AED] to-[#5B21E6]'
+              : 'bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400'
               }`}>
               Fluenzy AI
             </span>
@@ -553,8 +553,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                 {/* Special badge for Auto-Apply Setup */}
                 {!collapsed && item.href === '/train/auto-apply-setup' && (
                   <div className={`ml-auto w-5 h-5 rounded-full flex items-center justify-center ${autoApplyStatus.completed
-                      ? 'bg-green-500/20 text-green-400'
-                      : 'bg-orange-500/20 text-orange-400'
+                    ? 'bg-green-500/20 text-green-400'
+                    : 'bg-orange-500/20 text-orange-400'
                     }`}>
                     {autoApplyStatus.completed ? (
                       <CheckCircle size={12} />
@@ -624,8 +624,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 10 }}
                   className={`absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden shadow-2xl z-50 border ${isLight
-                      ? 'bg-white border-[#E5E0FF]'
-                      : 'bg-slate-900 border-slate-700'
+                    ? 'bg-white border-[#E5E0FF]'
+                    : 'bg-slate-900 border-slate-700'
                     }`}
                 >
                   {themeOptions.map((option) => {
@@ -735,8 +735,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   <Link
                     href="/train/live"
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${pathname.startsWith('/train/live')
-                        ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
-                        : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                      ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
+                      : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                       }`}
                   >
                     <Radio size={14} />
@@ -750,8 +750,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                         key={item.href}
                         href={item.href}
                         className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive
-                            ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
-                            : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
+                          ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
+                          : isLight ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100' : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
                           }`}
                       >
                         {item.label}
@@ -790,8 +790,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                           animate={{ opacity: 1, y: 0, scale: 1 }}
                           exit={{ opacity: 0, y: 10, scale: 0.95 }}
                           className={`theme-toggle-dropdown absolute right-0 top-full mt-2 w-44 rounded-xl overflow-hidden shadow-2xl z-50 border ${isLight
-                              ? 'bg-white border-[#E5E0FF]'
-                              : 'bg-slate-900 border-slate-700'
+                            ? 'bg-white border-[#E5E0FF]'
+                            : 'bg-slate-900 border-slate-700'
                             }`}
                         >
                           {themeOptions.map((option) => {
@@ -912,8 +912,8 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                                   <p className={`text-sm ${currentTheme.textMuted} truncate`}>{userData?.email || session?.user?.email}</p>
                                   <div className="flex items-center gap-2 mt-2">
                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${planInfo?.plan === 'Pro' ? 'bg-[#5B6CFF]/20 text-[#5B6CFF] border border-[#5B6CFF]/30' :
-                                        planInfo?.plan === 'Standard' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
-                                          'bg-slate-500/20 text-slate-400 border border-slate-500/30'
+                                      planInfo?.plan === 'Standard' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                        'bg-slate-500/20 text-slate-400 border border-slate-500/30'
                                       }`}>
                                       {planInfo?.plan || 'Free'} Plan
                                     </span>

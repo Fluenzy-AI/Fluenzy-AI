@@ -227,6 +227,7 @@ export default function SideChatBot() {
   const [loading, setLoading] = useState(false);
 
   const [messages, setMessages] = useState<Message[]>([]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Listen to custom open event from anywhere in the app
@@ -242,14 +243,20 @@ export default function SideChatBot() {
     return () => window.removeEventListener("open-side-chatbot" as any, handleOpen);
   }, []);
 
-  // Auto scroll to bottom
+  // Auto scroll logic
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   useEffect(() => {
     if (isOpen && !isMinimized) {
-      scrollToBottom();
+      if (messages.length === 0) {
+        if (scrollContainerRef.current) {
+          scrollContainerRef.current.scrollTop = 0;
+        }
+      } else {
+        scrollToBottom();
+      }
     }
   }, [messages, isOpen, isMinimized, loading]);
 
@@ -417,7 +424,7 @@ export default function SideChatBot() {
             {!isMinimized && (
               <div className={`flex-1 flex flex-col overflow-hidden ${styles.bodyBg}`}>
                 {/* Message Container / Initial Welcome Screen */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
+                <div ref={scrollContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
                   {messages.length === 0 ? (
                     <div className="flex flex-col items-center justify-center text-center py-6 px-2 space-y-5 animate-in fade-in duration-300">
                       {/* Fluenzy AI Official Bot Logo */}
