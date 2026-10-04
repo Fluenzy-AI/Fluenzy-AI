@@ -1125,13 +1125,17 @@ From now on, speak and act strictly according to these new settings!]`
           }`}>
             {/* Large Full-Width AI HR Coach Image */}
             <div className={`w-full relative rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 mb-2 bg-slate-950 ${
-              hideEndButton && type !== ModuleType.COMPANY_WISE_HR && type !== ModuleType.COMPANY_SPECIFIC ? 'h-64 sm:h-80' : 'aspect-[16/9] max-h-56'
+              hideEndButton && type !== ModuleType.COMPANY_WISE_HR && type !== ModuleType.COMPANY_SPECIFIC
+                ? 'h-64 sm:h-80'
+                : (type === ModuleType.COMPANY_WISE_HR || type === ModuleType.COMPANY_SPECIFIC)
+                  ? 'aspect-[3/4] max-h-72'
+                  : 'aspect-[16/9] max-h-56'
             }`}>
               <img
                 src="/image/avtar.jpg"
                 alt="AI Coach"
-                className="w-full h-full object-cover object-top"
-                style={{ objectPosition: 'top center' }}
+                className="w-full h-full object-cover"
+                style={{ objectPosition: 'center center' }}
               />
               <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[10px] font-black text-white force-white border border-white/10">
                 {isEnglishLearning ? 'AI Coach' : isConversationPractice ? 'AI Friend' : (sessionMeta?.isCompanyWise ? 'Company Coach' : 'HR Coach')}
