@@ -48,7 +48,10 @@ import {
   Leaf,
   Coffee,
   Terminal,
-  Trophy
+  Trophy,
+  Home,
+  Search,
+  Flame
 } from 'lucide-react';
 import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
 
@@ -115,6 +118,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [planInfo, setPlanInfo] = useState<any>(null);
   const [imageError, setImageError] = useState(false);
+  const [isPracticeOpen, setIsPracticeOpen] = useState(true);
   const [autoApplyStatus, setAutoApplyStatus] = useState<{ completed: boolean; enabled: boolean }>({
     completed: false,
     enabled: false,
@@ -443,224 +447,238 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     );
   }
 
-  const Sidebar = ({ collapsed = false, mobile = false }: { collapsed?: boolean; mobile?: boolean }) => (
-    <div className={`flex flex-col h-full ${isLight ? 'bg-white' : currentTheme.background} ${mobile ? 'w-full' : ''}`}>
-      {/* Logo */}
-      <div className={`p-4 border-b ${currentTheme.cardBorder} flex items-center justify-between`}>
-        <Link href="/" className="flex items-center gap-3">
-          <div className={`p-1.5 rounded-xl ${isLight
-            ? 'bg-[#F0EDFF] border border-[#C4B5FD]'
-            : 'bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20'
-            } flex items-center justify-center`}>
-            <img
-              src={isLight ? '/favicon/apple-touch-icon.png' : '/white-removebg-preview1.png'}
-              alt="Fluenzy AI Logo"
-              className="w-7 h-7 object-contain"
-            />
-          </div>
-          {!collapsed && (
-            <span className={`font-extrabold !bg-clip-text text-transparent text-xl tracking-tight ${isLight
-              ? 'bg-gradient-to-r from-[#5B21E6] via-[#7C3AED] to-[#5B21E6]'
-              : 'bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400'
-              }`}>
-              Fluenzy AI
-            </span>
+  const Sidebar = ({ collapsed = false, mobile = false }: { collapsed?: boolean; mobile?: boolean }) => {
+    const practiceSubItems = [
+      { href: '/train', label: 'Practice Modules', icon: Home },
+      { href: '/train/company', label: 'Company Interview', icon: Building2 },
+      { href: '/train/hr', label: 'HR Interview', icon: User },
+      { href: '/train/gd-agent', label: 'AI Interview', icon: MessageSquare },
+      { href: '/train/gd-coach', label: 'Group Discussion', icon: Users },
+      { href: '/train/technical', label: 'Technical Interview', icon: Code },
+      { href: '/train/english', label: 'English Practice', icon: BookOpen },
+    ];
+
+    const isPracticeActive = pathname.startsWith('/train');
+
+    return (
+      <div className={`flex flex-col h-full ${isLight ? 'bg-[#FAFAFB]' : 'bg-[#0B0E14]'} ${mobile ? 'w-full' : ''}`}>
+        {/* Logo */}
+        <div className={`p-4 border-b ${currentTheme.cardBorder} flex items-center justify-between`}>
+          <Link href="/" className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-rose-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+              <img
+                src={isLight ? '/favicon/apple-touch-icon.png' : '/white-removebg-preview1.png'}
+                alt="Fluenzy AI Logo"
+                className="w-5 h-5 object-contain"
+              />
+            </div>
+            {!collapsed && (
+              <span className={`font-extrabold text-xl tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Fluenzy <span className="text-orange-500">AI</span>
+              </span>
+            )}
+          </Link>
+          {mobile && (
+            <button onClick={() => setMobileMenuOpen(false)} className={`p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
+              <X size={20} />
+            </button>
           )}
-        </Link>
-        {mobile && (
-          <button onClick={() => setMobileMenuOpen(false)} className={`p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
-            <X size={20} />
-          </button>
-        )}
-      </div>
-
-      {/* Main Navigation */}
-      <div className="flex-1 overflow-y-auto py-4">
-        <div className="px-3 mb-2">
-          <span className={`text-xs font-semibold uppercase tracking-wider ${currentTheme.textMuted}`}>
-            {collapsed ? 'M' : 'Main'}
-          </span>
         </div>
 
-        <nav className="space-y-1 px-3">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || (item.href !== '/train' && pathname.startsWith(item.href));
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => mobile && setMobileMenuOpen(false)}
-                className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                  ${isActive
-                    ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
-                    : isLight
-                      ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-                      : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
-                  }
-                  ${collapsed ? 'justify-center' : ''}
-                `}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon size={20} className={isActive ? currentTheme.activeIconColor : ''} />
-                {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
-                {!collapsed && 'badge' in item && item.badge && (
-                  <span className="ml-auto px-2 py-0.5 text-[10px] font-semibold rounded-full bg-violet-500/20 text-violet-400 border border-violet-500/30">
-                    {item.badge}
-                  </span>
-                )}
-                {isActive && !('badge' in item && item.badge) && (
-                  <motion.div
-                    layoutId={mobile ? 'activeIndicator-mobile' : 'activeIndicator-desktop'}
-                    className={`ml-auto w-1.5 h-1.5 rounded-full ${currentTheme.activeIconColor.replace('text-', 'bg-')}`}
-                  />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Main Navigation */}
+        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5 scrollbar-thin">
+          {/* Home Link */}
+          <Link
+            href="/"
+            onClick={() => mobile && setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              pathname === '/'
+                ? isLight
+                  ? 'bg-amber-500/10 text-amber-700 font-semibold'
+                  : 'bg-orange-500/15 text-orange-400 font-semibold'
+                : isLight
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            } ${collapsed ? 'justify-center' : ''}`}
+            title={collapsed ? 'Home' : undefined}
+          >
+            <Home size={18} />
+            {!collapsed && <span>Home</span>}
+          </Link>
 
-        <div className={`px-3 mt-6 mb-2`}>
-          <span className={`text-xs font-semibold uppercase tracking-wider ${currentTheme.textMuted}`}>
-            {collapsed ? 'J&C' : 'Job & Career'}
-          </span>
-        </div>
-
-        <nav className="space-y-1 px-3">
-          {jobCareerItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => mobile && setMobileMenuOpen(false)}
-                className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                  ${isActive
-                    ? isLight
-                      ? `${currentTheme.activeIconColor} ${currentTheme.activeNavBg} font-semibold border-l-2 border-indigo-400`
-                      : `${currentTheme.accent} ${currentTheme.activeNavBg}`
-                    : isLight
-                      ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-                      : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
-                  }
-                  ${collapsed ? 'justify-center' : ''}
-                `}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon size={20} className={isActive ? currentTheme.activeIconColor : ''} />
-                {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
-                {/* Special badge for Auto-Apply Setup */}
-                {!collapsed && item.href === '/train/auto-apply-setup' && (
-                  <div className={`ml-auto w-5 h-5 rounded-full flex items-center justify-center ${autoApplyStatus.completed
-                    ? 'bg-green-500/20 text-green-400'
-                    : 'bg-orange-500/20 text-orange-400'
-                    }`}>
-                    {autoApplyStatus.completed ? (
-                      <CheckCircle size={12} />
-                    ) : (
-                      <Clock size={12} />
-                    )}
-                  </div>
-                )}
-              </Link>
-            );
-          })}
-        </nav>
-
-        <div className={`px-3 mt-6 mb-2`}>
-          <span className={`text-xs font-semibold uppercase tracking-wider ${currentTheme.textMuted}`}>
-            {collapsed ? 'Q' : 'Quick Access'}
-          </span>
-        </div>
-
-        <nav className="space-y-1 px-3">
-          {secondaryNavItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => mobile && setMobileMenuOpen(false)}
-                className={`
-                  flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200
-                  ${isActive
-                    ? `${currentTheme.accent} ${currentTheme.activeNavBg}`
-                    : isLight
-                      ? 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
-                      : `${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5`
-                  }
-                  ${collapsed ? 'justify-center' : ''}
-                `}
-                title={collapsed ? item.label : undefined}
-              >
-                <item.icon size={20} className={isActive ? currentTheme.activeIconColor : ''} />
-                {!collapsed && <span className="font-medium text-sm">{item.label}</span>}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Theme Selector (Bottom) */}
-      {!collapsed && (
-        <div className={`p-4 border-t ${currentTheme.cardBorder}`}>
-          <div className="relative">
+          {/* Practice Section with Subpart Accordion */}
+          <div>
             <button
-              onClick={() => setShowThemeMenu(!showThemeMenu)}
-              className={`w-full flex items-center justify-between px-3 py-2 rounded-lg ${currentTheme.cardBg} border ${currentTheme.cardBorder} ${isLight ? 'hover:border-indigo-300 hover:bg-indigo-50/60 shadow-sm' : 'hover:border-cyan-500/30'} transition-all duration-200`}
+              onClick={() => setIsPracticeOpen(!isPracticeOpen)}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                isPracticeActive
+                  ? isLight
+                    ? 'bg-amber-500/10 text-amber-700'
+                    : 'bg-orange-500/15 text-orange-400'
+                  : isLight
+                  ? 'text-slate-700 hover:bg-slate-100'
+                  : 'text-slate-300 hover:bg-white/5'
+              } ${collapsed ? 'justify-center' : ''}`}
+              title={collapsed ? 'Practice' : undefined}
             >
-              <div className="flex items-center gap-2">
-                {React.createElement(themeOptions.find(t => t.value === theme)?.icon || Moon, { size: 16, className: currentTheme.text })}
-                <span className={`text-sm ${currentTheme.text}`}>{themeOptions.find(t => t.value === theme)?.label}</span>
+              <div className="flex items-center gap-3">
+                <div className={`p-1 rounded-lg ${isLight ? 'bg-amber-500/15 text-amber-600' : 'bg-orange-500/20 text-orange-400'}`}>
+                  <Briefcase size={16} />
+                </div>
+                {!collapsed && <span>Practice</span>}
               </div>
-              <ChevronDown size={16} className={currentTheme.textMuted} />
+              {!collapsed && (
+                <ChevronDown
+                  size={16}
+                  className={`transition-transform duration-200 ${isPracticeOpen ? 'rotate-180 text-orange-500' : 'text-slate-400'}`}
+                />
+              )}
             </button>
 
-            <AnimatePresence>
-              {showThemeMenu && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                  className={`absolute bottom-full left-0 right-0 mb-2 rounded-xl overflow-hidden shadow-2xl z-50 border ${isLight
-                    ? 'bg-white border-[#E5E0FF]'
-                    : 'bg-slate-900 border-slate-700'
-                    }`}
-                >
-                  {themeOptions.map((option) => {
-                    const isSelected = theme === option.value;
-                    const colorStyle = isLight
-                      ? { color: isSelected ? '#5B21E6' : '#374151' }
-                      : { color: isSelected ? '#e9d5ff' : '#f1f5f9' };
-
-                    return (
-                      <button
-                        key={option.value}
-                        onClick={() => {
-                          setTheme(option.value);
-                          setShowThemeMenu(false);
-                        }}
-                        style={colorStyle}
-                        className={`w-full flex items-center gap-3 px-3.5 py-2.5 text-sm font-bold transition-all cursor-pointer ${isSelected ? 'theme-toggle-item-selected' : ''
-                          } ${isLight
-                            ? isSelected ? 'bg-[#5B21E6]/10 text-[#5B21E6]' : 'text-slate-700 hover:bg-slate-100'
-                            : isSelected ? 'bg-purple-600/30 text-purple-200' : 'hover:text-white hover:bg-slate-800'
-                          }`}
-                      >
-                        <option.icon size={16} style={colorStyle} />
-                        <span style={{ ...colorStyle, WebkitTextFillColor: colorStyle.color }}>{option.label}</span>
-                      </button>
-                    );
-                  })}
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* Subpart List */}
+            {!collapsed && isPracticeOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mt-1 ml-3 pl-3 border-l-2 border-orange-500/30 space-y-1"
+              >
+                {practiceSubItems.map((sub) => {
+                  const isSubActive = pathname === sub.href;
+                  return (
+                    <Link
+                      key={sub.href}
+                      href={sub.href}
+                      onClick={() => mobile && setMobileMenuOpen(false)}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                        isSubActive
+                          ? isLight
+                            ? 'bg-amber-600/15 text-amber-800 font-bold shadow-sm'
+                            : 'bg-gradient-to-r from-orange-500/30 to-amber-500/20 text-orange-300 font-bold border border-orange-500/30 shadow-md'
+                          : isLight
+                          ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                          : 'text-slate-400 hover:text-white hover:bg-white/5'
+                      }`}
+                    >
+                      <sub.icon size={15} className={isSubActive ? (isLight ? 'text-amber-700' : 'text-orange-400') : 'opacity-70'} />
+                      <span>{sub.label}</span>
+                    </Link>
+                  );
+                })}
+              </motion.div>
+            )}
           </div>
+
+          {/* History */}
+          <Link
+            href="/history"
+            onClick={() => mobile && setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              pathname.startsWith('/history')
+                ? isLight
+                  ? 'bg-amber-500/10 text-amber-700 font-semibold'
+                  : 'bg-orange-500/15 text-orange-400 font-semibold'
+                : isLight
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            } ${collapsed ? 'justify-center' : ''}`}
+            title={collapsed ? 'History' : undefined}
+          >
+            <History size={18} />
+            {!collapsed && <span>History</span>}
+          </Link>
+
+          {/* Analytics */}
+          <Link
+            href="/analytics"
+            onClick={() => mobile && setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              pathname.startsWith('/analytics')
+                ? isLight
+                  ? 'bg-amber-500/10 text-amber-700 font-semibold'
+                  : 'bg-orange-500/15 text-orange-400 font-semibold'
+                : isLight
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            } ${collapsed ? 'justify-center' : ''}`}
+            title={collapsed ? 'Analytics' : undefined}
+          >
+            <BarChart3 size={18} />
+            {!collapsed && <span>Analytics</span>}
+          </Link>
+
+          {/* Interview Guide */}
+          <Link
+            href="/interview-guide"
+            onClick={() => mobile && setMobileMenuOpen(false)}
+            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+              pathname.startsWith('/interview-guide')
+                ? isLight
+                  ? 'bg-amber-500/10 text-amber-700 font-semibold'
+                  : 'bg-orange-500/15 text-orange-400 font-semibold'
+                : isLight
+                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
+            } ${collapsed ? 'justify-center' : ''}`}
+            title={collapsed ? 'Interview Guide' : undefined}
+          >
+            <BookMarked size={18} />
+            {!collapsed && <span>Interview Guide</span>}
+          </Link>
         </div>
-      )}
-    </div>
-  );
+
+        {/* Sidebar Bottom Cards: Usage ring & Upgrade Plan */}
+        {!collapsed && (
+          <div className={`p-3 border-t ${currentTheme.cardBorder} space-y-3`}>
+            {/* Session Usage Progress Ring */}
+            <div className={`p-3.5 rounded-2xl ${isLight ? 'bg-amber-500/5 border border-amber-200/60' : 'bg-slate-900/80 border border-white/5'} flex items-center gap-3`}>
+              <div className="relative w-10 h-10 flex items-center justify-center">
+                <svg className="w-10 h-10 transform -rotate-90">
+                  <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className={isLight ? 'text-amber-200' : 'text-slate-800'} />
+                  <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" strokeDasharray={100} strokeDashoffset={40} className="text-orange-500" strokeLinecap="round" />
+                </svg>
+                <span className={`absolute text-[10px] font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>60%</span>
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white'} truncate`}>12 / 20</p>
+                <p className={`text-[11px] ${currentTheme.textMuted} truncate`}>Sessions used</p>
+              </div>
+            </div>
+
+            {/* Upgrade Plan Button */}
+            <button
+              onClick={() => {
+                if (mobile) setMobileMenuOpen(false);
+                window.location.href = '/billing';
+              }}
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-orange-500 via-amber-600 to-orange-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-xs shadow-lg shadow-orange-500/25 transition-all transform hover:-translate-y-0.5"
+            >
+              <Crown size={14} className="text-amber-200" />
+              <span>Upgrade Plan</span>
+            </button>
+
+            {/* Profile User Pill */}
+            {session?.user && (
+              <div className={`p-2 rounded-xl flex items-center justify-between ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} transition-colors cursor-pointer`} onClick={() => setShowProfileMenu(!showProfileMenu)}>
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white font-bold text-xs overflow-hidden shadow-sm">
+                    {showAvatarImage ? (
+                      <img src={avatarUrl!} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={() => setImageError(true)} />
+                    ) : userInitial}
+                  </div>
+                  <div className="min-w-0">
+                    <p className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'} truncate`}>{displayName}</p>
+                    <p className={`text-[10px] ${currentTheme.textMuted} truncate`}>{planInfo?.plan || 'Free'} Plan</p>
+                  </div>
+                </div>
+                <ChevronRight size={14} className={currentTheme.textMuted} />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className={`min-h-screen flex flex-col ${currentTheme.background}`}>
@@ -701,9 +719,9 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <main className={`flex-1 min-w-0 overflow-x-hidden flex flex-col min-h-screen ${showSidebar ? 'lg:pl-0' : ''}`}>
           {/* Top Navbar */}
           {!isMobilePageWithOwnHeader && (
-            <header className={`h-16 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-4 sticky top-0 z-30`}>
-              {/* Left - Mobile Menu + Breadcrumb */}
-              <div className="flex items-center gap-3">
+            <header className={`h-16 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-6 sticky top-0 z-30`}>
+              {/* Left - Mobile Menu + Top Search Bar */}
+              <div className="flex items-center gap-4 flex-1 max-w-xl">
                 <button
                   onClick={() => setMobileMenuOpen(true)}
                   className={`lg:hidden p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
@@ -711,19 +729,23 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   <Menu size={20} />
                 </button>
 
-                {/* Breadcrumb */}
-                <div className="hidden sm:flex items-center gap-2 text-sm">
-                  <Link href="/train" className={`${currentTheme.textMuted} hover:${currentTheme.text} transition-colors`}>
-                    Train
-                  </Link>
-                  {pathname !== '/train' && (
-                    <>
-                      <ChevronRight size={14} className={currentTheme.textMuted} />
-                      <span className={`${currentTheme.text} font-medium`}>
-                        {navItems.find(n => n.href === pathname)?.label || 'Page'}
-                      </span>
-                    </>
-                  )}
+                {/* Search Bar Input */}
+                <div className="relative w-full max-w-md hidden sm:block">
+                  <Search size={16} className={`absolute left-3.5 top-1/2 transform -translate-y-1/2 ${currentTheme.textMuted}`} />
+                  <input
+                    type="text"
+                    placeholder="Search for a module, topic or company..."
+                    className={`w-full pl-10 pr-16 py-2 rounded-xl text-xs font-medium border transition-all outline-none ${
+                      isLight
+                        ? 'bg-slate-100/80 border-slate-200 text-slate-800 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
+                        : 'bg-slate-900/80 border-white/10 text-white focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20'
+                    }`}
+                  />
+                  <span className={`absolute right-3 top-1/2 transform -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-mono border ${
+                    isLight ? 'bg-white border-slate-200 text-slate-500' : 'bg-slate-800 border-slate-700 text-slate-400'
+                  }`}>
+                    Ctrl K
+                  </span>
                 </div>
               </div>
 

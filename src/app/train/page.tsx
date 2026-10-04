@@ -23,23 +23,336 @@ import {
   Zap,
   Brain,
   Heart,
+  BarChart3,
+  Flame,
+  Clock,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Video,
+  Users,
+  Bot
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { useTheme, themeConfig } from '@/contexts/ThemeContext';
 
-// ===== CRITICAL FIX: Module Classifications =====
-// Unlimited modules that should NOT show session counts (no limit enforced)
+// ===== 3D Vector Graphic Illustrations for Cards =====
+
+const Robot3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(229, 107, 45, 0.25))">
+      {/* Robot Body */}
+      <rect x="25" y="38" width="50" height="32" rx="14" fill="url(#paint_robot_body)" />
+      {/* Robot Head */}
+      <rect x="28" y="14" width="44" height="28" rx="12" fill="url(#paint_robot_head)" />
+      {/* Ears */}
+      <circle cx="23" cy="28" r="4" fill="#E28647" />
+      <circle cx="77" cy="28" r="4" fill="#E28647" />
+      {/* Visor Screen */}
+      <rect x="34" y="19" width="32" height="18" rx="7" fill="#1C1815" />
+      {/* Eyes */}
+      <circle cx="43" cy="28" r="3.5" fill="#52D7FF" />
+      <circle cx="57" cy="28" r="3.5" fill="#52D7FF" />
+      {/* Antenna */}
+      <path d="M50 14 V8" stroke="#F4A261" strokeWidth="3" strokeLinecap="round" />
+      <circle cx="50" cy="6" r="3" fill="#F4A261" />
+      {/* Speech Bubble */}
+      <rect x="68" y="2" width="26" height="18" rx="6" fill="#F4A261" />
+      <circle cx="75" cy="11" r="1.5" fill="#FFFFFF" />
+      <circle cx="81" cy="11" r="1.5" fill="#FFFFFF" />
+      <circle cx="87" cy="11" r="1.5" fill="#FFFFFF" />
+    </g>
+    <defs>
+      <linearGradient id="paint_robot_body" x1="25" y1="38" x2="75" y2="70" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#F8D4B0" />
+        <stop offset="1" stopColor="#E29D62" />
+      </linearGradient>
+      <linearGradient id="paint_robot_head" x1="28" y1="14" x2="72" y2="42" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FFE0C2" />
+        <stop offset="1" stopColor="#F3B37C" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const Armchair3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(229, 57, 53, 0.2))">
+      {/* Armchair Backrest */}
+      <rect x="25" y="12" width="50" height="42" rx="14" fill="url(#pink_backrest)" />
+      {/* Seat Cushion */}
+      <rect x="20" y="42" width="60" height="18" rx="8" fill="url(#pink_seat)" />
+      {/* Armrests */}
+      <rect x="15" y="32" width="14" height="24" rx="7" fill="url(#pink_arm)" />
+      <rect x="71" y="32" width="14" height="24" rx="7" fill="url(#pink_arm)" />
+      {/* Legs */}
+      <path d="M26 60 L22 72" stroke="#B06579" strokeWidth="4" strokeLinecap="round" />
+      <path d="M74 60 L78 72" stroke="#B06579" strokeWidth="4" strokeLinecap="round" />
+      {/* Speech Bubble */}
+      <rect x="58" y="2" width="30" height="20" rx="7" fill="#FF7B9C" />
+      <circle cx="67" cy="12" r="2" fill="#FFFFFF" />
+      <circle cx="73" cy="12" r="2" fill="#FFFFFF" />
+      <circle cx="79" cy="12" r="2" fill="#FFFFFF" />
+    </g>
+    <defs>
+      <linearGradient id="pink_backrest" x1="25" y1="12" x2="75" y2="54" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FFA6BC" />
+        <stop offset="1" stopColor="#E85D80" />
+      </linearGradient>
+      <linearGradient id="pink_seat" x1="20" y1="42" x2="80" y2="60" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FFB8C9" />
+        <stop offset="1" stopColor="#EF6C8F" />
+      </linearGradient>
+      <linearGradient id="pink_arm" x1="15" y1="32" x2="29" y2="56" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FF9EB4" />
+        <stop offset="1" stopColor="#E05377" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const Group3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(16, 185, 129, 0.25))">
+      {/* Left Pawn */}
+      <circle cx="30" cy="28" r="11" fill="url(#green_head)" />
+      <path d="M15 62 C15 45 45 45 45 62 Z" fill="url(#green_body)" />
+      
+      {/* Right Pawn */}
+      <circle cx="70" cy="28" r="11" fill="url(#green_head)" />
+      <path d="M55 62 C55 45 85 45 85 62 Z" fill="url(#green_body)" />
+
+      {/* Center Front Pawn */}
+      <circle cx="50" cy="20" r="13" fill="url(#green_head_front)" />
+      <path d="M30 68 C30 46 70 46 70 68 Z" fill="url(#green_body_front)" />
+    </g>
+    <defs>
+      <linearGradient id="green_head" x1="30" y1="17" x2="30" y2="39" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#6EE7B7" />
+        <stop offset="1" stopColor="#10B981" />
+      </linearGradient>
+      <linearGradient id="green_body" x1="30" y1="45" x2="30" y2="62" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#34D399" />
+        <stop offset="1" stopColor="#059669" />
+      </linearGradient>
+      <linearGradient id="green_head_front" x1="50" y1="7" x2="50" y2="33" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#A7F3D0" />
+        <stop offset="1" stopColor="#10B981" />
+      </linearGradient>
+      <linearGradient id="green_body_front" x1="50" y1="46" x2="50" y2="68" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#34D399" />
+        <stop offset="1" stopColor="#047857" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const Technical3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(139, 92, 246, 0.25))">
+      {/* Laptop Screen */}
+      <rect x="25" y="14" width="50" height="34" rx="7" fill="url(#purple_screen)" />
+      <rect x="29" y="18" width="42" height="26" rx="4" fill="#18132B" />
+      {/* Code Brackets on Screen */}
+      <text x="35" y="36" fill="#A78BFA" fontSize="16" fontFamily="monospace" fontWeight="bold">&lt;/&gt;</text>
+      
+      {/* Laptop Base */}
+      <path d="M16 50 H84 L78 60 H22 Z" fill="url(#purple_base)" />
+      <rect x="42" y="52" width="16" height="3" rx="1.5" fill="#6D28D9" />
+
+      {/* Floating Code Cubes */}
+      <rect x="6" y="44" width="12" height="12" rx="3" fill="#A78BFA" opacity="0.9" />
+      <rect x="80" y="38" width="14" height="14" rx="4" fill="#C4B5FD" opacity="0.9" />
+    </g>
+    <defs>
+      <linearGradient id="purple_screen" x1="25" y1="14" x2="75" y2="48" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#8B5CF6" />
+        <stop offset="1" stopColor="#5B21B6" />
+      </linearGradient>
+      <linearGradient id="purple_base" x1="16" y1="50" x2="84" y2="60" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#7C3AED" />
+        <stop offset="1" stopColor="#4C1D95" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const Daily3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(14, 165, 233, 0.25))">
+      {/* Chat Bubble 1 (left) */}
+      <rect x="8" y="20" width="46" height="26" rx="10" fill="url(#sky_bubble1)" />
+      <polygon points="18,46 10,56 30,46" fill="url(#sky_bubble1)" />
+      {/* Dots inside bubble 1 */}
+      <circle cx="22" cy="33" r="3" fill="white" opacity="0.9" />
+      <circle cx="31" cy="33" r="3" fill="white" opacity="0.9" />
+      <circle cx="40" cy="33" r="3" fill="white" opacity="0.9" />
+      {/* Chat Bubble 2 (right) */}
+      <rect x="46" y="6" width="44" height="24" rx="9" fill="url(#sky_bubble2)" />
+      <polygon points="80,30 90,38 72,30" fill="url(#sky_bubble2)" />
+      {/* Dots inside bubble 2 */}
+      <circle cx="58" cy="18" r="2.5" fill="white" opacity="0.9" />
+      <circle cx="68" cy="18" r="2.5" fill="white" opacity="0.9" />
+      <circle cx="78" cy="18" r="2.5" fill="white" opacity="0.9" />
+      {/* Microphone base */}
+      <rect x="40" y="54" width="20" height="18" rx="6" fill="url(#sky_mic)" />
+      <circle cx="50" cy="54" r="8" fill="url(#sky_mic_head)" />
+      <path d="M42 62 Q50 70 58 62" stroke="#0EA5E9" strokeWidth="2.5" fill="none" strokeLinecap="round" />
+    </g>
+    <defs>
+      <linearGradient id="sky_bubble1" x1="8" y1="20" x2="54" y2="46" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#38BDF8" /><stop offset="1" stopColor="#0284C7" />
+      </linearGradient>
+      <linearGradient id="sky_bubble2" x1="46" y1="6" x2="90" y2="30" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#7DD3FC" /><stop offset="1" stopColor="#0EA5E9" />
+      </linearGradient>
+      <linearGradient id="sky_mic" x1="40" y1="54" x2="60" y2="72" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#38BDF8" /><stop offset="1" stopColor="#0369A1" />
+      </linearGradient>
+      <linearGradient id="sky_mic_head" x1="42" y1="46" x2="58" y2="62" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#7DD3FC" /><stop offset="1" stopColor="#0284C7" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const LatestTopics3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(132, 204, 22, 0.25))">
+      {/* Lightning bolt big */}
+      <path d="M54 4 L30 44 H50 L46 76 L78 32 H56 Z" fill="url(#lime_bolt)" />
+      {/* Small spark top-left */}
+      <path d="M12 22 L8 32 H16 L14 40 L24 28 H16 Z" fill="#BEF264" opacity="0.9" />
+      {/* Star sparkle */}
+      <circle cx="82" cy="14" r="5" fill="#D9F99D" />
+      <path d="M82 8 V20 M76 14 H88 M78 10 L86 18 M78 18 L86 10" stroke="#84CC16" strokeWidth="1.5" strokeLinecap="round" />
+    </g>
+    <defs>
+      <linearGradient id="lime_bolt" x1="30" y1="4" x2="78" y2="76" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#BEF264" /><stop offset="1" stopColor="#65A30D" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const English3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(59, 130, 246, 0.25))">
+      {/* Open Book */}
+      <path d="M50 14 Q32 10 14 16 L14 64 Q32 58 50 62 Z" fill="url(#blue_book_left)" />
+      <path d="M50 14 Q68 10 86 16 L86 64 Q68 58 50 62 Z" fill="url(#blue_book_right)" />
+      {/* Spine */}
+      <rect x="48" y="14" width="4" height="48" rx="2" fill="#1D4ED8" />
+      {/* Lines on left page */}
+      <line x1="22" y1="28" x2="44" y2="25" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      <line x1="22" y1="36" x2="44" y2="33" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      <line x1="22" y1="44" x2="44" y2="41" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      {/* Lines on right page */}
+      <line x1="56" y1="25" x2="78" y2="28" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      <line x1="56" y1="33" x2="78" y2="36" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      <line x1="56" y1="41" x2="78" y2="44" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.6" />
+      {/* Floating "A" */}
+      <text x="64" y="8" fill="#93C5FD" fontSize="14" fontWeight="bold" fontFamily="serif">A</text>
+    </g>
+    <defs>
+      <linearGradient id="blue_book_left" x1="14" y1="14" x2="50" y2="64" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#60A5FA" /><stop offset="1" stopColor="#1D4ED8" />
+      </linearGradient>
+      <linearGradient id="blue_book_right" x1="50" y1="14" x2="86" y2="64" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#93C5FD" /><stop offset="1" stopColor="#2563EB" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const Vocab3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(249, 115, 22, 0.25))">
+      {/* Stack of cards */}
+      <rect x="18" y="34" width="64" height="36" rx="8" fill="url(#orange_card3)" />
+      <rect x="14" y="24" width="64" height="36" rx="8" fill="url(#orange_card2)" />
+      <rect x="10" y="14" width="64" height="36" rx="8" fill="url(#orange_card1)" />
+      {/* Word on top card */}
+      <text x="22" y="30" fill="white" fontSize="10" fontWeight="bold" fontFamily="monospace">Vocab</text>
+      <text x="22" y="42" fill="#FFD8A8" fontSize="8" fontFamily="sans-serif">noun · growth</text>
+      {/* Star badge */}
+      <circle cx="82" cy="18" r="9" fill="#FED7AA" />
+      <text x="77" y="22" fill="#EA580C" fontSize="11" fontWeight="bold">★</text>
+    </g>
+    <defs>
+      <linearGradient id="orange_card1" x1="10" y1="14" x2="74" y2="50" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FB923C" /><stop offset="1" stopColor="#C2410C" />
+      </linearGradient>
+      <linearGradient id="orange_card2" x1="14" y1="24" x2="78" y2="60" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FDBA74" /><stop offset="1" stopColor="#EA580C" />
+      </linearGradient>
+      <linearGradient id="orange_card3" x1="18" y1="34" x2="82" y2="70" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FED7AA" /><stop offset="1" stopColor="#F97316" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const Voice3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(6, 182, 212, 0.25))">
+      {/* Microphone body */}
+      <rect x="38" y="8" width="24" height="36" rx="12" fill="url(#cyan_mic_body)" />
+      {/* Mic grille lines */}
+      <line x1="38" y1="22" x2="62" y2="22" stroke="white" strokeWidth="1.5" opacity="0.4" />
+      <line x1="38" y1="28" x2="62" y2="28" stroke="white" strokeWidth="1.5" opacity="0.4" />
+      <line x1="38" y1="34" x2="62" y2="34" stroke="white" strokeWidth="1.5" opacity="0.4" />
+      {/* Mic stand arm */}
+      <path d="M50 44 Q50 58 50 62" stroke="#0891B2" strokeWidth="4" strokeLinecap="round" />
+      <path d="M34 62 H66" stroke="#0891B2" strokeWidth="4" strokeLinecap="round" />
+      {/* Sound waves left */}
+      <path d="M28 20 Q22 26 22 32 Q22 38 28 44" stroke="#67E8F9" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M18 14 Q8 26 8 32 Q8 38 18 50" stroke="#A5F3FC" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.7" />
+      {/* Sound waves right */}
+      <path d="M72 20 Q78 26 78 32 Q78 38 72 44" stroke="#67E8F9" strokeWidth="3" fill="none" strokeLinecap="round" />
+      <path d="M82 14 Q92 26 92 32 Q92 38 82 50" stroke="#A5F3FC" strokeWidth="2.5" fill="none" strokeLinecap="round" opacity="0.7" />
+    </g>
+    <defs>
+      <linearGradient id="cyan_mic_body" x1="38" y1="8" x2="62" y2="44" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#67E8F9" /><stop offset="1" stopColor="#0891B2" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+const PromptIQ3DGraphic = () => (
+  <svg width="84" height="66" viewBox="0 0 100 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <g filter="drop-shadow(0px 8px 12px rgba(139, 92, 246, 0.25))">
+      {/* Brain silhouette */}
+      <path d="M50 10 C34 10 22 20 22 34 C22 44 28 50 36 54 L36 66 L64 66 L64 54 C72 50 78 44 78 34 C78 20 66 10 50 10 Z" fill="url(#violet_brain)" />
+      {/* Brain fold lines */}
+      <path d="M38 28 Q44 22 50 28 Q56 22 62 28" stroke="white" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.5" />
+      <path d="M32 38 Q36 34 40 38" stroke="white" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.5" />
+      <path d="M60 38 Q64 34 68 38" stroke="white" strokeWidth="1.8" fill="none" strokeLinecap="round" opacity="0.5" />
+      {/* Lightning in brain */}
+      <path d="M52 20 L44 36 H52 L48 52 L62 32 H52 Z" fill="#E9D5FF" opacity="0.9" />
+      {/* Floating sparkles */}
+      <circle cx="20" cy="18" r="4" fill="#C4B5FD" opacity="0.8" />
+      <circle cx="82" cy="16" r="5" fill="#DDD6FE" opacity="0.8" />
+      <circle cx="88" cy="52" r="3" fill="#A78BFA" opacity="0.7" />
+    </g>
+    <defs>
+      <linearGradient id="violet_brain" x1="22" y1="10" x2="78" y2="66" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#A78BFA" /><stop offset="1" stopColor="#5B21B6" />
+      </linearGradient>
+    </defs>
+  </svg>
+);
+
+// ===== Module Classifications =====
 const UNLIMITED_MODULES = new Set([
   'vocabulary',
   'latestTopics',
   'latest_topics',
-  'gdPrivate',  // GD Private - unlimited
-  'gdRandom',   // GD Random - unlimited
-  'live-red-heart', // HeartSync - unlimited
+  'gdPrivate',
+  'gdRandom',
+  'live-red-heart',
 ]);
-// LIMITED modules (show real remaining count): hr, gdCoach, technical, company, daily, english, corporateVoice
 
-// Module key mapping: UI key → API key
 const MODULE_KEY_MAP: Record<string, string> = {
   'hr': 'hr',
   'gd-coach': 'gdCoach',
@@ -80,8 +393,11 @@ interface Module {
   title: string;
   description: string;
   icon: typeof BookOpen;
+  graphic?: React.FC;
   color: string;
   gradient: string;
+  bgGlow: string;
+  accentBg: string;
   href: string;
   badge?: string;
   isLocked: boolean;
@@ -89,151 +405,153 @@ interface Module {
   isUnlimited?: boolean;
 }
 
-// Default modules - NO HARDCODED session values, will be fetched from API
 const modules: Module[] = [
   {
-    type: 'live-red-heart',
-    title: 'HeartSync',
-    description: 'Connect randomly in a live 1-on-1 video conversation — share ideas and practice speaking anonymously',
-    icon: Heart,
-    color: 'text-pink-400',
+    type: 'gd',
+    title: 'AI Interview',
+    description: 'Practice with AI interview simulations and get detailed feedback.',
+    icon: Bot,
+    graphic: Robot3DGraphic,
+    color: 'text-amber-500',
+    gradient: 'from-amber-500 to-orange-500',
+    bgGlow: 'from-amber-500/10 via-orange-500/5 to-transparent',
+    accentBg: 'bg-amber-500/15',
+    href: '/train/gd-agent',
+    badge: 'Popular',
+    isLocked: false,
+    sessions: '-',
+  },
+  {
+    type: 'hr',
+    title: 'HR Interview',
+    description: 'Practice common HR questions with AI.',
+    icon: UserPlus,
+    graphic: Armchair3DGraphic,
+    color: 'text-pink-500',
     gradient: 'from-pink-500 to-rose-500',
-    href: '/train/live-red-heart',
-    badge: '❤️ LIVE',
+    bgGlow: 'from-pink-500/10 via-rose-500/5 to-transparent',
+    accentBg: 'bg-pink-500/15',
+    href: '/train/hr',
+    isLocked: false,
+    sessions: '-',
+  },
+  {
+    type: 'gd-coach',
+    title: 'Group Discussion',
+    description: 'Join AI-powered GD simulations and improve your communication skills.',
+    icon: Users,
+    graphic: Group3DGraphic,
+    color: 'text-emerald-500',
+    gradient: 'from-emerald-500 to-teal-500',
+    bgGlow: 'from-emerald-500/10 via-teal-500/5 to-transparent',
+    accentBg: 'bg-emerald-500/15',
+    href: '/train/gd-coach',
+    isLocked: false,
+    sessions: '-',
+  },
+  {
+    type: 'technical',
+    title: 'Technical Interview',
+    description: 'Practice coding and technical concepts with role-based rounds.',
+    icon: Code,
+    graphic: Technical3DGraphic,
+    color: 'text-indigo-500',
+    gradient: 'from-indigo-500 to-purple-500',
+    bgGlow: 'from-indigo-500/10 via-purple-500/5 to-transparent',
+    accentBg: 'bg-indigo-500/15',
+    href: '/train/technical',
+    isLocked: false,
+    sessions: '-',
+  },
+  {
+    type: 'daily',
+    title: 'Daily Conversation',
+    description: 'Practice everyday English with AI conversation partner.',
+    icon: MessageSquare,
+    graphic: Daily3DGraphic,
+    color: 'text-sky-500',
+    gradient: 'from-sky-500 to-blue-500',
+    bgGlow: 'from-sky-500/10 via-blue-500/5 to-transparent',
+    accentBg: 'bg-sky-500/15',
+    href: '/train/daily',
+    isLocked: false,
+    sessions: '-',
+  },
+  {
+    type: 'latest-topics',
+    title: 'Latest Topics',
+    description: 'Stay updated with latest company-specific interview topics.',
+    icon: Zap,
+    graphic: LatestTopics3DGraphic,
+    color: 'text-lime-500',
+    gradient: 'from-lime-500 to-green-500',
+    bgGlow: 'from-lime-500/10 via-green-500/5 to-transparent',
+    accentBg: 'bg-lime-500/15',
+    href: '/train/latest-topics',
     isLocked: false,
     sessions: 'Unlimited',
     isUnlimited: true,
   },
   {
-    type: 'company',
-    title: 'Company Tracks',
-    description: 'Prepare for FAANG, Startups, or MNCs with curated company HR rounds',
-    icon: Building2,
-    color: 'text-red-500',
-    gradient: 'from-red-500 to-rose-600',
-    href: '/train/company',
-    badge: '🔥 HOT TRACK',
-    isLocked: false,
-    sessions: '-', // Will be updated from API
-  },
-  {
-    type: 'hr',
-    title: 'HR Interview',
-    description: 'Practice behavioral questions with AI-powered HR simulations',
-    icon: UserPlus,
-    color: 'text-pink-400',
-    gradient: 'from-pink-500 to-rose-500',
-    href: '/train/hr',
-    badge: 'Popular',
-    isLocked: false,
-    sessions: '-', // Will be updated from API
-  },
-  {
-    type: 'gd-coach',
-    title: 'GD Coach',
-    description: 'Step-by-step training from beginner to advanced GD leader',
-    icon: GraduationCap,
-    color: 'text-teal-400',
-    gradient: 'from-teal-500 to-emerald-500',
-    href: '/train/gd-coach',
-    badge: 'Pro',
-    isLocked: false,
-    sessions: '-', // Will be updated from API
-  },
-  {
-    type: 'gd',
-    title: 'GD Agent',
-    description: 'Live Group Discussions with multiple AI participants',
-    icon: Target,
-    color: 'text-purple-400',
-    gradient: 'from-purple-500 to-indigo-500',
-    href: '/train/gd-agent',
-    badge: 'AI',
-    isLocked: false,
-    sessions: '-', // Will be updated from API (AI Agents is LIMITED)
-  },
-  {
-    type: 'technical',
-    title: 'Technical Mastery',
-    description: 'Deep-dive into role-based conceptual and logic rounds',
-    icon: Code,
-    color: 'text-emerald-400',
-    gradient: 'from-emerald-500 to-teal-500',
-    href: '/train/technical',
-    badge: 'Advanced',
-    isLocked: false,
-    sessions: '-', // Will be updated from API
-  },
-  {
-    type: 'daily',
-    title: 'Daily Conversation',
-    description: 'Practice everyday English with AI conversation partner',
-    icon: MessageSquare,
-    color: 'text-sky-400',
-    gradient: 'from-sky-500 to-blue-500',
-    href: '/train/daily',
-    isLocked: false,
-    sessions: '-', // Will be updated from API (Daily is LIMITED)
-  },
-  {
-    type: 'latest-topics',
-    title: 'Latest Topics',
-    description: 'Stay updated with latest company-specific interview topics',
-    icon: Zap,
-    color: 'text-lime-400',
-    gradient: 'from-lime-500 to-green-500',
-    href: '/train/latest-topics',
-    isLocked: false,
-    sessions: 'Unlimited', // Will be confirmed from API
-  },
-  {
     type: 'english',
     title: 'English Learning',
-    description: 'Master professional English with real-time grammar feedback',
+    description: 'Master professional English with real-time grammar feedback.',
     icon: BookOpen,
-    color: 'text-blue-400',
-    gradient: 'from-blue-500 to-indigo-500',
+    graphic: English3DGraphic,
+    color: 'text-blue-500',
+    gradient: 'from-blue-500 to-cyan-500',
+    bgGlow: 'from-blue-500/10 via-cyan-500/5 to-transparent',
+    accentBg: 'bg-blue-500/15',
     href: '/train/english',
     isLocked: false,
-    sessions: '-', // Will be updated from API (English is LIMITED)
+    sessions: '-',
   },
   {
     type: 'vocabulary',
     title: 'Vocabulary Booster',
-    description: 'Expand your professional vocabulary with curated word lists',
+    description: 'Expand your professional vocabulary with curated word lists.',
     icon: BookMarked,
-    color: 'text-orange-400',
-    gradient: 'from-orange-500 to-red-500',
+    graphic: Vocab3DGraphic,
+    color: 'text-orange-500',
+    gradient: 'from-orange-500 to-amber-500',
+    bgGlow: 'from-orange-500/10 via-amber-500/5 to-transparent',
+    accentBg: 'bg-orange-500/15',
     href: '/train/vocabulary',
     isLocked: false,
-    sessions: 'Unlimited', // Will be confirmed from API
+    sessions: 'Unlimited',
+    isUnlimited: true,
   },
   {
     type: 'corporate-voice',
     title: 'Voice Practice',
-    description: 'Improve pronunciation and speaking style for corporate settings',
+    description: 'Improve pronunciation and speaking style for corporate settings.',
     icon: Phone,
-    color: 'text-cyan-400',
-    gradient: 'from-cyan-500 to-blue-500',
+    graphic: Voice3DGraphic,
+    color: 'text-cyan-500',
+    gradient: 'from-cyan-500 to-teal-500',
+    bgGlow: 'from-cyan-500/10 via-teal-500/5 to-transparent',
+    accentBg: 'bg-cyan-500/15',
     href: '/train/corporate-voice',
     isLocked: false,
-    sessions: '-', // Will be updated from API (Voice Practice is LIMITED)
+    sessions: '-',
   },
   {
     type: 'promptiq',
     title: 'PromptIQ',
-    description: 'AI Prompt Intelligence & Optimization — analyze, score, and perfect your prompts for production',
+    description: 'AI Prompt Intelligence & Optimization — analyze, score, and perfect prompts.',
     icon: Brain,
-    color: 'text-violet-400',
+    graphic: PromptIQ3DGraphic,
+    color: 'text-violet-500',
     gradient: 'from-violet-500 to-purple-600',
+    bgGlow: 'from-violet-500/10 via-purple-500/5 to-transparent',
+    accentBg: 'bg-violet-500/15',
     href: '/train/promptiq',
     badge: 'NEW',
     isLocked: false,
-    sessions: '-', // Will be updated from API (PromptIQ is LIMITED like HR)
+    sessions: '-',
   },
 ];
 
-/* ── Mobile breakpoint detection (≤ 640 px) ── */
 function useMobileBreakpoint() {
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
   useEffect(() => {
@@ -252,80 +570,29 @@ export default function TrainPage() {
   const { resolvedTheme } = useTheme();
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
-  const [autoApplyStatus, setAutoApplyStatus] = useState<AutoApplyStatus | null>(null);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
   const isLightMode = resolvedTheme === 'parchment' || resolvedTheme === 'light';
   const isMobile = useMobileBreakpoint();
 
-
-  // ===== CRITICAL FIX: Fetch usage data correctly =====
-  // ===== SAFE TIMESTAMP HELPER =====
-  const getLastUpdateMs = useCallback((): number => {
-    try {
-      const raw = localStorage.getItem('usage-updated');
-      if (!raw) return 0;
-      const parsed = Number(raw);
-      if (Number.isNaN(parsed) || parsed <= 0) {
-        console.warn('[TRAIN_PAGE_TIMESTAMP] Corrupt usage-updated value, treating as stale:', raw);
-        return 0;
-      }
-      return parsed;
-    } catch {
-      return 0;
-    }
-  }, []);
-
   const fetchUsageData = useCallback(async () => {
     try {
-      console.log('[TRAIN_PAGE_FETCH_START] Fetching usage data from /api/training-usage');
-
-      const [usageRes, planRes, autoApplyRes] = await Promise.all([
+      const [usageRes, planRes] = await Promise.all([
         fetch('/api/training-usage'),
         fetch('/api/user-plan'),
-        fetch('/api/candidates/preferences').catch(() => null),
       ]);
 
       if (usageRes.ok) {
         const data = await usageRes.json();
-        console.log('[TRAIN_PAGE_FETCH_SUCCESS] Usage data received:', {
-          gdCoach: data.remaining?.gdCoach,
-          gd: data.remaining?.gd,
-          hr: data.remaining?.hr,
-          remaining: data.remaining,
-          isUnlimited: data.isUnlimited
-        });
         setUsageData(data);
-        // Persist fetch timestamp for staleness checks on next mount
-        try {
-          localStorage.setItem('usage-updated', String(Date.now()));
-        } catch { /* localStorage unavailable */ }
-      } else {
-        console.warn('[TRAIN_PAGE_FETCH_FAILED] Usage fetch failed:', usageRes.status);
       }
 
       if (planRes.ok) {
         const data = await planRes.json();
-        console.log('[TRAIN_PAGE_PLAN_FETCHED] Plan data:', data.planName);
         setPlanInfo(data);
-      } else {
-        console.warn('[TRAIN_PAGE_PLAN_FAILED] Plan fetch failed:', planRes.status);
-      }
-
-      // Fetch auto-apply status (might not be a candidate user)
-      if (autoApplyRes && autoApplyRes.ok) {
-        const data = await autoApplyRes.json();
-        if (data.preferences) {
-          setAutoApplyStatus({
-            enabled: data.preferences.autoApplyEnabled,
-            count: data.preferences.autoApplyCount || 0,
-            limit: data.preferences.monthlyLimit || 0,
-            canAutoApply: data.canAutoApply,
-          });
-        }
       }
     } catch (error) {
-      console.error('[TRAIN_PAGE_FETCH_ERROR] Error fetching data:', error);
+      console.error('[TRAIN_PAGE] Error fetching data:', error);
     }
   }, []);
 
@@ -333,106 +600,44 @@ export default function TrainPage() {
     if (status === 'unauthenticated') {
       router.push('/');
     }
-  }, [status, router, isMobile]);
+  }, [status, router]);
 
   useEffect(() => {
     if (session?.user) {
-      console.log('[TRAIN_PAGE_LOAD] Session detected, checking for recent updates');
-      
-      // Check staleness with safe timestamp parsing
-      const lastUpdateMs = getLastUpdateMs();
-      if (lastUpdateMs > 0) {
-        const timeDiff = Date.now() - lastUpdateMs;
-        console.log(`[TRAIN_PAGE_RECENT_UPDATE_CHECK] Last update: ${timeDiff}ms ago`);
-      } else {
-        console.log('[TRAIN_PAGE_NO_RECENT_UPDATE] No valid usage-updated timestamp in localStorage');
-      }
-      
-      // Single initial fetch (no duplicate calls)
       fetchUsageData();
-      
-      // Listen for usage updates from other sources (same tab)
-      const handleUsageUpdate = (event: Event) => {
-        let moduleInfo = 'unknown';
-        if (event instanceof CustomEvent) {
-          moduleInfo = event.detail?.module || 'unknown';
-          console.log('[TRAIN_PAGE_EVENT_RECEIVED] Usage update event received:', {
-            module: event.detail?.module,
-            timestamp: event.detail?.timestamp,
-            lessonsCompleted: event.detail?.lessonsCompleted
-          });
-        } else {
-          console.log('[TRAIN_PAGE_EVENT_RECEIVED] Generic usage-updated event received');
-        }
-        
-        console.log(`[TRAIN_PAGE_REFETCH_TRIGGERED] Module (${moduleInfo}) session completed, refetching usage data...`);
-        fetchUsageData();
-      };
-      
+      const handleUsageUpdate = () => fetchUsageData();
       window.addEventListener('usage-updated', handleUsageUpdate);
-      console.log('[TRAIN_PAGE_LISTENER_ATTACHED] Event listener attached for usage-updated');
-      
-      return () => {
-        window.removeEventListener('usage-updated', handleUsageUpdate);
-        console.log('[TRAIN_PAGE_LISTENER_REMOVED] Event listener removed');
-      };
+      return () => window.removeEventListener('usage-updated', handleUsageUpdate);
     }
-  }, [session, fetchUsageData, getLastUpdateMs]);
+  }, [session, fetchUsageData]);
 
   const getUpdatedModules = () => {
-    console.log('[TRAIN_PAGE_GET_MODULES_START] usageData:', usageData ? 'loaded' : 'null');
-    
     return modules.map(mod => {
-      // Get the correct API key for this module
       const apiKey = MODULE_KEY_MAP[mod.type] || mod.type;
-      
-      // Check if this is an unlimited module
       const isUnlimitedModule = UNLIMITED_MODULES.has(apiKey);
-      
-      // If no API data yet, show loading state for limited modules only
+
       if (!usageData) {
-        const result = {
+        return {
           ...mod,
           sessions: isUnlimitedModule ? 'Unlimited' : '-',
           isUnlimited: isUnlimitedModule,
-          isLocked: false, // Don't lock until we have data
+          isLocked: false,
         };
-        if (mod.type === 'gd-coach') {
-          console.log('[TRAIN_PAGE_GDCOACH_LOADING] GD Coach in loading state:', result.sessions);
-        }
-        return result;
       }
 
-      // Get usage info from API response
       const canUse = usageData.canUse?.[apiKey] ?? true;
       const remaining = usageData.remaining?.[apiKey];
       const isApiUnlimited = usageData.isUnlimited?.[apiKey] ?? isUnlimitedModule;
-      
-      // Determine lock status
       const isLocked = !canUse && remaining !== 'Unlimited' && remaining !== '∞' && remaining !== undefined;
-      
-      // Determine session display
+
       let sessionDisplay: number | string;
       if (isUnlimitedModule || isApiUnlimited) {
         sessionDisplay = 'Unlimited';
       } else if (remaining === undefined) {
-        sessionDisplay = '-'; // Loading
+        sessionDisplay = '-';
       } else {
         sessionDisplay = remaining;
       }
-
-      if (mod.type === 'gd-coach') {
-        console.log('[TRAIN_PAGE_GDCOACH_DATA]', {
-          type: mod.type,
-          apiKey: apiKey,
-          remaining: remaining,
-          isApiUnlimited: isApiUnlimited,
-          isLocked: isLocked,
-          sessionDisplay: sessionDisplay
-        });
-      }
-
-      console.log(`[MODULE] ${mod.type} → apiKey: ${apiKey}, unlimited: ${isUnlimitedModule}, sessions: ${sessionDisplay}`);
 
       return {
         ...mod,
@@ -444,265 +649,301 @@ export default function TrainPage() {
   };
 
   const updatedModules = getUpdatedModules();
+  const userName = session?.user?.name ? session.user.name.split(' ')[0] : 'Achhuta';
 
+  // Exact image URLs from public/trainImage
+  const companyBannerSrc = isLightMode
+    ? '/trainImage/Light%20Company%20Interview%20Practice%20Banner.png'
+    : '/trainImage/Dark%20%20Company%20Interview%20Practice%20Banner.png';
 
+  const heartsyncBannerSrc = isLightMode
+    ? '/trainImage/Light%20HeartSync%20Live%20Practice%20Banner.png'
+    : '/trainImage/Dark%20HeartSync%20Live%20Practice%20Interface.png';
 
-  // Mobile layout: render dedicated mobile dashboard (≤ 640 px)
   if (isMobile === null) return null;
   if (isMobile) return <MobileTrainPage />;
 
   return (
-    <>
-      <div className="p-4 md:p-6 lg:p-8 relative">
-      {/* Light theme ambient background */}
-      {isLightMode && (
-        <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
-          <div className="absolute -top-10 left-1/3 w-[450px] h-[450px] bg-gradient-to-br from-violet-100/90 via-indigo-50/70 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
-          <div className="absolute top-20 -right-20 w-[380px] h-[380px] bg-gradient-to-tl from-sky-100/80 via-cyan-50/60 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '8s', animationDelay: '2s' }} />
-          <div className="absolute bottom-0 left-0 w-[320px] h-[320px] bg-gradient-to-r from-purple-100/60 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDuration: '7s', animationDelay: '1s' }} />
-        </div>
-      )}
+    <div className={`p-4 md:p-6 lg:p-8 relative min-h-screen ${currentTheme.background} ${currentTheme.text}`}>
 
-      {/* Module Cards Grid */}
+      {/* ── Top Header Greeting Banner & Stats ── */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+        <div>
+          <p className={`text-xs font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5 ${currentTheme.greetingColor}`}>
+            Hi {userName} 👋
+          </p>
+          <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">
+            Let&apos;s Practice &amp;{' '}
+            <span className={currentTheme.subheading}>
+              Grow
+            </span>
+          </h1>
+          <p className={`text-sm mt-1 max-w-xl ${currentTheme.bodyText}`}>
+            Build your interview and communication skills with AI.
+          </p>
+        </div>
+
+        {/* Right Stats Widget Box */}
+        <div className={`flex items-center gap-4 p-3.5 px-5 rounded-2xl border shadow-xl ${currentTheme.statsBg} ${currentTheme.statsBorder}`}>
+          <div className="flex items-center gap-3 pr-4 border-r border-slate-200/20">
+            <div className={`p-2 rounded-xl ${isLightMode ? 'bg-[#F5E6DA] text-[#9A4E12]' : 'bg-orange-500/20 text-orange-400'}`}>
+              <BarChart3 size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-extrabold leading-tight">12</p>
+              <p className={`text-[11px] ${currentTheme.textMuted}`}>Sessions done</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 pr-4 border-r border-slate-200/20">
+            <div className="p-2 rounded-xl bg-rose-500/15 text-rose-500">
+              <Flame size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-extrabold leading-tight">5</p>
+              <p className={`text-[11px] ${currentTheme.textMuted}`}>Day streak</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-xl ${isLightMode ? 'bg-[#F5E6DA] text-[#9A4E12]' : 'bg-amber-500/20 text-amber-400'}`}>
+              <Clock size={18} />
+            </div>
+            <div>
+              <p className="text-sm font-extrabold leading-tight">8h 20m</p>
+              <p className={`text-[11px] ${currentTheme.textMuted}`}>Total practice</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 2 Featured Hero Cards ── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+
+        {/* Hero Card 1: Company Interview */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`relative overflow-hidden rounded-3xl p-7 border transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-br ${currentTheme.heroBg1} ${currentTheme.heroBorder1} shadow-2xl`}
+        >
+          {/* Left Column: Text & CTA */}
+          <div className="flex-1 w-full flex flex-col justify-between h-full z-10">
+            <div>
+              {/* Header Badge */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 flex items-center justify-center shadow-md shadow-orange-500/20">
+                  <Building2 size={20} className="text-white" />
+                </div>
+              </div>
+
+              <h2 className={`text-2xl font-extrabold tracking-tight mb-2 ${currentTheme.heading}`}>
+                Company Interview
+              </h2>
+              <p className={`text-xs mb-4 leading-relaxed ${currentTheme.bodyText}`}>
+                Practice real company interview questions with AI or real people.
+              </p>
+
+              {/* Bullet Points */}
+              <div className="space-y-2 mb-6">
+                {[
+                  'FAANG & Startups questions',
+                  'Role-specific rounds',
+                  'Real interview experience',
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs font-semibold">
+                    <div className="w-4 h-4 rounded-full bg-[#E56B2D] flex items-center justify-center text-white text-[10px] flex-shrink-0">
+                      ✓
+                    </div>
+                    <span className={currentTheme.text}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Action CTA Button */}
+            <button
+              onClick={() => router.push('/train/company')}
+              className="py-3 px-6 rounded-xl bg-[#E56B2D] hover:bg-[#D45A1C] text-white font-extrabold text-xs shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 cursor-pointer w-full sm:w-auto"
+            >
+              <span>Start Practice</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
+
+          {/* Right Column: High-Res Banner Image */}
+          <div className="w-full md:w-1/2 flex items-center justify-center relative">
+            <img
+              src={companyBannerSrc}
+              alt="Company Interview Practice Banner"
+              className="w-full h-auto max-h-[220px] object-contain rounded-2xl drop-shadow-xl"
+            />
+          </div>
+        </motion.div>
+
+        {/* Hero Card 2: HeartSync */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className={`relative overflow-hidden rounded-3xl p-7 border transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-br ${currentTheme.heroBg2} ${currentTheme.heroBorder2} shadow-2xl`}
+        >
+          {/* Left Column: Text & CTA */}
+          <div className="flex-1 w-full flex flex-col justify-between h-full z-10">
+            <div>
+              {/* Header Badge */}
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-500 text-[11px] font-bold animate-pulse">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
+                  <span>LIVE NOW</span>
+                </div>
+              </div>
+
+              <h2 className={`text-2xl font-extrabold tracking-tight mb-2 ${currentTheme.heading}`}>
+                HeartSync
+              </h2>
+              <p className={`text-xs mb-4 leading-relaxed ${currentTheme.bodyText}`}>
+                Live 1-on-1 video practice with AI or real people.
+              </p>
+
+              {/* Bullet Points */}
+              <div className="space-y-2 mb-6">
+                {[
+                  'Real conversations',
+                  'Instant feedback',
+                  'Build confidence',
+                ].map((item, idx) => (
+                  <div key={idx} className="flex items-center gap-2 text-xs font-semibold">
+                    <div className="w-4 h-4 rounded-full bg-[#E53935] flex items-center justify-center text-white text-[10px] flex-shrink-0">
+                      ✓
+                    </div>
+                    <span className={currentTheme.text}>{item}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Action CTA Button */}
+            <button
+              onClick={() => router.push('/train/live-red-heart')}
+              className="py-3 px-6 rounded-xl bg-[#E53935] hover:bg-[#D32F2F] text-white font-extrabold text-xs shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 cursor-pointer w-full sm:w-auto"
+            >
+              <span>Start Live Practice</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
+
+          {/* Right Column: High-Res HeartSync Video Banner Image */}
+          <div className="w-full md:w-1/2 flex items-center justify-center relative">
+            <img
+              src={heartsyncBannerSrc}
+              alt="HeartSync Live Practice Banner"
+              className="w-full h-auto max-h-[220px] object-contain rounded-2xl drop-shadow-xl"
+            />
+          </div>
+        </motion.div>
+      </div>
+
+      {/* ── Choose a Practice Module Section ── */}
       <div className="mb-8">
-        <h2 className={`text-xl font-bold ${currentTheme.text} mb-4`}>Practice Modules</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h2 className={`text-xl font-extrabold tracking-tight ${currentTheme.heading}`}>
+              Choose a Practice Module
+            </h2>
+            <p className={`text-xs mt-0.5 ${currentTheme.textMuted}`}>
+              Pick a module and start practicing in seconds.
+            </p>
+          </div>
+
+          {/* Filter & Arrow Navigation Controls */}
+          <div className="flex items-center gap-3">
+            <button className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold border transition-all shadow-sm ${currentTheme.filterBtn}`}>
+              <span>Popular</span>
+              <ChevronDown size={14} />
+            </button>
+            <div className="flex items-center gap-1">
+              <button className={`p-1.5 rounded-xl border transition-colors ${currentTheme.navBtn}`}>
+                <ChevronLeft size={16} />
+              </button>
+              <button className={`p-1.5 rounded-xl border transition-colors ${currentTheme.navBtn}`}>
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* 4-Column Module Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {updatedModules.map((mod, index) => (
             <motion.div
               key={mod.type}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className={`
-                group relative ${currentTheme.cardBg} border ${currentTheme.cardBorder} 
-                rounded-2xl p-6 transition-all duration-300
-                ${isLightMode ? 'shadow-sm ring-1 ring-black/5' : ''}
-                ${mod.isLocked 
-                  ? 'opacity-60' 
-                  : isLightMode
-                    ? 'hover:border-indigo-200 hover:shadow-2xl hover:shadow-indigo-400/20 hover:-translate-y-2 hover:ring-indigo-100 cursor-pointer'
-                    : 'hover:border-[#5B6CFF]/30 hover:shadow-lg hover:shadow-[#5B6CFF]/10 hover:-translate-y-1 cursor-pointer'
-                }
-              `}
-              {...(mod.isLocked ? {} : { onClick: () => router.push(mod.href), role: 'button', tabIndex: 0, onKeyDown: (e) => e.key === 'Enter' && router.push(mod.href) })}
+              transition={{ delay: index * 0.04 }}
+              className={`group relative rounded-2xl p-5 border transition-all duration-300 flex flex-col justify-between min-h-[220px] overflow-hidden shadow-lg hover:-translate-y-1.5 hover:shadow-2xl ${currentTheme.moduleCard} ${mod.isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+              onClick={() => !mod.isLocked && router.push(mod.href)}
             >
-              {/* Gradient Background Effect */}
-              <div className={`absolute -right-20 -top-20 w-40 h-40 bg-gradient-to-br ${mod.gradient} blur-3xl transition-opacity duration-500 ${isLightMode ? 'opacity-0 group-hover:opacity-30' : 'opacity-0 group-hover:opacity-10'}`} />
+              {/* Color Glow Overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${mod.bgGlow} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
 
               <div className="relative z-10">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${mod.gradient} flex items-center justify-center shadow-lg`}>
-                    <mod.icon size={24} className="text-white" />
+                {/* Header: Icon + Badge/Lock */}
+                <div className="flex items-start justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl ${mod.accentBg} flex items-center justify-center shadow-sm`}>
+                    <mod.icon size={20} className={mod.color} />
                   </div>
-                  {mod.badge && (
-                    <span className={`px-2 py-1 rounded-md bg-gradient-to-r ${mod.gradient} text-white text-xs font-semibold`}>
-                      {mod.badge}
-                    </span>
-                  )}
-                  {mod.isLocked && (
-                    <div className="flex items-center gap-1 px-2 py-1 rounded-md bg-red-500/10 border border-red-500/20">
-                      <Lock size={12} className="text-red-400" />
-                      <span className="text-xs text-red-400">Locked</span>
-                    </div>
-                  )}
+                  <div className="flex flex-col items-end gap-1">
+                    {mod.badge && (
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r ${mod.gradient} text-white shadow-sm`}>
+                        {mod.badge}
+                      </span>
+                    )}
+                    {mod.isLocked ? (
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[10px] font-bold">
+                        <Lock size={10} />
+                        <span>Locked</span>
+                      </div>
+                    ) : (
+                      <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        mod.isUnlimited
+                          ? 'bg-emerald-500/15 text-emerald-500'
+                          : `${mod.accentBg} ${mod.color}`
+                      }`}>
+                        {mod.isUnlimited ? (
+                          <><Sparkles size={9} /><span>∞ Unlimited</span></>
+                        ) : (
+                          <><Target size={9} /><span>{mod.sessions === '-' ? '— sessions' : `${mod.sessions} left`}</span></>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Content */}
-                <h3 className={`text-lg font-bold ${currentTheme.text} mb-2 transition-colors ${isLightMode ? 'group-hover:text-indigo-600' : 'group-hover:text-[#5B6CFF]'}`}>
+                <h3 className={`text-base font-extrabold tracking-tight mb-1 transition-colors ${currentTheme.heading} group-hover:${mod.color}`}>
                   {mod.title}
                 </h3>
-                <p className={`text-sm ${currentTheme.textMuted} mb-4 line-clamp-2`}>
+                <p className={`text-xs leading-relaxed line-clamp-2 ${currentTheme.bodyText}`}>
                   {mod.description}
                 </p>
+              </div>
 
-                {/* Footer */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={14} className="text-[#22D3EE]" />
-                    <span className={`text-sm ${currentTheme.textMuted}`}>
-                      {/* CRITICAL FIX: Show correct session info based on module type */}
-                      {mod.isUnlimited ? (
-                        'Unlimited'
-                      ) : mod.sessions === '-' ? (
-                        <span className="inline-block w-16 h-4 rounded bg-current opacity-10 animate-pulse" />
-                      ) : (
-                        <>
-                          {mod.sessions} {mod.sessions === 1 ? 'session' : 'sessions'}
-                        </>
-                      )}
-                    </span>
-                  </div>
-                  
-                  {!mod.isLocked && (
-                    <Link
-                      href={mod.href}
-                      className={`
-                        flex items-center gap-1 text-sm font-semibold ${mod.color}
-                        group-hover:translate-x-1 transition-transform
-                      `}
-                    >
-                      Start
-                      <ArrowRight size={16} />
-                    </Link>
-                  )}
-                  
-                  {mod.isLocked && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-slate-500 z-20"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        router.push('/billing');
-                      }}
-                    >
-                      Upgrade
-                    </Button>
-                  )}
+              {/* 3D Illustration Graphic & Arrow Button */}
+              <div className="relative z-10 flex items-end justify-between pt-3">
+                <div className="opacity-90 group-hover:scale-105 transition-transform duration-300">
+                  {mod.graphic && <mod.graphic />}
+                </div>
+                <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-md ${currentTheme.moduleArrow}`}>
+                  <ArrowRight size={16} />
                 </div>
               </div>
             </motion.div>
           ))}
         </div>
+
       </div>
 
-      {/* Career Portal CTA Section */}
-      {autoApplyStatus && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`mb-8 ${currentTheme.cardBg} border ${
-            autoApplyStatus.enabled && autoApplyStatus.canAutoApply
-              ? isLightMode
-                ? 'border-emerald-200 shadow-lg shadow-emerald-100'
-                : 'border-emerald-500/30'
-              : isLightMode
-                ? 'border-purple-200 shadow-lg shadow-purple-100'
-                : 'border-purple-500/30'
-          } rounded-2xl p-6 bg-gradient-to-r ${
-            autoApplyStatus.enabled && autoApplyStatus.canAutoApply
-              ? isLightMode
-                ? 'from-emerald-50 to-teal-50'
-                : 'from-emerald-500/10 to-teal-500/10'
-              : isLightMode
-                ? 'from-purple-50 to-indigo-50'
-                : 'from-purple-500/10 to-indigo-500/10'
-          }`}
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${
-                autoApplyStatus.enabled && autoApplyStatus.canAutoApply
-                  ? 'from-emerald-500 to-teal-500'
-                  : 'from-purple-500 to-indigo-500'
-              } flex items-center justify-center`}>
-                <Briefcase size={24} className="text-white" />
-              </div>
-              <div>
-                {autoApplyStatus.enabled && autoApplyStatus.canAutoApply ? (
-                  <>
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className={`text-lg font-bold ${currentTheme.text}`}>
-                        Auto-Apply Active
-                      </h3>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">
-                        <Zap size={12} />
-                        {autoApplyStatus.count}/{autoApplyStatus.limit} used
-                      </span>
-                    </div>
-                    <p className={`text-sm ${currentTheme.textMuted}`}>
-                      Your profile is being matched with new jobs automatically. Browse available positions now!
-                    </p>
-                  </>
-                ) : !autoApplyStatus.canAutoApply ? (
-                  <>
-                    <h3 className={`text-lg font-bold ${currentTheme.text} mb-1`}>
-                      Unlock Auto-Apply
-                    </h3>
-                    <p className={`text-sm ${currentTheme.textMuted}`}>
-                      Upgrade to Standard or Pro to automatically apply to matching jobs while you train
-                    </p>
-                  </>
-                ) : (
-                  <>
-                    <h3 className={`text-lg font-bold ${currentTheme.text} mb-1`}>
-                      Enable Auto-Apply
-                    </h3>
-                    <p className={`text-sm ${currentTheme.textMuted}`}>
-                      Set your job preferences and let our AI apply to matching positions for you
-                    </p>
-                  </>
-                )}
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                onClick={() => router.push('/jobs')}
-                variant="outline"
-                className={`${
-                  isLightMode
-                    ? 'border-slate-300 hover:bg-slate-100'
-                    : 'border-white/10 hover:bg-white/5'
-                } font-medium`}
-              >
-                Browse Jobs
-              </Button>
-              {autoApplyStatus.canAutoApply ? (
-                <Button
-                  onClick={() => router.push('/train/auto-apply-setup')}
-                  className={`bg-gradient-to-r ${
-                    autoApplyStatus.enabled
-                      ? 'from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600'
-                      : 'from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'
-                  } text-white font-semibold`}
-                >
-                  {autoApplyStatus.enabled ? 'Manage Settings' : 'Enable Auto-Apply'}
-                </Button>
-              ) : (
-                <Button
-                  onClick={() => router.push('/pricing')}
-                  className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-semibold"
-                >
-                  Upgrade Plan
-                </Button>
-              )}
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* CTA Section */}
-      {planInfo && planInfo.plan === 'Free' && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className={`${currentTheme.cardBg} border ${isLightMode ? 'border-indigo-200 shadow-lg shadow-indigo-100' : 'border-[#5B6CFF]/30'} rounded-2xl p-6 bg-gradient-to-r ${isLightMode ? 'from-indigo-50 to-violet-50' : 'from-[#5B6CFF]/10 to-[#8B5CF6]/10'}`}
-        >
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#5B6CFF] to-[#8B5CF6] flex items-center justify-center">
-                <Sparkles size={24} className="text-white" />
-              </div>
-              <div>
-                <h3 className={`text-lg font-bold ${currentTheme.text} mb-1`}>
-                  Unlock Unlimited Practice
-                </h3>
-                <p className={`text-sm ${currentTheme.textMuted}`}>
-                  Upgrade to Pro for unlimited sessions and advanced features
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={() => router.push('/billing')}
-              className="bg-gradient-to-r from-[#5B6CFF] to-[#8B5CF6] hover:from-[#4B5CE8] hover:to-[#7B4CE6] text-white font-semibold px-6"
-            >
-              Upgrade Now
-            </Button>
-          </div>
-        </motion.div>
-      )}
     </div>
-    </>
   );
 }
+

@@ -126,6 +126,9 @@ const VoiceAgent: React.FC<{
   showSettings?: boolean;
   onShowSettingsChange?: (show: boolean) => void;
   hideEndButton?: boolean;
+  /** When true, the static HR image is replaced by the muted AI HR video.
+   *  Must ONLY be set to true for Company Wise HR on mobile. */
+  showHRVideo?: boolean;
 }> = ({ 
   user, 
   type: propType,
@@ -133,7 +136,8 @@ const VoiceAgent: React.FC<{
   onInterviewStart,
   showSettings,
   onShowSettingsChange,
-  hideEndButton = false
+  hideEndButton = false,
+  showHRVideo = false,
 }) => {
   const { type: paramType } = useParams<{ type: string }>();
   const type = propType || (paramType as ModuleType);
@@ -147,6 +151,9 @@ const VoiceAgent: React.FC<{
   const [isFinished, setIsFinished] = useState(false);
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [isUserSpeaking, setIsUserSpeaking] = useState(false);
+
+  // ── AI HR Video ref — only used when showHRVideo=true (Company Wise HR mobile) ──
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const [localShowSettings, setLocalShowSettings] = useState(false);
   const isSettingsShown = showSettings !== undefined ? showSettings : localShowSettings;
@@ -917,6 +924,28 @@ const VoiceAgent: React.FC<{
     }
   }, [isFinished, router]);
 
+  // ── Sync AI HR video with isAiSpeaking lifecycle ──────────────────────────
+  // Only active when showHRVideo=true (Company Wise HR on mobile).
+  // Uses the REAL TTS audio state (isAiSpeaking) — not a timer.
+  // play() is called safely with .catch() to handle browser autoplay policy.
+  // Video is muted+loop+playsInline — never outputs audio.
+  useEffect(() => {
+    if (!showHRVideo) return;
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isAiSpeaking) {
+      video.play().catch(() => {
+        // Autoplay blocked — interview continues working normally.
+        // No error shown to candidate.
+      });
+    } else {
+      video.pause();
+      // currentTime is intentionally NOT reset — video resumes from last frame
+      // giving the illusion the HR interviewer stopped talking and is now listening.
+    }
+  }, [isAiSpeaking, showHRVideo]);
+
   // Prevent user from closing/navigating away while data is saving
   useEffect(() => {
     if (!isSaving) return;
@@ -1170,14 +1199,39 @@ From now on, speak and act strictly according to these new settings!]`
         </div>
         ) : (
           <div className="w-full max-w-2xl mx-auto space-y-1.5">
-            {/* AI HR Interviewer Image - 100% clean, unblocked face */}
+            {/* AI HR Interviewer — video on Company Wise HR mobile, image elsewhere */}
             <div className="relative w-full aspect-[16/10] min-h-[140px] max-h-44 sm:max-h-56 rounded-xl overflow-hidden border shadow-xl flex items-center justify-center bg-slate-950 border-slate-700/60">
-              <img
-                src="/image/img.png"
-                alt="AI HR Interviewer"
-                className="w-full h-full object-cover object-top"
-                style={{ objectPosition: 'top center' }}
-              />
+              {showHRVideo ? (
+                /* ─── Company Wise HR Mobile: muted AI HR video ───────────────
+                 * - muted:      video NEVER outputs audio (AI TTS is the only voice)
+                 * - loop:       video loops while AI speaks long questions
+                 * - playsInline: prevents iOS fullscreen takeover
+                 * - preload:    pre-buffers so first frame is instant, no black flash
+                 * - controls are hidden — this is an interviewer UI, not a player UI
+                 */
+                <video
+                  ref={videoRef}
+                  src="/video/interviewvid.mp4"
+                  muted
+                  loop
+                  playsInline
+                  preload="auto"
+                  className="w-full h-full object-cover object-top"
+                  style={{ objectPosition: 'top center' }}
+                  onError={() => {
+                    // Video failed to load — interview continues normally.
+                    // The element stays in the DOM but invisible (no poster).
+                    console.warn('[AIHRVideo] /video/interviewvid.mp4 failed to load — interview unaffected');
+                  }}
+                />
+              ) : (
+                <img
+                  src="/image/img.png"
+                  alt="AI HR Interviewer"
+                  className="w-full h-full object-cover object-top"
+                  style={{ objectPosition: 'top center' }}
+                />
+              )}
             </div>
 
             {/* Dynamic Audio Visualizer & Live Speaking Status Bar BELOW Image */}

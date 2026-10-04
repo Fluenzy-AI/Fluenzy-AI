@@ -326,6 +326,7 @@ export default function MobileSessionPage() {
             showSettings={showSettings}
             onShowSettingsChange={setShowSettings}
             hideEndButton={true}
+            showHRVideo={isCompanyWise}
           />
         </div>
 
