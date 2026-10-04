@@ -152,8 +152,12 @@ const VoiceAgent: React.FC<{
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [isUserSpeaking, setIsUserSpeaking] = useState(false);
 
-  // ── AI HR Video ref — only used when showHRVideo=true (Company Wise HR mobile) ──
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // ── AI HR Video refs — only used when showHRVideo=true (Company Wise HR mobile) ──
+  // speakingVideoRef: /video/interviewvid.mp4  (plays while AI TTS is active)
+  // listeningVideoRef: /video/stop.mp4         (loops while candidate answers)
+  // Both are always mounted so they preload; visibility toggled via opacity.
+  const speakingVideoRef = useRef<HTMLVideoElement>(null);
+  const listeningVideoRef = useRef<HTMLVideoElement>(null);
 
   const [localShowSettings, setLocalShowSettings] = useState(false);
   const isSettingsShown = showSettings !== undefined ? showSettings : localShowSettings;
@@ -924,25 +928,36 @@ const VoiceAgent: React.FC<{
     }
   }, [isFinished, router]);
 
-  // ── Sync AI HR video with isAiSpeaking lifecycle ──────────────────────────
-  // Only active when showHRVideo=true (Company Wise HR on mobile).
-  // Uses the REAL TTS audio state (isAiSpeaking) — not a timer.
-  // play() is called safely with .catch() to handle browser autoplay policy.
-  // Video is muted+loop+playsInline — never outputs audio.
+  // ── Dual-video HR sync: speaking ↔ listening (Company Wise HR mobile only) ──
+  // Source of truth: isAiSpeaking (real TTS AudioBufferSourceNode lifecycle).
+  // Both <video> elements are always in the DOM so both preload with no reload.
+  // Visibility is toggled via opacity — zero black flash between switches.
+  //
+  //   isAiSpeaking = true  → speakingVideoRef (/video/interviewvid.mp4) plays
+  //                          listeningVideoRef (/video/stop.mp4)        pauses
+  //   isAiSpeaking = false → listeningVideoRef (/video/stop.mp4)        plays
+  //                          speakingVideoRef (/video/interviewvid.mp4) pauses
   useEffect(() => {
     if (!showHRVideo) return;
-    const video = videoRef.current;
-    if (!video) return;
+    const speaking  = speakingVideoRef.current;
+    const listening = listeningVideoRef.current;
 
     if (isAiSpeaking) {
-      video.play().catch(() => {
-        // Autoplay blocked — interview continues working normally.
-        // No error shown to candidate.
-      });
+      // ── AI is speaking: show interviewvid.mp4, pause stop.mp4 ──
+      if (listening) listening.pause();
+      if (speaking) {
+        speaking.play().catch(() => {
+          // Autoplay blocked — interview continues working normally.
+        });
+      }
     } else {
-      video.pause();
-      // currentTime is intentionally NOT reset — video resumes from last frame
-      // giving the illusion the HR interviewer stopped talking and is now listening.
+      // ── AI finished / candidate turn: show stop.mp4, pause interviewvid.mp4 ──
+      if (speaking) speaking.pause();
+      if (listening) {
+        listening.play().catch(() => {
+          // Autoplay blocked — interview continues working normally.
+        });
+      }
     }
   }, [isAiSpeaking, showHRVideo]);
 
@@ -1199,37 +1214,63 @@ From now on, speak and act strictly according to these new settings!]`
         </div>
         ) : (
           <div className="w-full max-w-2xl mx-auto space-y-1.5">
-            {/* AI HR Interviewer — video on Company Wise HR mobile, image elsewhere */}
-            <div className="relative w-full aspect-[16/10] min-h-[140px] max-h-44 sm:max-h-56 rounded-xl overflow-hidden border shadow-xl flex items-center justify-center bg-slate-950 border-slate-700/60">
+            {/* AI HR Interviewer — dual-video on Company Wise HR mobile, static image elsewhere */}
+            <div className="relative w-full aspect-[16/10] min-h-[140px] max-h-44 sm:max-h-56 rounded-xl overflow-hidden border shadow-xl bg-slate-950 border-slate-700/60">
               {showHRVideo ? (
-                /* ─── Company Wise HR Mobile: muted AI HR video ───────────────
-                 * - muted:      video NEVER outputs audio (AI TTS is the only voice)
-                 * - loop:       video loops while AI speaks long questions
-                 * - playsInline: prevents iOS fullscreen takeover
-                 * - preload:    pre-buffers so first frame is instant, no black flash
-                 * - controls are hidden — this is an interviewer UI, not a player UI
-                 */
-                <video
-                  ref={videoRef}
-                  src="/video/interviewvid.mp4"
-                  muted
-                  loop
-                  playsInline
-                  preload="auto"
-                  className="w-full h-full object-cover object-top"
-                  style={{ objectPosition: 'top center' }}
-                  onError={() => {
-                    // Video failed to load — interview continues normally.
-                    // The element stays in the DOM but invisible (no poster).
-                    console.warn('[AIHRVideo] /video/interviewvid.mp4 failed to load — interview unaffected');
-                  }}
-                />
+                <>
+                  {/* ── Company Wise HR Mobile: dual muted HR videos ──────────────
+                   *  Both <video> elements are always mounted (preloaded).
+                   *  Visibility toggled via opacity — zero black flash on switch.
+                   *  object-position: center 15% frames the face in the upper-center
+                   *  of the card (head+eyes+shoulders visible, professional framing).
+                   *  Both videos use identical objectPosition so the face stays
+                   *  locked when switching speaking ↔ listening.
+                   */}
+
+                  {/* Speaking video: plays while AI TTS is active */}
+                  <video
+                    ref={speakingVideoRef}
+                    src="/video/interviewvid.mp4"
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-200"
+                    style={{
+                      objectPosition: 'center 15%',
+                      opacity: isAiSpeaking ? 1 : 0,
+                      pointerEvents: 'none',
+                    }}
+                    onError={() => {
+                      console.warn('[AIHRVideo] /video/interviewvid.mp4 failed to load — interview unaffected');
+                    }}
+                  />
+
+                  {/* Listening video: loops while candidate answers */}
+                  <video
+                    ref={listeningVideoRef}
+                    src="/video/stop.mp4"
+                    muted
+                    loop
+                    playsInline
+                    preload="auto"
+                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-200"
+                    style={{
+                      objectPosition: 'center 15%',
+                      opacity: isAiSpeaking ? 0 : 1,
+                      pointerEvents: 'none',
+                    }}
+                    onError={() => {
+                      console.warn('[AIHRVideo] /video/stop.mp4 failed to load — interview unaffected');
+                    }}
+                  />
+                </>
               ) : (
                 <img
                   src="/image/img.png"
                   alt="AI HR Interviewer"
-                  className="w-full h-full object-cover object-top"
-                  style={{ objectPosition: 'top center' }}
+                  className="absolute inset-0 w-full h-full object-cover"
+                  style={{ objectPosition: 'center 15%' }}
                 />
               )}
             </div>
