@@ -1128,7 +1128,7 @@ From now on, speak and act strictly according to these new settings!]`
               hideEndButton && type !== ModuleType.COMPANY_WISE_HR && type !== ModuleType.COMPANY_SPECIFIC ? 'h-64 sm:h-80' : 'aspect-[16/9] max-h-56'
             }`}>
               <img
-                src="/image/img.png"
+                src="/image/avtar.jpg"
                 alt="AI Coach"
                 className="w-full h-full object-cover object-top"
                 style={{ objectPosition: 'top center' }}
@@ -1267,7 +1267,7 @@ From now on, speak and act strictly according to these new settings!]`
                 </>
               ) : (
                 <img
-                  src="/image/img.png"
+                  src="/image/avtar.jpg"
                   alt="AI HR Interviewer"
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{ objectPosition: 'center 15%' }}
