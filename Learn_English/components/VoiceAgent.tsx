@@ -319,6 +319,128 @@ const VoiceAgent: React.FC<{
   const currentTurnIdRef = useRef<string | null>(null);
   const currentSessionIdRef = useRef<string | null>(null);
 
+  // ── P0 FIX: Post-turn finalization window ────────────────────────────────
+  //
+  // Root cause: Gemini Live delivers `inputTranscription` events and
+  // `turnComplete` in SEPARATE WebSocket frames. The ordering is NOT
+  // guaranteed — `turnComplete` can arrive 50–500ms before the final
+  // `inputTranscription` chunk. The old code reset `currentQA.current`
+  // on `turnComplete`, so any late STT chunk was silently discarded or
+  // added to the NEXT turn's answer instead.
+  //
+  // Fix: when `turnComplete` fires we:
+  //   1. Snapshot + push the current answer to transcriptHistory as-is
+  //   2. Open a 600ms back-patch window on that committed entry
+  //   3. Any `inputTranscription` arriving during the window is appended
+  //      to the ALREADY-COMMITTED entry (not the next turn's buffer)
+  //   4. At window close, run Prompt1 reconstruction on the fully
+  //      assembled transcript (not the incomplete snapshot)
+  //   5. cleanup() flushes the window synchronously so End cannot lose
+  //      speech that arrived right before the button press.
+  //
+  // States:
+  //   null                    → no turn in finalization
+  //   { entryIndex, timer }   → window open; late STT still arriving
+  //
+  const FINALIZATION_WINDOW_MS = 600;
+  type PostTurnBuffer = {
+    entryIndex: number;
+    timer: ReturnType<typeof setTimeout> | null;
+    extraAnswer: string;  // accumulated late STT during the window
+  };
+  const postTurnBufferRef = useRef<PostTurnBuffer | null>(null);
+
+  /**
+   * Flush the finalization window immediately (called from cleanup before save).
+   * Cancels the timer and commits whatever late STT has arrived so far.
+   */
+  const flushPostTurnBuffer = useCallback(() => {
+    const buf = postTurnBufferRef.current;
+    if (!buf) return;
+    if (buf.timer) {
+      clearTimeout(buf.timer);
+      buf.timer = null;
+    }
+    // Back-patch is already done incrementally; just mark done
+    postTurnBufferRef.current = null;
+    console.log('[FINALIZATION] Post-turn buffer flushed synchronously before save');
+  }, []);
+
+  /**
+   * Called when the finalization window closes (timer fires or flush).
+   * Runs Prompt1 reconstruction on the NOW-COMPLETE transcript for this entry.
+   * By deferring this until after the window, Prompt1 always sees the full answer
+   * (including late STT chunks), not just the snapshot at turnComplete time.
+   */
+  const finalizeTurn = useCallback((entryIndex: number) => {
+    // Clear the buffer reference
+    if (postTurnBufferRef.current?.entryIndex === entryIndex) {
+      postTurnBufferRef.current = null;
+    }
+
+    const entry = transcriptHistory.current[entryIndex];
+    if (!entry) return;
+
+    const finalAnswer = entry.answer.trim();
+    console.log(
+      `[FINALIZATION] Turn ${entryIndex} finalized. Answer: "${finalAnswer.slice(0, 80)}..." (${finalAnswer.length} chars)`
+    );
+
+    // Classify the transcript status
+    if (!finalAnswer) {
+      // Confirm no speech — mark explicitly so History UI shows amber indicator
+      transcriptHistory.current[entryIndex] = {
+        ...entry,
+        transcriptStatus: 'NO_SPEECH',
+      };
+      console.warn(`[FINALIZATION] Turn ${entryIndex}: NO_SPEECH confirmed after full window`);
+      return;
+    }
+
+    // Mark as finalized
+    transcriptHistory.current[entryIndex] = { ...entry, transcriptStatus: 'FINALIZED' };
+
+    // Run Prompt1 reconstruction on the complete answer (not the snapshot)
+    if (isInterviewModule) {
+      const historyForContext = transcriptHistory.current.slice(Math.max(0, entryIndex - 3), entryIndex);
+      const conversationContext = historyForContext
+        .map(h => `[HR]: ${h.question}\n[Candidate]: ${h.answer}`)
+        .join('\n\n');
+
+      runTranscriptReconstruction(finalAnswer, conversationContext)
+        .then((p1Output) => {
+          const current = transcriptHistory.current[entryIndex];
+          if (!current) return;
+
+          transcriptHistory.current[entryIndex] = {
+            ...current,
+            answer: p1Output.status !== 'capture_failed'
+              ? p1Output.reconstructed_text || current.answer
+              : current.answer,
+            p1Status:        p1Output.status,
+            p1Confidence:    p1Output.confidence,
+            p1UnclearSpans:  p1Output.unclear_spans,
+            isCaptureFailed: p1Output.status === 'capture_failed',
+            transcriptStatus: p1Output.status === 'capture_failed' ? 'FAILED' : 'VERIFIED',
+          };
+
+          if (p1Output.status === 'capture_failed') {
+            console.warn(`[FINALIZATION] Turn ${entryIndex}: capture_failed — nudging AI to repeat`);
+            sessionRef.current?.sendRealtimeInput({
+              text: "[CAPTURE_FAILED: the candidate's last response was not captured by the microphone. Please ask them politely to repeat their answer before continuing.]",
+            });
+          } else {
+            console.log(`[FINALIZATION] Turn ${entryIndex}: Prompt1 VERIFIED. Confidence: ${p1Output.confidence}`);
+          }
+        })
+        .catch((err) => {
+          console.error('[FINALIZATION] Prompt1 reconstruction error for turn', entryIndex, err);
+          // Non-fatal: keep the raw STT answer
+        });
+    }
+  }, [isInterviewModule]);
+
+
   const cleanup = useCallback(async (saveResults = false) => {
     // ── FIX P3: Idempotency guard — safe to call multiple times ──────────────
     // onerror and onclose both fire when Gemini session dies; without this guard
@@ -328,6 +450,12 @@ const VoiceAgent: React.FC<{
       return;
     }
     cleaningUpRef.current = true;
+
+    // ── P0 FIX: Flush finalization window BEFORE saving ───────────────────────
+    // If the user clicked End while a post-turn window was open (speech arrived
+    // right before End button), flush immediately so the late STT is committed
+    // to the history entry before we read transcriptHistory for saving.
+    flushPostTurnBuffer();
 
     // Clear silence detection timer
     if (silenceTimerRef.current) {
@@ -886,61 +1014,81 @@ const VoiceAgent: React.FC<{
             }, 5000);
           },
           onmessage: async (m) => {
-            if (m.serverContent?.outputTranscription?.text) currentQA.current.question += m.serverContent.outputTranscription.text;
+            // ── outputTranscription: AI's spoken text accumulates as the "question" ──
+            if (m.serverContent?.outputTranscription?.text) {
+              currentQA.current.question += m.serverContent.outputTranscription.text;
+            }
+
+            // ── inputTranscription: User's STT — P0 RACE FIX ─────────────────────
+            //
+            // Gemini Live does NOT guarantee that all inputTranscription events
+            // arrive BEFORE turnComplete. The final STT chunk(s) often arrive in
+            // a subsequent WebSocket frame 50–500ms after turnComplete.
+            //
+            // Decision table:
+            //   postTurnBuffer OPEN  → late STT: back-patch the COMMITTED entry
+            //   postTurnBuffer CLOSED → normal STT: accumulate in currentQA
             if (m.serverContent?.inputTranscription?.text) {
-              currentQA.current.answer += m.serverContent.inputTranscription.text;
-              // Reset silence prompt count when user speaks
+              const sttText = m.serverContent.inputTranscription.text;
+              const buf = postTurnBufferRef.current;
+
+              if (buf) {
+                // ── Late STT: back-patch the committed history entry ──────────
+                buf.extraAnswer += sttText;
+                const entry = transcriptHistory.current[buf.entryIndex];
+                if (entry) {
+                  transcriptHistory.current[buf.entryIndex] = {
+                    ...entry,
+                    answer: entry.answer + sttText,
+                  };
+                  console.log(
+                    `[FINALIZATION] Late STT back-patched to entry ${buf.entryIndex}:`,
+                    `+${sttText.length} chars. Total now: ${transcriptHistory.current[buf.entryIndex].answer.length} chars`
+                  );
+                }
+                // Extend the window: the provider may still be streaming chunks
+                if (buf.timer) clearTimeout(buf.timer);
+                buf.timer = setTimeout(() => {
+                  finalizeTurn(buf.entryIndex);
+                }, FINALIZATION_WINDOW_MS);
+              } else {
+                // ── Normal STT: accumulate in current turn buffer ─────────────
+                currentQA.current.answer += sttText;
+              }
+
               silencePromptCountRef.current = 0;
               lastUserSpeechRef.current = Date.now();
             }
+
+            // ── turnComplete: AI's turn is done, user may speak next ─────────
             if (m.serverContent?.turnComplete) {
+              // 1. Snapshot the current Q/A and push to history immediately.
+              //    The AI can start generating the next question right away.
               const completedQA = { ...currentQA.current, timestamp: new Date().toLocaleTimeString() };
               transcriptHistory.current.push(completedQA);
               const entryIndex = transcriptHistory.current.length - 1;
+
+              // 2. Reset currentQA so next turn accumulates cleanly.
               currentQA.current = { question: '', answer: '' };
-              // Reset last speech time when turn completes to give user time to respond
               lastUserSpeechRef.current = Date.now();
               isFirstChunkOfTurnRef.current = true;
 
-              // ── Prompt 1: Async Transcript Reconstruction (interview modules only) ────
-              // Fired in the background — does NOT block the Live audio stream.
-              // Back-patches the stored history entry once reconstruction resolves.
-              if (isInterviewModule && completedQA.answer.trim()) {
-                // Build conversation context from last 2 stored turns
-                const historyForContext = transcriptHistory.current.slice(-4, -1);
-                const conversationContext = historyForContext
-                  .map(h => `[HR]: ${h.question}\n[Candidate]: ${h.answer}`)
-                  .join('\n\n');
-
-                runTranscriptReconstruction(completedQA.answer, conversationContext)
-                  .then((p1Output) => {
-                    const entry = transcriptHistory.current[entryIndex];
-                    if (!entry) return;
-
-                    // Back-patch the entry with reconstruction metadata
-                    transcriptHistory.current[entryIndex] = {
-                      ...entry,
-                      // Replace raw STT answer with reconstructed text (unless capture failed)
-                      answer: p1Output.status !== 'capture_failed'
-                        ? p1Output.reconstructed_text || entry.answer
-                        : entry.answer,
-                      p1Status:       p1Output.status,
-                      p1Confidence:   p1Output.confidence,
-                      p1UnclearSpans: p1Output.unclear_spans,
-                      isCaptureFailed: p1Output.status === 'capture_failed',
-                    };
-
-                    if (p1Output.status === 'capture_failed') {
-                      // Inject a gentle in-session prompt so the Live AI asks the candidate to repeat.
-                      // This is a text nudge to the already-connected Live session.
-                      console.warn('[PROMPT1] capture_failed — nudging AI to ask for repeat');
-                      sessionRef.current?.sendRealtimeInput({
-                        text: '[CAPTURE_FAILED: the candidate\'s last response was not captured by the microphone. Please ask them politely to repeat their answer before continuing.]',
-                      });
-                    }
-                  })
-                  .catch((err) => console.error('[PROMPT1_BACKPATCH_ERROR]', err));
+              // 3. Open the finalization window for this entry.
+              //    Late inputTranscription events will back-patch entryIndex.
+              if (postTurnBufferRef.current?.timer) {
+                clearTimeout(postTurnBufferRef.current.timer);
               }
+              postTurnBufferRef.current = {
+                entryIndex,
+                extraAnswer: '',
+                timer: setTimeout(() => {
+                  finalizeTurn(entryIndex);
+                }, FINALIZATION_WINDOW_MS),
+              };
+
+              console.log(
+                `[FINALIZATION] turnComplete for entry ${entryIndex}. Initial answer length: ${completedQA.answer.length}. Window: ${FINALIZATION_WINDOW_MS}ms`
+              );
             }
             const data = m.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (data) {

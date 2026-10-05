@@ -67,6 +67,15 @@ export interface QAPair {
   p1UnclearSpans?: string[];
   /** true when Prompt 1 returned capture_failed — exclude this turn from scoring */
   isCaptureFailed?: boolean;
+  /**
+   * Finalization lifecycle state set by the post-turn finalization window.
+   * ACCUMULATING - 600ms window is open; late STT may still arrive
+   * FINALIZED    - window closed; answer is the complete assembled text
+   * NO_SPEECH    - window closed with empty answer (confirmed no audio)
+   * FAILED       - Prompt1 reconstruction returned capture_failed
+   * VERIFIED     - Prompt1 reconstruction succeeded with confidence
+   */
+  transcriptStatus?: 'ACCUMULATING' | 'FINALIZED' | 'NO_SPEECH' | 'FAILED' | 'VERIFIED';
 }
 
 // Added InterviewQA interface to store structured question-answer pairs with metrics
@@ -86,6 +95,15 @@ export interface InterviewQA {
   p1UnclearSpans?: string[];
   /** true when Prompt 1 returned capture_failed — exclude this turn from scoring */
   isCaptureFailed?: boolean;
+  /**
+   * Finalization lifecycle state set by the post-turn finalization window.
+   * ACCUMULATING - 600ms window is open; late STT may still arrive
+   * FINALIZED    - window closed; answer is the complete assembled text
+   * NO_SPEECH    - window closed with empty answer (confirmed no audio)
+   * FAILED       - Prompt1 reconstruction returned capture_failed
+   * VERIFIED     - Prompt1 reconstruction succeeded with confidence
+   */
+  transcriptStatus?: 'ACCUMULATING' | 'FINALIZED' | 'NO_SPEECH' | 'FAILED' | 'VERIFIED';
 }
 
 export interface SessionRecord {
