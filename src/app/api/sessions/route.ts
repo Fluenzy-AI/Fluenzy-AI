@@ -175,23 +175,60 @@ export async function GET(request: NextRequest) {
     const sessions = await (prisma as any).session.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
-      select: {
-        sessionId: true,
-        module: true,
-        createdAt: true,
-        startTime: true,
-        endTime: true,
-        aggregateScore: true,
-        status: true,
-        targetCompany: true,
-        role: true,
-        duration: true
-      }
+      include: {
+        // ── Critical: must include transcripts for History modal to display ──
+        // Previously this was a `select` with NO transcripts field, causing
+        // the "No turn transcripts recorded" UI state even when data existed.
+        transcripts: {
+          orderBy: [{ createdAt: 'asc' }, { turnNumber: 'asc' }],
+          select: {
+            id: true,
+            turnNumber: true,
+            aiPrompt: true,
+            userAnswer: true,
+            aiFeedback: true,
+            idealAnswer: true,
+            clarityScore: true,
+            relevanceScore: true,
+            grammarScore: true,
+            confidenceScore: true,
+            technicalAccuracyScore: true,
+            perQuestionScore: true,
+            createdAt: true,
+          },
+        },
+      },
+      // Use select only for session-level scalar fields (avoid returning full user object)
     });
 
-    const formattedSessions = sessions.map((session: any) => ({
-      ...session,
-      durationMinutes: getDurationMinutes(session.startTime, session.endTime, session.duration)
+    const formattedSessions = sessions.map((s: any) => ({
+      sessionId:      s.sessionId,
+      module:         s.module,
+      createdAt:      s.createdAt,
+      startTime:      s.startTime,
+      endTime:        s.endTime,
+      aggregateScore: s.aggregateScore,
+      status:         s.status,
+      targetCompany:  s.targetCompany,
+      role:           s.role,
+      duration:       s.duration,
+      durationMinutes: getDurationMinutes(s.startTime, s.endTime, s.duration),
+      // Map Transcript rows to the shape the History UI expects
+      transcripts: (s.transcripts || []).map((t: any) => ({
+        turnNumber:       t.turnNumber,
+        aiPrompt:         t.aiPrompt,
+        userAnswer:       t.userAnswer,
+        aiFeedback:       t.aiFeedback,
+        idealAnswer:      t.idealAnswer,
+        perQuestionScore: t.perQuestionScore,
+        scores: {
+          clarity:           t.clarityScore,
+          relevance:         t.relevanceScore,
+          grammar:           t.grammarScore,
+          confidence:        t.confidenceScore,
+          technicalAccuracy: t.technicalAccuracyScore,
+        },
+      })),
     }));
 
     return NextResponse.json(formattedSessions);

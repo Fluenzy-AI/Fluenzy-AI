@@ -31,8 +31,23 @@ export async function POST(request: NextRequest) {
       if (denied) return denied;
     }
 
-    if (!question || !answer) {
-      return NextResponse.json({ error: 'Question and answer are required' }, { status: 400 });
+    if (!question) {
+      return NextResponse.json({ error: 'Question is required' }, { status: 400 });
+    }
+
+    // ── Empty/missing answer: return a structured fallback, do NOT reject ──
+    // An empty answer means STT captured nothing for this turn (microphone off,
+    // very short response, or connection drop). Returning 400 causes the caller
+    // to hit a rejected Promise.allSettled entry and the turn gets no feedback.
+    // We return a graceful degraded response instead.
+    if (!answer || !String(answer).trim()) {
+      return NextResponse.json({
+        idealAnswer: 'Please provide a verbal response to the interview question.',
+        aiFeedback: 'No speech was captured for this turn. Ensure your microphone is active and speak clearly.',
+        scores: { clarity: 0, relevance: 0, grammar: 0, confidence: 0, technicalAccuracy: 0 },
+        perQuestionScore: 0,
+        transcriptStatus: 'NO_SPEECH_CAPTURED',
+      });
     }
 
     const prompt = `

@@ -147,6 +147,8 @@ function SessionDetailModal({
 }) {
   const { resolvedTheme } = useTheme();
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   const scorePct = Math.round(
     typeof session.aggregateScore === "number"
@@ -158,8 +160,54 @@ function SessionDetailModal({
 
   const isPassed = scorePct >= 70;
 
-  const handleDownloadPDF = () => {
-    window.open(`/api/generate-pdf?sessionId=${session.sessionId || session.id}&format=pdf`, "_blank");
+  // ── Production-grade PDF download ─────────────────────────────────────────
+  // Uses fetch + blob download to trigger a real file download.
+  // Previously used window.open which opened an HTML page instead of a PDF.
+  const handleDownloadPDF = async () => {
+    if (isDownloading) return;
+    setIsDownloading(true);
+    setDownloadError(null);
+    try {
+      const sid = session.sessionId || session.id;
+      const response = await fetch(`/api/generate-pdf?sessionId=${sid}&format=pdf`);
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.error || `Server returned ${response.status}`);
+      }
+      const contentType = response.headers.get("content-type") || "";
+      // If the server redirected to a CDN URL, open that directly
+      if (contentType.includes("text/html")) {
+        // Fallback: server returned HTML report — open in new tab for printing
+        const html = await response.text();
+        const blob = new Blob([html], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.target = "_blank";
+        a.rel = "noopener";
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        // Real PDF binary — trigger browser download
+        const blob = await response.blob();
+        if (blob.size < 100) {
+          throw new Error("PDF is empty or corrupt. Please try again.");
+        }
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `fluenzy-audit-${sid}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err: any) {
+      console.error("[PDF_DOWNLOAD_ERROR]", err);
+      setDownloadError(err?.message || "Download failed. Please try again.");
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const transcripts = session.transcripts || [];
@@ -245,7 +293,21 @@ function SessionDetailModal({
             </div>
 
             {transcripts.length === 0 ? (
-              <p className="text-xs text-slate-400 italic">No turn transcripts recorded for this session.</p>
+              // ── Distinguish truly empty from API error ───────────────────
+              // An empty array here means the session was saved with 0 turns
+              // (interview was ended immediately, or transcript persistence failed).
+              // We no longer show this for API-level failures — those are caught
+              // in HistoryContent and the session would not be rendered at all.
+              <div className="rounded-xl border border-dashed border-white/10 p-5 text-center space-y-1">
+                <AlertCircle size={20} className="text-amber-400 mx-auto mb-1" />
+                <p className="text-xs font-semibold text-amber-300">No conversation turns were recorded</p>
+                <p className="text-[11px] text-slate-500">
+                  The session completed without any captured speech turns. This may happen
+                  if the interview ended before the first AI response or if the microphone
+                  was not active. The Audit PDF may still contain analysis if data was
+                  captured at report time.
+                </p>
+              </div>
             ) : (
               <div className="space-y-4">
                 {transcripts.map((turn: any, index: number) => (
@@ -258,12 +320,21 @@ function SessionDetailModal({
                       </p>
                     </div>
 
-                    {/* Candidate Answer */}
-                    {(turn.userAnswer || turn.speaker?.includes("You")) && (
+                    {/* Candidate Answer — show whenever userAnswer is a non-empty string */}
+                    {typeof turn.userAnswer === "string" && turn.userAnswer.trim().length > 0 && (
                       <div className="pl-3 border-l-2 border-cyan-500 space-y-1 bg-cyan-500/5 p-2.5 rounded-r-lg">
                         <span className="text-[10px] uppercase font-bold tracking-wider text-cyan-300">Your Response</span>
                         <p className="text-xs md:text-sm text-slate-300 leading-relaxed">
-                          {turn.userAnswer || turn.text}
+                          {turn.userAnswer}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Empty transcript indicator for a specific turn */}
+                    {!(typeof turn.userAnswer === "string" && turn.userAnswer.trim().length > 0) && (
+                      <div className="pl-3 border-l-2 border-amber-500/40 bg-amber-500/5 p-2 rounded-r-lg">
+                        <p className="text-[11px] text-amber-400 italic">
+                          No speech captured for this turn.
                         </p>
                       </div>
                     )}
@@ -292,14 +363,32 @@ function SessionDetailModal({
             <span>Encrypted Audit History</span>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={onClose} className="h-9 text-xs rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10">
-              Close
-            </Button>
-            <Button onClick={handleDownloadPDF} className="h-9 text-xs rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold">
-              <Download size={13} className="mr-1.5" />
-              Download Audit PDF
-            </Button>
+          <div className="flex flex-col items-end gap-1.5">
+            {downloadError && (
+              <p className="text-[11px] text-rose-400">{downloadError}</p>
+            )}
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" onClick={onClose} className="h-9 text-xs rounded-xl border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10">
+                Close
+              </Button>
+              <Button
+                onClick={handleDownloadPDF}
+                disabled={isDownloading}
+                className="h-9 text-xs rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isDownloading ? (
+                  <>
+                    <RefreshCw size={13} className="mr-1.5 animate-spin" />
+                    Preparing...
+                  </>
+                ) : (
+                  <>
+                    <Download size={13} className="mr-1.5" />
+                    Download Audit PDF
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       </div>
