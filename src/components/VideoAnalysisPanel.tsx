@@ -112,6 +112,14 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   const savingRef = useRef(false);
   const savedRef = useRef(false);
 
+  // ── FIX P4: Stable reconnect control — avoids stale closure bug ──────────────
+  // ws.onclose captures variables from its closure at WS creation time.
+  // isAnalyzing STATE is stale inside the closure after stopCamera() updates it.
+  // shouldReconnectRef is always current because refs are not captured by closure.
+  const shouldReconnectRef = useRef(false);
+  const wsRetryCountRef = useRef(0);
+  const MAX_WS_RETRIES = 5;
+
   useEffect(() => {
     metricsRef.current = metrics;
     onMetricsUpdate?.(metrics);
@@ -294,14 +302,19 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   }, [sessionId]);
 
   // Connect to WebSocket with auto-reconnect
+  // FIX P4: Uses shouldReconnectRef instead of stale isAnalyzing closure
   const connectWebSocket = useCallback(() => {
+    // Guard: do not reconnect if intentionally stopped
+    if (!shouldReconnectRef.current) {
+      console.log('[VideoAnalysisPanel] connectWebSocket() skipped — shouldReconnect=false');
+      return;
+    }
+
     const wsUrl = getBehavioralWsUrl();
     
     // Close existing connection if any
     if (wsRef.current) {
-      try {
-        wsRef.current.close();
-      } catch (_) {}
+      try { wsRef.current.close(); } catch (_) {}
     }
     
     try {
@@ -309,28 +322,21 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
 
       ws.onopen = () => {
         console.log("✅ Connected to behavioral analysis WebSocket");
+        wsRetryCountRef.current = 0; // Reset retry count on successful connect
         setWsConnected(true);
         setError(null);
-        
-        // Auto-start analysis after connection
-        if (!isAnalyzing) {
-          setIsAnalyzing(true);
-        }
+        if (!isAnalyzing) setIsAnalyzing(true);
       };
 
       ws.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data);
-          console.log("📨 Received message:", message.type);
           
           if (message.type === "behavioral_result") {
             const data = message.data;
             const newMetrics = data.metrics;
-            
-            // Backpressure: Mark that previous frame is processed
             setIsProcessingFrame(false);
             pendingFrameRef.current = false;
-            
             setMetrics(newMetrics);
             setMetricsHistory(prev => [...prev.slice(-100), newMetrics]);
             timelineRef.current.push({
@@ -348,14 +354,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
             if (timelineRef.current.length > 1500) {
               timelineRef.current = timelineRef.current.slice(-1500);
             }
-            
-            if (data.annotated_frame) {
-              setAnnotatedFrame(data.annotated_frame);
-            }
+            if (data.annotated_frame) setAnnotatedFrame(data.annotated_frame);
             captureBehavioralSnapshot(newMetrics);
           } else if (message.type === "busy") {
-            // Backend is busy - drop pending frame and wait
-            console.log("⚠️ Backend busy, dropping frame");
             setIsProcessingFrame(false);
             pendingFrameRef.current = false;
           } else if (message.type === "connected") {
@@ -363,13 +364,11 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
           } else if (message.type === "error") {
             console.warn("⚠️ Server behavioral warning:", message.message);
             setError(message.message);
-            // Also reset processing state on error
             setIsProcessingFrame(false);
             pendingFrameRef.current = false;
           }
         } catch (e) {
           console.warn("Error parsing WebSocket message:", e);
-          // Reset processing state on error
           setIsProcessingFrame(false);
           pendingFrameRef.current = false;
         }
@@ -379,15 +378,25 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
         console.log("🔌 WebSocket closed:", e.code, e.reason);
         setWsConnected(false);
         
-        // Auto-reconnect if still analyzing
-        if (isAnalyzing && e.code !== 1000) {
-          console.log("🔄 Attempting to reconnect...");
-          setTimeout(connectWebSocket, 2000);
+        // ── FIX P4: Use shouldReconnectRef (always current) NOT isAnalyzing (stale closure) ──
+        // shouldReconnectRef.current is set to false by stopCamera() BEFORE ws.close().
+        // isAnalyzing captured in this closure would still be 'true' from creation time.
+        if (shouldReconnectRef.current && e.code !== 1000) {
+          if (wsRetryCountRef.current >= MAX_WS_RETRIES) {
+            console.warn('[VideoAnalysisPanel] Max WS retries reached — stopping reconnect');
+            shouldReconnectRef.current = false;
+            return;
+          }
+          wsRetryCountRef.current++;
+          // Exponential backoff: 2s, 4s, 8s, 16s, 32s (capped)
+          const backoffMs = Math.min(2000 * Math.pow(2, wsRetryCountRef.current - 1), 30000);
+          console.log(`🔄 WS reconnecting in ${backoffMs}ms (attempt ${wsRetryCountRef.current}/${MAX_WS_RETRIES})`);
+          setTimeout(connectWebSocket, backoffMs);
         }
       };
 
       ws.onerror = (err) => {
-        console.warn("⚠️ WebSocket error connection failed:", err);
+        console.warn("⚠️ WebSocket error:", err);
         setError(`Failed to connect to analysis server. Ensure backend is running on ${wsUrl}`);
       };
 
@@ -421,7 +430,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
       console.log("✅ Camera started successfully");
       setIsCameraOn(true);
       
-      // Connect to WebSocket
+      // ── FIX P4: Enable reconnect BEFORE opening WS ────────────────────────
+      shouldReconnectRef.current = true;
+      wsRetryCountRef.current = 0;
       connectWebSocket();
       
     } catch (err) {
@@ -486,6 +497,11 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   const stopCamera = () => {
     void persistBehavioralAnalytics();
 
+    // ── FIX P4: Disable reconnect BEFORE closing WS ──────────────────────
+    // CRITICAL ORDERING: must set false BEFORE ws.close() fires onclose.
+    // If we set it after, onclose sees shouldReconnect=true and triggers reconnect.
+    shouldReconnectRef.current = false;
+
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => track.stop());
       streamRef.current = null;
@@ -496,7 +512,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
     }
     
     if (wsRef.current) {
-      wsRef.current.close();
+      wsRef.current.close(1000, 'User stopped camera'); // code 1000 = normal closure
       wsRef.current = null;
     }
     

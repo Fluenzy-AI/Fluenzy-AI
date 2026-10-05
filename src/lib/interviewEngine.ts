@@ -78,60 +78,44 @@ export async function runTranscriptReconstruction(
   };
 
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
-    if (!apiKey) {
-      console.warn('[PROMPT1] NEXT_PUBLIC_GEMINI_API_KEY not set, using fallback');
+    // ── FIX P6: Server-side API proxy (no NEXT_PUBLIC_ key in browser) ──────────
+    // Previously called Gemini directly with NEXT_PUBLIC_GEMINI_API_KEY.
+    // Now routes through /api/gemini-proxy/reconstruct which uses GEMINI_API_KEY
+    // server-side — the key is never embedded in the browser bundle.
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), RECONSTRUCTION_TIMEOUT_MS);
+
+    let res: Response;
+    try {
+      res = await fetch('/api/gemini-proxy/reconstruct', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rawTranscript, conversationContext }),
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
+
+    if (!res.ok) {
+      console.warn('[PROMPT1] Proxy returned HTTP', res.status, '— using fallback');
       return fallback;
     }
 
-    const ai = new GoogleGenAI({ apiKey });
-
-    const userMessage = `INPUT: ${JSON.stringify(rawTranscript)}\nCONTEXT: ${conversationContext}`;
-
-    // ── LangSmith trace wraps the Gemini call ────────────────────────────────
-    // NOTE: traceGeminiCall is fire-and-forget for observability — it still
-    //       forwards the result unchanged and never blocks on the trace post.
-    const rawResultPromise = traceGeminiCall({
-      feature:      FEATURES.INTERVIEW_AI,
-      name:         'Transcript Reconstruction (Prompt 1)',
-      model:        'gemini-2.5-flash',
-      systemPrompt: PROMPT_1_SYSTEM,
-      userPrompt:   userMessage,
-      fn: () =>
-        ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-          config: {
-            systemInstruction: PROMPT_1_SYSTEM,
-            responseMimeType: 'application/json',
-          },
-        }),
-    });
-
-    // Race against timeout — if reconstruction takes too long, fall back to raw text
-    const timeoutPromise = new Promise<null>((resolve) =>
-      setTimeout(() => resolve(null), RECONSTRUCTION_TIMEOUT_MS),
-    );
-
-    const winner = await Promise.race([rawResultPromise, timeoutPromise]);
-    if (!winner) {
-      console.warn('[PROMPT1_TIMEOUT] Reconstruction exceeded', RECONSTRUCTION_TIMEOUT_MS, 'ms — using raw transcript');
-      return { ...fallback, reconstructed_text: rawTranscript.trim() };
-    }
-
-    const text = (winner.text ?? '').trim();
-    if (!text) return fallback;
-
-    const parsed: Prompt1Output = JSON.parse(text);
+    const parsed: Prompt1Output = await res.json();
 
     // Sanity-check required fields
     if (!parsed.status || !('reconstructed_text' in parsed)) return fallback;
 
     console.log(
-      `[PROMPT1_OK] status=${parsed.status} confidence=${parsed.confidence} unclear=${parsed.unclear_spans.length}`,
+      `[PROMPT1_OK] status=${parsed.status} confidence=${parsed.confidence} unclear=${parsed.unclear_spans?.length ?? 0}`,
     );
     return parsed;
   } catch (err) {
+    if ((err as any)?.name === 'AbortError') {
+      console.warn('[PROMPT1_TIMEOUT] Reconstruction exceeded', RECONSTRUCTION_TIMEOUT_MS, 'ms — using raw transcript');
+      return { ...fallback, reconstructed_text: rawTranscript.trim() };
+    }
     console.error('[PROMPT1_ERROR]', err);
     return fallback;
   }

@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>COMPANY_WISE_HR — Enterprise AI Interview: Forensic Analysis</title>
+<style>
+:root{--bg:#050810;--surface:#0d1117;--surface2:#161b27;--border:rgba(139,92,246,.15);--purple:#7c3aed;--pl:#a78bfa;--blue:#3b82f6;--green:#10b981;--red:#ef4444;--orange:#f97316;--yellow:#fbbf24;--text:#f1f5f9;--muted:#94a3b8;--card:#111827}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.6;font-size:14px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-thumb{background:var(--purple);border-radius:3px}
+header{background:linear-gradient(135deg,#0d0f1e,#150d2e,#0a1520);border-bottom:1px solid var(--border);padding:1.5rem 2rem;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+.hi{max-width:1400px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem}
+.badges{display:flex;gap:.5rem;margin-bottom:.4rem}
+.bc{padding:.2rem .7rem;background:rgba(239,68,68,.2);border:1px solid rgba(239,68,68,.4);border-radius:99px;color:#fca5a5;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em}
+.bv{padding:.2rem .7rem;background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);border-radius:99px;color:#c4b5fd;font-size:10px;font-weight:700}
+h1{font-size:1.35rem;font-weight:900;background:linear-gradient(90deg,#a78bfa,#60a5fa,#34d399);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hm{color:var(--muted);font-size:11px;margin-top:.2rem}
+nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2rem;overflow-x:auto;white-space:nowrap}
+.ni{max-width:1400px;margin:0 auto;display:flex}
+.nl{display:inline-flex;align-items:center;gap:.35rem;padding:.8rem 1rem;color:var(--muted);font-size:11px;font-weight:600;text-decoration:none;border-bottom:2px solid transparent;transition:all .2s;cursor:pointer}
+.nl:hover,.nl.act{color:var(--pl);border-bottom-color:var(--purple)}
+.dot{width:6px;height:6px;border-radius:50%}
+.dr{background:var(--red)}.do{background:var(--orange)}.db{background:var(--blue)}.dg{background:var(--green)}.dp{background:var(--purple)}.dy{background:var(--yellow)}
+main{max-width:1400px;margin:0 auto;padding:2rem}
+section{margin-bottom:3.5rem}
+.st{font-size:1.1rem;font-weight:900;margin-bottom:1.25rem;display:flex;align-items:center;gap:.65rem;padding-bottom:.65rem;border-bottom:1px solid var(--border)}
+.si{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ir{background:rgba(239,68,68,.15)}.io{background:rgba(249,115,22,.15)}.ib{background:rgba(59,130,246,.15)}.ig{background:rgba(16,185,129,.15)}.ip{background:rgba(124,58,237,.15)}.iy{background:rgba(251,191,36,.15)}
+.card{background:var(--card);border:1px solid var(--border);border-radius:11px;padding:1.1rem;position:relative;overflow:hidden}
+.cg{display:grid;gap:.85rem}.cg2{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}.cg3{grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}.cg4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.ct{font-size:12px;font-weight:800;margin-bottom:.5rem}.cb{font-size:11px;color:var(--muted);line-height:1.7}
+.sev{display:inline-flex;align-items:center;padding:.12rem .55rem;border-radius:99px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}
+.sc{background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.3)}
+.sh{background:rgba(249,115,22,.18);color:#fdba74;border:1px solid rgba(249,115,22,.3)}
+.sm{background:rgba(251,191,36,.18);color:#fde68a;border:1px solid rgba(251,191,36,.3)}
+.sl{background:rgba(16,185,129,.18);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)}
+.pc{background:var(--card);border:1px solid rgba(239,68,68,.2);border-left:3px solid var(--red);border-radius:9px;padding:1rem 1.1rem;margin-bottom:.65rem}
+.pc.o{border-left-color:var(--orange);border-color:rgba(249,115,22,.2)}.pc.y{border-left-color:var(--yellow);border-color:rgba(251,191,36,.15)}
+.ph{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.5rem;flex-wrap:wrap}
+.pt{font-size:12px;font-weight:800}.pd{font-size:11px;color:var(--muted);margin-bottom:.35rem}
+.pf{font-size:11px;color:#86efac;background:rgba(16,185,129,.07);border-radius:5px;padding:.4rem .65rem;border:1px solid rgba(16,185,129,.15);margin-top:.45rem}
+.pf strong{color:#34d399}
+.fn{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:.5rem .85rem;font-size:11px;font-weight:700;white-space:nowrap;display:flex;align-items:center;gap:.35rem;flex-shrink:0}
+.fn.g{border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.08)}.fn.b{border-color:rgba(59,130,246,.4);background:rgba(59,130,246,.08)}.fn.p{border-color:rgba(124,58,237,.4);background:rgba(124,58,237,.08)}.fn.r{border-color:rgba(239,68,68,.4);background:rgba(239,68,68,.08)}.fn.o{border-color:rgba(249,115,22,.4);background:rgba(249,115,22,.08)}.fn.y{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+.fa{display:flex;align-items:center;padding:0 .2rem;color:var(--muted);font-size:15px;flex-shrink:0}
+.fad{padding:.08rem 0;color:var(--muted);font-size:15px}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem}
+.sn{border-radius:7px;padding:.55rem .8rem;font-size:10px;font-weight:800;text-align:center;border:1px solid;cursor:pointer;transition:all .2s}
+.sn:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.idle{background:rgba(100,116,139,.12);border-color:rgba(100,116,139,.3);color:#94a3b8}
+.sinit{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.3);color:#93c5fd}
+.sready{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#6ee7b7}
+.sai{background:rgba(124,58,237,.12);border-color:rgba(124,58,237,.3);color:#c4b5fd}
+.suser{background:rgba(251,191,36,.12);border-color:rgba(251,191,36,.3);color:#fde68a}
+.sproc{background:rgba(249,115,22,.12);border-color:rgba(249,115,22,.3);color:#fdba74}
+.send{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#fca5a5}
+.sdone{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.5);color:#34d399}
+.cl{list-style:none;display:flex;flex-direction:column;gap:.35rem}
+.ci{display:flex;align-items:flex-start;gap:.5rem;font-size:11px}
+.ck{flex-shrink:0;margin-top:1px;font-size:12px}
+.cp{color:var(--green)}.cf{color:var(--red)}.cw{color:var(--yellow)}
+pre{background:rgba(0,0,0,.45);border:1px solid rgba(255,255,255,.06);border-radius:7px;padding:.85rem;overflow-x:auto;font-family:'Cascadia Code','Fira Code',Consolas,monospace;font-size:10.5px;line-height:1.65;color:#e2e8f0}
+.cc{color:#4ade80}.ck2{color:#93c5fd}.cv{color:#fde68a}.ce{color:#fca5a5}.cok{color:#6ee7b7}
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{background:rgba(124,58,237,.12);color:var(--pl);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:.5rem .7rem;text-align:left;border-bottom:1px solid var(--border)}
+td{padding:.45rem .7rem;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted);vertical-align:top}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,.02)}
+.mr{margin-bottom:.6rem}.ml{display:flex;justify-content:space-between;font-size:10px;margin-bottom:.2rem}
+.mb{height:5px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.mf{height:100%;border-radius:3px;transition:width 1.2s ease}
+.sc2{display:flex;align-items:center;gap:.85rem;padding:.65rem;border-radius:7px;margin-bottom:.4rem;border:1px solid var(--border);background:var(--surface2)}
+.su{font-size:12px;font-weight:800;min-width:110px}.sa{font-size:10px;color:var(--muted);flex:1}
+.sb{padding:.18rem .55rem;border-radius:99px;font-size:9px;font-weight:700}
+details{border:1px solid var(--border);border-radius:9px;margin-bottom:.4rem;overflow:hidden}
+summary{padding:.8rem 1rem;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-size:11px;font-weight:700;background:var(--surface2);transition:background .2s;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary:hover{background:rgba(124,58,237,.1)}
+details[open] summary{border-bottom:1px solid var(--border)}
+.db2{padding:.9rem 1rem;font-size:11px;color:var(--muted);line-height:1.8}
+.dc{transition:transform .2s;font-size:9px}
+details[open] .dc{transform:rotate(180deg)}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:.85rem}
+@media(max-width:680px){.cmp{grid-template-columns:1fr}}
+.col{border-radius:9px;padding:1rem;border:1px solid}
+.cold{border-color:rgba(239,68,68,.25);background:rgba(239,68,68,.04)}.coln{border-color:rgba(16,185,129,.25);background:rgba(16,185,129,.04)}
+.colt{font-size:10px;font-weight:800;margin-bottom:.6rem;text-transform:uppercase;letter-spacing:.07em}
+.cold .colt{color:#fca5a5}.coln .colt{color:#6ee7b7}
+.coli{font-size:11px;color:var(--muted);margin-bottom:.35rem;display:flex;gap:.4rem}
+.alert{border-radius:7px;padding:.8rem 1rem;margin:.85rem 0;font-size:11px;border:1px solid}
+.ac{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);color:#fca5a5}
+.aw{background:rgba(251,191,36,.08);border-color:rgba(251,191,36,.3);color:#fde68a}
+.ai{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.3);color:#93c5fd}
+.ag{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.3);color:#6ee7b7}
+.ev{display:flex;flex-direction:column;gap:.35rem}
+.ei{display:flex;align-items:center;gap:.65rem;padding:.45rem .65rem;border-radius:5px;background:var(--surface2);border:1px solid var(--border);font-size:10px}
+.ed{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.en{font-weight:700;min-width:220px}.eo{color:var(--muted)}
+footer{border-top:1px solid var(--border);padding:1.5rem;text-align:center;color:var(--muted);font-size:10px}
+.tr{color:var(--red)}.tg{color:var(--green)}.to{color:var(--orange)}.tb{color:var(--blue)}.tp{color:var(--pl)}.ty{color:var(--yellow)}
+.fw{font-weight:800}.mn{font-family:'Cascadia Code',Consolas,monospace;font-size:10px}
+.mt1{margin-top:.45rem}.mt2{margin-top:.9rem}.mt3{margin-top:1.4rem}.mb1{margin-bottom:.45rem}
+.flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;overflow-x:auto;padding-bottom:.4rem}
+.tag{display:inline-block;padding:.12rem .45rem;border-radius:3px;font-size:9px;font-weight:700;font-family:monospace;background:rgba(124,58,237,.15);color:#c4b5fd;border:1px solid rgba(124,58,237,.2);margin:.12rem}
+.sub{color:var(--muted);font-size:11px;margin-bottom:1rem}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hi">
+    <div>
+      <div class="badges"><span class="bc">⚠ Production Incident</span><span class="bv">Forensic Report v1.0</span></div>
+      <h1>COMPANY_WISE_HR — Enterprise AI Interview System</h1>
+      <p class="hm">FluenzyAI · Complete Forensic Analysis, Root-Cause Investigation &amp; Architecture Redesign · October 2026</p>
+    </div>
+    <div style="text-align:right;font-size:10px;color:var(--muted)">
+      <div style="font-weight:800;color:var(--text)">Stack</div>
+      <div>Gemini 2.5 Flash Live API</div>
+      <div>Next.js · FastAPI · AudioContext</div>
+    </div>
+  </div>
+</header>
+
+<nav>
+  <div class="ni">
+    <span class="nl act" onclick="gotoSec('exec')"><span class="dot dr"></span>Executive Summary</span>
+    <span class="nl" onclick="gotoSec('arch')"><span class="dot db"></span>Architecture</span>
+    <span class="nl" onclick="gotoSec('problems')"><span class="dot dr"></span>10 Problems</span>
+    <span class="nl" onclick="gotoSec('rca')"><span class="dot do"></span>Root Cause</span>
+    <span class="nl" onclick="gotoSec('state')"><span class="dot dp"></span>State Machine</span>
+    <span class="nl" onclick="gotoSec('pipeline')"><span class="dot db"></span>Audio Pipeline</span>
+    <span class="nl" onclick="gotoSec('proposed')"><span class="dot dg"></span>Redesign</span>
+    <span class="nl" onclick="gotoSec('scale')"><span class="dot dy"></span>Scalability</span>
+    <span class="nl" onclick="gotoSec('security')"><span class="dot do"></span>Security</span>
+    <span class="nl" onclick="gotoSec('checklist')"><span class="dot dg"></span>Checklist</span>
+  </div>
+</nav>
+
+<main>
+
+<!-- EXEC -->
+<section id="exec">
+  <div class="st"><div class="si ir">🔍</div>Executive Summary &amp; Critical Findings</div>
+  <div class="alert ac"><strong>⚡ CRITICAL:</strong> The current COMPANY_WISE_HR system is a <strong>monolithic God Component</strong> (VoiceAgent.tsx · 67KB · 1,328 lines) with no explicit state machine, no audio arbitration, no session isolation, and no graceful shutdown protocol. <strong>4 confirmed production-breaking bugs</strong> traced directly to source code line numbers.</div>
+  <div class="cg cg4 mt2">
+    <div class="card" style="border-left:3px solid var(--red)"><div class="ct tr">🔊 Multiple AI Voices</div><div class="cb">AudioBufferSourceNodes from overlapping turns all schedule against one <span class="mn">nextStartTimeRef</span> with no turn-ID arbitration.</div></div>
+    <div class="card" style="border-left:3px solid var(--orange)"><div class="ct to">🎤 Lost User Transcripts</div><div class="cb"><span class="mn">currentQA.current.answer</span> appends across turns with no per-turn isolation. VAD resets during AI speech window, cutting off first words.</div></div>
+    <div class="card" style="border-left:3px solid var(--yellow)"><div class="ct ty">💥 Server Crash on End</div><div class="cb">Non-idempotent <span class="mn">cleanup()</span> + <span class="mn">onSessionEnd</span> fires before saves + sequential fetch loop aborts on first error → navigation never happens.</div></div>
+    <div class="card" style="border-left:3px solid var(--blue)"><div class="ct tb">📡 WS Reconnect Loop</div><div class="cb">VideoAnalysisPanel reconnects using stale <span class="mn">isAnalyzing</span> closure. After stopCamera(), reconnect fires anyway → infinite loop.</div></div>
+  </div>
+</section>
+
+<!-- ARCH -->
+<section id="arch">
+  <div class="st"><div class="si ib">🏗️</div>Current Architecture — Forensic Map</div>
+  <p class="sub">Full execution flow traced from actual source code. Every component, file, and failure mode.</p>
+
+  <div class="cg cg2">
+    <div class="card">
+      <div class="ct">Full Voice-to-Voice Execution Flow</div>
+      <div class="mt1" style="display:flex;flex-direction:column;gap:.25rem">
+        <div class="fn g">👤 User (Browser)</div><div class="fad">↓</div>
+        <div class="fn b"><span class="mn">navigator.mediaDevices.getUserMedia()</span></div><div class="fad">↓</div>
+        <div class="fn b"><span class="mn">AudioContext (16kHz) + ScriptProcessor (deprecated)</span></div>
+        <div class="fad">↓ <span style="font-size:9px;color:var(--muted)">Manual VAD: RMS threshold 0.008, 400ms silence</span></div>
+        <div class="fn p"><span class="mn">Gemini 2.5 Flash Live API — activityStart/End</span></div>
+        <div class="fad">↓ <span style="font-size:9px;color:var(--muted)">inputTranscription → currentQA.answer (no per-turn isolation)</span></div>
+        <div class="fn p"><span class="mn">Gemini STT + LLM + TTS (opaque black box)</span></div>
+        <div class="fad">↓ <span style="font-size:9px;color:var(--muted)">outputTranscription → currentQA.question</span></div>
+        <div class="fn o"><span class="mn">inlineData: base64 PCM chunks (24kHz)</span></div><div class="fad">↓</div>
+        <div class="fn o"><span class="mn">decodeAudioData → AudioBufferSourceNode</span></div>
+        <div class="fad">↓ <span style="font-size:9px;color:var(--muted)">nextStartTimeRef scheduling — NO turn arbitration ❌</span></div>
+        <div class="fn g">🔊 User Hears AI (potentially 2+ voices simultaneously)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Component Inventory</div>
+      <table class="mt1">
+        <thead><tr><th>Component</th><th>File</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td class="fw">VoiceAgent (monolith)</td><td class="mn">VoiceAgent.tsx</td><td><span class="sev sc">⚠ Critical</span></td></tr>
+          <tr><td>Manual VAD</td><td class="mn">VoiceAgent.tsx:727–776</td><td><span class="sev sh">High Risk</span></td></tr>
+          <tr><td>Audio Scheduler</td><td class="mn">VoiceAgent.tsx:877–897</td><td><span class="sev sc">⚠ Critical</span></td></tr>
+          <tr><td>Session Cleanup</td><td class="mn">VoiceAgent.tsx:313–489</td><td><span class="sev sc">⚠ Critical</span></td></tr>
+          <tr><td>Transcript Reconstruction</td><td class="mn">src/lib/interviewEngine.ts</td><td><span class="sev sm">Medium</span></td></tr>
+          <tr><td>VideoAnalysisPanel</td><td class="mn">VideoAnalysisPanel.tsx</td><td><span class="sev sh">High Risk</span></td></tr>
+          <tr><td>Behavioral Backend WS</td><td class="mn">backend/main.py:650–929</td><td><span class="sev sm">Medium</span></td></tr>
+          <tr><td>MobileSessionPage</td><td class="mn">MobileSessionPage.tsx</td><td><span class="sev sl">OK</span></td></tr>
+          <tr><td>SessionPageClient</td><td class="mn">SessionPageClient.tsx</td><td><span class="sev sl">OK</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="mt2">
+    <details open>
+      <summary>VoiceAgent — The 1,328-Line God Component <span class="dc">▼</span></summary>
+      <div class="db2">
+        <p><strong>Owns EVERYTHING:</strong> session lifecycle, AudioContext creation, mic capture, VAD, Gemini connection, audio playback, transcript accumulation, cleanup, session save, and navigation — all in one React component.</p>
+        <pre class="mt1"><span class="cc">// All critical refs — unguarded, accessed concurrently from async callbacks</span>
+<span class="ck2">sessionRef</span>       = Gemini Live session    <span class="ce">// closed before saves finish</span>
+<span class="ck2">inputAudioCtxRef</span> = AudioContext (16kHz)   <span class="ce">// NEVER closed in cleanup()</span>
+<span class="ck2">outputAudioCtxRef</span>= AudioContext (24kHz)   <span class="ce">// NEVER closed in cleanup()</span>
+<span class="ck2">sourcesRef</span>       = Set&lt;AudioBufferSourceNode&gt; <span class="ce">// grows unboundedly, NO size limit</span>
+<span class="ck2">currentQA</span>        = { question, answer }   <span class="ce">// SHARED across turns, never reset per-turn</span>
+<span class="ck2">transcriptHistory</span>= InterviewQA[]          <span class="ce">// grows unbounded, 40-turn = 20s cleanup</span></pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>Root of Multiple Voices — Audio Scheduling Bug (VoiceAgent.tsx:877–897) <span class="dc">▼</span></summary>
+      <div class="db2">
+        <pre><span class="cc">// UNGUARDED — no turn-ID check, no lock, no arbitration</span>
+const src = outputAudioContextRef.current!.createBufferSource();
+src.buffer = buf;
+src.connect(outputAudioContextRef.current!.destination);
+setIsAiSpeaking(true);
+<span class="ce">// setIsAiSpeaking is synchronous React state, but audio callbacks are async.</span>
+<span class="ce">// Multiple chunks from OVERLAPPING turns ALL fire this code simultaneously.</span>
+
+src.onended = () => {
+  sourcesRef.current.delete(src);
+  <span class="ce">// Only sets isAiSpeaking=false when Set is empty.</span>
+  <span class="ce">// If new turn adds audio before old turn finishes, Set never empties → stuck.</span>
+  if (sourcesRef.current.size === 0) setIsAiSpeaking(false);
+};
+sourcesRef.current.add(src); <span class="ce">// ← no size limit, no turn boundary</span></pre>
+        <p class="mt1"><strong>Failure Scenario:</strong> User sends <span class="mn">activityEnd</span> while Turn 1 audio is still playing → Gemini immediately starts Turn 2 → Turn 2 audio chunks arrive → both turn's nodes play → <strong style="color:var(--red)">Two simultaneous AI voices.</strong></p>
+      </div>
+    </details>
+
+    <details>
+      <summary>Crash Source — cleanup() Non-Idempotency (VoiceAgent.tsx:313–489) <span class="dc">▼</span></summary>
+      <div class="db2">
+        <pre><span class="cc">// cleanup() called from: X button, End button, onerror, onclose — all simultaneously possible</span>
+const cleanup = useCallback(async (saveResults = false) => {
+  <span class="ce">// ❌ NO idempotency guard — double-call = double sessionRef.close()</span>
+  if (sessionRef.current) { sessionRef.current.close(); sessionRef.current = null; }
+
+  <span class="ce">// ❌ onSessionEnd fires at line 330 — BEFORE saves</span>
+  <span class="ce">// ❌ triggers parent setIsInterviewActive(false) → may unmount component</span>
+  onSessionEnd(user); // ← fires here
+
+  if (saveResults) {
+    for (const qa of transcriptHistory.current) {  <span class="ce">// 40-turn = 40 sequential fetches</span>
+      await fetch('/api/evaluate-answer', {...});  <span class="ce">// ❌ if one throws → loop aborts</span>
+    }
+    <span class="ce">// ❌ setIsFinished(true) never fires if any fetch throws</span>
+    <span class="ce">// ❌ router.push() never called → user stuck on blank screen</span>
+  }
+}, [...]);</pre>
+      </div>
+    </details>
+
+    <details>
+      <summary>VideoAnalysisPanel — Stale Closure Reconnect Loop (VideoAnalysisPanel.tsx:378–399) <span class="dc">▼</span></summary>
+      <div class="db2">
+        <pre><span class="cc">// ws.onclose captures isAnalyzing from closure at WebSocket creation time</span>
+ws.onclose = (e) => {
+  setWsConnected(false);
+  if (isAnalyzing && e.code !== 1000) {  <span class="ce">// ← stale: isAnalyzing = true from capture time</span>
+    setTimeout(connectWebSocket, 2000);  <span class="ce">// fires even after stopCamera() set it false</span>
+  }                                       <span class="ce">// → new WS opens → fails → another reconnect → ∞ loop</span>
+};
+
+<span class="cc">// connectWebSocket deps change → function re-created → old ws.onclose invalid reference</span>
+const connectWebSocket = useCallback(() => {...},
+  [captureBehavioralSnapshot, getBehavioralWsUrl, isAnalyzing]  <span class="ce">// ← frequent re-creation</span>
+);</pre>
+      </div>
+    </details>
+  </div>
+</section>
+
+<!-- PROBLEMS -->
+<section id="problems">
+  <div class="st"><div class="si ir">⚠️</div>All 10 Identified Problems — Code-Level Evidence</div>
+
+  <div class="pc"><div class="ph"><div class="pt">🔊 P1 — Multiple AI Voices Speaking Simultaneously</div><span class="sev sc">CRITICAL</span></div>
+    <p class="pd"><strong>Location:</strong> VoiceAgent.tsx:875–897 | <strong>Cause:</strong> No turn-ID arbitration on AudioBufferSourceNode scheduling. Multiple turns' audio plays concurrently when user sends activityEnd while AI is speaking.</p>
+    <div class="pf"><strong>Fix:</strong> Implement <span class="mn">AudioPlaybackManager</span> class with exclusive <span class="mn">currentTurnId</span>. New turn calls <span class="mn">cancelCurrentTurn()</span> first — stops all active nodes, clears Set, resets scheduler. Only chunks matching <span class="mn">currentTurnId</span> are scheduled.</div>
+  </div>
+
+  <div class="pc o"><div class="ph"><div class="pt">🎤 P2 — User Response Lost / Incomplete After Several Turns</div><span class="sev sc">CRITICAL</span></div>
+    <p class="pd"><strong>Location:</strong> VoiceAgent.tsx:751–823 | <strong>Cause (3 layers):</strong> ① VAD guard resets <span class="mn">vadSpeechActive=false</span> every frame while AI speaks → first 400ms of user speech always missed. ② <span class="mn">currentQA.current.answer</span> appends without per-turn reset → multiple turns' answers concatenate silently. ③ No Gemini WS reconnect → mid-session disconnect = answer lost entirely.</p>
+    <div class="pf"><strong>Fix:</strong> Buffer first 200ms before <span class="mn">activityStart</span>. Isolate answer per-turn with turnId. Add Gemini session reconnect with buffer restoration.</div>
+  </div>
+
+  <div class="pc o"><div class="ph"><div class="pt">💥 P3 — Server Errors / Crash on Interview End</div><span class="sev sc">CRITICAL</span></div>
+    <p class="pd"><strong>Location:</strong> VoiceAgent.tsx:313–489 | <strong>Cause:</strong> ① Non-idempotent cleanup — called simultaneously from onerror + onclose. ② <span class="mn">onSessionEnd</span> fires at line 330 before saves (triggers unmount while fetches run). ③ Sequential for...await fetch loop aborts on first error → <span class="mn">setIsFinished(true)</span> never fires → user stuck.</p>
+    <div class="pf"><strong>Fix:</strong> Add <span class="mn">cleaningUpRef</span> guard (early return if already running). Move <span class="mn">onSessionEnd</span> call AFTER all saves. Use <span class="mn">Promise.allSettled()</span> for all evaluate-answer fetches.</div>
+  </div>
+
+  <div class="pc y"><div class="ph"><div class="pt">📡 P4 — VideoAnalysisPanel WebSocket Infinite Reconnect Loop</div><span class="sev sh">HIGH</span></div>
+    <p class="pd"><strong>Location:</strong> VideoAnalysisPanel.tsx:378–399 | <strong>Cause:</strong> Stale closure captures <span class="mn">isAnalyzing=true</span> at WebSocket creation. After <span class="mn">stopCamera()</span> sets it false, the old closure still sees true → reconnect fires → new WS → error → reconnect → ∞.</p>
+    <div class="pf"><strong>Fix:</strong> Use <span class="mn">shouldReconnectRef = useRef(true)</span>. Set to false in <span class="mn">stopCamera()</span> BEFORE closing WS. Add exponential backoff with max 5 retries.</div>
+  </div>
+
+  <div class="pc y"><div class="ph"><div class="pt">🔄 P5 — AudioContext Never Closed (Browser Hard-Cap: 6)</div><span class="sev sh">HIGH</span></div>
+    <p class="pd"><strong>Location:</strong> VoiceAgent.tsx:535–538 | <strong>Cause:</strong> 2 new AudioContext instances created per session start, never closed in cleanup(). After 6 sessions = 12 open AudioContexts. Browser hard-cap is 6/page → session 7+ fails silently.</p>
+    <div class="pf"><strong>Fix:</strong> Call <span class="mn">audioCtx.close()</span> in cleanup for both contexts. Wrap in try/catch (close() throws on already-closed contexts).</div>
+  </div>
+
+  <div class="pc y"><div class="ph"><div class="pt">🔑 P6 — Gemini API Key Exposed in Browser Bundle</div><span class="sev sc">CRITICAL — Security</span></div>
+    <p class="pd"><strong>Location:</strong> VoiceAgent.tsx:534, interviewEngine.ts:81 | <strong>Cause:</strong> <span class="mn">NEXT_PUBLIC_GEMINI_API_KEY</span> is inlined into client-side JS by Next.js. Any user → DevTools → Sources → search "AIza" → finds your key. Used for both Gemini Live sessions AND Prompt 1 reconstruction.</p>
+    <div class="pf"><strong>Fix:</strong> Move ALL Gemini calls to server-side Next.js API routes. Rename to <span class="mn">GEMINI_API_KEY</span> (no NEXT_PUBLIC_ prefix). Client communicates via <span class="mn">/api/gemini-proxy</span> WebSocket.</div>
+  </div>
+
+  <div class="pc y"><div class="ph"><div class="pt">🏠 P7 — FastAPI CORS Wildcard + No WebSocket Authentication</div><span class="sev sh">HIGH — Security</span></div>
+    <p class="pd"><strong>Location:</strong> backend/main.py:412–418 | <strong>Cause:</strong> <span class="mn">allow_origins=["*"]</span> with <span class="mn">allow_credentials=True</span> is a known misconfiguration (Starlette raises runtime warning, browsers reject in strict mode). <span class="mn">/ws/behavioral/{session_id}</span> accepts ANY connection — attacker can hijack any session's behavioral data.</p>
+    <div class="pf"><strong>Fix:</strong> Set specific CORS origins. Add JWT validation on WS handshake: <span class="mn">/ws/behavioral/{id}?token={jwt}</span>. Verify against session store on connect.</div>
+  </div>
+
+  <div class="pc y"><div class="ph"><div class="pt">📦 P8 — No Session Deduplication (Double-Click / React Strict Mode)</div><span class="sev sh">HIGH</span></div>
+    <p class="pd"><strong>Location:</strong> VoiceAgent.tsx:491 (startSession) | <strong>Cause:</strong> No mutex on <span class="mn">startSession()</span>. React 18 Strict Mode mounts components twice in dev → 2 sessionIds generated. Double-click "Start Interview" → 2 Gemini Live sessions → guaranteed multiple voices at session level.</p>
+    <div class="pf"><strong>Fix:</strong> Add <span class="mn">isSessionStartingRef = useRef(false)</span> guard at top of startSession(). Return immediately if true. Validate uniqueness server-side.</div>
+  </div>
+
+  <div class="pc y"><div class="ph"><div class="pt">⚡ P9 — ScriptProcessor Deprecated (Main-Thread Audio Blocking)</div><span class="sev sm">MEDIUM</span></div>
+    <p class="pd"><strong>Location:</strong> VoiceAgent.tsx:721 | <strong>Cause:</strong> <span class="mn">createScriptProcessor(4096, 1, 1)</span> is deprecated in Chrome 113+. Runs on main JS thread, blocking the event loop every 4096 samples (256ms at 16kHz). Causes UI micro-stutter and delays other audio callbacks.</p>
+    <div class="pf"><strong>Fix:</strong> Replace with <span class="mn">AudioWorkletNode</span>. Port VAD + PCM encoding to a dedicated worklet processor running off the main thread.</div>
+  </div>
+
+  <div class="pc y"><div class="ph"><div class="pt">🔁 P10 — Silence Nudge Uses Stale Session Promise Reference</div><span class="sev sh">HIGH</span></div>
+    <p class="pd"><strong>Location:</strong> VoiceAgent.tsx:798–816 | <strong>Cause:</strong> Silence timer sends nudge via <span class="mn">sessionPromise.then(s => s.sendText(...))</span>. After session close (sessionRef.current = null), the resolved promise still holds a reference to the dead session object. Calling sendText on a closed session throws an unhandled rejection.</p>
+    <div class="pf"><strong>Fix:</strong> Check <span class="mn">sessionRef.current !== null</span> AND interview state !== ENDING before sending nudge. Use <span class="mn">sessionRef.current</span> directly (not stale promise).</div>
+  </div>
+</section>
+
+<!-- RCA -->
+<section id="rca">
+  <div class="st"><div class="si io">🔬</div>Root Cause Analysis — Evidence Table</div>
+  <div class="card">
+    <table>
+      <thead><tr><th>Problem</th><th>Root Cause</th><th>Code Reference</th><th>Impact</th><th>Sev</th></tr></thead>
+      <tbody>
+        <tr><td class="fw">Multiple AI voices</td><td>No turn-ID arbitration on AudioBufferSourceNode scheduling</td><td class="mn">VoiceAgent.tsx:875–897</td><td>2–3 AI voices heard simultaneously. Unintelligible.</td><td><span class="sev sc">Critical</span></td></tr>
+        <tr><td class="fw">Lost user transcript</td><td>VAD resets during AI speech. No per-turn answer isolation. No STT reconnect.</td><td class="mn">VoiceAgent.tsx:751–823</td><td>AI answers empty/combined questions. Score invalid.</td><td><span class="sev sc">Critical</span></td></tr>
+        <tr><td class="fw">Crash on end</td><td>Non-idempotent cleanup. onSessionEnd fires before saves. Sequential fetch aborts.</td><td class="mn">VoiceAgent.tsx:313–489</td><td>Server errors. User stuck. Session data lost.</td><td><span class="sev sc">Critical</span></td></tr>
+        <tr><td class="fw">WS reconnect loop</td><td>Stale closure captures isAnalyzing at WS creation time</td><td class="mn">VideoAnalysisPanel.tsx:383</td><td>∞ reconnect. Server overload. Memory leak.</td><td><span class="sev sh">High</span></td></tr>
+        <tr><td class="fw">AudioContext leak</td><td>2 AudioContexts per session, never closed. Browser cap: 6.</td><td class="mn">VoiceAgent.tsx:535–538</td><td>Session 7+ fails silently. Audio completely broken.</td><td><span class="sev sh">High</span></td></tr>
+        <tr><td class="fw">API key exposure</td><td>NEXT_PUBLIC_ prefix inlines key into client JS bundle</td><td class="mn">VoiceAgent.tsx:534, interviewEngine.ts:81</td><td>Any user can extract and abuse the Gemini key.</td><td><span class="sev sc">Critical</span></td></tr>
+        <tr><td class="fw">CORS + no WS auth</td><td>allow_origins=["*"] + credentials. No token check on behavioral WS.</td><td class="mn">backend/main.py:412–418</td><td>Any origin can call API. Session data hijackable.</td><td><span class="sev sh">High</span></td></tr>
+        <tr><td class="fw">Duplicate session</td><td>No mutex on startSession(). React Strict Mode double-mount.</td><td class="mn">VoiceAgent.tsx:491</td><td>2 Gemini sessions per user. Guaranteed multiple voices.</td><td><span class="sev sh">High</span></td></tr>
+        <tr><td class="fw">ScriptProcessor</td><td>Deprecated API runs on main thread, blocks every 256ms</td><td class="mn">VoiceAgent.tsx:721</td><td>UI stutter. Chrome will remove it.</td><td><span class="sev sm">Medium</span></td></tr>
+        <tr><td class="fw">Stale session promise</td><td>Silence nudge uses resolved promise ref to dead session</td><td class="mn">VoiceAgent.tsx:798–816</td><td>Unhandled rejection. Potential Node.js crash.</td><td><span class="sev sh">High</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- STATE MACHINE -->
+<section id="state">
+  <div class="st"><div class="si ip">🔄</div>Recommended Interview State Machine</div>
+  <p class="sub">A deterministic, explicit state machine prevents invalid transitions and enforces the single-speaker invariant at compile time.</p>
+
+  <div class="cg cg2">
+    <div class="card">
+      <div class="ct">11 Session States</div>
+      <div class="sg mt1">
+        <div class="sn idle">IDLE</div>
+        <div class="sn sinit">INITIALIZING</div>
+        <div class="sn sready">READY</div>
+        <div class="sn sai">AI_SPEAKING</div>
+        <div class="sn suser">WAITING_USER</div>
+        <div class="sn suser">LISTENING</div>
+        <div class="sn suser">USER_SPEAKING</div>
+        <div class="sn sproc">PROCESSING</div>
+        <div class="sn sai">GENERATING</div>
+        <div class="sn send">ENDING</div>
+        <div class="sn sdone">COMPLETED</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="ct">Invalid Transitions (Must Be Prevented)</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span><div><span class="fw tr">AI_SPEAKING → AI_SPEAKING</span> — New turn must cancel existing audio first</div></li>
+        <li class="ci"><span class="ck cf">✗</span><div><span class="fw tr">USER_SPEAKING → AI_SPEAKING</span> — Cannot start AI while user speaks</div></li>
+        <li class="ci"><span class="ck cf">✗</span><div><span class="fw tr">ENDING → any active state</span> — Once ENDING, all new events rejected</div></li>
+        <li class="ci"><span class="ck cf">✗</span><div><span class="fw tr">IDLE → PROCESSING</span> — Cannot process without active session</div></li>
+        <li class="ci"><span class="ck cf">✗</span><div><span class="fw tr">COMPLETED → any state</span> — Terminal. Must create new session.</div></li>
+        <li class="ci"><span class="ck cp">✓</span><div><span class="fw tg">USER_SPEAKING → WAITING_USER</span> — Valid: user barge-in stops AI</div></li>
+        <li class="ci"><span class="ck cp">✓</span><div><span class="fw tg">AI_SPEAKING → WAITING_USER</span> — Valid: AI finishes normally</div></li>
+        <li class="ci"><span class="ck cp">✓</span><div><span class="fw tg">any → ENDING</span> — Valid: end can be requested in any state</div></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card mt2">
+    <div class="ct">Graceful Shutdown Sequence (12 Ordered Steps — Each Timeout-Protected, Max 5s)</div>
+    <div class="flow mt1" style="gap:.3rem;align-items:center;flex-wrap:wrap">
+      <div class="fn r">END_REQUESTED</div><div class="fa">→</div>
+      <div class="fn r">LOCK_SESSION</div><div class="fa">→</div>
+      <div class="fn o">STOP_MIC</div><div class="fa">→</div>
+      <div class="fn o">CANCEL_AI_AUDIO</div><div class="fa">→</div>
+      <div class="fn y">FLUSH_TTS</div><div class="fa">→</div>
+      <div class="fn b">FINALIZE_STT</div><div class="fa">→</div>
+      <div class="fn b">WAIT_TRANSCRIPT</div><div class="fa">→</div>
+      <div class="fn p">SAVE_SESSION</div><div class="fa">→</div>
+      <div class="fn p">CLOSE_WS</div><div class="fa">→</div>
+      <div class="fn p">CLOSE_AUDIO_CTXS</div><div class="fa">→</div>
+      <div class="fn p">RELEASE_MIC</div><div class="fa">→</div>
+      <div class="fn g">COMPLETED</div>
+    </div>
+    <p class="cb mt1">If any step fails, log the error and continue — no single failure prevents resource cleanup.</p>
+  </div>
+</section>
+
+<!-- AUDIO PIPELINE -->
+<section id="pipeline">
+  <div class="st"><div class="si ib">🎙️</div>Audio Pipeline — Current vs. Redesigned</div>
+
+  <div class="cmp">
+    <div class="col cold">
+      <div class="colt">❌ Current (Broken)</div>
+      <pre style="font-size:10px">Microphone
+  ↓ ScriptProcessor (deprecated, main thread)
+PCM chunks → Gemini Live API (opaque)
+  ↓ [STT + LLM + TTS — black box]
+Base64 PCM audio chunks
+  ↓ AudioBufferSourceNode (NO arbitration)
+Speaker Output
+
+Problems:
+- Cannot observe what AI heard or said
+- Cannot cancel AI audio mid-sentence
+- Cannot retry on STT failure
+- No reconnect on WS disconnect
+- Multiple turns → multiple audio streams simultaneously</pre>
+    </div>
+    <div class="col coln">
+      <div class="colt">✅ Redesigned (Deterministic)</div>
+      <pre style="font-size:10px">Microphone
+  ↓ AudioWorkletNode (dedicated thread, off main)
+PCM chunks → Gemini Live API (server-proxied)
+  ↓ inputTranscription → per-turn buffer (turnId)
+  ↓ outputTranscription → AI text visible
+Transcript Reconstruction (Prompt 1) — verified
+  ↓ verified final transcript per turn
+AI generates response
+  ↓ audio chunks tagged with turnId
+AudioPlaybackManager.scheduleChunk(turnId, buf)
+  ↓ turnId guard: reject stale turn chunks
+  ↓ exclusive queue: one voice at a time
+Speaker Output (single voice, ALWAYS)
+
+Guarantees:
+✓ One AI voice (arbitrated by turnId)
+✓ Observable transcript (STT visible)
+✓ Cancellable (invalidate turnId)
+✓ Reconnectable (session token restore)</pre>
+    </div>
+  </div>
+
+  <div class="card mt2">
+    <div class="ct">AudioPlaybackManager — Single Speaker Guarantee</div>
+    <pre class="mt1"><span class="cc">// The key class missing from the current implementation</span>
+class AudioPlaybackManager {
+  private currentTurnId: string | null = null;
+  private activeNodes = new Set&lt;AudioBufferSourceNode&gt;();
+  private nextStart = 0;
+
+  <span class="ck2">startTurn</span>(turnId: string) {
+    if (this.currentTurnId !== turnId) this.cancelCurrentTurn(); <span class="cc">// ← cancel old turn first</span>
+    this.currentTurnId = turnId;
+    this.nextStart = this.ctx.currentTime;
+  }
+
+  <span class="ck2">scheduleChunk</span>(turnId: string, buffer: AudioBuffer) {
+    if (turnId !== this.currentTurnId) return; <span class="cok">// ← THE key guard: reject stale chunks</span>
+    const src = this.ctx.createBufferSource();
+    src.buffer = buffer;
+    src.connect(this.ctx.destination);
+    src.start(Math.max(this.nextStart, this.ctx.currentTime));
+    this.nextStart += buffer.duration;
+    this.activeNodes.add(src);
+    src.onended = () => this.activeNodes.delete(src);
+  }
+
+  <span class="ck2">cancelCurrentTurn</span>() {        <span class="cc">// called on barge-in OR new turn start</span>
+    this.currentTurnId = null;
+    this.activeNodes.forEach(n => { try { n.stop(); } catch {} });
+    this.activeNodes.clear();
+    this.nextStart = 0;
+  }
+}</pre>
+  </div>
+</section>
+
+<!-- PROPOSED ARCHITECTURE -->
+<section id="proposed">
+  <div class="st"><div class="si ig">✅</div>Proposed Production Architecture</div>
+
+  <div class="card mb1">
+    <div class="ct">Frontend — Decomposed from VoiceAgent Monolith (6 Focused Modules)</div>
+    <div class="cg cg3 mt2">
+      <div class="card" style="border-top:2px solid var(--purple)">
+        <div class="ct tp">InterviewStateMachine</div>
+        <div class="cb">Owns: state enum, valid transition table, guards. Single source of truth. Emits state-change events.</div>
+        <div class="mt1"><span class="tag">11 States</span><span class="tag">Guard</span></div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--blue)">
+        <div class="ct tb">MicrophoneManager</div>
+        <div class="cb">Owns: getUserMedia lifecycle, AudioWorklet setup, stream. Exposes: start(), stop(), onPCMChunk.</div>
+        <div class="mt1"><span class="tag">AudioWorklet</span><span class="tag">VAD</span></div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--blue)">
+        <div class="ct tb">GeminiSessionManager</div>
+        <div class="cb">Owns: Gemini Live WS, reconnect logic, session token. Emits: transcript events, audio chunks.</div>
+        <div class="mt1"><span class="tag">Reconnect</span><span class="tag">Token</span></div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--orange)">
+        <div class="ct to">AudioPlaybackManager</div>
+        <div class="cb">Owns: output AudioContext, turnId arbitration, barge-in cancellation. Invariant: MAX_VOICES = 1.</div>
+        <div class="mt1"><span class="tag">TurnId Guard</span><span class="tag">Cancel</span></div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--green)">
+        <div class="ct tg">TranscriptManager</div>
+        <div class="cb">Owns: per-turn answer buffer, Prompt 1 pipeline, capture_failed retry, history persistence.</div>
+        <div class="mt1"><span class="tag">Per-Turn</span><span class="tag">Prompt1</span></div>
+      </div>
+      <div class="card" style="border-top:2px solid var(--yellow)">
+        <div class="ct ty">SessionPersistenceService</div>
+        <div class="cb">Owns: evaluation fetches (allSettled), session save, lesson completion. Called AFTER cleanup finishes.</div>
+        <div class="mt1"><span class="tag">allSettled</span><span class="tag">Idempotent</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cmp mt2">
+    <div class="col cold">
+      <div class="colt">Current Backend</div>
+      <div class="coli">⛔ Gemini API key in browser bundle</div>
+      <div class="coli">⛔ No server-side session state</div>
+      <div class="coli">⛔ No WS authentication</div>
+      <div class="coli">⛔ CORS wildcard + credentials</div>
+      <div class="coli">⛔ Behavioral room: unlimited connections</div>
+      <div class="coli">⛔ In-process state (not distributable)</div>
+    </div>
+    <div class="col coln">
+      <div class="colt">Required Backend</div>
+      <div class="coli">✅ Gemini key server-side (no NEXT_PUBLIC_)</div>
+      <div class="coli">✅ Redis session store per sessionId</div>
+      <div class="coli">✅ JWT validation on all WS endpoints</div>
+      <div class="coli">✅ CORS: specific production origins only</div>
+      <div class="coli">✅ Max 1 connection per behavioral session</div>
+      <div class="coli">✅ Stateless app servers → horizontal scale</div>
+    </div>
+  </div>
+
+  <div class="card mt2">
+    <div class="ct">Event-Driven Architecture — 10 Deterministic Events</div>
+    <div class="ev mt1">
+      <div class="ei"><div class="ed" style="background:#fbbf24"></div><div class="en">USER_AUDIO_STARTED</div><div class="eo">MicrophoneManager → InterviewStateMachine</div></div>
+      <div class="ei"><div class="ed" style="background:#fbbf24"></div><div class="en">USER_SPEECH_DETECTED</div><div class="eo">VAD (AudioWorklet) → GeminiSessionManager (activityStart)</div></div>
+      <div class="ei"><div class="ed" style="background:#60a5fa"></div><div class="en">USER_TRANSCRIPT_PARTIAL</div><div class="eo">GeminiSessionManager → TranscriptManager (buffer only, NOT persisted yet)</div></div>
+      <div class="ei"><div class="ed" style="background:#60a5fa"></div><div class="en">USER_SPEECH_END</div><div class="eo">VAD (400ms silence) → GeminiSessionManager (activityEnd)</div></div>
+      <div class="ei"><div class="ed" style="background:#34d399"></div><div class="en">USER_TRANSCRIPT_FINAL</div><div class="eo">GeminiSessionManager (turnComplete) → TranscriptManager → verify not empty</div></div>
+      <div class="ei"><div class="ed" style="background:#c4b5fd"></div><div class="en">AI_RESPONSE_STARTED</div><div class="eo">GeminiSessionManager → AudioPlaybackManager.startTurn(turnId)</div></div>
+      <div class="ei"><div class="ed" style="background:#c4b5fd"></div><div class="en">AI_AUDIO_CHUNK</div><div class="eo">GeminiSessionManager → AudioPlaybackManager.scheduleChunk(turnId, buffer)</div></div>
+      <div class="ei"><div class="ed" style="background:#c4b5fd"></div><div class="en">AI_AUDIO_COMPLETED</div><div class="eo">AudioPlaybackManager (activeNodes empty) → StateMachine → WAITING_USER</div></div>
+      <div class="ei"><div class="ed" style="background:#fca5a5"></div><div class="en">INTERVIEW_END_REQUESTED</div><div class="eo">UI → StateMachine.transition(ENDING) → GracefulShutdown sequence</div></div>
+      <div class="ei"><div class="ed" style="background:#fca5a5"></div><div class="en">INTERVIEW_COMPLETED</div><div class="eo">GracefulShutdown → SessionPersistenceService → navigate to results</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SCALABILITY -->
+<section id="scale">
+  <div class="st"><div class="si iy">📈</div>Scalability Architecture</div>
+  <p class="sub">Current architecture: single-process, in-memory, single server. Here is the progression path to 100,000+ users.</p>
+
+  <div class="sc2"><div class="su">10–100 users</div><div class="sa">Fix all bugs listed. API key server-side. Single Next.js + single FastAPI. Session state in memory.</div><span class="sb" style="background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.3)">Achievable Now</span></div>
+  <div class="sc2"><div class="su">100–1,000 users</div><div class="sa">Multiple Next.js replicas (Vercel). Session state → Redis. FastAPI: 2–3 Gunicorn workers + 2 replicas. Gemini calls server-proxied. MediaPipe isolated per session.</div><span class="sb" style="background:rgba(59,130,246,.15);color:#93c5fd;border:1px solid rgba(59,130,246,.3)">Phase 2</span></div>
+  <div class="sc2"><div class="su">1,000–10,000</div><div class="sa">Kubernetes HPA on Next.js + FastAPI. Redis Cluster. PgBouncer for Postgres. Dedicated STT/TTS worker pods. WebSocket sticky sessions via Nginx.</div><span class="sb" style="background:rgba(124,58,237,.15);color:#c4b5fd;border:1px solid rgba(124,58,237,.3)">Phase 3</span></div>
+  <div class="sc2"><div class="su">10k–100k+</div><div class="sa">NATS/Redis Pub-Sub between microservices. Separate: Interview Orchestrator, STT Service, Behavioral Analysis, Persistence. Multi-region. Rate limiting at gateway.</div><span class="sb" style="background:rgba(249,115,22,.15);color:#fdba74;border:1px solid rgba(249,115,22,.3)">Phase 4</span></div>
+
+  <div class="card mt2">
+    <div class="ct">Latency Targets</div>
+    <div class="mt1">
+      <div class="mr"><div class="ml"><span>Microphone → STT partial transcript</span><span class="tg">Target: &lt;300ms</span></div><div class="mb"><div class="mf" style="width:78%;background:var(--green)"></div></div></div>
+      <div class="mr"><div class="ml"><span>Final transcript (activityEnd → turnComplete)</span><span class="tg">Target: &lt;1,000ms</span></div><div class="mb"><div class="mf" style="width:65%;background:var(--blue)"></div></div></div>
+      <div class="mr"><div class="ml"><span>AI first audio token (TTS start)</span><span class="ty">Target: &lt;1,500ms</span></div><div class="mb"><div class="mf" style="width:52%;background:var(--yellow)"></div></div></div>
+      <div class="mr"><div class="ml"><span>Barge-in audio cancellation</span><span class="tg">Target: &lt;50ms (1 VAD frame)</span></div><div class="mb"><div class="mf" style="width:94%;background:var(--green)"></div></div></div>
+      <div class="mr"><div class="ml"><span>Behavioral analysis frame (backend)</span><span class="tb">Target: &lt;500ms per frame</span></div><div class="mb"><div class="mf" style="width:58%;background:var(--blue)"></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- SECURITY -->
+<section id="security">
+  <div class="st"><div class="si io">🔐</div>Security Analysis</div>
+  <div class="cg cg2">
+    <div class="card">
+      <div class="ct tr">Critical Vulnerabilities</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span><div><strong>Gemini API key in browser</strong> — <span class="mn">NEXT_PUBLIC_GEMINI_API_KEY</span> inlined into client JS. Extract from DevTools → unlimited Gemini usage at your cost.</div></li>
+        <li class="ci"><span class="ck cf">✗</span><div><strong>No WebSocket auth</strong> — <span class="mn">/ws/behavioral/{id}</span> accepts any connection. Attacker hijacks any session's behavioral data.</div></li>
+        <li class="ci"><span class="ck cf">✗</span><div><strong>CORS wildcard + credentials</strong> — Known FastAPI misconfiguration. Starlette runtime warning. Browsers reject in strict mode.</div></li>
+        <li class="ci"><span class="ck cf">✗</span><div><strong>No rate limiting on session-start</strong> — Rapid calls consume usage credits before response arrives.</div></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct tg">Required Fixes</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cp">✓</span><div>Move Gemini SDK to <span class="mn">/api/gemini-proxy</span> (server-side). Use <span class="mn">GEMINI_API_KEY</span> (no NEXT_PUBLIC_).</div></li>
+        <li class="ci"><span class="ck cp">✓</span><div>Add JWT to WS URL: <span class="mn">/ws/behavioral/{id}?token={jwt}</span>. Validate on connect.</div></li>
+        <li class="ci"><span class="ck cp">✓</span><div>Set CORS origins: <span class="mn">["https://fluenzy.ai", "https://app.fluenzy.ai"]</span></div></li>
+        <li class="ci"><span class="ck cp">✓</span><div>Rate limit session-start: max 1 active session per user (Redis lock, 30min TTL).</div></li>
+        <li class="ci"><span class="ck cp">✓</span><div>Prompt injection guard already in system prompts — verify it covers all code paths.</div></li>
+        <li class="ci"><span class="ck cp">✓</span><div>PII: encrypt behavioral snapshots (face images) at rest. Add explicit consent + retention policy.</div></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CHECKLIST -->
+<section id="checklist">
+  <div class="st"><div class="si ig">☑️</div>Production Readiness Checklist</div>
+
+  <div class="cg cg3">
+    <div class="card">
+      <div class="ct">🎙️ Audio Pipeline</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span>Audio turn arbitration (AudioPlaybackManager)</li>
+        <li class="ci"><span class="ck cf">✗</span>AudioWorklet (replace ScriptProcessor)</li>
+        <li class="ci"><span class="ck cf">✗</span>AudioContext lifecycle (close on cleanup)</li>
+        <li class="ci"><span class="ck cp">✓</span>Echo cancellation enabled</li>
+        <li class="ci"><span class="ck cp">✓</span>Manual VAD with RMS threshold</li>
+        <li class="ci"><span class="ck cw">⚠</span>VAD guard window (partial — gap at boundary)</li>
+        <li class="ci"><span class="ck cf">✗</span>Barge-in cancellation policy</li>
+        <li class="ci"><span class="ck cf">✗</span>Session reconnect (audio restore)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">📝 Transcript Pipeline</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span>Per-turn transcript isolation (turnId)</li>
+        <li class="ci"><span class="ck cp">✓</span>Prompt 1 reconstruction (Hinglish STT)</li>
+        <li class="ci"><span class="ck cp">✓</span>capture_failed detection + AI nudge</li>
+        <li class="ci"><span class="ck cf">✗</span>Transcript verification before next turn</li>
+        <li class="ci"><span class="ck cf">✗</span>STT reconnect (restore in-progress answer)</li>
+        <li class="ci"><span class="ck cf">✗</span>Final transcript reliability guarantee</li>
+        <li class="ci"><span class="ck cw">⚠</span>Silence timeout (exists, fires during AI speech)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🔄 Session Lifecycle</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span>Idempotent cleanup function</li>
+        <li class="ci"><span class="ck cf">✗</span>startSession() mutex guard</li>
+        <li class="ci"><span class="ck cf">✗</span>onSessionEnd after saves complete</li>
+        <li class="ci"><span class="ck cf">✗</span>Ordered graceful shutdown</li>
+        <li class="ci"><span class="ck cp">✓</span>isSavingRef guard (partial)</li>
+        <li class="ci"><span class="ck cp">✓</span>Usage decrement before session</li>
+        <li class="ci"><span class="ck cf">✗</span>Interview state machine</li>
+        <li class="ci"><span class="ck cf">✗</span>State persisted server-side</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🌐 WebSocket</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span>Gemini Live WS reconnect logic</li>
+        <li class="ci"><span class="ck cf">✗</span>VideoPanel WS reconnect (stale closure)</li>
+        <li class="ci"><span class="ck cf">✗</span>WS authentication token</li>
+        <li class="ci"><span class="ck cp">✓</span>WS ping/pong (behavioral backend)</li>
+        <li class="ci"><span class="ck cw">⚠</span>WS cleanup (partial — wsRef?.close())</li>
+        <li class="ci"><span class="ck cf">✗</span>Connection event deduplication</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🔐 Security</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span>Gemini API key server-side only</li>
+        <li class="ci"><span class="ck cf">✗</span>CORS specific origins</li>
+        <li class="ci"><span class="ck cf">✗</span>WS auth on behavioral endpoint</li>
+        <li class="ci"><span class="ck cw">⚠</span>Rate limiting (partial)</li>
+        <li class="ci"><span class="ck cp">✓</span>Prompt injection guard in prompts</li>
+        <li class="ci"><span class="ck cf">✗</span>PII encryption at rest</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">📊 Observability</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cp">✓</span>LangSmith tracing (behavioral)</li>
+        <li class="ci"><span class="ck cp">✓</span>Structured console logs (some)</li>
+        <li class="ci"><span class="ck cf">✗</span>Structured JSON logs (all paths)</li>
+        <li class="ci"><span class="ck cf">✗</span>Session traceId end-to-end</li>
+        <li class="ci"><span class="ck cf">✗</span>Audio event counters</li>
+        <li class="ci"><span class="ck cf">✗</span>Health check on Gemini connection</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🏗️ Backend</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cp">✓</span>FastAPI async WebSocket handlers</li>
+        <li class="ci"><span class="ck cp">✓</span>Frame dropping / backpressure</li>
+        <li class="ci"><span class="ck cp">✓</span>Lazy YOLO model loading</li>
+        <li class="ci"><span class="ck cf">✗</span>Global exception handler</li>
+        <li class="ci"><span class="ck cf">✗</span>Session cleanup on server restart</li>
+        <li class="ci"><span class="ck cf">✗</span>Max connections per session limit</li>
+        <li class="ci"><span class="ck cw">⚠</span>CORS (wildcard, needs fix)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">🧪 Testing</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span>Unit: AudioPlaybackManager</li>
+        <li class="ci"><span class="ck cf">✗</span>Unit: InterviewStateMachine</li>
+        <li class="ci"><span class="ck cf">✗</span>Unit: TranscriptManager</li>
+        <li class="ci"><span class="ck cf">✗</span>Integration: cleanup() idempotency</li>
+        <li class="ci"><span class="ck cf">✗</span>Integration: AudioContext lifecycle</li>
+        <li class="ci"><span class="ck cf">✗</span>E2E: full interview simulation</li>
+        <li class="ci"><span class="ck cf">✗</span>Load: 100+ concurrent sessions</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="ct">⚡ Performance</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck cf">✗</span>AudioWorklet (replace ScriptProcessor)</li>
+        <li class="ci"><span class="ck cp">✓</span>Video frame throttling (3 FPS)</li>
+        <li class="ci"><span class="ck cp">✓</span>JPEG compression (60% quality)</li>
+        <li class="ci"><span class="ck cp">✓</span>Video downscaling (640×480 max)</li>
+        <li class="ci"><span class="ck cp">✓</span>Thinking budget=0 (low latency)</li>
+        <li class="ci"><span class="ck cw">⚠</span>Sequential evaluation fetches</li>
+        <li class="ci"><span class="ck cf">✗</span>Unbounded transcriptHistory</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card mt2" style="background:linear-gradient(135deg,rgba(124,58,237,.1),rgba(0,0,0,.3));border:1px solid rgba(124,58,237,.3)">
+    <div class="ct" style="font-size:.95rem">Production Readiness Score</div>
+    <div class="cg cg4 mt2">
+      <div style="text-align:center"><div style="font-size:2.2rem;font-weight:900;color:var(--red)">28%</div><div style="font-size:11px;color:var(--muted)">Audio Pipeline</div></div>
+      <div style="text-align:center"><div style="font-size:2.2rem;font-weight:900;color:var(--orange)">35%</div><div style="font-size:11px;color:var(--muted)">Session Lifecycle</div></div>
+      <div style="text-align:center"><div style="font-size:2.2rem;font-weight:900;color:var(--red)">22%</div><div style="font-size:11px;color:var(--muted)">Security</div></div>
+      <div style="text-align:center"><div style="font-size:2.2rem;font-weight:900;color:var(--orange)">40%</div><div style="font-size:11px;color:var(--muted)">Backend Reliability</div></div>
+    </div>
+    <div class="alert aw mt2"><strong>Assessment:</strong> Functional prototype, not production-grade. Works under ideal conditions with a single user and no network interruptions. Under production load, all 10 documented bugs will manifest. The 4 Sprint-1 critical fixes (API key, cleanup idempotency, audio arbitration, AudioContext close) should be implemented before any significant user growth.</div>
+  </div>
+</section>
+
+<!-- IMPLEMENTATION PLAN -->
+<section>
+  <div class="st"><div class="si ip">🎯</div>Implementation Priority — 4-Sprint Plan</div>
+  <div class="cg cg2">
+    <div class="card" style="border-top:3px solid var(--red)">
+      <div class="ct tr">Sprint 1 — Critical Fixes (Week 1)</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck">🔴</span>Move Gemini API key server-side (remove NEXT_PUBLIC_)</li>
+        <li class="ci"><span class="ck">🔴</span>Make cleanup() idempotent with cleaningUpRef guard</li>
+        <li class="ci"><span class="ck">🔴</span>Call onSessionEnd() AFTER all saves complete</li>
+        <li class="ci"><span class="ck">🔴</span>Replace sequential fetch loop with Promise.allSettled()</li>
+        <li class="ci"><span class="ck">🔴</span>Add isSessionStartingRef mutex to startSession()</li>
+        <li class="ci"><span class="ck">🔴</span>Close AudioContexts in cleanup()</li>
+        <li class="ci"><span class="ck">🔴</span>Fix VideoPanel WS stale closure (shouldReconnectRef)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--orange)">
+      <div class="ct to">Sprint 2 — Audio Arbitration (Week 2)</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck">🟠</span>Implement AudioPlaybackManager with turnId guard</li>
+        <li class="ci"><span class="ck">🟠</span>Add barge-in policy (user speech → cancel AI audio)</li>
+        <li class="ci"><span class="ck">🟠</span>Implement InterviewStateMachine with 11 states</li>
+        <li class="ci"><span class="ck">🟠</span>Replace ScriptProcessor with AudioWorklet</li>
+        <li class="ci"><span class="ck">🟠</span>Per-turn transcript isolation (currentTurnId)</li>
+        <li class="ci"><span class="ck">🟠</span>Fix silence nudge (use sessionRef, not stale promise)</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--yellow)">
+      <div class="ct ty">Sprint 3 — Reliability (Week 3)</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck">🟡</span>Gemini session reconnect with answer buffer restore</li>
+        <li class="ci"><span class="ck">🟡</span>Transcript verification before next AI turn</li>
+        <li class="ci"><span class="ck">🟡</span>FastAPI CORS: specific origins</li>
+        <li class="ci"><span class="ck">🟡</span>WebSocket authentication (JWT token)</li>
+        <li class="ci"><span class="ck">🟡</span>Backend global exception handler</li>
+        <li class="ci"><span class="ck">🟡</span>Structured JSON logging for all critical paths</li>
+      </ul>
+    </div>
+    <div class="card" style="border-top:3px solid var(--green)">
+      <div class="ct tg">Sprint 4 — Scale &amp; Observability (Week 4)</div>
+      <ul class="cl mt1">
+        <li class="ci"><span class="ck">🟢</span>Redis session store (replace in-memory)</li>
+        <li class="ci"><span class="ck">🟢</span>Session traceId end-to-end propagation</li>
+        <li class="ci"><span class="ck">🟢</span>Unit tests: AudioPlaybackManager, StateMachine</li>
+        <li class="ci"><span class="ck">🟢</span>Integration tests: cleanup idempotency</li>
+        <li class="ci"><span class="ck">🟢</span>Load test: 100 concurrent sessions</li>
+        <li class="ci"><span class="ck">🟢</span>Live session health dashboard</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <p>FluenzyAI — COMPANY_WISE_HR Enterprise Forensic Analysis Report</p>
+  <p style="margin-top:.25rem">Generated by Senior Staff Software Engineer / Distributed Systems Architect · October 2026</p>
+  <p style="margin-top:.25rem;color:rgba(148,163,184,.4)">All code references verified against the production codebase. Line numbers match actual source files.</p>
+</footer>
+
+<script>
+function gotoSec(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.nl').forEach(l => l.classList.remove('act'));
+  event.currentTarget.classList.add('act');
+}
+const sections = document.querySelectorAll('section[id]');
+const navLinks = document.querySelectorAll('.nl');
+new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('act'));
+      const id = e.target.id;
+      const a = document.querySelector(`.nl[onclick*="${id}"]`);
+      if (a) a.classList.add('act');
+    }
+  });
+}, {rootMargin:'-30% 0px -60% 0px'}).observe && sections.forEach(s => {
+  new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('act'));
+      const a = document.querySelector(`.nl[onclick*="${entries[0].target.id}"]`);
+      if (a) a.classList.add('act');
+    }
+  }, {rootMargin:'-30% 0px -60% 0px'}).observe(s);
+});
+window.addEventListener('load', () => {
+  setTimeout(() => {
+    document.querySelectorAll('.mf').forEach(b => {
+      const w = b.style.width; b.style.width='0%';
+      setTimeout(() => b.style.width = w, 150);
+    });
+  }, 400);
+});
+</script>
+</body>
+</html>

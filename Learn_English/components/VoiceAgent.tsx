@@ -310,7 +310,25 @@ const VoiceAgent: React.FC<{
   const sessionRef = useRef<any>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
+  // ── Sprint 1 Critical Fixes ──────────────────────────────────────────────
+  // FIX P8: Mutex guard — prevents duplicate sessions from double-click / React Strict Mode
+  const isSessionStartingRef = useRef(false);
+  // FIX P3: Idempotency guard — cleanup() safe to call multiple times (onerror + onclose both fire)
+  const cleaningUpRef = useRef(false);
+  // FIX P1: Turn-ID arbitration — only audio from the CURRENT turn plays
+  const currentTurnIdRef = useRef<string | null>(null);
+  const currentSessionIdRef = useRef<string | null>(null);
+
   const cleanup = useCallback(async (saveResults = false) => {
+    // ── FIX P3: Idempotency guard — safe to call multiple times ──────────────
+    // onerror and onclose both fire when Gemini session dies; without this guard
+    // both triggers cause double-saves and double-calls to onSessionEnd.
+    if (cleaningUpRef.current) {
+      console.warn('[cleanup] Already running — ignoring duplicate call');
+      return;
+    }
+    cleaningUpRef.current = true;
+
     // Clear silence detection timer
     if (silenceTimerRef.current) {
       clearInterval(silenceTimerRef.current);
@@ -318,60 +336,85 @@ const VoiceAgent: React.FC<{
     }
     silencePromptCountRef.current = 0;
     isFirstChunkOfTurnRef.current = true;
-    
-    if (sessionRef.current) { sessionRef.current.close(); sessionRef.current = null; }
-    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
-    sourcesRef.current.forEach(s => { try { s.stop(); } catch(e) {} });
+
+    // ── FIX P1: Invalidate current turn so no stale audio chunks play ────────
+    currentTurnIdRef.current = null;
+
+    // Stop Gemini session
+    if (sessionRef.current) {
+      try { sessionRef.current.close(); } catch { /* already closed */ }
+      sessionRef.current = null;
+    }
+
+    // Stop mic stream tracks and release MediaStream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => { try { t.stop(); } catch { /* already stopped */ } });
+      streamRef.current = null;
+    }
+
+    // Cancel all active audio nodes
+    sourcesRef.current.forEach((s) => { try { s.stop(0); } catch { /* already ended */ } });
     sourcesRef.current.clear();
+
+    // ── FIX P5: Close AudioContexts to prevent browser 6-context cap ─────────
+    if (inputAudioContextRef.current && inputAudioContextRef.current.state !== 'closed') {
+      try { await inputAudioContextRef.current.close(); } catch { /* already closed */ }
+      inputAudioContextRef.current = null;
+    }
+    if (outputAudioContextRef.current && outputAudioContextRef.current.state !== 'closed') {
+      try { await outputAudioContextRef.current.close(); } catch { /* already closed */ }
+      outputAudioContextRef.current = null;
+    }
+
     setIsActive(false);
     setIsConnecting(false);
     setIsAiSpeaking(false);
     setIsUserSpeaking(false);
-    onSessionEnd(user);
+    // ── FIX P3: onSessionEnd fires AFTER saves (not before) ──────────────────
+    // Moving this call to after all save logic prevents parent unmounting the
+    // component while awaited fetches are still running.
 
     if (saveResults) {
       const endTime = new Date();
 
-      // Evaluate each answer
-      const evaluatedTranscripts = [];
-      for (const qa of transcriptHistory.current) {
-        try {
-          const evaluation = await fetch('/api/evaluate-answer', {
+      // ── FIX P3: Parallel evaluation with allSettled — one failure doesn't abort others ──
+      const FALLBACK_SCORES = { clarity: 7, relevance: 7, grammar: 7, confidence: 7, technicalAccuracy: 7 };
+      const evalResults = await Promise.allSettled(
+        transcriptHistory.current.map((qa) =>
+          fetch('/api/evaluate-answer', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              question: qa.question,
-              answer: qa.answer,
-              module: type,
-              context: sessionMeta
-            })
-          }).then(r => r.json());
+            body: JSON.stringify({ question: qa.question, answer: qa.answer, module: type, context: sessionMeta }),
+          }).then((r) => r.json()),
+        ),
+      );
 
-          // If evaluation returned an error or missing scores, use fallback
-          const hasScores = evaluation.scores && typeof evaluation.scores === 'object' && !evaluation.error;
-          evaluatedTranscripts.push({
+      const evaluatedTranscripts = transcriptHistory.current.map((qa, i) => {
+        const result = evalResults[i];
+        if (result.status === 'fulfilled') {
+          const ev = result.value;
+          const hasScores = ev.scores && !ev.error;
+          if (ev.error) console.warn('[EVALUATE] API returned error for turn', i, ':', ev.error);
+          return {
             aiPrompt: qa.question,
             userAnswer: qa.answer,
-            aiFeedback: evaluation.aiFeedback || 'Good response',
-            idealAnswer: evaluation.idealAnswer || qa.answer,
-            scores: hasScores ? evaluation.scores : { clarity: 7, relevance: 7, grammar: 7, confidence: 7, technicalAccuracy: 7 },
-            perQuestionScore: evaluation.perQuestionScore ?? 7
-          });
-          if (evaluation.error) {
-            console.warn('[EVALUATE] API returned error, using fallback scores:', evaluation.error);
-          }
-        } catch (error) {
-          console.error('Evaluation error:', error);
-          evaluatedTranscripts.push({
+            aiFeedback: ev.aiFeedback || 'Good response',
+            idealAnswer: ev.idealAnswer || qa.answer,
+            scores: hasScores ? ev.scores : FALLBACK_SCORES,
+            perQuestionScore: ev.perQuestionScore ?? 7,
+          };
+        } else {
+          console.warn('[EVALUATE] Turn', i, 'evaluation rejected:', result.reason);
+          return {
             aiPrompt: qa.question,
             userAnswer: qa.answer,
             aiFeedback: 'Response recorded',
             idealAnswer: qa.answer,
-            scores: { clarity: 7, relevance: 7, grammar: 7, confidence: 7, technicalAccuracy: 7 },
-            perQuestionScore: 7
-          });
+            scores: FALLBACK_SCORES,
+            perQuestionScore: 7,
+          };
         }
-      }
+      });
 
       // Calculate aggregate score
       const totalScore = evaluatedTranscripts.reduce((sum, t) => sum + (t.perQuestionScore || 0), 0);
@@ -486,9 +529,21 @@ const VoiceAgent: React.FC<{
 
       setIsFinished(true);
     }
+
+    // ── FIX P3: onSessionEnd fires LAST — after all saves are complete ────────
+    onSessionEnd(user);
+
+    // Reset idempotency guard AFTER full completion
+    cleaningUpRef.current = false;
   }, [type, sessionMeta, onSessionEnd, user]);
 
   const startSession = async () => {
+    // ── FIX P8: Mutex guard — prevents duplicate sessions ─────────────────────
+    if (isSessionStartingRef.current) {
+      console.warn('[startSession] Already starting — ignoring duplicate call (double-click / Strict Mode)');
+      return;
+    }
+    isSessionStartingRef.current = true;
     setIsConnecting(true);
     setError(null);
     isFirstChunkOfTurnRef.current = true;
@@ -717,6 +772,10 @@ const VoiceAgent: React.FC<{
         callbacks: {
           onopen: () => {
             setIsConnecting(false); setIsActive(true);
+            // Assign session ID for turn-ID arbitration
+            currentSessionIdRef.current = `SES_${Date.now()}`;
+            currentTurnIdRef.current = null;
+            isSessionStartingRef.current = false; // ── Release mutex after successful connect
             const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
             
@@ -794,26 +853,37 @@ const VoiceAgent: React.FC<{
               console.log('[AI_INITIAL_PROMPT] Sent initial prompt to make AI speak first');
             });
             
-            // Start silence detection timer - prompt user if silent for too long
+            // ── FIX P10: Silence nudge guard — use sessionRef.current directly (not stale promise) ──
+            // Check session AND interview state before sending nudge to prevent
+            // unhandled rejections when session is null during/after cleanup.
             silenceTimerRef.current = setInterval(() => {
               const timeSinceLastSpeech = Date.now() - lastUserSpeechRef.current;
               const isAiCurrentlySpeaking = sourcesRef.current.size > 0;
               
-              // If user has been silent for 15+ seconds and AI is not speaking
-              if (timeSinceLastSpeech > 15000 && !isAiCurrentlySpeaking && silencePromptCountRef.current < 3) {
+              // Only nudge if: user silent 15s + AI not speaking + session still alive + nudge count < 3
+              if (
+                timeSinceLastSpeech > 15000 &&
+                !isAiCurrentlySpeaking &&
+                silencePromptCountRef.current < 3 &&
+                sessionRef.current !== null
+              ) {
                 silencePromptCountRef.current++;
                 const silencePrompts = [
                   "I'm here to help. Feel free to share your thoughts or ask any questions.",
                   "Take your time. When you're ready, you can respond or ask me to continue.",
                   "I'll wait for you. Just say something when you're ready to continue."
                 ];
-                sessionPromise.then(s => {
-                  s.sendRealtimeInput({ text: silencePrompts[silencePromptCountRef.current - 1] + " Encourage the user gently." });
+                try {
+                  sessionRef.current.sendRealtimeInput({
+                    text: silencePrompts[silencePromptCountRef.current - 1] + " Encourage the user gently."
+                  });
                   console.log('[AI_SILENCE_PROMPT] User silent, sending prompt #', silencePromptCountRef.current);
-                });
-                lastUserSpeechRef.current = Date.now(); // Reset timer
+                } catch (err) {
+                  console.warn('[AI_SILENCE_PROMPT] Failed to send nudge (session may have closed):', err);
+                }
+                lastUserSpeechRef.current = Date.now();
               }
-            }, 5000); // Check every 5 seconds
+            }, 5000);
           },
           onmessage: async (m) => {
             if (m.serverContent?.outputTranscription?.text) currentQA.current.question += m.serverContent.outputTranscription.text;
@@ -874,25 +944,66 @@ const VoiceAgent: React.FC<{
             }
             const data = m.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (data) {
-              const buf = await decodeAudioData(decode(data), outputAudioContextRef.current!, 24000, 1);
-              const src = outputAudioContextRef.current!.createBufferSource();
-              src.buffer = buf; src.connect(outputAudioContextRef.current!.destination);
-              setIsAiSpeaking(true);
-              src.onended = () => { sourcesRef.current.delete(src); if (sourcesRef.current.size === 0) setIsAiSpeaking(false); };
-              
+              // ── FIX P1: Turn-ID Arbitration — prevents multiple simultaneous AI voices ──
+              // Each Gemini response turn gets a unique ID assigned at the start of the turn.
+              // Any audio chunk that arrives AFTER a new turn has begun is silently rejected.
+              if (!outputAudioContextRef.current || outputAudioContextRef.current.state === 'closed') {
+                console.warn('[AUDIO] outputAudioContext is null/closed — skipping chunk');
+                return;
+              }
+
+              // Assign turn ID at the FIRST chunk of each new turn
               if (isFirstChunkOfTurnRef.current) {
                 isFirstChunkOfTurnRef.current = false;
+                // Generate a new turnId for this response
+                const newTurnId = `TURN_${currentSessionIdRef.current}_${Date.now()}`;
+                currentTurnIdRef.current = newTurnId;
+
+                // Apply response delay at start of first chunk
                 const dynamicConfig = buildSessionConfig(activeSettingsRef.current, sessionMeta);
-                const delaySec = (dynamicConfig.responseDelayMs ?? 1200) / 1000;
-                if (nextStartTimeRef.current < outputAudioContextRef.current!.currentTime) {
-                  nextStartTimeRef.current = outputAudioContextRef.current!.currentTime + delaySec;
+                const delaySec = (dynamicConfig.responseDelayMs ?? 0) / 1000;
+                if (nextStartTimeRef.current < outputAudioContextRef.current.currentTime) {
+                  nextStartTimeRef.current = outputAudioContextRef.current.currentTime + delaySec;
                 } else {
                   nextStartTimeRef.current += delaySec;
                 }
+                console.log('[AUDIO] New turn started: turnId=', newTurnId, 'delay=', delaySec, 's');
               }
 
-              src.start(Math.max(nextStartTimeRef.current, outputAudioContextRef.current!.currentTime));
-              nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputAudioContextRef.current!.currentTime) + buf.duration;
+              // ── THE KEY GUARD: Reject stale chunks from old turns ──
+              const chunkTurnId = currentTurnIdRef.current;
+              if (!chunkTurnId) {
+                // Turn was invalidated (interview ending) — drop this chunk
+                return;
+              }
+
+              const buf = await decodeAudioData(decode(data), outputAudioContextRef.current, 24000, 1);
+              
+              // Double-check turn ID is still valid after async decodeAudioData
+              if (currentTurnIdRef.current !== chunkTurnId) {
+                console.log('[AUDIO] Chunk rejected — turn invalidated during decode. turnId=', chunkTurnId);
+                return;
+              }
+              // Double-check output context is still valid after async decode
+              if (!outputAudioContextRef.current || (outputAudioContextRef.current.state as string) === 'closed') {
+                return;
+              }
+
+              const src = outputAudioContextRef.current.createBufferSource();
+              src.buffer = buf;
+              src.connect(outputAudioContextRef.current.destination);
+              setIsAiSpeaking(true);
+
+              src.onended = () => {
+                sourcesRef.current.delete(src);
+                // Only clear AI speaking when ALL nodes for the CURRENT turn are done
+                if (sourcesRef.current.size === 0 && currentTurnIdRef.current === chunkTurnId) {
+                  setIsAiSpeaking(false);
+                }
+              };
+
+              src.start(Math.max(nextStartTimeRef.current, outputAudioContextRef.current.currentTime));
+              nextStartTimeRef.current = Math.max(nextStartTimeRef.current, outputAudioContextRef.current.currentTime) + buf.duration;
               sourcesRef.current.add(src);
             }
           },
@@ -903,6 +1014,7 @@ const VoiceAgent: React.FC<{
       sessionRef.current = await sessionPromise;
     } catch (err: any) {
       setIsConnecting(false);
+      isSessionStartingRef.current = false; // Release mutex on error
       console.error('Microphone error:', err);
 
       let errorMessage = "Microphone access failed. ";

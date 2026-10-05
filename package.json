@@ -13,7 +13,10 @@
     "backend": "node scripts/start-backend.js",
     "backend:setup": "python backend/setup_venv.py",
     "backend:start:win": "backend\\venv\\Scripts\\python -m uvicorn main:app --reload --port 8000 --app-dir backend",
-    "backend:start:unix": "backend/venv/bin/python -m uvicorn main:app --reload --port 8000 --app-dir backend"
+    "backend:start:unix": "backend/venv/bin/python -m uvicorn main:app --reload --port 8000 --app-dir backend",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1019.0",
@@ -108,6 +111,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.0.0",
     "@types/file-saver": "^2.0.7",
+    "@types/jest": "^30.0.0",
     "@types/libsodium-wrappers": "^0.7.14",
     "@types/node": "^20.11.19",
     "@types/pdf-parse": "^1.1.5",
@@ -116,9 +120,12 @@
     "@types/uuid": "^10.0.0",
     "@types/web-bluetooth": "^0.0.21",
     "concurrently": "^9.2.1",
+    "jest": "^30.5.2",
+    "jest-environment-jsdom": "^30.5.2",
     "lightningcss": "^1.27.0",
     "prisma": "^6.19.2",
     "tailwindcss": "^4.0.0",
+    "ts-jest": "^29.4.14",
     "tw-animate-css": "^1.3.7",
     "typescript": "^5.6.3"
   },
