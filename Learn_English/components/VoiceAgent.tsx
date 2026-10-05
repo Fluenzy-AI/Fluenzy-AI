@@ -1218,8 +1218,9 @@ From now on, speak and act strictly according to these new settings!]`
         </div>
         ) : (
           <div className="w-full max-w-2xl mx-auto space-y-1.5">
-            {/* AI HR Interviewer — dual-video on Company Wise HR mobile, static image elsewhere */}
-            <div className="relative w-full aspect-[16/10] min-h-[140px] max-h-44 sm:max-h-56 rounded-xl overflow-hidden border shadow-xl bg-slate-950 border-slate-700/60">
+            {/* AI HR Interviewer — dual-video on Company Wise HR, static image elsewhere */}
+            {/* Desktop: taller container + object-contain so full face is visible without cropping */}
+            <div className="relative w-full min-h-[140px] max-h-44 sm:max-h-56 md:max-h-80 lg:max-h-[420px] md:aspect-auto aspect-[16/10] rounded-xl overflow-hidden border shadow-xl bg-slate-950 border-slate-700/60">
               {showHRVideo ? (
                 <>
                   {/* ── Company Wise HR Mobile: dual muted HR videos ──────────────
@@ -1239,7 +1240,7 @@ From now on, speak and act strictly according to these new settings!]`
                     loop
                     playsInline
                     preload="auto"
-                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-200"
+                    className="absolute inset-0 w-full h-full transition-opacity duration-200 object-cover md:object-contain"
                     style={{
                       objectPosition: 'center 15%',
                       opacity: isAiSpeaking ? 1 : 0,
@@ -1258,7 +1259,7 @@ From now on, speak and act strictly according to these new settings!]`
                     loop
                     playsInline
                     preload="auto"
-                    className="absolute inset-0 w-full h-full object-cover transition-opacity duration-200"
+                    className="absolute inset-0 w-full h-full transition-opacity duration-200 object-cover md:object-contain"
                     style={{
                       objectPosition: 'center 15%',
                       opacity: isAiSpeaking ? 0 : 1,
@@ -1273,8 +1274,8 @@ From now on, speak and act strictly according to these new settings!]`
                 <img
                   src="/image/avtar.jpg"
                   alt="AI HR Interviewer"
-                  className="absolute inset-0 w-full h-full object-cover"
-                  style={{ objectPosition: 'center 15%' }}
+                  className="absolute inset-0 w-full h-full object-cover md:object-contain"
+                  style={{ objectPosition: 'center 20%' }}
                 />
               )}
             </div>
