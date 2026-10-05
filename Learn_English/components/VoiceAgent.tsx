@@ -30,6 +30,7 @@ import {
 import { TurnTakingEngine, QuestionType, DEFAULT_CONFIG as TT_DEFAULT_CONFIG } from '../../src/lib/interview/core/TurnTakingEngine';
 import { AnswerCompletionAnalyzer } from '../../src/lib/interview/core/AnswerCompletionAnalyzer';
 import { QuestionGate } from '../../src/lib/interview/core/QuestionGate';
+import { AcousticSourceIntelligenceEngine } from '../../src/lib/interview/audio/AcousticSourceIntelligenceEngine';
 
 
 // --- Utility Functions for Audio ---
@@ -388,6 +389,14 @@ const VoiceAgent: React.FC<{
   }, []);
 
 
+  // -- Acoustic Source Intelligence Engine -------------------------------------
+  // Instantiated once per component mount; reset on each session start.
+  // processFrame() called from scriptProcessor.onaudioprocess (every 256ms).
+  const asieRef = useRef(new AcousticSourceIntelligenceEngine());
+  // Latest ASIE result for the 300ms evaluation loop
+  const lastAsieResultRef = useRef<ReturnType<AcousticSourceIntelligenceEngine['processFrame']> | null>(null);
+
+
   /**
    * Flush the finalization window immediately (called from cleanup before save).
    * Cancels the timer and commits whatever late STT has arrived so far.
@@ -512,6 +521,9 @@ const VoiceAgent: React.FC<{
 
     // Guarantee all AI audio stops immediately on End
     stopAiAudio();
+    // Reset acoustic engine for next session
+    asieRef.current.reset();
+    lastAsieResultRef.current = null;
 
 
     // ── FIX P1: Invalidate current turn so no stale audio chunks play ────────

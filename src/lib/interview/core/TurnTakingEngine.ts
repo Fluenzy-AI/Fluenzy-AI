@@ -3,18 +3,25 @@
 //
 // Design:
 //   • Pure class — no React, no DOM, no side-effects
-//   • Accepts signals from VAD, STT, audio playback
+//   • Accepts signals from VAD, STT, audio playback, AcousticSourceIntelligence
 //   • Outputs a typed Decision every time evaluate() is called
 //   • Never uses a single timer as the decision engine
 //   • All thresholds configurable per question type
 //
 // Signal priority (highest → lowest):
-//   1. User actively speaking (VAD + audio energy)
-//   2. STT finalisation pending
-//   3. Transcript finalization window open
-//   4. Answer completion analysis
-//   5. Silence duration
-//   6. Next question eligibility
+//   1.  Candidate barge-in (high-confidence acoustic speech during AI playback)
+//   1b. Background audio during AI playback → KEEP AI PLAYING
+//   2.  Active candidate speech (acoustic or VAD)
+//   3.  Background speech/audio detected → ignore, keep waiting
+//   4.  Acoustic calibrating → conservative fallback
+//   5.  Session ending
+//   6.  Generation lock (duplicate prevention)
+//   7.  STT finalisation pending
+//   8.  Transcript finalization window (600ms)
+//   9.  AI still speaking
+//   10. Answer confirmed complete
+//   11. Hard silence + no transcript → recovery
+//   12. Silence classification fallback
 
 export type QuestionType =
   | 'GREETING'
@@ -76,13 +83,17 @@ export type SilenceClass =
   | 'CONFIRMED_SILENT' // > hardSilence
 
 export type TurnDecision =
-  | 'WAIT_FOR_USER'         // User hasn't spoken yet / AI just finished
-  | 'USER_IS_SPEAKING'      // Active speech — never ask next question
-  | 'WAIT_FOR_STT'          // VAD ended but STT not finalised
-  | 'WAIT_LONGER'           // Answer likely incomplete — keep waiting
-  | 'ANSWER_COMPLETE'       // Ready to transition — fire next question
-  | 'NO_ANSWER_RECOVERY'    // Long silence, no transcript — gentle nudge
-  | 'INTERRUPT_AI'          // User spoke while AI was speaking
+  | 'WAIT_FOR_USER'                  // User hasn't spoken yet / AI just finished
+  | 'USER_IS_SPEAKING'               // Active candidate speech — next question forbidden
+  | 'WAIT_FOR_STT'                   // VAD ended but STT not finalised
+  | 'WAIT_LONGER'                    // Answer likely incomplete — keep waiting
+  | 'ANSWER_COMPLETE'                // Ready to transition — fire next question
+  | 'NO_ANSWER_RECOVERY'             // Long silence, no transcript — gentle nudge
+  | 'INTERRUPT_AI'                   // High-confidence candidate barge-in
+  | 'CANDIDATE_BARGE_IN'             // Alias for INTERRUPT_AI (acoustic layer term)
+  | 'BACKGROUND_SPEECH_IGNORED'      // Background/distant speech — ignore, keep waiting
+  | 'BACKGROUND_AUDIO_ONLY'          // Music / env noise only — not advancing turn
+  | 'WAIT_FOR_SOURCE_CLASSIFICATION' // Acoustic engine still calibrating
 
 export interface TurnSignals {
   /** True if VAD reports active speech right now */
@@ -109,6 +120,18 @@ export interface TurnSignals {
   questionAlreadyAsked: boolean;
   /** True once session ending has been requested */
   sessionEnding: boolean;
+
+  // ── Acoustic Source Intelligence signals (from AcousticSourceIntelligenceEngine) ──
+  /** Candidate speech confidence 0..1. null = ASIE unavailable → fallback to VAD */
+  candidateSpeechConfidence?: number | null;
+  /** True when acoustic layer detects background/distant speech */
+  backgroundSpeechDetected?: boolean;
+  /** True when acoustic layer detects background non-speech audio (music, env noise) */
+  backgroundAudioDetected?: boolean;
+  /** True while acoustic layer is still calibrating (noise floor not ready) */
+  isCalibrating?: boolean;
+  /** Raw acoustic source class from BackgroundAudioClassifier */
+  acousticSource?: string;
 }
 
 export type AnswerCompletionState =
@@ -143,8 +166,22 @@ export class TurnTakingEngine {
 
   /**
    * Primary evaluation method.
-   * Call this whenever a signal changes (VAD frame, STT event, timer tick).
-   * It is PURE — same inputs → same output. No side-effects.
+   * Pure — same inputs → same output. No side-effects.
+   *
+   * Priority chain (12 levels):
+   *   1.  Candidate barge-in (high-confidence acoustic during AI)
+   *   1b. Background audio during AI → KEEP AI PLAYING
+   *   2.  Active candidate speech
+   *   3.  Background speech/audio (ignore)
+   *   4.  ASIE calibrating
+   *   5.  Session ending
+   *   6.  Generation lock
+   *   7.  STT pending
+   *   8.  Transcript finalization window
+   *   9.  AI speaking
+   *   10. Answer complete
+   *   11. No-answer recovery
+   *   12. Silence classification
    */
   evaluate(signals: TurnSignals): TurnDecisionResult {
     const mult = QUESTION_TYPE_MULTIPLIERS[signals.questionType] ?? 1.0;
@@ -156,104 +193,161 @@ export class TurnTakingEngine {
 
     const silenceClass = this._classifySilence(signals.silenceDurationMs, thresholds);
 
-    // ── Priority 1: User barge-in (highest priority) ───────────────────────
-    if (signals.vadSpeechActive && signals.aiSpeaking) {
-      return {
-        decision: 'INTERRUPT_AI',
-        reason: 'User speech detected while AI is speaking — barge-in required',
-        silenceClass,
-        thresholds,
-      };
-    }
+    // Resolve effective candidate-speaking flag.
+    // ASIE takes priority over raw VAD when available and calibrated.
+    const hasAcoustic      = signals.candidateSpeechConfidence != null && !signals.isCalibrating;
+    const acousticConf     = signals.candidateSpeechConfidence ?? 0;
+    const candidateSpeaking = hasAcoustic
+      ? (acousticConf >= 0.55)
+      : signals.vadSpeechActive;
 
-    // ── Priority 2: Active user speech — never ask next question ───────────
-    if (signals.vadSpeechActive) {
-      return {
-        decision: 'USER_IS_SPEAKING',
-        reason: 'VAD reports active speech — next question forbidden',
-        silenceClass,
-        thresholds,
-      };
-    }
+    const backgroundSpeech = signals.backgroundSpeechDetected ?? false;
+    const backgroundAudio  = signals.backgroundAudioDetected  ?? false;
 
-    // ── Priority 3: Session ending ─────────────────────────────────────────
-    if (signals.sessionEnding) {
-      return {
-        decision: 'WAIT_FOR_USER',
-        reason: 'Session ending — no new question',
-        silenceClass,
-        thresholds,
-      };
-    }
-
-    // ── Priority 4: Question already in flight ─────────────────────────────
-    if (signals.questionGenerationPending) {
-      return {
-        decision: 'WAIT_FOR_USER',
-        reason: 'Question generation already in progress — duplicate forbidden',
-        silenceClass,
-        thresholds,
-      };
-    }
-
-    // ── Priority 5: STT finalisation pending ──────────────────────────────
-    if (!signals.sttFinalised && signals.silenceDurationMs < this._config.sttFinalizationTimeoutMs) {
-      return {
-        decision: 'WAIT_FOR_STT',
-        reason: `STT not finalised yet — waiting ${this._config.sttFinalizationTimeoutMs}ms. Silence so far: ${signals.silenceDurationMs}ms`,
-        silenceClass,
-        thresholds,
-      };
-    }
-
-    // ── Priority 6: Transcript finalization window ─────────────────────────
-    if (signals.transcriptFinalizationOpen) {
-      return {
-        decision: 'WAIT_FOR_STT',
-        reason: '600ms transcript finalization window is open — STT chunks may still arrive',
-        silenceClass,
-        thresholds,
-      };
-    }
-
-    // ── Priority 7: AI still speaking (not a barge-in) ────────────────────
-    if (signals.aiSpeaking) {
-      return {
-        decision: 'WAIT_FOR_USER',
-        reason: 'AI is speaking — waiting for AI to finish',
-        silenceClass,
-        thresholds,
-      };
-    }
-
-    // ── Priority 8: Answer already confirmed complete ──────────────────────
-    if (signals.answerCompletion === 'COMPLETE' && !signals.questionAlreadyAsked) {
-      if (signals.silenceDurationMs >= this._config.naturalPauseBeforeNextMs) {
+    // ── Priority 1: Candidate BARGE-IN ────────────────────────────────────
+    // ONLY stop AI for HIGH-CONFIDENCE candidate speech.
+    // Background noise/speech must NEVER trigger barge-in.
+    if (signals.aiSpeaking && candidateSpeaking) {
+      const bargeInConf = hasAcoustic ? acousticConf : (signals.vadSpeechActive ? 0.80 : 0);
+      if (bargeInConf >= 0.68) {
         return {
-          decision: 'ANSWER_COMPLETE',
-          reason: `Answer confirmed COMPLETE. Silence: ${signals.silenceDurationMs}ms. Natural pause elapsed.`,
+          decision: 'INTERRUPT_AI',
+          reason:   `Candidate barge-in: confidence=${bargeInConf.toFixed(2)} >= 0.68 — stopping AI`,
           silenceClass,
           thresholds,
         };
       }
     }
 
-    // ── Priority 9: Hard silence with no answer ────────────────────────────
-    const hasTranscript = signals.partialTranscript.trim().length >= this._config.minAnswerLength;
-    if (silenceClass === 'CONFIRMED_SILENT' && !hasTranscript) {
+    // ── Priority 1b: Background audio while AI plays → KEEP AI PLAYING ───
+    if (signals.aiSpeaking && (backgroundSpeech || backgroundAudio)) {
       return {
-        decision: 'NO_ANSWER_RECOVERY',
-        reason: `Hard silence (${signals.silenceDurationMs}ms) with no transcript — gentle recovery`,
+        decision: 'WAIT_FOR_USER',
+        reason:   `AI playing + background audio (${signals.acousticSource ?? 'unknown'}) — keeping AI playing`,
         silenceClass,
         thresholds,
       };
     }
 
-    // ── Priority 10: Silence-based completion analysis ────────────────────
+    // ── Priority 2: Active candidate speech — next question FORBIDDEN ──────
+    if (candidateSpeaking) {
+      return {
+        decision: 'USER_IS_SPEAKING',
+        reason:   hasAcoustic
+          ? `Acoustic: candidateConf=${acousticConf.toFixed(2)} >= 0.55 — next question forbidden`
+          : 'VAD reports active speech — next question forbidden',
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 3: Background speech/audio — ignore, DO NOT advance turn ──
+    // INVARIANT: background speech must NEVER trigger ANSWER_COMPLETE
+    if (backgroundSpeech) {
+      return {
+        decision: 'BACKGROUND_SPEECH_IGNORED',
+        reason:   `Background/distant speech detected (source=${signals.acousticSource ?? 'BACKGROUND_SPEECH'}) — not candidate`,
+        silenceClass,
+        thresholds,
+      };
+    }
+    if (backgroundAudio) {
+      return {
+        decision: 'BACKGROUND_AUDIO_ONLY',
+        reason:   `Background audio only (source=${signals.acousticSource ?? 'BACKGROUND_AUDIO'}) — not advancing turn`,
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 4: ASIE calibrating ──────────────────────────────────────
+    if (signals.isCalibrating) {
+      return {
+        decision: 'WAIT_FOR_SOURCE_CLASSIFICATION',
+        reason:   'Acoustic engine calibrating — conservative VAD-only mode active',
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 5: Session ending ─────────────────────────────────────────
+    if (signals.sessionEnding) {
+      return {
+        decision: 'WAIT_FOR_USER',
+        reason:   'Session ending — no new question',
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 6: Question already in flight ─────────────────────────────
+    if (signals.questionGenerationPending) {
+      return {
+        decision: 'WAIT_FOR_USER',
+        reason:   'Question generation already in progress — duplicate forbidden',
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 7: STT finalisation pending ──────────────────────────────
+    if (!signals.sttFinalised && signals.silenceDurationMs < this._config.sttFinalizationTimeoutMs) {
+      return {
+        decision: 'WAIT_FOR_STT',
+        reason:   `STT not finalised yet — waiting ${this._config.sttFinalizationTimeoutMs}ms. Silence: ${signals.silenceDurationMs}ms`,
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 8: Transcript finalization window ─────────────────────────
+    if (signals.transcriptFinalizationOpen) {
+      return {
+        decision: 'WAIT_FOR_STT',
+        reason:   '600ms transcript finalization window open — STT chunks may still arrive',
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 9: AI still speaking (not a barge-in) ────────────────────
+    if (signals.aiSpeaking) {
+      return {
+        decision: 'WAIT_FOR_USER',
+        reason:   'AI is speaking — waiting for AI to finish',
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 10: Answer confirmed complete ─────────────────────────────
+    if (signals.answerCompletion === 'COMPLETE' && !signals.questionAlreadyAsked) {
+      if (signals.silenceDurationMs >= this._config.naturalPauseBeforeNextMs) {
+        return {
+          decision: 'ANSWER_COMPLETE',
+          reason:   `Answer COMPLETE. Silence: ${signals.silenceDurationMs}ms. Natural pause elapsed.`,
+          silenceClass,
+          thresholds,
+        };
+      }
+    }
+
+    // ── Priority 11: Hard silence with no answer ───────────────────────────
+    const hasTranscript = signals.partialTranscript.trim().length >= this._config.minAnswerLength;
+    if (silenceClass === 'CONFIRMED_SILENT' && !hasTranscript) {
+      return {
+        decision: 'NO_ANSWER_RECOVERY',
+        reason:   `Hard silence (${signals.silenceDurationMs}ms) with no transcript — gentle recovery`,
+        silenceClass,
+        thresholds,
+      };
+    }
+
+    // ── Priority 12: Silence-based completion analysis ────────────────────
     if (silenceClass === 'CONFIRMED_SILENT' && hasTranscript) {
       return {
         decision: 'ANSWER_COMPLETE',
-        reason: `Hard silence (${signals.silenceDurationMs}ms) with transcript — treating as complete`,
+        reason:   `Hard silence (${signals.silenceDurationMs}ms) with transcript — treating as complete`,
         silenceClass,
         thresholds,
       };
@@ -263,14 +357,14 @@ export class TurnTakingEngine {
       if (signals.answerCompletion === 'LIKELY_COMPLETE' && hasTranscript) {
         return {
           decision: 'ANSWER_COMPLETE',
-          reason: `Silence ${signals.silenceDurationMs}ms + LIKELY_COMPLETE analysis + has transcript`,
+          reason:   `Silence ${signals.silenceDurationMs}ms + LIKELY_COMPLETE + has transcript`,
           silenceClass,
           thresholds,
         };
       }
       return {
         decision: 'WAIT_LONGER',
-        reason: `Silence ${signals.silenceDurationMs}ms — possible end but answer not confirmed (completion=${signals.answerCompletion})`,
+        reason:   `Silence ${signals.silenceDurationMs}ms — possible end, answer not confirmed (completion=${signals.answerCompletion})`,
         silenceClass,
         thresholds,
       };
@@ -279,16 +373,16 @@ export class TurnTakingEngine {
     if (silenceClass === 'THINKING_PAUSE') {
       return {
         decision: 'WAIT_LONGER',
-        reason: `Silence ${signals.silenceDurationMs}ms — candidate thinking/pausing, threshold=${thresholds.completion}ms`,
+        reason:   `Silence ${signals.silenceDurationMs}ms — candidate thinking, threshold=${thresholds.completion}ms`,
         silenceClass,
         thresholds,
       };
     }
 
-    // SHORT_PAUSE or < pauseThreshold
+    // SHORT_PAUSE
     return {
       decision: 'WAIT_FOR_USER',
-      reason: `Short silence (${signals.silenceDurationMs}ms < ${thresholds.pause}ms) — waiting`,
+      reason:   `Short silence (${signals.silenceDurationMs}ms < ${thresholds.pause}ms) — waiting`,
       silenceClass,
       thresholds,
     };
