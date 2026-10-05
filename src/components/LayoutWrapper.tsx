@@ -55,40 +55,143 @@ import {
 } from 'lucide-react';
 import { useTheme, ThemeName, themeConfig } from '@/contexts/ThemeContext';
 
-const navItems = [
-  { href: '/train', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/train/competitions', label: 'Competitions', icon: Trophy, badge: 'New' },
-  { href: '/train/live', label: 'Live GD', icon: Radio },
-  { href: '/train/hr', label: 'HR Interview', icon: User },
-  { href: '/train/gd-coach', label: 'GD Coach', icon: GraduationCap },
-  { href: '/train/gd-agent', label: 'GD Agent', icon: Users },
-  { href: '/train/technical', label: 'Technical', icon: Code },
-  { href: '/train/company', label: 'Company', icon: Building2 },
-  { href: '/train/daily', label: 'Daily Practice', icon: MessageSquare },
-  { href: '/train/latest-topics', label: 'Latest Topics', icon: Zap },
-  { href: '/train/english', label: 'English Learning', icon: BookOpen },
-  { href: '/train/vocabulary', label: 'Vocabulary', icon: BookMarked },
-  { href: '/train/corporate-voice', label: 'Voice Practice', icon: Phone },
+interface NavItem {
+  href: string;
+  label: string;
+  icon: any;
+  badge?: string;
+  isAutoApplySetup?: boolean;
+  isAutoApplyActivity?: boolean;
+}
+
+interface NavSubGroup {
+  subTitle?: string;
+  items: NavItem[];
+}
+
+interface NavSection {
+  title: string;
+  key: string;
+  groups: NavSubGroup[];
+}
+
+const navSections: NavSection[] = [
+  {
+    title: 'OVERVIEW',
+    key: 'overview',
+    groups: [
+      {
+        items: [
+          { href: '/train', label: 'Dashboard', icon: LayoutDashboard },
+          { href: '/train/competitions', label: 'Competitions', icon: Trophy, badge: 'NEW' },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'INTERVIEW PRACTICE',
+    key: 'interviewPractice',
+    groups: [
+      {
+        subTitle: 'INTERVIEW',
+        items: [
+          { href: '/train/company', label: 'Company', icon: Building2 },
+          { href: '/train/hr', label: 'HR Interview', icon: User },
+          { href: '/train/technical', label: 'Technical', icon: Code },
+          { href: '/train/daily', label: 'Daily Practice', icon: MessageSquare },
+        ],
+      },
+      {
+        subTitle: 'LIVE & SIMULATION',
+        items: [
+          { href: '/train/live', label: 'Live GD', icon: Radio },
+          { href: '/train/gd-coach', label: 'GD Coach', icon: GraduationCap },
+          { href: '/train/gd-agent', label: 'GD Agent', icon: Users },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'COMMUNICATION & LEARNING',
+    key: 'communicationLearning',
+    groups: [
+      {
+        subTitle: 'COMMUNICATION',
+        items: [
+          { href: '/train/english', label: 'English Learning', icon: BookOpen },
+          { href: '/train/vocabulary', label: 'Vocabulary', icon: BookMarked },
+          { href: '/train/corporate-voice', label: 'Voice Practice', icon: Phone },
+        ],
+      },
+      {
+        subTitle: 'CONTENT',
+        items: [
+          { href: '/train/latest-topics', label: 'Latest Topics', icon: Flame },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'JOB DISCOVERY',
+    key: 'jobDiscovery',
+    groups: [
+      {
+        subTitle: 'FIND JOBS',
+        items: [
+          { href: '/train/job-search', label: 'AI Job Search', icon: Zap },
+          { href: '/jobs', label: 'Browse Jobs', icon: Briefcase },
+          { href: '/train/saved-jobs', label: 'Saved Jobs', icon: Bookmark },
+        ],
+      },
+      {
+        subTitle: 'AUTO-APPLY',
+        items: [
+          { href: '/train/auto-apply-setup', label: 'Auto-Apply Setup', icon: ShieldCheck, isAutoApplySetup: true },
+          { href: '/train/auto-apply-activity', label: 'Auto-Apply Activity', icon: BarChart3, isAutoApplyActivity: true },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'APPLICATIONS',
+    key: 'applications',
+    groups: [
+      {
+        items: [
+          { href: '/train/applications', label: 'My Applications', icon: Briefcase },
+          { href: '/train/assessments', label: 'My Assessments', icon: Award },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'TOOLS',
+    key: 'tools',
+    groups: [
+      {
+        items: [
+          { href: '/interview-guide', label: 'Interview Guide', icon: GraduationCap },
+          { href: '/ats', label: 'Advanced ATS System', icon: ShieldCheck },
+        ],
+      },
+    ],
+  },
+  {
+    title: 'ACCOUNT & ACTIVITY',
+    key: 'accountActivity',
+    groups: [
+      {
+        items: [
+          { href: '/history', label: 'History', icon: History },
+          { href: '/analytics', label: 'Analytics', icon: BarChart3 },
+          { href: '/profile', label: 'Profile', icon: User },
+          { href: '/billing', label: 'Billing', icon: CreditCard },
+        ],
+      },
+    ],
+  },
 ];
 
-const jobCareerItems = [
-  { href: '/train/auto-apply-setup', label: 'Auto-Apply Setup', icon: ShieldCheck },
-  { href: '/train/job-search', label: 'AI Job Search', icon: Zap },
-  { href: '/train/saved-jobs', label: 'Saved Jobs', icon: Bookmark },
-  { href: '/train/applications', label: 'My Applications', icon: Briefcase },
-  { href: '/train/assessments', label: 'My Assessments', icon: Award },
-  { href: '/train/auto-apply-activity', label: 'Auto-Apply Activity', icon: BarChart3 },
-  { href: '/jobs', label: 'Browse Jobs', icon: Briefcase },
-];
-
-const secondaryNavItems = [
-  { href: '/interview-guide', label: 'Interview Guide', icon: GraduationCap },
-  { href: '/ats', label: 'Advanced ATS System', icon: ShieldCheck },
-  { href: '/history', label: 'History', icon: History },
-  { href: '/analytics', label: 'Analytics', icon: BarChart3 },
-  { href: '/profile', label: 'Profile', icon: User },
-  { href: '/billing', label: 'Billing', icon: CreditCard },
-];
 const topQuickLinks = [
   { href: '/history', label: 'History' },
   { href: '/analytics', label: 'Analytics' },
@@ -104,6 +207,56 @@ const themeOptions: { value: ThemeName; label: string; icon: typeof Moon }[] = [
   { value: 'codeterm', label: 'Code', icon: Terminal },
 ];
 
+const getSidebarTheme = (themeName: string) => {
+  if (themeName === 'parchment') {
+    return {
+      bg: 'bg-[#FCFBF8]',
+      border: 'border-[#E7E5E4]',
+      sectionText: 'text-[#78716C]',
+      itemText: 'text-[#292524]',
+      itemIcon: 'text-[#57534E]',
+      activeText: 'text-[#C2413A]',
+      activeBg: 'bg-[#FCE7E7]',
+      activeIcon: 'text-[#C2413A]',
+      activeIndicator: 'bg-[#C2413A]',
+      hoverBg: 'hover:bg-[#F4F1EA]',
+      hoverText: 'hover:text-[#0C0A09]',
+      hoverIcon: 'group-hover:text-[#C2413A]',
+    };
+  }
+  if (themeName === 'light') {
+    return {
+      bg: 'bg-[#FAFAFA]',
+      border: 'border-[#E5E7EB]',
+      sectionText: 'text-[#6B7280]',
+      itemText: 'text-[#374151]',
+      itemIcon: 'text-[#6B7280]',
+      activeText: 'text-[#EA580C]',
+      activeBg: 'bg-[#FFF7ED]',
+      activeIcon: 'text-[#EA580C]',
+      activeIndicator: 'bg-[#EA580C]',
+      hoverBg: 'hover:bg-[#F3F4F6]',
+      hoverText: 'hover:text-[#111827]',
+      hoverIcon: 'group-hover:text-[#EA580C]',
+    };
+  }
+  // Midnight / Dark / Forest / Codeterm (Midnight specification match)
+  return {
+    bg: 'bg-[#090B10]',
+    border: 'border-[#1C222C]',
+    sectionText: 'text-[#6B7280]',
+    itemText: 'text-[#9CA3AF]',
+    itemIcon: 'text-[#7C8492]',
+    activeText: 'text-[#FF9D24]',
+    activeBg: 'bg-[#FF9D24]/10',
+    activeIcon: 'text-[#FF9D24]',
+    activeIndicator: 'bg-[#FF9D24]',
+    hoverBg: 'hover:bg-white/[0.04]',
+    hoverText: 'hover:text-[#F3F4F6]',
+    hoverIcon: 'group-hover:text-[#FF9D24]',
+  };
+};
+
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -118,7 +271,15 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [planInfo, setPlanInfo] = useState<any>(null);
   const [imageError, setImageError] = useState(false);
-  const [isPracticeOpen, setIsPracticeOpen] = useState(true);
+  const [sectionsOpen, setSectionsOpen] = useState<Record<string, boolean>>({
+    overview: true,
+    interviewPractice: true,
+    communicationLearning: true,
+    jobDiscovery: true,
+    applications: true,
+    tools: true,
+    accountActivity: true,
+  });
   const [autoApplyStatus, setAutoApplyStatus] = useState<{ completed: boolean; enabled: boolean }>({
     completed: false,
     enabled: false,
@@ -128,6 +289,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
   const isLight = resolvedTheme === 'parchment' || resolvedTheme === 'light';
+  const st = getSidebarTheme(resolvedTheme);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(max-width: 640px)');
@@ -183,18 +345,26 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     return () => clearInterval(id);
   }, [session, fetchSocialCounts]);
 
+  const [userStats, setUserStats] = useState<{ sessionsDone: number; dayStreak: number; totalPracticeDisplay: string } | null>(null);
+
   // Fetch user plan info and auto-apply status
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [planRes, autoApplyRes] = await Promise.all([
+        const [planRes, autoApplyRes, statsRes] = await Promise.all([
           fetch('/api/user-plan'),
-          fetch('/api/candidates/preferences')
+          fetch('/api/candidates/preferences'),
+          fetch('/api/user-stats')
         ]);
 
         if (planRes.ok) {
           const data = await planRes.json();
           setPlanInfo(data);
+        }
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setUserStats(statsData);
         }
 
         if (autoApplyRes.ok) {
@@ -256,7 +426,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   const isPortalPage = pathname.startsWith('/portal');
   const isCandidatePage = pathname.startsWith('/candidates');
 
-  // ── Candidate Portal: completely separate layout (has its own CandidatePortalLayout) ──
+  // ── Candidate Portal: completely separate layout ──
   if (isCandidatePage) {
     return <>{children}</>;
   }
@@ -409,22 +579,10 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
       </div>
     );
   }
-  // ────────────────────────────────────────────────────────────────────────────
 
-  // ── College Portal: completely separate layout (no main-site nav) ──────────
-  if (isCollegePage) {
+  if (isCollegePage || isCompanyPortalLanding || isPortalPage) {
     return <>{children}</>;
   }
-  if (isCompanyPortalLanding) {
-    return <>{children}</>;
-  }
-  // ────────────────────────────────────────────────────────────────────────────
-
-  // ── HR / Admin Portal: completely separate layout (no main-site nav) ───────
-  if (isPortalPage) {
-    return <>{children}</>;
-  }
-  // ────────────────────────────────────────────────────────────────────────────
 
   // Show persistent sidebar if logged in and not on a special page
   const showSidebar = !!session?.user && !hideNav && !isAuthPage;
@@ -447,235 +605,271 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     );
   }
 
-  const Sidebar = ({ collapsed = false, mobile = false }: { collapsed?: boolean; mobile?: boolean }) => {
-    const practiceSubItems = [
-      { href: '/train', label: 'Practice Modules', icon: Home },
-      { href: '/train/company', label: 'Company Interview', icon: Building2 },
-      { href: '/train/hr', label: 'HR Interview', icon: User },
-      { href: '/train/gd-agent', label: 'AI Interview', icon: MessageSquare },
-      { href: '/train/gd-coach', label: 'Group Discussion', icon: Users },
-      { href: '/train/technical', label: 'Technical Interview', icon: Code },
-      { href: '/train/english', label: 'English Practice', icon: BookOpen },
-    ];
+  const isItemActive = (href: string) => {
+    if (href === '/train') {
+      return pathname === '/train' || pathname === '/train/';
+    }
+    return pathname === href || pathname.startsWith(href + '/');
+  };
 
-    const isPracticeActive = pathname.startsWith('/train');
+  const Sidebar = ({ collapsed = false, mobile = false }: { collapsed?: boolean; mobile?: boolean }) => {
+    const renderSection = (section: NavSection) => {
+      const isOpen = sectionsOpen[section.key] ?? true;
+
+      return (
+        <div key={section.key} className="mb-2">
+          {!collapsed && (
+            <button
+              type="button"
+              onClick={() => setSectionsOpen(prev => ({ ...prev, [section.key]: !prev[section.key] }))}
+              className={`w-full flex items-center justify-between px-2.5 h-[26px] mb-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${st.sectionText} hover:text-white hover:bg-white/[0.02]`}
+            >
+              <span>{section.title}</span>
+              <ChevronDown
+                size={12}
+                className={`transition-transform duration-200 opacity-60 ${isOpen ? 'rotate-0' : '-rotate-90'}`}
+              />
+            </button>
+          )}
+
+          {(collapsed || isOpen) && (
+            <div className="space-y-1">
+              {section.groups.map((group, gIdx) => (
+                <div key={gIdx} className="space-y-0.5">
+                  {!collapsed && group.subTitle && (
+                    <div className={`px-2.5 pt-1.5 pb-0.5 text-[9px] font-semibold uppercase tracking-widest ${st.sectionText} opacity-70`}>
+                      {group.subTitle}
+                    </div>
+                  )}
+                  {group.items.map(item => {
+                    const active = isItemActive(item.href);
+                    const Icon = item.icon;
+
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => mobile && setMobileMenuOpen(false)}
+                        title={collapsed ? item.label : undefined}
+                        className={`group relative flex items-center h-[32px] px-2.5 rounded-md text-[12px] font-medium transition-colors duration-150 ${
+                          active
+                            ? `${st.activeBg} ${st.activeText} font-semibold`
+                            : `${st.itemText} ${st.hoverBg} ${st.hoverText}`
+                        } ${collapsed ? 'justify-center px-0' : 'gap-2.5'}`}
+                      >
+                        {/* Active Indicator Bar */}
+                        {active && !collapsed && (
+                          <span className={`absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full ${st.activeIndicator}`} />
+                        )}
+
+                        <Icon
+                          size={15}
+                          className={`flex-shrink-0 transition-colors duration-150 ${
+                            active ? st.activeIcon : `${st.itemIcon} ${st.hoverIcon}`
+                          }`}
+                        />
+
+                        {!collapsed && (
+                          <span className="truncate flex-1 text-[12px] tracking-tight">{item.label}</span>
+                        )}
+
+                        {/* Badges */}
+                        {!collapsed && item.badge && (
+                          <span className="ml-auto px-1.5 py-0.2 text-[9px] font-bold uppercase tracking-wider rounded-full bg-orange-500/15 text-orange-400 border border-orange-500/25">
+                            {item.badge}
+                          </span>
+                        )}
+
+                        {!collapsed && item.isAutoApplySetup && (
+                          <span className="ml-auto flex items-center gap-1">
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                autoApplyStatus.completed
+                                  ? 'bg-emerald-400'
+                                  : autoApplyStatus.enabled
+                                  ? 'bg-amber-400 animate-pulse'
+                                  : 'bg-slate-500'
+                              }`}
+                            />
+                          </span>
+                        )}
+
+                        {!collapsed && item.isAutoApplyActivity && (
+                          <span className="ml-auto flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                          </span>
+                        )}
+
+                        {/* Collapsed dot badges */}
+                        {collapsed && (item.badge || item.isAutoApplySetup || item.isAutoApplyActivity) && (
+                          <span className="absolute top-1 right-1.5 w-1.5 h-1.5 rounded-full bg-orange-400" />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    };
 
     return (
-      <div className={`flex flex-col h-full ${isLight ? 'bg-[#FAFAFB]' : 'bg-[#0B0E14]'} ${mobile ? 'w-full' : ''}`}>
-        {/* Logo */}
-        <div className={`p-4 border-b ${currentTheme.cardBorder} flex items-center justify-between`}>
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-500 via-amber-500 to-rose-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+      <div className={`flex flex-col h-full ${st.bg} ${mobile ? 'w-full' : ''}`}>
+        {/* Sidebar Header */}
+        <div className={`h-12 px-3 border-b ${st.border} flex items-center justify-between flex-shrink-0`}>
+          <Link href="/" className="flex items-center gap-2 min-w-0">
+            <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
               <img
                 src={isLight ? '/favicon/apple-touch-icon.png' : '/white-removebg-preview1.png'}
                 alt="Fluenzy AI Logo"
-                className="w-5 h-5 object-contain"
+                className="w-full h-full object-contain"
               />
             </div>
             {!collapsed && (
-              <span className={`font-extrabold text-xl tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                Fluenzy <span className="text-orange-500">AI</span>
+              <span className={`font-bold text-base tracking-tight truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                Fluenzy <span className="text-[#E56B2D]">AI</span>
               </span>
             )}
           </Link>
+
+          {!mobile && (
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className={`p-1 rounded-md transition-colors ${st.sectionText} hover:text-white hover:bg-white/10`}
+              title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            >
+              <ChevronRight size={14} className={`transition-transform duration-200 ${shouldExpandSidebar ? 'rotate-180' : ''}`} />
+            </button>
+          )}
+
           {mobile && (
-            <button onClick={() => setMobileMenuOpen(false)} className={`p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/10'}`}>
-              <X size={20} />
+            <button
+              onClick={() => setMobileMenuOpen(false)}
+              className={`p-1 rounded-md transition-colors ${st.sectionText} hover:text-white hover:bg-white/10`}
+            >
+              <X size={18} />
             </button>
           )}
         </div>
 
-        {/* Main Navigation */}
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5 scrollbar-thin">
-          {/* Home Link */}
-          <Link
-            href="/"
-            onClick={() => mobile && setMobileMenuOpen(false)}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              pathname === '/'
-                ? isLight
-                  ? 'bg-amber-500/10 text-amber-700 font-semibold'
-                  : 'bg-orange-500/15 text-orange-400 font-semibold'
-                : isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-            } ${collapsed ? 'justify-center' : ''}`}
-            title={collapsed ? 'Home' : undefined}
-          >
-            <Home size={18} />
-            {!collapsed && <span>Home</span>}
-          </Link>
-
-          {/* Practice Section with Subpart Accordion */}
-          <div>
-            <button
-              onClick={() => setIsPracticeOpen(!isPracticeOpen)}
-              className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                isPracticeActive
-                  ? isLight
-                    ? 'bg-amber-500/10 text-amber-700'
-                    : 'bg-orange-500/15 text-orange-400'
-                  : isLight
-                  ? 'text-slate-700 hover:bg-slate-100'
-                  : 'text-slate-300 hover:bg-white/5'
-              } ${collapsed ? 'justify-center' : ''}`}
-              title={collapsed ? 'Practice' : undefined}
-            >
-              <div className="flex items-center gap-3">
-                <div className={`p-1 rounded-lg ${isLight ? 'bg-amber-500/15 text-amber-600' : 'bg-orange-500/20 text-orange-400'}`}>
-                  <Briefcase size={16} />
-                </div>
-                {!collapsed && <span>Practice</span>}
-              </div>
-              {!collapsed && (
-                <ChevronDown
-                  size={16}
-                  className={`transition-transform duration-200 ${isPracticeOpen ? 'rotate-180 text-orange-500' : 'text-slate-400'}`}
-                />
-              )}
-            </button>
-
-            {/* Subpart List */}
-            {!collapsed && isPracticeOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="mt-1 ml-3 pl-3 border-l-2 border-orange-500/30 space-y-1"
-              >
-                {practiceSubItems.map((sub) => {
-                  const isSubActive = pathname === sub.href;
-                  return (
-                    <Link
-                      key={sub.href}
-                      href={sub.href}
-                      onClick={() => mobile && setMobileMenuOpen(false)}
-                      className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
-                        isSubActive
-                          ? isLight
-                            ? 'bg-amber-600/15 text-amber-800 font-bold shadow-sm'
-                            : 'bg-gradient-to-r from-orange-500/30 to-amber-500/20 text-orange-300 font-bold border border-orange-500/30 shadow-md'
-                          : isLight
-                          ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                          : 'text-slate-400 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      <sub.icon size={15} className={isSubActive ? (isLight ? 'text-amber-700' : 'text-orange-400') : 'opacity-70'} />
-                      <span>{sub.label}</span>
-                    </Link>
-                  );
-                })}
-              </motion.div>
-            )}
-          </div>
-
-          {/* History */}
-          <Link
-            href="/history"
-            onClick={() => mobile && setMobileMenuOpen(false)}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              pathname.startsWith('/history')
-                ? isLight
-                  ? 'bg-amber-500/10 text-amber-700 font-semibold'
-                  : 'bg-orange-500/15 text-orange-400 font-semibold'
-                : isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-            } ${collapsed ? 'justify-center' : ''}`}
-            title={collapsed ? 'History' : undefined}
-          >
-            <History size={18} />
-            {!collapsed && <span>History</span>}
-          </Link>
-
-          {/* Analytics */}
-          <Link
-            href="/analytics"
-            onClick={() => mobile && setMobileMenuOpen(false)}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              pathname.startsWith('/analytics')
-                ? isLight
-                  ? 'bg-amber-500/10 text-amber-700 font-semibold'
-                  : 'bg-orange-500/15 text-orange-400 font-semibold'
-                : isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-            } ${collapsed ? 'justify-center' : ''}`}
-            title={collapsed ? 'Analytics' : undefined}
-          >
-            <BarChart3 size={18} />
-            {!collapsed && <span>Analytics</span>}
-          </Link>
-
-          {/* Interview Guide */}
-          <Link
-            href="/interview-guide"
-            onClick={() => mobile && setMobileMenuOpen(false)}
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-              pathname.startsWith('/interview-guide')
-                ? isLight
-                  ? 'bg-amber-500/10 text-amber-700 font-semibold'
-                  : 'bg-orange-500/15 text-orange-400 font-semibold'
-                : isLight
-                ? 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'
-            } ${collapsed ? 'justify-center' : ''}`}
-            title={collapsed ? 'Interview Guide' : undefined}
-          >
-            <BookMarked size={18} />
-            {!collapsed && <span>Interview Guide</span>}
-          </Link>
+        {/* Scrollable Navigation Area */}
+        <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1 scrollbar-thin">
+          {navSections.map(section => renderSection(section))}
         </div>
 
-        {/* Sidebar Bottom Cards: Usage ring & Upgrade Plan */}
-        {!collapsed && (
-          <div className={`p-3 border-t ${currentTheme.cardBorder} space-y-3`}>
-            {/* Session Usage Progress Ring */}
-            <div className={`p-3.5 rounded-2xl ${isLight ? 'bg-amber-500/5 border border-amber-200/60' : 'bg-slate-900/80 border border-white/5'} flex items-center gap-3`}>
-              <div className="relative w-10 h-10 flex items-center justify-center">
-                <svg className="w-10 h-10 transform -rotate-90">
-                  <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" className={isLight ? 'text-amber-200' : 'text-slate-800'} />
-                  <circle cx="20" cy="20" r="16" stroke="currentColor" strokeWidth="3" fill="transparent" strokeDasharray={100} strokeDashoffset={40} className="text-orange-500" strokeLinecap="round" />
-                </svg>
-                <span className={`absolute text-[10px] font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>60%</span>
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className={`text-xs font-bold ${isLight ? 'text-slate-800' : 'text-white'} truncate`}>12 / 20</p>
-                <p className={`text-[11px] ${currentTheme.textMuted} truncate`}>Sessions used</p>
-              </div>
-            </div>
-
-            {/* Upgrade Plan Button */}
-            <button
-              onClick={() => {
-                if (mobile) setMobileMenuOpen(false);
-                window.location.href = '/billing';
-              }}
-              className="w-full flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl bg-gradient-to-r from-orange-500 via-amber-600 to-orange-600 hover:from-orange-600 hover:to-amber-700 text-white font-bold text-xs shadow-lg shadow-orange-500/25 transition-all transform hover:-translate-y-0.5"
-            >
-              <Crown size={14} className="text-amber-200" />
-              <span>Upgrade Plan</span>
-            </button>
-
-            {/* Profile User Pill */}
-            {session?.user && (
-              <div className={`p-2 rounded-xl flex items-center justify-between ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} transition-colors cursor-pointer`} onClick={() => setShowProfileMenu(!showProfileMenu)}>
-                <div className="flex items-center gap-2.5 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white font-bold text-xs overflow-hidden shadow-sm">
-                    {showAvatarImage ? (
-                      <img src={avatarUrl!} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={() => setImageError(true)} />
-                    ) : userInitial}
-                  </div>
-                  <div className="min-w-0">
-                    <p className={`text-xs font-bold ${isLight ? 'text-slate-900' : 'text-white'} truncate`}>{displayName}</p>
-                    <p className={`text-[10px] ${currentTheme.textMuted} truncate`}>{planInfo?.plan || 'Free'} Plan</p>
-                  </div>
+        {/* Footer / User Profile & Usage */}
+        <div className={`p-2.5 border-t ${st.border} space-y-2 flex-shrink-0`}>
+          {!collapsed ? (
+            <>
+              {/* Session Usage Progress Ring */}
+              <div className={`p-2 rounded-xl ${isLight ? 'bg-slate-100' : 'bg-white/[0.03]'} border ${st.border} flex items-center gap-2.5`}>
+                <div className="relative w-7 h-7 flex items-center justify-center flex-shrink-0">
+                  <svg className="w-7 h-7 transform -rotate-90">
+                    <circle cx="14" cy="14" r="11" stroke="currentColor" strokeWidth="2.5" fill="transparent" className={isLight ? 'text-slate-300' : 'text-slate-800'} />
+                    <circle cx="14" cy="14" r="11" stroke="currentColor" strokeWidth="2.5" fill="transparent" strokeDasharray={70} strokeDashoffset={Math.max(0, 70 - Math.min(70, Math.round(((userStats?.sessionsDone || 0) / 20) * 70)))} className="text-amber-500" strokeLinecap="round" />
+                  </svg>
+                  <span className={`absolute text-[8px] font-bold ${isLight ? 'text-slate-800' : 'text-white'}`}>
+                    {userStats ? Math.min(100, Math.round((userStats.sessionsDone / 20) * 100)) : 0}%
+                  </span>
                 </div>
-                <ChevronRight size={14} className={currentTheme.textMuted} />
+                <div className="min-w-0 flex-1">
+                  <p className={`text-[11px] font-bold ${isLight ? 'text-slate-800' : 'text-white'} truncate leading-tight`}>
+                    {userStats ? userStats.sessionsDone : 0} {planInfo?.isUnlimited ? 'Sessions' : '/ 20 Sessions'}
+                  </p>
+                  <p className={`text-[10px] ${st.sectionText} truncate leading-tight`}>
+                    {userStats?.dayStreak ? `${userStats.dayStreak} day streak` : 'Total sessions done'}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
-        )}
+
+              {/* Upgrade / Manage Plan Button */}
+              {planInfo?.plan === 'Free' || !planInfo ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (mobile) setMobileMenuOpen(false);
+                    window.location.href = '/billing';
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg bg-gradient-to-r from-orange-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold text-[11px] shadow-sm transition-all"
+                >
+                  <Crown size={13} className="text-amber-200" />
+                  <span>Upgrade Plan</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (mobile) setMobileMenuOpen(false);
+                    window.location.href = '/billing';
+                  }}
+                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg bg-white/[0.06] hover:bg-white/10 border border-white/10 text-white font-semibold text-[11px] transition-all"
+                >
+                  <CreditCard size={13} className="text-slate-300" />
+                  <span>Manage Plan</span>
+                </button>
+              )}
+
+              {/* User Profile Pill */}
+              {session?.user && (
+                <div
+                  className={`p-1.5 rounded-lg flex items-center justify-between ${st.hoverBg} transition-colors cursor-pointer`}
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white font-bold text-xs overflow-hidden flex-shrink-0">
+                      {showAvatarImage ? (
+                        <img src={avatarUrl!} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={() => setImageError(true)} />
+                      ) : (
+                        userInitial
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`text-[11px] font-semibold ${isLight ? 'text-slate-900' : 'text-white'} truncate leading-tight`}>{displayName}</p>
+                      <p className={`text-[9px] ${st.sectionText} truncate leading-tight`}>{planInfo?.plan || 'Free'} Plan</p>
+                    </div>
+                  </div>
+                  <ChevronRight size={13} className={st.sectionText} />
+                </div>
+              )}
+            </>
+          ) : (
+            /* Collapsed mode bottom buttons */
+            <div className="flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  if (mobile) setMobileMenuOpen(false);
+                  window.location.href = '/billing';
+                }}
+                title={planInfo?.plan === 'Free' || !planInfo ? 'Upgrade Plan' : 'Manage Plan'}
+                className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm ${
+                  planInfo?.plan === 'Free' || !planInfo
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-600'
+                    : 'bg-white/10 border border-white/10'
+                }`}
+              >
+                {planInfo?.plan === 'Free' || !planInfo ? <Crown size={14} /> : <CreditCard size={14} />}
+              </button>
+
+              {session?.user && (
+                <div
+                  title={displayName}
+                  className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-500 to-amber-600 flex items-center justify-center text-white font-bold text-xs overflow-hidden cursor-pointer"
+                  onClick={() => setShowProfileMenu(!showProfileMenu)}
+                >
+                  {showAvatarImage ? (
+                    <img src={avatarUrl!} alt={displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" onError={() => setImageError(true)} />
+                  ) : (
+                    userInitial
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
@@ -687,16 +881,21 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
         <aside
           onMouseEnter={() => !sidebarOpen && setSidebarHovered(true)}
           onMouseLeave={() => setSidebarHovered(false)}
-          className={`hidden lg:flex flex-col border-r ${currentTheme.cardBorder} ${isLight ? 'bg-white shadow-[2px_0_12px_rgba(0,0,0,0.06)]' : currentTheme.background} transition-all duration-300 ${shouldExpandSidebar ? 'w-64' : 'w-20'} relative`}
+          className={`hidden lg:flex flex-col border-r ${st.border} ${st.bg} transition-all duration-300 ${
+            shouldExpandSidebar ? 'w-[230px]' : 'w-[68px]'
+          } relative z-20`}
         >
           <Sidebar collapsed={!shouldExpandSidebar} />
 
-          {/* Collapse Toggle */}
+          {/* Floating Collapse Toggle Button on Border */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
-            className={`absolute top-1/2 -right-3 transform -translate-y-1/2 w-6 h-6 rounded-full ${currentTheme.cardBg} border ${currentTheme.cardBorder} flex items-center justify-center ${currentTheme.textMuted} hover:${currentTheme.text} transition-colors z-10`}
+            className={`absolute top-14 -right-3 transform w-6 h-6 rounded-full ${
+              isLight ? 'bg-white text-slate-700 shadow-md border border-slate-200' : 'bg-[#11161F] text-slate-300 border border-[#1C222C]'
+            } flex items-center justify-center hover:text-orange-400 transition-colors z-30`}
+            title={shouldExpandSidebar ? 'Collapse sidebar' : 'Expand sidebar'}
           >
-            <ChevronRight size={14} className={`transition-transform ${shouldExpandSidebar ? 'rotate-180' : ''}`} />
+            <ChevronRight size={13} className={`transition-transform duration-200 ${shouldExpandSidebar ? 'rotate-180' : ''}`} />
           </button>
         </aside>
 
@@ -720,33 +919,14 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           {/* Top Navbar */}
           {!isMobilePageWithOwnHeader && (
             <header className={`h-16 border-b ${currentTheme.cardBorder} ${currentTheme.background} flex items-center justify-between px-6 sticky top-0 z-30`}>
-              {/* Left - Mobile Menu + Top Search Bar */}
-              <div className="flex items-center gap-4 flex-1 max-w-xl">
+              {/* Left - Mobile Menu Toggle */}
+              <div className="flex items-center gap-4">
                 <button
                   onClick={() => setMobileMenuOpen(true)}
                   className={`lg:hidden p-2 rounded-lg transition-colors ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'}`}
                 >
                   <Menu size={20} />
                 </button>
-
-                {/* Search Bar Input */}
-                <div className="relative w-full max-w-md hidden sm:block">
-                  <Search size={16} className={`absolute left-3.5 top-1/2 transform -translate-y-1/2 ${currentTheme.textMuted}`} />
-                  <input
-                    type="text"
-                    placeholder="Search for a module, topic or company..."
-                    className={`w-full pl-10 pr-16 py-2 rounded-xl text-xs font-medium border transition-all outline-none ${
-                      isLight
-                        ? 'bg-slate-100/80 border-slate-200 text-slate-800 focus:bg-white focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20'
-                        : 'bg-slate-900/80 border-white/10 text-white focus:border-orange-500/50 focus:ring-2 focus:ring-orange-500/20'
-                    }`}
-                  />
-                  <span className={`absolute right-3 top-1/2 transform -translate-y-1/2 px-1.5 py-0.5 rounded text-[10px] font-mono border ${
-                    isLight ? 'bg-white border-slate-200 text-slate-500' : 'bg-slate-800 border-slate-700 text-slate-400'
-                  }`}>
-                    Ctrl K
-                  </span>
-                </div>
               </div>
 
               {/* Right - Actions */}

@@ -42,10 +42,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Apply theme to document
     const root = document.documentElement;
     const actualTheme = validThemes.includes(theme) ? theme : 'dark';
-    
+
     // Remove all theme classes first
     root.classList.remove('light', 'dark', 'midnight', 'forest', 'parchment', 'codeterm', 'system');
-    
+
     // Add the current theme class
     root.classList.add(actualTheme);
 

@@ -116,7 +116,7 @@ const Group3DGraphic = () => (
       {/* Left Pawn */}
       <circle cx="30" cy="28" r="11" fill="url(#green_head)" />
       <path d="M15 62 C15 45 45 45 45 62 Z" fill="url(#green_body)" />
-      
+
       {/* Right Pawn */}
       <circle cx="70" cy="28" r="11" fill="url(#green_head)" />
       <path d="M55 62 C55 45 85 45 85 62 Z" fill="url(#green_body)" />
@@ -154,7 +154,7 @@ const Technical3DGraphic = () => (
       <rect x="29" y="18" width="42" height="26" rx="4" fill="#18132B" />
       {/* Code Brackets on Screen */}
       <text x="35" y="36" fill="#A78BFA" fontSize="16" fontFamily="monospace" fontWeight="bold">&lt;/&gt;</text>
-      
+
       {/* Laptop Base */}
       <path d="M16 50 H84 L78 60 H22 Z" fill="url(#purple_base)" />
       <rect x="42" y="52" width="16" height="3" rx="1.5" fill="#6D28D9" />
@@ -570,6 +570,7 @@ export default function TrainPage() {
   const { resolvedTheme } = useTheme();
   const [usageData, setUsageData] = useState<UsageData | null>(null);
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
+  const [userStats, setUserStats] = useState<{ sessionsDone: number; dayStreak: number; totalPracticeDisplay: string } | null>(null);
 
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
   const isLightMode = resolvedTheme === 'parchment' || resolvedTheme === 'light';
@@ -577,9 +578,10 @@ export default function TrainPage() {
 
   const fetchUsageData = useCallback(async () => {
     try {
-      const [usageRes, planRes] = await Promise.all([
+      const [usageRes, planRes, statsRes] = await Promise.all([
         fetch('/api/training-usage'),
         fetch('/api/user-plan'),
+        fetch('/api/user-stats'),
       ]);
 
       if (usageRes.ok) {
@@ -590,6 +592,11 @@ export default function TrainPage() {
       if (planRes.ok) {
         const data = await planRes.json();
         setPlanInfo(data);
+      }
+
+      if (statsRes.ok) {
+        const data = await statsRes.json();
+        setUserStats(data);
       }
     } catch (error) {
       console.error('[TRAIN_PAGE] Error fetching data:', error);
@@ -690,7 +697,7 @@ export default function TrainPage() {
               <BarChart3 size={18} />
             </div>
             <div>
-              <p className="text-sm font-extrabold leading-tight">12</p>
+              <p className="text-sm font-extrabold leading-tight">{userStats ? userStats.sessionsDone : 0}</p>
               <p className={`text-[11px] ${currentTheme.textMuted}`}>Sessions done</p>
             </div>
           </div>
@@ -700,7 +707,7 @@ export default function TrainPage() {
               <Flame size={18} />
             </div>
             <div>
-              <p className="text-sm font-extrabold leading-tight">5</p>
+              <p className="text-sm font-extrabold leading-tight">{userStats ? userStats.dayStreak : 0}</p>
               <p className={`text-[11px] ${currentTheme.textMuted}`}>Day streak</p>
             </div>
           </div>
@@ -710,7 +717,7 @@ export default function TrainPage() {
               <Clock size={18} />
             </div>
             <div>
-              <p className="text-sm font-extrabold leading-tight">8h 20m</p>
+              <p className="text-sm font-extrabold leading-tight">{userStats ? userStats.totalPracticeDisplay : '0m'}</p>
               <p className={`text-[11px] ${currentTheme.textMuted}`}>Total practice</p>
             </div>
           </div>
@@ -724,60 +731,14 @@ export default function TrainPage() {
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`relative overflow-hidden rounded-3xl p-7 border transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-br ${currentTheme.heroBg1} ${currentTheme.heroBorder1} shadow-2xl`}
+          onClick={() => router.push('/train/company')}
+          className="relative overflow-hidden rounded-3xl shadow-2xl cursor-pointer group transition-all duration-300 border border-white/10 hover:scale-[1.015] hover:shadow-orange-500/10"
         >
-          {/* Left Column: Text & CTA */}
-          <div className="flex-1 w-full flex flex-col justify-between h-full z-10">
-            <div>
-              {/* Header Badge */}
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-rose-500 flex items-center justify-center shadow-md shadow-orange-500/20">
-                  <Building2 size={20} className="text-white" />
-                </div>
-              </div>
-
-              <h2 className={`text-2xl font-extrabold tracking-tight mb-2 ${currentTheme.heading}`}>
-                Company Interview
-              </h2>
-              <p className={`text-xs mb-4 leading-relaxed ${currentTheme.bodyText}`}>
-                Practice real company interview questions with AI or real people.
-              </p>
-
-              {/* Bullet Points */}
-              <div className="space-y-2 mb-6">
-                {[
-                  'FAANG & Startups questions',
-                  'Role-specific rounds',
-                  'Real interview experience',
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs font-semibold">
-                    <div className="w-4 h-4 rounded-full bg-[#E56B2D] flex items-center justify-center text-white text-[10px] flex-shrink-0">
-                      ✓
-                    </div>
-                    <span className={currentTheme.text}>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Action CTA Button */}
-            <button
-              onClick={() => router.push('/train/company')}
-              className="py-3 px-6 rounded-xl bg-[#E56B2D] hover:bg-[#D45A1C] text-white font-extrabold text-xs shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 cursor-pointer w-full sm:w-auto"
-            >
-              <span>Start Practice</span>
-              <ArrowRight size={16} />
-            </button>
-          </div>
-
-          {/* Right Column: High-Res Banner Image */}
-          <div className="w-full md:w-1/2 flex items-center justify-center relative">
-            <img
-              src={companyBannerSrc}
-              alt="Company Interview Practice Banner"
-              className="w-full h-auto max-h-[220px] object-contain rounded-2xl drop-shadow-xl"
-            />
-          </div>
+          <img
+            src={companyBannerSrc}
+            alt="Company Interview Practice Banner"
+            className="w-full h-auto object-cover rounded-3xl"
+          />
         </motion.div>
 
         {/* Hero Card 2: HeartSync */}
@@ -785,61 +746,14 @@ export default function TrainPage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className={`relative overflow-hidden rounded-3xl p-7 border transition-all duration-300 flex flex-col md:flex-row items-center justify-between gap-6 bg-gradient-to-br ${currentTheme.heroBg2} ${currentTheme.heroBorder2} shadow-2xl`}
+          onClick={() => router.push('/train/live-red-heart')}
+          className="relative overflow-hidden rounded-3xl shadow-2xl cursor-pointer group transition-all duration-300 border border-white/10 hover:scale-[1.015] hover:shadow-rose-500/10"
         >
-          {/* Left Column: Text & CTA */}
-          <div className="flex-1 w-full flex flex-col justify-between h-full z-10">
-            <div>
-              {/* Header Badge */}
-              <div className="flex items-center gap-2 mb-3">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/20 border border-rose-500/30 text-rose-500 text-[11px] font-bold animate-pulse">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" />
-                  <span>LIVE NOW</span>
-                </div>
-              </div>
-
-              <h2 className={`text-2xl font-extrabold tracking-tight mb-2 ${currentTheme.heading}`}>
-                HeartSync
-              </h2>
-              <p className={`text-xs mb-4 leading-relaxed ${currentTheme.bodyText}`}>
-                Live 1-on-1 video practice with AI or real people.
-              </p>
-
-              {/* Bullet Points */}
-              <div className="space-y-2 mb-6">
-                {[
-                  'Real conversations',
-                  'Instant feedback',
-                  'Build confidence',
-                ].map((item, idx) => (
-                  <div key={idx} className="flex items-center gap-2 text-xs font-semibold">
-                    <div className="w-4 h-4 rounded-full bg-[#E53935] flex items-center justify-center text-white text-[10px] flex-shrink-0">
-                      ✓
-                    </div>
-                    <span className={currentTheme.text}>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Action CTA Button */}
-            <button
-              onClick={() => router.push('/train/live-red-heart')}
-              className="py-3 px-6 rounded-xl bg-[#E53935] hover:bg-[#D32F2F] text-white font-extrabold text-xs shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 transition-all transform hover:-translate-y-0.5 cursor-pointer w-full sm:w-auto"
-            >
-              <span>Start Live Practice</span>
-              <ArrowRight size={16} />
-            </button>
-          </div>
-
-          {/* Right Column: High-Res HeartSync Video Banner Image */}
-          <div className="w-full md:w-1/2 flex items-center justify-center relative">
-            <img
-              src={heartsyncBannerSrc}
-              alt="HeartSync Live Practice Banner"
-              className="w-full h-auto max-h-[220px] object-contain rounded-2xl drop-shadow-xl"
-            />
-          </div>
+          <img
+            src={heartsyncBannerSrc}
+            alt="HeartSync Live Practice Banner"
+            className="w-full h-auto object-cover rounded-3xl"
+          />
         </motion.div>
       </div>
 
@@ -880,61 +794,92 @@ export default function TrainPage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.04 }}
-              className={`group relative rounded-2xl p-5 border transition-all duration-300 flex flex-col justify-between min-h-[220px] overflow-hidden shadow-lg hover:-translate-y-1.5 hover:shadow-2xl ${currentTheme.moduleCard} ${mod.isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 flex flex-col min-h-[230px] shadow-xl hover:-translate-y-1.5 hover:shadow-2xl ${mod.isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'} ${isLightMode ? 'bg-white border-slate-200 hover:border-slate-300' : 'bg-[#0D1118] border-[#1C222C] hover:border-white/10'}`}
               onClick={() => !mod.isLocked && router.push(mod.href)}
             >
-              {/* Color Glow Overlay */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${mod.bgGlow} opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none`} />
+              {/* Bottom accent color glow */}
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: `radial-gradient(ellipse 90% 55% at 50% 110%, var(--card-glow-color) 0%, transparent 70%)`,
+                }}
+              />
+              {/* Per-card glow color injected via inline var */}
+              <style>{`
+                .card-glow-${mod.type.replace(/[^a-z0-9]/gi, '-')} { --card-glow-color: ${
+                  mod.color === 'text-amber-500' ? 'rgba(245,158,11,0.22)' :
+                  mod.color === 'text-pink-500' ? 'rgba(236,72,153,0.22)' :
+                  mod.color === 'text-emerald-500' ? 'rgba(16,185,129,0.22)' :
+                  mod.color === 'text-indigo-500' ? 'rgba(99,102,241,0.22)' :
+                  mod.color === 'text-sky-500' ? 'rgba(14,165,233,0.22)' :
+                  mod.color === 'text-lime-500' ? 'rgba(132,204,22,0.22)' :
+                  mod.color === 'text-blue-500' ? 'rgba(59,130,246,0.22)' :
+                  mod.color === 'text-orange-500' ? 'rgba(249,115,22,0.22)' :
+                  mod.color === 'text-cyan-500' ? 'rgba(6,182,212,0.22)' :
+                  mod.color === 'text-violet-500' ? 'rgba(139,92,246,0.22)' :
+                  'rgba(255,157,36,0.18)'
+                }; }
+              `}</style>
 
-              <div className="relative z-10">
-                {/* Header: Icon + Badge/Lock */}
-                <div className="flex items-start justify-between mb-3">
-                  <div className={`w-10 h-10 rounded-xl ${mod.accentBg} flex items-center justify-center shadow-sm`}>
-                    <mod.icon size={20} className={mod.color} />
+              {/* Card inner padding */}
+              <div className={`relative z-10 flex flex-col flex-1 p-5 card-glow-${mod.type.replace(/[^a-z0-9]/gi, '-')}`}>
+                {/* Header row: Icon + Badge */}
+                <div className="flex items-start justify-between mb-4">
+                  {/* Icon square */}
+                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center shadow-lg ${mod.accentBg}`}>
+                    <mod.icon size={22} className={mod.color} />
                   </div>
-                  <div className="flex flex-col items-end gap-1">
+
+                  {/* Badge / Lock / Sessions pill */}
+                  <div className="flex flex-col items-end gap-1.5">
                     {mod.badge && (
-                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r ${mod.gradient} text-white shadow-sm`}>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r ${mod.gradient} text-white shadow-md tracking-wide`}>
                         {mod.badge}
                       </span>
                     )}
                     {mod.isLocked ? (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[10px] font-bold">
-                        <Lock size={10} />
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-bold">
+                        <Lock size={9} />
                         <span>Locked</span>
                       </div>
                     ) : (
-                      <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      <div className={`flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
                         mod.isUnlimited
-                          ? 'bg-emerald-500/15 text-emerald-500'
-                          : `${mod.accentBg} ${mod.color}`
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                          : `${mod.accentBg} ${mod.color} border-transparent`
                       }`}>
                         {mod.isUnlimited ? (
-                          <><Sparkles size={9} /><span>∞ Unlimited</span></>
+                          <><Sparkles size={8} /><span>∞ Unlimited</span></>
                         ) : (
-                          <><Target size={9} /><span>{mod.sessions === '-' ? '— sessions' : `${mod.sessions} left`}</span></>
+                          <><Target size={8} /><span>{mod.sessions === '-' ? '— sessions' : `${mod.sessions} left`}</span></>
                         )}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Content */}
-                <h3 className={`text-base font-extrabold tracking-tight mb-1 transition-colors ${currentTheme.heading} group-hover:${mod.color}`}>
-                  {mod.title}
-                </h3>
-                <p className={`text-xs leading-relaxed line-clamp-2 ${currentTheme.bodyText}`}>
-                  {mod.description}
-                </p>
-              </div>
-
-              {/* 3D Illustration Graphic & Arrow Button */}
-              <div className="relative z-10 flex items-end justify-between pt-3">
-                <div className="opacity-90 group-hover:scale-105 transition-transform duration-300">
-                  {mod.graphic && <mod.graphic />}
+                {/* Title & Description */}
+                <div className="flex-1">
+                  <h3 className={`text-[15px] font-extrabold tracking-tight mb-1.5 ${isLightMode ? 'text-slate-900' : 'text-white'}`}>
+                    {mod.title}
+                  </h3>
+                  <p className={`text-xs leading-relaxed line-clamp-2 ${isLightMode ? 'text-slate-500' : 'text-slate-400'}`}>
+                    {mod.description}
+                  </p>
                 </div>
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center transition-all shadow-md ${currentTheme.moduleArrow}`}>
-                  <ArrowRight size={16} />
+
+                {/* Bottom row: 3D Graphic + Arrow */}
+                <div className="flex items-end justify-between mt-3">
+                  <div className="opacity-95 group-hover:scale-105 group-hover:-translate-y-0.5 transition-transform duration-300 drop-shadow-lg">
+                    {mod.graphic && <mod.graphic />}
+                  </div>
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg transition-all duration-200 group-hover:scale-110 ${
+                    isLightMode
+                      ? 'bg-slate-900 text-white group-hover:bg-slate-700'
+                      : 'bg-[#1C222C] border border-white/10 text-white group-hover:bg-white/15'
+                  }`}>
+                    <ArrowRight size={15} />
+                  </div>
                 </div>
               </div>
             </motion.div>
@@ -942,6 +887,15 @@ export default function TrainPage() {
         </div>
 
       </div>
+
+      {/* ── Floating Ask AI Button ── */}
+      <button
+        onClick={() => router.push('/train/promptiq')}
+        className="fixed bottom-6 right-6 z-40 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#E56B2D] to-[#D45A1C] hover:from-[#F4A261] hover:to-[#E56B2D] text-white font-extrabold text-xs shadow-2xl flex items-center gap-2 border border-orange-400/30 transition-all transform hover:scale-105 active:scale-95 cursor-pointer"
+      >
+        <Sparkles size={16} className="text-amber-200 animate-spin-slow" />
+        <span>Ask AI</span>
+      </button>
 
     </div>
   );

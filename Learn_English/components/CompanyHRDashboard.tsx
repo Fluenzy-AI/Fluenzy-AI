@@ -195,9 +195,6 @@ const CompanyHRDashboard: React.FC = () => {
         {step === 1 && (
           <div className="p-6 sm:p-10 lg:p-12 space-y-8 lg:space-y-10 flex-1 animate-in slide-in-from-right-4 duration-300">
             <div className="text-center space-y-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-bold uppercase tracking-wider">
-                🍎 Apple iOS Aesthetic Track Setup
-              </span>
               <h2 className="text-2xl sm:text-3xl font-black text-card-foreground tracking-tight">Select Target Company</h2>
               <p className="text-muted-foreground font-medium text-sm sm:text-base max-w-lg mx-auto">Choose a company or add a custom one to unlock its specific HR & technical culture.</p>
             </div>
@@ -576,20 +573,6 @@ const CompanyHRDashboard: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
-
-      <div className="bg-gradient-to-r from-red-600 via-rose-600 to-red-700 rounded-2xl sm:rounded-[2.5rem] p-6 sm:p-10 text-white flex items-center justify-between shadow-2xl overflow-hidden relative border border-red-500/30">
-         <div className="relative z-10 space-y-2">
-            <div className="flex items-center gap-2">
-               <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-               <p className="text-[10px] font-black uppercase tracking-widest text-white/80">Live Simulation Status</p>
-            </div>
-            <h3 className="text-xl sm:text-2xl font-black">AI HR Engine Primed</h3>
-            <p className="text-white/90 text-sm max-w-md">Our model has ingested 10,000+ real interview patterns from {selection.company === 'custom' ? selection.customCompany : selection.company} to ensure the highest fidelity round.</p>
-         </div>
-         <div className="opacity-10 absolute right-[-20px] top-[-20px] rotate-12 hidden sm:block">
-            <Building2 size={240} />
-         </div>
       </div>
         </div>
       </div>

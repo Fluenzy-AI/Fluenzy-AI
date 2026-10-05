@@ -122,6 +122,7 @@ export const SessionPageClient = () => {
                 onInterviewStart={() => setIsInterviewActive(true)}
                 showSettings={showSettings}
                 onShowSettingsChange={setShowSettings}
+                showHRVideo={isCompanyWise}
               />
             </div>
           </div>

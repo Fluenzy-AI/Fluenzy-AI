@@ -407,7 +407,9 @@
   }
 
   /* Parchment Theme — Apple iOS/macOS Warm Parchment + Apple Red Accents */
+
   .parchment {
+
     --color-background: hsl(42 22% 93%);
     --color-foreground: hsl(20 14% 10%);
 
@@ -453,6 +455,84 @@
     --glow-primary: 0 0 30px hsl(17 52% 55% / 0.18);
     --glow-secondary: 0 0 30px hsl(17 40% 62% / 0.15);
     --glow-subtle: 0 2px 12px hsl(17 52% 55% / 0.08);
+  }
+
+  /* ===== PARCHMENT SIDEBAR NAVIGATION ===== */
+
+  /* ===== PARCHMENT SIDEBAR NAVIGATION ===== */
+
+  [data-theme="parchment"] nav,
+  [data-theme="parchment"] aside {
+    background: #FCFBF8 !important;
+    color: #292524 !important;
+    border-color: #E6E2D8 !important;
+  }
+
+  /* Navigation text */
+  [data-theme="parchment"] nav a,
+  [data-theme="parchment"] nav button,
+  [data-theme="parchment"] nav span,
+  [data-theme="parchment"] nav a *,
+  [data-theme="parchment"] nav button *,
+  [data-theme="parchment"] aside span {
+    color: #292524 !important;
+    -webkit-text-fill-color: #292524 !important;
+    opacity: 1 !important;
+  }
+
+  /* Navigation icons */
+  [data-theme="parchment"] nav svg,
+  [data-theme="parchment"] nav a svg,
+  [data-theme="parchment"] nav button svg,
+  [data-theme="parchment"] aside svg {
+    color: #57534E !important;
+    stroke: #57534E !important;
+    fill: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Hover */
+  [data-theme="parchment"] nav a:hover,
+  [data-theme="parchment"] nav button:hover {
+    background-color: #F4F1EA !important;
+    color: #1C1917 !important;
+  }
+
+  [data-theme="parchment"] nav a:hover *,
+  [data-theme="parchment"] nav button:hover * {
+    color: #1C1917 !important;
+    -webkit-text-fill-color: #1C1917 !important;
+  }
+
+  /* Active navigation */
+  [data-theme="parchment"] nav .active,
+  [data-theme="parchment"] nav a.active,
+  [data-theme="parchment"] nav button.active {
+    background-color: #FCE7E7 !important;
+    color: #C2413A !important;
+  }
+
+  /* Active text */
+  [data-theme="parchment"] nav .active *,
+  [data-theme="parchment"] nav a.active *,
+  [data-theme="parchment"] nav button.active * {
+    color: #C2413A !important;
+    -webkit-text-fill-color: #C2413A !important;
+  }
+
+  /* Active icon */
+  [data-theme="parchment"] nav .active svg,
+  [data-theme="parchment"] nav a.active svg,
+  [data-theme="parchment"] nav button.active svg {
+    color: #C2413A !important;
+    stroke: #C2413A !important;
+  }
+
+  /* Sidebar divider */
+  [data-theme="parchment"] nav hr,
+  [data-theme="parchment"] nav .border-t,
+  [data-theme="parchment"] aside .border-t {
+    border-color: #E6E2D8 !important;
   }
 
   /* Claude Code Terminal Theme — near-black + deep warm crimson */
@@ -2564,11 +2644,10 @@ html.parchment .mobile-live-card .mobile-live-badge[data-status="Invite-Only"],
 }
 
 /* ===== DARK MODE COMPANY PAGE ENHANCEMENTS ===== */
-[data-theme="dark"] .bg-white.rounded-\[3rem\].border.border-slate-100,
-[data-theme="midnight"] .bg-white.rounded-\[3rem\].border.border-slate-100 {
-  background-color: #1E293B !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+[data-theme="midnight"] .bg-white.rounded-\[3rem\] {
+  background: #11151C !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35) !important;
 }
 
 [data-theme="dark"] .text-slate-900,
@@ -2775,16 +2854,9 @@ html.parchment .mobile-live-card .mobile-live-badge[data-status="Invite-Only"],
 }
 
 /* ===== DARK THEME PREMIUM IMPROVEMENTS ===== */
-[data-theme="dark"] body,
-[data-theme="dark"] .min-h-screen,
 [data-theme="midnight"] body,
 [data-theme="midnight"] .min-h-screen {
-  background: #0f172a !important;
-}
-
-[data-theme="midnight"] body,
-[data-theme="midnight"] .min-h-screen {
-  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%) !important;
+  background: #080B10 !important;
 }
 
 [data-theme="dark"] .bg-white.rounded-\[3rem\],
