@@ -27,6 +27,10 @@ import {
   PRESSURE_STYLE_TO_PROMPT2,
   TIMING_TO_PROMPT2,
 } from '../../src/lib/interviewEngine';
+import { TurnTakingEngine, QuestionType, DEFAULT_CONFIG as TT_DEFAULT_CONFIG } from '../../src/lib/interview/core/TurnTakingEngine';
+import { AnswerCompletionAnalyzer } from '../../src/lib/interview/core/AnswerCompletionAnalyzer';
+import { QuestionGate } from '../../src/lib/interview/core/QuestionGate';
+
 
 // --- Utility Functions for Audio ---
 function decode(base64: string) {
@@ -350,6 +354,40 @@ const VoiceAgent: React.FC<{
   };
   const postTurnBufferRef = useRef<PostTurnBuffer | null>(null);
 
+  // ── Turn-Taking Engine (multi-signal) ──────────────────────────────────────
+  // Replaces the naive 400ms VAD silence → activityEnd approach.
+  // Evaluates 10 prioritized signals to produce a typed TurnDecision.
+  const ttEngineRef    = useRef(new TurnTakingEngine(TT_DEFAULT_CONFIG));
+  const completionRef  = useRef(new AnswerCompletionAnalyzer());
+  const questionGateRef = useRef<QuestionGate | null>(null);  // created in onopen
+
+  // ── Per-turn STT tracking ──────────────────────────────────────────────────
+  // sttFinalisedRef:   true after Gemini sends a complete inputTranscription
+  //                    (i.e. the last chunk was received, window is closed)
+  // vadSpeechActiveRef: mirrors the local ManualVAD state for the engine
+  // speechStartAtRef:  timestamp when VAD last detected speech start
+  // turnSilenceTimerRef: the multi-signal evaluation interval (replaces old silenceTimerRef)
+  const sttFinalisedRef      = useRef(false);
+  const vadSpeechActiveRef   = useRef(false);
+  const speechStartAtRef     = useRef<number | null>(null);
+  const turnSilenceTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const currentQuestionType  = useRef<QuestionType>('HR');
+
+  // ── Barge-in controller ────────────────────────────────────────────────────
+  // When user speaks during AI audio, stop all playing AI audio immediately.
+  const stopAiAudio = useCallback(() => {
+    // Invalidate current turn so no new chunks play
+    currentTurnIdRef.current = null;
+    // Stop all currently scheduled AudioBufferSourceNodes
+    sourcesRef.current.forEach((src) => {
+      try { src.stop(); } catch { /* already ended */ }
+    });
+    sourcesRef.current.clear();
+    setIsAiSpeaking(false);
+    console.log('[BARGE_IN] AI audio stopped — user has priority');
+  }, []);
+
+
   /**
    * Flush the finalization window immediately (called from cleanup before save).
    * Cancels the timer and commits whatever late STT has arrived so far.
@@ -457,13 +495,24 @@ const VoiceAgent: React.FC<{
     // to the history entry before we read transcriptHistory for saving.
     flushPostTurnBuffer();
 
-    // Clear silence detection timer
+    // Clear multi-signal evaluation timer (replaces old silenceTimerRef use)
     if (silenceTimerRef.current) {
       clearInterval(silenceTimerRef.current);
       silenceTimerRef.current = null;
     }
     silencePromptCountRef.current = 0;
     isFirstChunkOfTurnRef.current = true;
+
+    // ── Reset turn-taking engine state ────────────────────────────────────────
+    sttFinalisedRef.current    = false;
+    vadSpeechActiveRef.current = false;
+    speechStartAtRef.current   = null;
+    // Invalidate any in-progress question generation
+    questionGateRef.current?.invalidateGeneration('Session ending');
+
+    // Guarantee all AI audio stops immediately on End
+    stopAiAudio();
+
 
     // ── FIX P1: Invalidate current turn so no stale audio chunks play ────────
     currentTurnIdRef.current = null;
@@ -904,21 +953,28 @@ const VoiceAgent: React.FC<{
             currentSessionIdRef.current = `SES_${Date.now()}`;
             currentTurnIdRef.current = null;
             isSessionStartingRef.current = false; // ── Release mutex after successful connect
+
+            // ── Initialize QuestionGate for this session ──────────────────────
+            questionGateRef.current = new QuestionGate(currentSessionIdRef.current || `SES_${Date.now()}`);
+
             const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
-            
-            // ── Manual VAD state ─────────────────────────────────────────────
-            // Mirrors the speech level threshold so we control exactly when
-            // the AI turn starts (activityStart) and ends (activityEnd).
-            // activityEnd is what triggers the AI to generate a response.
-            let vadSpeechActive = false;
-            const SPEECH_THRESHOLD  = 0.008;  // RMS level that counts as speech
-            const SILENCE_MS        = 400;     // ms of silence → send activityEnd
+
+            // ── Multi-Signal VAD (replaces naive 400ms single-threshold) ─────────
+            //
+            // The scriptProcessor feeds RMS frames.
+            // VAD logic:
+            //   SPEECH_THRESHOLD = 0.008 (unchanged — empirically calibrated)
+            //   Speech detected → vadSpeechActiveRef = true
+            //   Barge-in detection: user speech while AI speaking → stopAiAudio()
+            //   400ms VAD silence → tell Gemini activityEnd (still needed for server-side VAD)
+            //   FINAL decision (ask next question) is made by TurnTakingEngine, NOT here
+            const SPEECH_THRESHOLD = 0.008;
+            const VAD_SILENCE_MS   = 400; // minimum silence to send activityEnd to Gemini
 
             scriptProcessor.onaudioprocess = (e) => {
               const inputData = e.inputBuffer.getChannelData(0);
               const int16 = new Int16Array(inputData.length);
-
               let sum = 0;
               for (let i = 0; i < inputData.length; i++) {
                 int16[i] = inputData[i] * 32768;
@@ -926,48 +982,57 @@ const VoiceAgent: React.FC<{
               }
               const avgLevel = sum / inputData.length;
 
-              // Always stream audio to Gemini (required even in manual VAD mode)
+              // Always stream audio to Gemini
               sessionRef.current?.sendRealtimeInput({
                 audio: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' }
               });
 
-              // ── GUARD: skip VAD entirely while AI is speaking ──────────────────
-              // Without this guard, the 400ms silence after AI finishes a sentence
-              // would fire activityEnd and trigger another AI response immediately,
-              // causing the AI to talk in an endless loop with no user input.
               const aiCurrentlySpeaking = sourcesRef.current.size > 0;
-              if (aiCurrentlySpeaking) {
-                // Reset VAD state so we start fresh when AI stops speaking
-                if (vadSpeechActive) {
-                  vadSpeechActive = false;
+
+              // ── BARGE-IN: User speaks while AI is playing ────────────────────
+              if (avgLevel > SPEECH_THRESHOLD && aiCurrentlySpeaking) {
+                stopAiAudio();
+                // Fall through to record speech start
+              }
+
+              if (aiCurrentlySpeaking && avgLevel <= SPEECH_THRESHOLD) {
+                // AI speaking, no user speech → reset VAD, skip
+                if (vadSpeechActiveRef.current) {
+                  vadSpeechActiveRef.current = false;
                   setIsUserSpeaking(false);
                 }
-                return; // ← do NOT process VAD while AI speaks
+                return;
               }
 
               if (avgLevel > SPEECH_THRESHOLD) {
-                // ── User is speaking ────────────────────────────────────────
+                // ── User is speaking ──────────────────────────────────────────
                 lastUserSpeechRef.current = Date.now();
-                if (!vadSpeechActive) {
-                  vadSpeechActive = true;
+                if (!vadSpeechActiveRef.current) {
+                  vadSpeechActiveRef.current = true;
+                  speechStartAtRef.current   = Date.now();
+                  sttFinalisedRef.current    = false; // new speech → STT not yet final
                   setIsUserSpeaking(true);
                   sessionRef.current?.sendRealtimeInput({ activityStart: {} });
-                  console.log('[VAD] activityStart — user speaking');
+                  // Cancel any pending question generation on speech start
+                  questionGateRef.current?.onUserSpeechStarted();
+                  console.log('[VAD] activityStart — user speaking, generation cancelled');
                 }
-              } else if (vadSpeechActive && Date.now() - lastUserSpeechRef.current > SILENCE_MS) {
-                // ── Silence for 400ms after speech → user done, trigger AI now ──
-                vadSpeechActive = false;
+              } else if (vadSpeechActiveRef.current && Date.now() - lastUserSpeechRef.current > VAD_SILENCE_MS) {
+                // ── 400ms silence after speech → tell Gemini activityEnd ────────
+                // This tells the server user has paused, but we do NOT ask next
+                // question here — that decision belongs to TurnTakingEngine below.
+                vadSpeechActiveRef.current = false;
                 setIsUserSpeaking(false);
                 sessionRef.current?.sendRealtimeInput({ activityEnd: {} });
-                console.log('[VAD] activityEnd — user silent for', SILENCE_MS, 'ms, AI responds now');
+                console.log('[VAD] activityEnd — 400ms silence. Engine will decide next action.');
               }
             };
-            source.connect(scriptProcessor); scriptProcessor.connect(inputAudioContextRef.current!.destination);
-            
+            source.connect(scriptProcessor);
+            scriptProcessor.connect(inputAudioContextRef.current!.destination);
+
             // CRITICAL: Send initial text prompt to make AI speak FIRST
-            // This triggers the AI to greet the user immediately
             sessionPromise.then(s => {
-              const initialPrompt = isGDCoach 
+              const initialPrompt = isGDCoach
                 ? `Start teaching the chapter "${sessionMeta?.lessonTitle || 'GD Practice'}". Greet the student briefly, introduce the chapter in one sentence, then ask ONE opening question. Then STOP and wait for the student to respond.`
                 : isEnglishLearning
                 ? `Start the English lesson on "${sessionMeta?.lessonTitle || 'English Practice'}". Greet the student warmly in one sentence, then ask ONE opening question to assess their level. Then STOP and wait for them to answer.`
@@ -976,43 +1041,95 @@ const VoiceAgent: React.FC<{
                 : isHRInterview
                 ? `Start the HR interview. Greet me in one professional sentence, then ask your FIRST question only. Then STOP SPEAKING and wait for my answer.`
                 : `Start the interview. Greet me in one sentence, then ask your FIRST question only. Then STOP SPEAKING immediately and wait for my answer.`;
-              
               s.sendRealtimeInput({ text: initialPrompt });
-              console.log('[AI_INITIAL_PROMPT] Sent initial prompt to make AI speak first');
+              console.log('[AI_INITIAL_PROMPT] Sent initial prompt');
             });
-            
-            // ── FIX P10: Silence nudge guard — use sessionRef.current directly (not stale promise) ──
-            // Check session AND interview state before sending nudge to prevent
-            // unhandled rejections when session is null during/after cleanup.
+
+            // ── Multi-Signal Turn-Taking Evaluation Loop ─────────────────────
+            // Runs every 300ms. Evaluates TurnTakingEngine with live signals.
+            // Replaces the old 5s setInterval with a hardcoded 15s nudge.
+            //
+            // Decision actions:
+            //   WAIT_*          → do nothing
+            //   USER_IS_SPEAKING → do nothing (VAD handles)
+            //   INTERRUPT_AI    → handled inline in onaudioprocess (barge-in)
+            //   ANSWER_COMPLETE → send activityEnd if not already sent, allow next Q
+            //   NO_ANSWER_RECOVERY → gentle text nudge (max 3 times)
             silenceTimerRef.current = setInterval(() => {
-              const timeSinceLastSpeech = Date.now() - lastUserSpeechRef.current;
-              const isAiCurrentlySpeaking = sourcesRef.current.size > 0;
-              
-              // Only nudge if: user silent 15s + AI not speaking + session still alive + nudge count < 3
-              if (
-                timeSinceLastSpeech > 15000 &&
-                !isAiCurrentlySpeaking &&
-                silencePromptCountRef.current < 3 &&
-                sessionRef.current !== null
-              ) {
-                silencePromptCountRef.current++;
-                const silencePrompts = [
-                  "I'm here to help. Feel free to share your thoughts or ask any questions.",
-                  "Take your time. When you're ready, you can respond or ask me to continue.",
-                  "I'll wait for you. Just say something when you're ready to continue."
-                ];
-                try {
-                  sessionRef.current.sendRealtimeInput({
-                    text: silencePrompts[silencePromptCountRef.current - 1] + " Encourage the user gently."
-                  });
-                  console.log('[AI_SILENCE_PROMPT] User silent, sending prompt #', silencePromptCountRef.current);
-                } catch (err) {
-                  console.warn('[AI_SILENCE_PROMPT] Failed to send nudge (session may have closed):', err);
-                }
-                lastUserSpeechRef.current = Date.now();
+              const gate = questionGateRef.current;
+              if (!gate || !sessionRef.current) return;
+
+              const aiSpeaking        = sourcesRef.current.size > 0;
+              const silenceMs         = Date.now() - lastUserSpeechRef.current;
+              const speechDurationMs  = speechStartAtRef.current
+                ? (lastUserSpeechRef.current - speechStartAtRef.current)
+                : 0;
+              const transcript        = currentQA.current.answer;
+              const sttFinalised      = sttFinalisedRef.current;
+              const finalizationOpen  = postTurnBufferRef.current !== null;
+
+              // Run completion analysis locally (< 1ms, no LLM)
+              const completionResult = completionRef.current.analyze({
+                question:          currentQA.current.question,
+                transcript,
+                speechDurationMs,
+                silenceDurationMs: silenceMs,
+                questionType:      currentQuestionType.current,
+                sttFinalised,
+              });
+
+              const decision = ttEngineRef.current.evaluate({
+                vadSpeechActive:            vadSpeechActiveRef.current,
+                aiSpeaking,
+                silenceDurationMs:          silenceMs,
+                speechDurationMs,
+                partialTranscript:          transcript,
+                sttFinalised,
+                transcriptFinalizationOpen: finalizationOpen,
+                answerCompletion:           completionResult.state,
+                questionType:               currentQuestionType.current,
+                questionGenerationPending:  gate.isGenerationActive,
+                questionAlreadyAsked:       false,
+                sessionEnding:              cleaningUpRef.current,
+              });
+
+              console.log(
+                `[TT_ENGINE] state=${decision.decision} silence=${silenceMs}ms ` +
+                `stt=${sttFinalised} completion=${completionResult.state} ` +
+                `transcript="${transcript.slice(0, 40)}..."`
+              );
+
+              if (decision.decision === 'ANSWER_COMPLETE') {
+                // All conditions met — allow Gemini to proceed to next question
+                // activityEnd was already sent by VAD; just reset tracking for next turn
+                sttFinalisedRef.current   = false;
+                speechStartAtRef.current  = null;
+                silencePromptCountRef.current = 0;
+                gate.resetSilenceRecovery();
+                console.log('[TT_ENGINE] ANSWER_COMPLETE — turn handed off to AI:', decision.reason);
               }
-            }, 5000);
+
+              if (decision.decision === 'NO_ANSWER_RECOVERY') {
+                if (gate.canSendSilenceRecovery()) {
+                  gate.recordSilenceRecovery();
+                  const silenceNudges = [
+                    "I'm here to help. Feel free to share your thoughts.",
+                    "Take your time. Whenever you're ready, just speak.",
+                    "I'll wait for you. Just say something when you're ready to continue.",
+                  ];
+                  const msg = silenceNudges[Math.min(gate.askedCount, silenceNudges.length - 1)];
+                  try {
+                    sessionRef.current?.sendRealtimeInput({ text: msg + ' Encourage gently.' });
+                    console.log('[TT_ENGINE] NO_ANSWER_RECOVERY nudge sent');
+                    lastUserSpeechRef.current = Date.now(); // prevent repeated nudges
+                  } catch (err) {
+                    console.warn('[TT_ENGINE] Failed to send nudge:', err);
+                  }
+                }
+              }
+            }, 300);
           },
+
           onmessage: async (m) => {
             // ── outputTranscription: AI's spoken text accumulates as the "question" ──
             if (m.serverContent?.outputTranscription?.text) {
@@ -1056,12 +1173,21 @@ const VoiceAgent: React.FC<{
                 currentQA.current.answer += sttText;
               }
 
+              // ── Mark STT as having received at least one finalisation chunk ──
+              // TurnTakingEngine checks this before allowing ANSWER_COMPLETE.
+              // Prevents asking next Q when Gemini hasn't sent any STT yet.
+              sttFinalisedRef.current = true;
               silencePromptCountRef.current = 0;
               lastUserSpeechRef.current = Date.now();
             }
 
             // ── turnComplete: AI's turn is done, user may speak next ─────────
             if (m.serverContent?.turnComplete) {
+              // Reset per-turn STT/speech tracking for incoming user answer
+              sttFinalisedRef.current  = false;
+              vadSpeechActiveRef.current = false;
+              speechStartAtRef.current = null;
+
               // 1. Snapshot the current Q/A and push to history immediately.
               //    The AI can start generating the next question right away.
               const completedQA = { ...currentQA.current, timestamp: new Date().toLocaleTimeString() };
