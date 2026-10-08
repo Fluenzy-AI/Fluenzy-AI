@@ -4,23 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import PortalLayout from "@/components/PortalLayout";
 import { usePortalAuth } from "@/contexts/PortalAuthContext";
 
-const HR_NAV = [
-  { label: "Dashboard", href: "/portal/hr" },
-  { label: "Employees", href: "/portal/hr/employees" },
-  { label: "Candidates", href: "/portal/hr/candidates" },
-  { label: "Interviews", href: "/portal/hr/interviews" },
-  { label: "Manage Jobs", href: "/portal/hr/jobs" },
-  { label: "Assessments", href: "/portal/hr/assessments", icon: <ClipboardCheckIcon /> },
-  { label: "Analytics", href: "/portal/hr/analytics", icon: <BarChartIcon /> },
-  { label: "Job Applications", href: "/portal/hr/job-applications" },
-  { label: "Leave Requests", href: "/portal/hr/leaves" },
-  { label: "Attendance", href: "/portal/hr/attendance" },
-  { label: "Payroll", href: "/portal/hr/payroll" },
-  { label: "Offer Letters", href: "/portal/hr/offer-letters" },
-  { label: "Certificates", href: "/portal/hr/certificates" },
-  { label: "Send Email", href: "/portal/hr/send-email" },
-  { label: "Email Logs", href: "/portal/hr/email-logs" },
-];
+
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
@@ -187,7 +171,7 @@ export default function JobApplicationsPage() {
   const totalApplications = stats.reduce((a, s) => a + (Number(s._count) || 0), 0);
 
   return (
-    <PortalLayout navItems={HR_NAV} title="Job Applications" roleLabel="HR Portal" roleColor="text-blue-400">
+    <PortalLayout title="Job Applications" roleLabel="HR Portal" roleColor="text-blue-400">
       <div className="space-y-5">
         {/* Header */}
         <div className="flex items-center justify-between">

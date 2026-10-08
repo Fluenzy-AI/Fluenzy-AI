@@ -40,20 +40,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const HR_NAV = [
-  { label: "Dashboard", href: "/portal/hr", icon: <HomeIcon /> },
-  { label: "Employees", href: "/portal/hr/employees", icon: <UsersIcon /> },
-  { label: "Candidates", href: "/portal/hr/candidates", icon: <UserPlusIcon /> },
-  { label: "Interviews", href: "/portal/hr/interviews", icon: <CalendarIcon /> },
-  { label: "Manage Jobs", href: "/portal/hr/jobs", icon: <BriefcaseIcon /> },
-  { label: "Assessments", href: "/portal/hr/assessments", icon: <ClipboardListIcon /> },
-  { label: "Analytics", href: "/portal/hr/analytics", icon: <ChartIcon /> },
-  { label: "Leave Management", href: "/portal/hr/leaves", icon: <ClockIcon /> },
-  { label: "Attendance", href: "/portal/hr/attendance", icon: <CheckSquareIcon /> },
-  { label: "Payroll", href: "/portal/hr/payroll", icon: <BanknotesIcon /> },
-  { label: "Offer Letters", href: "/portal/hr/offer-letters", icon: <DocumentIcon /> },
-  { label: "Job Applications", href: "/portal/hr/job-applications", icon: <ClipboardListIcon /> },
-];
+
 
 interface AnalyticsData {
   overview: {
@@ -171,7 +158,7 @@ export default function HRAnalyticsPage() {
 
   if (authLoading || isLoading) {
     return (
-      <PortalLayout navItems={HR_NAV} title="Analytics" roleLabel="HR Portal" roleColor="text-emerald-400">
+      <PortalLayout title="Analytics" roleLabel="HR Portal" roleColor="text-emerald-400">
         <AnalyticsSkeleton />
       </PortalLayout>
     );
@@ -180,7 +167,7 @@ export default function HRAnalyticsPage() {
   const o = analytics?.overview;
 
   return (
-    <PortalLayout navItems={HR_NAV} title="Analytics" roleLabel="HR Portal" roleColor="text-emerald-400">
+    <PortalLayout title="Analytics" roleLabel="HR Portal" roleColor="text-emerald-400">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

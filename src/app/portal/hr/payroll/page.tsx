@@ -4,23 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import PortalLayout from "@/components/PortalLayout";
 import { usePortalAuth } from "@/contexts/PortalAuthContext";
 
-const HR_NAV = [
-  { label: "Dashboard", href: "/portal/hr" },
-  { label: "Employees", href: "/portal/hr/employees" },
-  { label: "Candidates", href: "/portal/hr/candidates" },
-  { label: "Interviews", href: "/portal/hr/interviews" },
-  { label: "Leave Requests", href: "/portal/hr/leaves" },
-  { label: "Attendance", href: "/portal/hr/attendance" },
-  { label: "Payroll", href: "/portal/hr/payroll" },
-  { label: "Offer Letters", href: "/portal/hr/offer-letters" },
-  { label: "Certificates", href: "/portal/hr/certificates" },
-  { label: "Send Email", href: "/portal/hr/send-email" },
-  { label: "Email Logs", href: "/portal/hr/email-logs" },
-  { label: "Manage Jobs", href: "/portal/hr/jobs" },
-  { label: "Assessments", href: "/portal/hr/assessments", icon: <ClipboardCheckIcon /> },
-  { label: "Analytics", href: "/portal/hr/analytics", icon: <BarChartIcon /> },
-  { label: "Job Applications", href: "/portal/hr/job-applications" },
-];interface PayrollRecord {
+interface PayrollRecord {
   id: string;
   employeeId: string;
   employeeName: string;
@@ -98,7 +82,7 @@ export default function PayrollPage() {
   const years = [currYear - 1, currYear, currYear + 1];
 
   return (
-    <PortalLayout navItems={HR_NAV} title="Payroll" roleLabel="HR Portal" roleColor="text-emerald-400">
+    <PortalLayout title="Payroll" roleLabel="HR Portal" roleColor="text-emerald-400">
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>

@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePortalAuth } from "@/contexts/PortalAuthContext";
+import HRPortalLayout from "@/components/hr/HRPortalLayout";
 
 interface NavItem {
   label: string;
@@ -14,15 +15,25 @@ interface NavItem {
 
 interface PortalLayoutProps {
   children: React.ReactNode;
-  navItems: NavItem[];
+  navItems?: NavItem[];
   title: string;
   roleLabel: string;
   roleColor: string;
 }
 
 export default function PortalLayout({ children, navItems, title, roleLabel, roleColor }: PortalLayoutProps) {
-  const { user, logout } = usePortalAuth();
   const pathname = usePathname();
+
+  // Use canonical HR Portal layout for HR routes or HR roleLabel
+  if (roleLabel === "HR Portal" || pathname?.startsWith("/portal/hr")) {
+    return (
+      <HRPortalLayout title={title} roleLabel={roleLabel} roleColor={roleColor}>
+        {children}
+      </HRPortalLayout>
+    );
+  }
+
+  const { user, logout } = usePortalAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
 
   return (
@@ -52,7 +63,7 @@ export default function PortalLayout({ children, navItems, title, roleLabel, rol
 
         {/* Nav */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
+          {navItems?.map((item) => {
             const active = pathname === item.href || (item.href !== "/" && pathname?.startsWith(item.href + "/"));
             return (
               <Link
@@ -128,3 +139,4 @@ export default function PortalLayout({ children, navItems, title, roleLabel, rol
     </div>
   );
 }
+

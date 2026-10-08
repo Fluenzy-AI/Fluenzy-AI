@@ -6,23 +6,7 @@ import { usePortalAuth } from "@/contexts/PortalAuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-const HR_NAV = [
-  { label: "Dashboard", href: "/portal/hr", icon: <HomeIcon /> },
-  { label: "Employees", href: "/portal/hr/employees", icon: <UsersIcon /> },
-  { label: "Candidates", href: "/portal/hr/candidates", icon: <UserPlusIcon /> },
-  { label: "Interviews", href: "/portal/hr/interviews", icon: <CalendarIcon /> },
-  { label: "Manage Jobs", href: "/portal/hr/jobs" },
-  { label: "Assessments", href: "/portal/hr/assessments", icon: <ClipboardCheckIcon /> },
-  { label: "Analytics", href: "/portal/hr/analytics", icon: <BarChartIcon /> },
-  { label: "Leave Management", href: "/portal/hr/leaves", icon: <ClockIcon /> },
-  { label: "Attendance", href: "/portal/hr/attendance", icon: <CheckSquareIcon /> },
-  { label: "Payroll", href: "/portal/hr/payroll", icon: <BanknotesIcon /> },
-  { label: "Offer Letters", href: "/portal/hr/offer-letters", icon: <DocumentIcon /> },
-  { label: "Certificates", href: "/portal/hr/certificates" },
-  { label: "Send Email", href: "/portal/hr/send-email", icon: <MailIcon /> },
-  { label: "Email History", href: "/portal/hr/email-logs", icon: <MailOpenIcon /> },
-  { label: "Job Applications", href: "/portal/hr/job-applications", icon: <ClipboardListIcon /> },
-];
+
 
 interface Employee {
   id: string;
@@ -111,7 +95,7 @@ export default function EmployeesPage() {
   };
 
   return (
-    <PortalLayout navItems={HR_NAV} title="Employee Management" roleLabel="HR Portal" roleColor="text-emerald-400">
+    <PortalLayout title="Employee Management" roleLabel="HR Portal" roleColor="text-emerald-400">
       <div className="space-y-5">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-3">

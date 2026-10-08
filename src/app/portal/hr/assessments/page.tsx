@@ -40,20 +40,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-const HR_NAV = [
-  { label: "Dashboard", href: "/portal/hr", icon: <HomeIcon /> },
-  { label: "Employees", href: "/portal/hr/employees", icon: <UsersIcon2 /> },
-  { label: "Candidates", href: "/portal/hr/candidates", icon: <UserPlusIcon /> },
-  { label: "Interviews", href: "/portal/hr/interviews", icon: <CalendarIcon /> },
-  { label: "Manage Jobs", href: "/portal/hr/jobs", icon: <BriefcaseIcon /> },
-  { label: "Assessments", href: "/portal/hr/assessments", icon: <ClipboardListIcon /> },
-  { label: "Analytics", href: "/portal/hr/analytics", icon: <ChartIcon /> },
-  { label: "Leave Management", href: "/portal/hr/leaves", icon: <ClockIcon /> },
-  { label: "Attendance", href: "/portal/hr/attendance", icon: <CheckSquareIcon /> },
-  { label: "Payroll", href: "/portal/hr/payroll", icon: <BanknotesIcon /> },
-  { label: "Offer Letters", href: "/portal/hr/offer-letters", icon: <DocumentIcon /> },
-  { label: "Job Applications", href: "/portal/hr/job-applications", icon: <ClipboardListIcon /> },
-];
+
 
 interface Assessment {
   id: string;
@@ -170,14 +157,14 @@ export default function HRAssessmentsPage() {
 
   if (authLoading || isLoading) {
     return (
-      <PortalLayout navItems={HR_NAV} title="Assessments" roleLabel="HR Portal" roleColor="text-emerald-400">
+      <PortalLayout title="Assessments" roleLabel="HR Portal" roleColor="text-emerald-400">
         <AssessmentSkeleton />
       </PortalLayout>
     );
   }
 
   return (
-    <PortalLayout navItems={HR_NAV} title="Assessments" roleLabel="HR Portal" roleColor="text-emerald-400">
+    <PortalLayout title="Assessments" roleLabel="HR Portal" roleColor="text-emerald-400">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
