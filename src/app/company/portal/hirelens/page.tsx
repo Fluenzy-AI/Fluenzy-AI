@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompanyAuth } from '@/contexts/CompanyAuthContext';
-import { PortalLayout, LiveIndicator } from '@/components/portal';
+import { LiveIndicator } from '@/components/portal';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
@@ -49,8 +49,7 @@ export default function HireLensModePage() {
   }, [user, loading, router]);
 
   return (
-    <PortalLayout title="HireLens AI — Interview Intelligence">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="max-w-4xl mx-auto space-y-6">
 
         {/* ── Console Header ── */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -298,6 +297,5 @@ export default function HireLensModePage() {
           </div>
         </div>
       </div>
-    </PortalLayout>
   );
 }

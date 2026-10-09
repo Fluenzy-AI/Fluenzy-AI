@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { PortalLayout, DataTable, EmptyState, PortalStatusBadge, ViewToggle } from "@/components/portal";
+import { DataTable, EmptyState, PortalStatusBadge, ViewToggle } from "@/components/portal";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
   Plus,
@@ -260,8 +260,7 @@ export default function JobPostingsPage() {
   );
 
   return (
-    <PortalLayout title="Job Postings">
-      <div className="space-y-5">
+    <div className="space-y-5">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -483,6 +482,5 @@ export default function JobPostingsPage() {
           </div>
         )}
       </div>
-    </PortalLayout>
   );
 }

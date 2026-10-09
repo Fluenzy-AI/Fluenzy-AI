@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompanyAuth } from '@/contexts/CompanyAuthContext';
-import CompanyPortalLayout from '@/components/CompanyPortalLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, Users, UserPlus, Settings, FileText, ScanFace,
@@ -139,8 +138,7 @@ export default function HireLensSetupPage() {
   const currentMeta = STEP_META[step];
 
   return (
-    <CompanyPortalLayout navItems={COMPANY_NAV} title={`HireLens Setup — ${currentMeta.label}`}>
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
 
         {/* Progress Header */}
         <div className="space-y-3">
@@ -508,6 +506,5 @@ export default function HireLensSetupPage() {
         </AnimatePresence>
 
       </div>
-    </CompanyPortalLayout>
   );
 }

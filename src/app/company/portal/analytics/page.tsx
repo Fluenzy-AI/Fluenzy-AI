@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { PortalLayout, StatCard } from "@/components/portal";
+import { StatCard } from "@/components/portal";
 import { BarChart3, TrendingUp, Calendar, Target, Clock, UserCheck } from "lucide-react";
 import {
   BarChart,
@@ -54,26 +54,23 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <PortalLayout title="Analytics">
-        <div className="space-y-6">
-          <div className="h-8 w-48 rounded portal-skeleton" />
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="h-20 rounded border portal-skeleton" style={{ borderColor: "var(--portal-border)" }} />
-            ))}
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="h-80 rounded border portal-skeleton" style={{ borderColor: "var(--portal-border)" }} />
-            <div className="h-80 rounded border portal-skeleton" style={{ borderColor: "var(--portal-border)" }} />
-          </div>
+      <div className="space-y-6">
+        <div className="h-8 w-48 rounded portal-skeleton" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-20 rounded border portal-skeleton" style={{ borderColor: "var(--portal-border)" }} />
+          ))}
         </div>
-      </PortalLayout>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="h-80 rounded border portal-skeleton" style={{ borderColor: "var(--portal-border)" }} />
+          <div className="h-80 rounded border portal-skeleton" style={{ borderColor: "var(--portal-border)" }} />
+        </div>
+      </div>
     );
   }
 
   return (
-    <PortalLayout title="Analytics">
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "var(--portal-text-primary)" }}>
             Analytics Dashboard
@@ -206,6 +203,5 @@ export default function AnalyticsPage() {
           </div>
         </div>
       </div>
-    </PortalLayout>
   );
 }

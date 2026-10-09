@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { PortalLayout, StatCard, EmptyState, PortalStatusBadge } from "@/components/portal";
+import { StatCard, EmptyState, PortalStatusBadge } from "@/components/portal";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -105,8 +105,7 @@ export default function AssessmentsPage() {
   };
 
   return (
-    <PortalLayout title="Assessments">
-      <div className="space-y-5">
+    <div className="space-y-5">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
@@ -303,6 +302,5 @@ export default function AssessmentsPage() {
           </div>
         )}
       </div>
-    </PortalLayout>
   );
 }

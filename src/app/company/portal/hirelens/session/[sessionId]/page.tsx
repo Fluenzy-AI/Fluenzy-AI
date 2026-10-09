@@ -3,7 +3,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useCompanyAuth } from '@/contexts/CompanyAuthContext';
-import CompanyPortalLayout from '@/components/CompanyPortalLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Briefcase, Users, UserPlus, Settings, FileText, ScanFace,
@@ -409,7 +408,7 @@ export default function HireLensLiveDashboard() {
   const isEnded = status === 'ENDED';
 
   return (
-    <CompanyPortalLayout navItems={COMPANY_NAV} title={`HireLens Live — ${candidate?.name ?? 'Loading…'}`}>
+    <div className="space-y-6">
 
       {showVerdict && scores && (
         <VerdictPanel 
@@ -824,6 +823,6 @@ export default function HireLensLiveDashboard() {
         )}
 
       </div>
-    </CompanyPortalLayout>
+    </div>
   );
 }

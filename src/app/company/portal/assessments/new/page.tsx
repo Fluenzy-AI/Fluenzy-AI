@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import CompanyPortalLayout from "@/components/CompanyPortalLayout";
 import {
   ArrowLeft,
   ClipboardList,
@@ -183,8 +182,7 @@ export default function NewAssessmentPage() {
   };
 
   return (
-    <CompanyPortalLayout navItems={COMPANY_NAV} title="Create Assessment">
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
           <Button
@@ -956,6 +954,5 @@ export default function NewAssessmentPage() {
           )}
         </div>
       </div>
-    </CompanyPortalLayout>
   );
 }

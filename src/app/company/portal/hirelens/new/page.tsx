@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCompanyAuth } from '@/contexts/CompanyAuthContext';
-import CompanyPortalLayout from '@/components/CompanyPortalLayout';
 import { motion, AnimatePresence } from 'framer-motion';
 import QRCode from 'react-qr-code';
 import {
@@ -179,11 +178,7 @@ export default function NewMobileSessionPage() {
     code.length === 6 ? `${code.slice(0, 3)}-${code.slice(3)}` : code;
 
   return (
-    <CompanyPortalLayout
-      navItems={COMPANY_NAV}
-      title={step === 'form' ? 'New Interview — Candidate Details' : 'Connect Phone to Session'}
-    >
-      <div className="max-w-xl mx-auto space-y-6">
+    <div className="max-w-xl mx-auto space-y-6">
 
         {/* Back link */}
         <button
@@ -477,6 +472,5 @@ export default function NewMobileSessionPage() {
 
         </AnimatePresence>
       </div>
-    </CompanyPortalLayout>
   );
 }

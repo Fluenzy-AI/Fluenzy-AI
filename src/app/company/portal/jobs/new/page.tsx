@@ -3,7 +3,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import CompanyPortalLayout from "@/components/CompanyPortalLayout";
 import {
   ArrowLeft,
   Briefcase,
@@ -145,8 +144,7 @@ export default function NewJobPage() {
   };
 
   return (
-    <CompanyPortalLayout navItems={COMPANY_NAV} title="Post New Job">
-      <div className="max-w-5xl mx-auto">
+    <div className="max-w-5xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -475,6 +473,5 @@ export default function NewJobPage() {
         </div>
       </form>
     </div>
-    </CompanyPortalLayout>
   );
 }

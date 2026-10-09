@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PortalLayout, StatCard, EmptyState, LiveIndicator } from "@/components/portal";
+import { StatCard, EmptyState, LiveIndicator } from "@/components/portal";
 import { useCompanyAuth } from "@/contexts/CompanyAuthContext";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -124,16 +124,11 @@ export default function CompanyPortalDashboard() {
     : [];
 
   if (loading || loadingData) {
-    return (
-      <PortalLayout title="Dashboard">
-        <DashboardSkeleton />
-      </PortalLayout>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
-    <PortalLayout title="Dashboard">
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Welcome + CTA */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
@@ -648,7 +643,6 @@ export default function CompanyPortalDashboard() {
           </motion.div>
         </div>
       </div>
-    </PortalLayout>
   );
 }
 

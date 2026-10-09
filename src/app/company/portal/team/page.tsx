@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { PortalLayout, DataTable, StatCard, EmptyState, PortalStatusBadge } from "@/components/portal";
+import { DataTable, StatCard, EmptyState, PortalStatusBadge } from "@/components/portal";
 import {
   Plus,
   Search,
@@ -254,8 +254,7 @@ export default function TeamPage() {
   );
 
   return (
-    <PortalLayout title="Team Management">
-      <div className="space-y-6">
+    <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -426,6 +425,5 @@ export default function TeamPage() {
           </div>
         )}
       </div>
-    </PortalLayout>
   );
 }

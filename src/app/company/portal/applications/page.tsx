@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { PortalLayout, DataTable, EmptyState, PortalStatusBadge, ViewToggle } from "@/components/portal";
+import { DataTable, EmptyState, PortalStatusBadge, ViewToggle } from "@/components/portal";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
   Search,
@@ -253,8 +253,7 @@ export default function ApplicationsPage() {
   );
 
   return (
-    <PortalLayout title="Applications">
-      <div className="space-y-5">
+    <div className="space-y-5">
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold" style={{ color: "var(--portal-text-primary)" }}>
@@ -457,6 +456,5 @@ export default function ApplicationsPage() {
           </div>
         )}
       </div>
-    </PortalLayout>
   );
 }
