@@ -1,31 +1,17 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useCompanyAuth } from "@/contexts/CompanyAuthContext";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DataTable, EmptyState, PortalStatusBadge, ViewToggle } from "@/components/portal";
-import { type ColumnDef } from "@tanstack/react-table";
-import {
-  Plus,
-  Search,
-  MoreVertical,
-  Eye,
-  Edit,
-  Trash2,
-  Users,
-  MapPin,
-  Briefcase,
-  DollarSign,
-  Calendar,
-  Pause,
-  Play,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
+const LOC_LABELS: Record<string, string> = { REMOTE: "Remote", HYBRID: "Hybrid", ONSITE: "On-site" };
+const TYPE_LABELS: Record<string, string> = {
+  FULL_TIME: "Full-time",
+  PART_TIME: "Part-time",
+  CONTRACT: "Contract",
+  INTERNSHIP: "Internship",
+};
 
 interface Job {
   id: string;
@@ -33,454 +19,190 @@ interface Job {
   department: string;
   location: string;
   employmentType: string;
-  salaryMin?: string | number | null;
-  salaryMax?: string | number | null;
-  experience: string;
+  description: string;
+  experience?: string;
+  salaryMin?: number;
+  salaryMax?: number;
   isActive: boolean;
-  autoApplyEnabled: boolean;
-  applicationsCount: number;
-  viewCount: number;
   createdAt: string;
+  applicationsCount?: number;
+  viewCount?: number;
 }
 
-export default function JobPostingsPage() {
+export default function CompanyManageJobsPage() {
+  const { user, company } = useCompanyAuth();
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<"all" | "active" | "inactive">("all");
-  const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"table" | "card">("table");
+  const [loading, setLoading] = useState(true);
+  const [toggling, setToggling] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchJobs();
-  }, []);
-
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
+    setLoading(true);
     try {
-      setIsLoading(true);
       const res = await fetch("/api/company/jobs");
       if (res.ok) {
-        const data = await res.json();
-        setJobs(data.jobs || []);
+        const d = await res.json();
+        setJobs(d.jobs || []);
       }
-    } catch (error) {
-      console.error("Failed to fetch jobs:", error);
+    } catch {
+      // Silent fail
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const toggleJobStatus = async (jobId: string, currentStatus: boolean) => {
-    try {
-      const res = await fetch(`/api/company/jobs/${jobId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ isActive: !currentStatus }),
-      });
-      if (res.ok) {
-        setJobs(jobs.map((job) => (job.id === jobId ? { ...job, isActive: !currentStatus } : job)));
-      }
-    } catch (error) {
-      console.error("Failed to toggle job status:", error);
-    }
-  };
+  useEffect(() => {
+    if (user) fetchJobs();
+  }, [user, fetchJobs]);
 
-  const deleteJob = async (jobId: string) => {
-    try {
-      const res = await fetch(`/api/company/jobs/${jobId}`, { method: "DELETE" });
-      if (res.ok) {
-        setJobs(jobs.filter((job) => job.id !== jobId));
-        setDeleteJobId(null);
-      }
-    } catch (error) {
-      console.error("Failed to delete job:", error);
-    }
-  };
+  async function handleToggle(job: Job) {
+    setToggling(job.id);
+    await fetch(`/api/company/jobs/${job.id}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive: !job.isActive }),
+    });
+    await fetchJobs();
+    setToggling(null);
+  }
 
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.department.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter =
-      filterStatus === "all" ||
-      (filterStatus === "active" && job.isActive) ||
-      (filterStatus === "inactive" && !job.isActive);
-    return matchesSearch && matchesFilter;
-  });
+  async function handleDelete(job: Job) {
+    if (!confirm(`Delete "${job.title}"? This will also delete all applications for this job.`))
+      return;
+    setDeleting(job.id);
+    await fetch(`/api/company/jobs/${job.id}`, { method: "DELETE", credentials: "include" });
+    await fetchJobs();
+    setDeleting(null);
+  }
 
-  const stats = {
-    active: jobs.filter((j) => j.isActive).length,
-    inactive: jobs.filter((j) => !j.isActive).length,
-    totalApplications: jobs.reduce((sum, j) => sum + (j.applicationsCount || 0), 0),
-  };
-
-  // Table columns
-  const columns = useMemo<ColumnDef<Job, any>[]>(
-    () => [
-      {
-        accessorKey: "title",
-        header: "Title",
-        cell: ({ row }) => (
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-md flex items-center justify-center flex-shrink-0"
-              style={{ backgroundColor: "var(--portal-primary-muted)" }}
-            >
-              <Briefcase className="w-4 h-4" style={{ color: "var(--portal-primary)" }} />
-            </div>
-            <div className="min-w-0">
-              <p className="font-medium text-sm truncate" style={{ color: "var(--portal-text-primary)" }}>
-                {row.original.title}
-              </p>
-              <p className="text-xs" style={{ color: "var(--portal-text-muted)" }}>
-                {row.original.department}
-              </p>
-            </div>
-          </div>
-        ),
-      },
-      {
-        accessorKey: "isActive",
-        header: "Status",
-        cell: ({ row }) => (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleJobStatus(row.original.id, row.original.isActive);
-            }}
-            className="cursor-pointer"
-          >
-            <PortalStatusBadge status={row.original.isActive ? "ACTIVE" : "INACTIVE"} />
-          </button>
-        ),
-      },
-      {
-        accessorKey: "location",
-        header: "Location",
-        cell: ({ row }) => (
-          <span className="text-sm flex items-center gap-1" style={{ color: "var(--portal-text-secondary)" }}>
-            <MapPin className="w-3 h-3" />
-            {row.original.location}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "applicationsCount",
-        header: "Applicants",
-        cell: ({ row }) => (
-          <span className="portal-mono text-sm font-medium" style={{ color: "var(--portal-text-primary)" }}>
-            {row.original.applicationsCount ?? 0}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "viewCount",
-        header: "Views",
-        cell: ({ row }) => (
-          <span className="portal-mono text-sm" style={{ color: "var(--portal-text-secondary)" }}>
-            {row.original.viewCount ?? 0}
-          </span>
-        ),
-      },
-      {
-        accessorKey: "salary",
-        header: "Salary Range",
-        enableSorting: false,
-        cell: ({ row }) => {
-          const { salaryMin, salaryMax } = row.original;
-          if (!salaryMin && !salaryMax) return <span style={{ color: "var(--portal-text-muted)" }}>—</span>;
-          return (
-            <span className="portal-mono text-xs" style={{ color: "var(--portal-text-secondary)" }}>
-              ₹{Number(salaryMin).toLocaleString()} – ₹{Number(salaryMax).toLocaleString()}
-            </span>
-          );
-        },
-      },
-      {
-        accessorKey: "createdAt",
-        header: "Posted",
-        cell: ({ row }) => (
-          <span className="text-xs" style={{ color: "var(--portal-text-muted)" }}>
-            {new Date(row.original.createdAt).toLocaleDateString()}
-          </span>
-        ),
-      },
-      {
-        id: "actions",
-        header: "",
-        enableSorting: false,
-        cell: ({ row }) => {
-          const job = row.original;
-          return (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="p-1.5 rounded-md transition-colors"
-                  style={{ color: "var(--portal-text-muted)" }}
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="w-4 h-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="min-w-[160px]"
-                style={{
-                  backgroundColor: "var(--portal-bg-elevated)",
-                  borderColor: "var(--portal-border)",
-                }}
-              >
-                <DropdownMenuItem onClick={() => router.push(`/company/portal/jobs/${job.id}`)}>
-                  <Eye className="w-4 h-4 mr-2" /> View Details
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(`/company/portal/jobs/${job.id}/edit`)}>
-                  <Edit className="w-4 h-4 mr-2" /> Edit Job
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => toggleJobStatus(job.id, job.isActive)}>
-                  {job.isActive ? <Pause className="w-4 h-4 mr-2" /> : <Play className="w-4 h-4 mr-2" />}
-                  {job.isActive ? "Pause Job" : "Activate Job"}
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => router.push(`/company/portal/applications?jobId=${job.id}`)}>
-                  <Users className="w-4 h-4 mr-2" /> View Candidates ({job.applicationsCount ?? 0})
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setDeleteJobId(job.id)}
-                  className="text-red-400 focus:text-red-300"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" /> Delete Job
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          );
-        },
-      },
-    ],
-    [jobs, router]
-  );
+  const activeCount = jobs.filter((j) => j.isActive).length;
+  const totalApps = jobs.reduce((a, j) => a + (j.applicationsCount || 0), 0);
 
   return (
     <div className="space-y-5">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold" style={{ color: "var(--portal-text-primary)" }}>
-              Job Postings
-            </h1>
-            <p className="text-sm mt-0.5" style={{ color: "var(--portal-text-muted)" }}>
-              <span className="portal-mono font-medium" style={{ color: "var(--portal-text-secondary)" }}>
-                {stats.active}
-              </span>{" "}
-              Active ·{" "}
-              <span className="portal-mono font-medium" style={{ color: "var(--portal-text-secondary)" }}>
-                {stats.inactive}
-              </span>{" "}
-              Inactive ·{" "}
-              <span className="portal-mono font-medium" style={{ color: "var(--portal-text-secondary)" }}>
-                {stats.totalApplications}
-              </span>{" "}
-              Total Applications
-            </p>
-          </div>
-          <button
-            onClick={() => router.push("/company/portal/jobs/new")}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-md text-sm font-semibold transition-colors"
-            style={{
-              backgroundColor: "var(--portal-primary)",
-              color: "var(--portal-primary-text)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--portal-primary-hover)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "var(--portal-primary)";
-            }}
-          >
-            <Plus className="w-4 h-4" />
-            Post New Job
-          </button>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-bold text-white">Manage Jobs</h2>
+          <p className="text-slate-400 text-sm">
+            {activeCount} active · {jobs.length} total · {totalApps} applications
+          </p>
         </div>
-
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4"
-              style={{ color: "var(--portal-text-muted)" }}
-            />
-            <input
-              type="text"
-              placeholder="Search jobs by title or department..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-md text-sm outline-none transition-colors"
-              style={{
-                backgroundColor: "var(--portal-bg-elevated)",
-                border: "1px solid var(--portal-border)",
-                color: "var(--portal-text-primary)",
-              }}
-              onFocus={(e) => {
-                e.currentTarget.style.borderColor = "var(--portal-primary)";
-              }}
-              onBlur={(e) => {
-                e.currentTarget.style.borderColor = "var(--portal-border)";
-              }}
-            />
-          </div>
-          <div className="flex items-center gap-2">
-            {(["all", "active", "inactive"] as const).map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilterStatus(status)}
-                className="px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-                style={{
-                  backgroundColor:
-                    filterStatus === status ? "var(--portal-primary-muted)" : "var(--portal-bg-elevated)",
-                  color: filterStatus === status ? "var(--portal-primary)" : "var(--portal-text-secondary)",
-                  border: `1px solid ${filterStatus === status ? "var(--portal-primary)" : "var(--portal-border)"}`,
-                }}
-              >
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </button>
-            ))}
-            <ViewToggle
-              views={["table", "card"]}
-              activeView={viewMode}
-              onViewChange={(v) => setViewMode(v as "table" | "card")}
-            />
-          </div>
-        </div>
-
-        {/* Data Table */}
-        {viewMode === "table" ? (
-          <DataTable
-            data={filteredJobs}
-            columns={columns}
-            loading={isLoading}
-            enableRowSelection
-            emptyState={
-              <EmptyState
-                icon={<Briefcase className="w-6 h-6" />}
-                title={searchQuery || filterStatus !== "all" ? "No jobs match your filters" : "No jobs posted yet"}
-                description={
-                  searchQuery || filterStatus !== "all"
-                    ? "Try adjusting your search or filters."
-                    : "Create your first job posting to start receiving applications."
-                }
-                action={
-                  !searchQuery && filterStatus === "all"
-                    ? { label: "Post New Job", onClick: () => router.push("/company/portal/jobs/new") }
-                    : undefined
-                }
-              />
-            }
-          />
-        ) : (
-          /* Card View */
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {isLoading
-              ? Array.from({ length: 4 }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="h-48 rounded-lg border portal-skeleton"
-                    style={{ borderColor: "var(--portal-border)" }}
-                  />
-                ))
-              : filteredJobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="rounded-lg border p-5 transition-shadow hover:shadow-[var(--portal-shadow-hover)] cursor-pointer"
-                    style={{
-                      backgroundColor: "var(--portal-bg-elevated)",
-                      borderColor: "var(--portal-border)",
-                    }}
-                    onClick={() => router.push(`/company/portal/jobs/${job.id}`)}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h3 className="font-semibold text-base" style={{ color: "var(--portal-text-primary)" }}>
-                          {job.title}
-                        </h3>
-                        <div className="flex items-center gap-2 mt-1">
-                          <PortalStatusBadge status={job.isActive ? "ACTIVE" : "INACTIVE"} />
-                          {job.autoApplyEnabled && <PortalStatusBadge status="INFO" />}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-3 text-xs mb-3" style={{ color: "var(--portal-text-muted)" }}>
-                      <span className="flex items-center gap-1">
-                        <Briefcase className="w-3 h-3" /> {job.department}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" /> {job.location}
-                      </span>
-                      {job.salaryMin && job.salaryMax && (
-                        <span className="flex items-center gap-1 portal-mono">
-                          <DollarSign className="w-3 h-3" /> ₹{Number(job.salaryMin).toLocaleString()} – ₹
-                          {Number(job.salaryMax).toLocaleString()}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-4 text-xs" style={{ color: "var(--portal-text-secondary)" }}>
-                      <span className="flex items-center gap-1">
-                        <Users className="w-3.5 h-3.5" style={{ color: "var(--portal-primary)" }} />
-                        <span className="portal-mono font-semibold">{job.applicationsCount ?? 0}</span> applications
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3.5 h-3.5" />
-                        <span className="portal-mono">{job.viewCount ?? 0}</span> views
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {new Date(job.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-          </div>
-        )}
-
-        {/* Delete Confirmation Dialog */}
-        {deleteJobId && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: "rgba(0,0,0,0.6)" }}>
-            <div
-              className="rounded-xl p-6 w-full max-w-md"
-              style={{
-                backgroundColor: "var(--portal-bg-elevated)",
-                border: "1px solid var(--portal-border)",
-                boxShadow: "var(--portal-shadow-modal)",
-              }}
+        <div className="flex gap-2">
+          {company?.slug && (
+            <a
+              href={`/careers/${company.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-slate-400 hover:text-white transition"
             >
-              <h3 className="text-lg font-semibold mb-2" style={{ color: "var(--portal-text-primary)" }}>
-                Delete Job?
-              </h3>
-              <p className="text-sm mb-6" style={{ color: "var(--portal-text-muted)" }}>
-                This will permanently delete this job posting and all associated applications. This action cannot be undone.
-              </p>
-              <div className="flex gap-3 justify-end">
-                <button
-                  onClick={() => setDeleteJobId(null)}
-                  className="px-4 py-2 rounded-md text-sm font-medium transition-colors"
-                  style={{
-                    border: "1px solid var(--portal-border)",
-                    color: "var(--portal-text-secondary)",
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => deleteJob(deleteJobId)}
-                  className="px-4 py-2 rounded-md text-sm font-medium text-white transition-colors"
-                  style={{ backgroundColor: "var(--portal-danger)" }}
-                >
-                  <span className="flex items-center gap-2">
-                    <Trash2 className="w-4 h-4" /> Delete Job
-                  </span>
-                </button>
+              Public Page ↗
+            </a>
+          )}
+          <Link
+            href="/company/portal/jobs/new"
+            className="text-sm px-4 py-2 rounded-xl bg-emerald-500 text-white font-medium hover:bg-emerald-600 transition"
+          >
+            + Post a Job
+          </Link>
+        </div>
+      </div>
+
+      {/* Jobs list */}
+      <div className="bg-slate-900 rounded-2xl border border-white/5 overflow-hidden">
+        {loading ? (
+          <div className="p-8 text-center text-slate-500">Loading...</div>
+        ) : jobs.length === 0 ? (
+          <div className="py-16 text-center">
+            <div className="text-5xl mb-3">💼</div>
+            <p className="text-slate-400 mb-4">No jobs posted yet</p>
+            <Link
+              href="/company/portal/jobs/new"
+              className="text-sm px-5 py-2.5 bg-emerald-500 text-white font-medium rounded-xl hover:bg-emerald-600 transition"
+            >
+              Post your first job
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-white/5">
+            {jobs.map((job) => (
+              <div
+                key={job.id}
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 hover:bg-white/2 transition"
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-sm font-semibold text-white">{job.title}</p>
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full border font-medium ${
+                        job.isActive
+                          ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                          : "bg-slate-500/10 text-slate-400 border-slate-500/20"
+                      }`}
+                    >
+                      {job.isActive ? "Active" : "Inactive"}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {job.department} · {LOC_LABELS[job.location] || job.location} ·{" "}
+                    {TYPE_LABELS[job.employmentType] || job.employmentType}
+                    {job.experience ? ` · ${job.experience}` : ""}
+                  </p>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    {job.applicationsCount || 0} application
+                    {(job.applicationsCount || 0) !== 1 ? "s" : ""} · Posted{" "}
+                    {new Date(job.createdAt).toLocaleDateString("en-IN")}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap">
+                  {company?.slug && (
+                    <a
+                      href={`/careers/${company.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 hover:text-white rounded-lg transition"
+                    >
+                      Preview
+                    </a>
+                  )}
+                  <Link
+                    href={`/company/portal/applications?jobId=${job.id}`}
+                    className="text-xs px-3 py-1.5 bg-blue-500/10 border border-blue-500/20 text-blue-400 hover:bg-blue-500/20 rounded-lg transition"
+                  >
+                    Applications ({job.applicationsCount || 0})
+                  </Link>
+                  <Link
+                    href={`/company/portal/jobs/${job.id}/edit`}
+                    className="text-xs px-3 py-1.5 bg-white/5 border border-white/10 text-slate-400 hover:text-white rounded-lg transition"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    onClick={() => handleToggle(job)}
+                    disabled={toggling === job.id}
+                    className={`text-xs px-3 py-1.5 border rounded-lg transition disabled:opacity-50 ${
+                      job.isActive
+                        ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/20"
+                        : "bg-emerald-500/10 border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20"
+                    }`}
+                  >
+                    {toggling === job.id ? "..." : job.isActive ? "Deactivate" : "Activate"}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(job)}
+                    disabled={deleting === job.id}
+                    className="text-xs px-3 py-1.5 bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-lg transition disabled:opacity-50"
+                  >
+                    {deleting === job.id ? "..." : "Delete"}
+                  </button>
+                </div>
               </div>
-            </div>
+            ))}
           </div>
         )}
       </div>
+    </div>
   );
 }

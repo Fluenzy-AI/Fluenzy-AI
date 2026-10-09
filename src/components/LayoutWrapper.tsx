@@ -580,7 +580,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
     );
   }
 
-  if (isCollegePage || isCompanyPortalLanding || isPortalPage) {
+  if (isCollegePage || isCompanyPortalLanding || isPortalPage || pathname.startsWith('/company') || pathname.startsWith('/careers')) {
     return <>{children}</>;
   }
 

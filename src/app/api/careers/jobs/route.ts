@@ -1,6 +1,6 @@
 /**
  * Careers - Job Listings
- * GET  /api/careers/jobs  - List all active jobs (public)
+ * GET  /api/careers/jobs  - List all active jobs (public & candidate dashboard, including Company Portal jobs)
  * POST /api/careers/jobs  - Create job (HR/Admin only via portal JWT)
  */
 
@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   const decoded = getPortalAuthFromRequest(req);
   const isPortal = !!decoded;
 
-  const where: Record<string, unknown> = {
+  const whereInternal: Record<string, unknown> = {
     ...(!isPortal || !all ? { isActive: true } : {}),
     ...(department ? { department } : {}),
     ...(location ? { location: location as "REMOTE" | "HYBRID" | "ONSITE" } : {}),
@@ -55,32 +55,101 @@ export async function GET(req: NextRequest) {
       : {}),
   };
 
-  const jobs = await prisma.job.findMany({
-    where,
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      department: true,
-      location: true,
-      employmentType: true,
-      experienceYears: true,
-      salaryRange: true,
-      skills: true,
-      isActive: true,
-      createdAt: true,
-      _count: { select: { applications: true } },
-    },
-  });
+  const whereExternal: Record<string, unknown> = {
+    ...(!isPortal || !all ? { isActive: true } : {}),
+    ...(department ? { department } : {}),
+    ...(location ? { location: location as "REMOTE" | "HYBRID" | "ONSITE" } : {}),
+    ...(type ? { employmentType: type as "FULL_TIME" | "PART_TIME" | "CONTRACT" | "INTERNSHIP" } : {}),
+    ...(search
+      ? {
+          OR: [
+            { title: { contains: search, mode: "insensitive" } },
+            { department: { contains: search, mode: "insensitive" } },
+            { description: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : {}),
+  };
+
+  const [internalJobs, externalJobs] = await Promise.all([
+    prisma.job.findMany({
+      where: whereInternal,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        department: true,
+        location: true,
+        employmentType: true,
+        experienceYears: true,
+        salaryRange: true,
+        skills: true,
+        description: true,
+        isActive: true,
+        createdAt: true,
+        _count: { select: { applications: true } },
+      },
+    }),
+    prisma.externalJob.findMany({
+      where: whereExternal,
+      orderBy: { createdAt: "desc" },
+      include: {
+        company: {
+          select: {
+            name: true,
+            slug: true,
+            logoUrl: true,
+          },
+        },
+        _count: { select: { applications: true } },
+      },
+    }),
+  ]);
+
+  const formattedExternalJobs = externalJobs.map((ext) => ({
+    id: ext.id,
+    title: ext.title,
+    slug: ext.slug,
+    department: ext.department,
+    location: ext.location,
+    employmentType: ext.employmentType,
+    experienceLevel: ext.experienceYears || "0-1 years",
+    experienceYears: ext.experienceYears,
+    salaryRange:
+      ext.salaryMin || ext.salaryMax
+        ? `₹${ext.salaryMin || ""} - ₹${ext.salaryMax || ""}`
+        : undefined,
+    skills: ext.skills || [],
+    description: ext.description || "",
+    companyName: ext.company.name,
+    companySlug: ext.company.slug,
+    isExternal: true,
+    isActive: ext.isActive,
+    postedAt: ext.createdAt.toISOString(),
+    createdAt: ext.createdAt.toISOString(),
+    _count: { applications: ext._count?.applications || 0 },
+  }));
+
+  const formattedInternalJobs = internalJobs.map((j) => ({
+    ...j,
+    experienceLevel: j.experienceYears || "0-1 years",
+    companyName: "Fluenzy AI",
+    companySlug: "fluenzy-ai",
+    isExternal: false,
+    postedAt: j.createdAt.toISOString(),
+    createdAt: j.createdAt.toISOString(),
+  }));
+
+  const allJobs = [...formattedInternalJobs, ...formattedExternalJobs];
 
   // Extract unique departments/locations for filters
   const meta = {
-    departments: [...new Set(jobs.map((j) => j.department))],
-    locations: [...new Set(jobs.map((j) => j.location))],
+    departments: [...new Set(allJobs.map((j) => j.department))],
+    locations: [...new Set(allJobs.map((j) => j.location))],
   };
 
-  return NextResponse.json({ jobs, meta, total: jobs.length });
+  return NextResponse.json({ jobs: allJobs, meta, total: allJobs.length });
 }
 
 export async function POST(req: NextRequest) {

@@ -116,138 +116,141 @@ export default function JobDetailPage() {
         }
 
         // Check if already applied
-        const appsRes = await fetch(`/api/candidates/applications?type=internal`);
-        if (appsRes.ok) {
-          const appsData = await appsRes.json();
-          console.log('[FETCH_DATA] Checking if already applied:', {
-            slug,
-            jobId: jobData.job?.id,
-            applications: appsData.applications?.map((app: any) => ({
-              jobSlug: app.jobSlug,
-              jobId: app.jobId,
-              jobTitle: app.jobTitle,
-            })),
-          });
-          const existing = appsData.applications?.find(
-            (app: any) => app.jobSlug === slug || app.jobId === jobData.job?.id
-          );
-          if (existing) {
-            console.log('[FETCH_DATA] Already applied!', existing);
-            setAlreadyApplied(true);
-          } else {
-            console.log('[FETCH_DATA] Not applied yet');
-          }
+      const appsRes = await fetch(`/api/candidates/applications?type=all`);
+      if (appsRes.ok) {
+        const appsData = await appsRes.json();
+        console.log('[FETCH_DATA] Checking if already applied:', {
+          slug,
+          jobId: jobData.job?.id,
+          applications: appsData.applications?.map((app: any) => ({
+            jobSlug: app.jobSlug,
+            jobId: app.jobId,
+            jobTitle: app.jobTitle,
+          })),
+        });
+        const existing = appsData.applications?.find(
+          (app: any) => app.jobSlug === slug || app.jobId === jobData.job?.id
+        );
+        if (existing) {
+          console.log('[FETCH_DATA] Already applied!', existing);
+          setAlreadyApplied(true);
+        } else {
+          console.log('[FETCH_DATA] Not applied yet');
         }
-      } catch (error) {
-        console.error("Failed to fetch data:", error);
-      } finally {
-        setLoading(false);
       }
+    } catch (error) {
+      console.error("Failed to fetch data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchData();
+}, [slug]);
+
+// Auto-apply functionality
+useEffect(() => {
+  if (autoApply && job && !alreadyApplied && !showApplicationForm) {
+    setShowApplicationForm(true);
+  }
+}, [autoApply, job, alreadyApplied, showApplicationForm]);
+
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  
+  console.log('[APPLY_SUBMIT] Starting submission...', {
+    hasJob: !!job,
+    alreadyApplied,
+    formData,
+    useExistingResume,
+    hasResumeFile: !!resumeFile,
+    profileResumeUrl: profile?.resumeUrl,
+  });
+
+  if (!job) {
+    alert("Job information not found. Please refresh the page.");
+    return;
+  }
+
+  if (alreadyApplied) {
+    alert("You have already applied for this position.");
+    return;
+  }
+
+  // Validate required fields
+  if (!formData.name || !formData.email || !formData.phone) {
+    alert("Please fill in all required fields (Name, Email, Phone)");
+    return;
+  }
+
+  // Email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(formData.email)) {
+    alert("Please enter a valid email address");
+    return;
+  }
+
+  // Phone validation (basic)
+  if (formData.phone.length < 7) {
+    alert("Please enter a valid phone number");
+    return;
+  }
+
+  setSubmitting(true);
+
+  try {
+    // If uploading new resume, do that first
+    let resumeUrl = profile?.resumeUrl || "";
+    let resumeName = "";
+
+    if (!useExistingResume && resumeFile) {
+      const uploadData = new FormData();
+      uploadData.append("file", resumeFile);
+      
+      const uploadRes = await fetch("/api/careers/upload-resume", {
+        method: "POST",
+        body: uploadData,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload resume");
+      }
+
+      const uploadResult = await uploadRes.json();
+      resumeUrl = uploadResult.url;
+      resumeName = resumeFile.name;
+    } else if (!resumeUrl) {
+      alert("Please upload a resume");
+      return;
+    }
+
+    // Submit application with all required fields
+    const applicationData = {
+      jobId: job.id,
+      name: formData.name.trim(),
+      email: formData.email.toLowerCase().trim(),
+      phone: formData.phone.trim(),
+      resumeUrl,
+      resumeName: resumeName || "resume.pdf",
+      portfolio: formData.portfolio.trim() || "",
+      coverLetter: coverLetter.trim(),
+      experience: formData.experience,
+      linkedin: formData.linkedin.trim() || "",
+      candidateId: profile?.id || undefined,
     };
 
-    fetchData();
-  }, [slug]);
+    console.log('[APPLY] Submitting application:', applicationData);
 
-  // Auto-apply functionality
-  useEffect(() => {
-    if (autoApply && job && !alreadyApplied && !showApplicationForm) {
-      setShowApplicationForm(true);
-    }
-  }, [autoApply, job, alreadyApplied, showApplicationForm]);
+    const applyEndpoint = (job as any).isExternal ? "/api/jobs/apply" : "/api/careers/apply";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    console.log('[APPLY_SUBMIT] Starting submission...', {
-      hasJob: !!job,
-      alreadyApplied,
-      formData,
-      useExistingResume,
-      hasResumeFile: !!resumeFile,
-      profileResumeUrl: profile?.resumeUrl,
+    const res = await fetch(applyEndpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include",
+      body: JSON.stringify(applicationData),
     });
-
-    if (!job) {
-      alert("Job information not found. Please refresh the page.");
-      return;
-    }
-
-    if (alreadyApplied) {
-      alert("You have already applied for this position.");
-      return;
-    }
-
-    // Validate required fields
-    if (!formData.name || !formData.email || !formData.phone) {
-      alert("Please fill in all required fields (Name, Email, Phone)");
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
-      alert("Please enter a valid email address");
-      return;
-    }
-
-    // Phone validation (basic)
-    if (formData.phone.length < 7) {
-      alert("Please enter a valid phone number");
-      return;
-    }
-
-    setSubmitting(true);
-
-    try {
-      // If uploading new resume, do that first
-      let resumeUrl = profile?.resumeUrl || "";
-      let resumeName = "";
-
-      if (!useExistingResume && resumeFile) {
-        const uploadData = new FormData();
-        uploadData.append("file", resumeFile);
-        
-        const uploadRes = await fetch("/api/careers/upload-resume", {
-          method: "POST",
-          body: uploadData,
-        });
-
-        if (!uploadRes.ok) {
-          throw new Error("Failed to upload resume");
-        }
-
-        const uploadResult = await uploadRes.json();
-        resumeUrl = uploadResult.url;
-        resumeName = resumeFile.name;
-      } else if (!resumeUrl) {
-        alert("Please upload a resume");
-        return;
-      }
-
-      // Submit application with all required fields
-      const applicationData = {
-        jobId: job.id,
-        name: formData.name.trim(),
-        email: formData.email.toLowerCase().trim(),
-        phone: formData.phone.trim(),
-        resumeUrl,
-        resumeName: resumeName || "resume.pdf",
-        portfolio: formData.portfolio.trim() || "",
-        coverLetter: coverLetter.trim(),
-        experience: formData.experience,
-        linkedin: formData.linkedin.trim() || "",
-        candidateId: profile?.id || undefined,
-      };
-
-      console.log('[APPLY] Submitting application:', applicationData);
-
-      const res = await fetch("/api/careers/apply", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(applicationData),
-      });
 
       console.log('[APPLY] Response status:', res.status);
 

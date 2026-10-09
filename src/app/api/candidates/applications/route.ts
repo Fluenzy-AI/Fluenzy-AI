@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const status = searchParams.get('status');
     const source = searchParams.get('source'); // 'manual' or 'auto_apply'
-    const type = searchParams.get('type') || 'external'; // 'external' | 'internal' | 'all'
+    const type = searchParams.get('type') || 'all'; // 'external' | 'internal' | 'all' (default to all)
 
     // Build filter conditions for internal jobs
     const internalWhereClause: any = {

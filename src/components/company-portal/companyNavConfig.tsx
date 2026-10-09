@@ -9,6 +9,7 @@ import {
   Calendar,
   CheckSquare,
   ScanFace,
+  Award,
   BarChart3,
   UserCheck,
   Settings,
@@ -93,6 +94,13 @@ export const COMPANY_NAV_ITEMS: CompanyNavItem[] = [
     href: "/company/portal/hirelens",
     aliases: ["/company/portal/hirelens/setup", "/company/portal/hirelens/hardware"],
     icon: <ScanFace className="w-4 h-4" />,
+    section: "RECRUITMENT",
+  },
+  {
+    id: "certificates",
+    label: "Certificates",
+    href: "/company/portal/certificates",
+    icon: <Award className="w-4 h-4" />,
     section: "RECRUITMENT",
   },
   {
