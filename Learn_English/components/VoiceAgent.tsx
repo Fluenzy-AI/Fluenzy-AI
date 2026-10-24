@@ -31,6 +31,7 @@ import { TurnTakingEngine, QuestionType, DEFAULT_CONFIG as TT_DEFAULT_CONFIG } f
 import { AnswerCompletionAnalyzer } from '../../src/lib/interview/core/AnswerCompletionAnalyzer';
 import { QuestionGate } from '../../src/lib/interview/core/QuestionGate';
 import { AcousticSourceIntelligenceEngine } from '../../src/lib/interview/audio/AcousticSourceIntelligenceEngine';
+import { SpeechStateGuard } from '../../src/lib/interview/audio/SpeechStateGuard';
 
 
 // --- Utility Functions for Audio ---
@@ -410,6 +411,15 @@ const VoiceAgent: React.FC<{
   // Latest ASIE result for the 300ms evaluation loop
   const lastAsieResultRef = useRef<ReturnType<AcousticSourceIntelligenceEngine['processFrame']> | null>(null);
 
+  // ── SpeechStateGuard — deterministic speech state with hysteresis ─────────
+  // Fixes P0: vadSpeechActive could stay true forever when ASIE returned
+  // background-audio frames for silence. Guard adds:
+  //   • 2-frame start hysteresis (prevents noise spikes → speech)
+  //   • 3-frame end hysteresis   (prevents thinking-pause → speech-end)
+  //   • 2500ms hard stale-state expiry (safety net when frames stop arriving)
+  //   • lastConfirmedCandidateSpeechAt refresh ONLY for genuine candidate frames
+  const speechGuardRef = useRef(new SpeechStateGuard());
+
   // ── Mic-muted ref — keeps onaudioprocess closure always current ──────────────
   // micMutedProp flows from parent (MobileSessionPage) via CandidateMediaController.
   // We mirror it into a ref so the onaudioprocess closure (which is stale) always
@@ -528,6 +538,11 @@ const VoiceAgent: React.FC<{
     if (silenceTimerRef.current) {
       clearInterval(silenceTimerRef.current);
       silenceTimerRef.current = null;
+    // Belt-and-suspenders: clear the aliased turnSilenceTimerRef too
+    if (turnSilenceTimerRef.current) {
+      clearInterval(turnSilenceTimerRef.current);
+      turnSilenceTimerRef.current = null;
+    }
     }
     silencePromptCountRef.current = 0;
     isFirstChunkOfTurnRef.current = true;
@@ -535,6 +550,7 @@ const VoiceAgent: React.FC<{
     // â”€â”€ Reset turn-taking engine state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     sttFinalisedRef.current    = false;
     vadSpeechActiveRef.current = false;
+    speechGuardRef.current.forceSilent('session-cleanup');
     speechStartAtRef.current   = null;
     // Invalidate any in-progress question generation
     questionGateRef.current?.invalidateGeneration('Session ending');
@@ -543,6 +559,7 @@ const VoiceAgent: React.FC<{
     stopAiAudio();
     // Reset acoustic engine for next session
     asieRef.current.reset();
+    speechGuardRef.current.reset();
     lastAsieResultRef.current = null;
 
 
@@ -1060,9 +1077,23 @@ const VoiceAgent: React.FC<{
                 ? (asieDecision === 'CANDIDATE_SPEAKING' || asieDecision === 'CANDIDATE_BARGE_IN')
                 : (avgLevel > FALLBACK_THRESHOLD);
 
+
               const isBackgroundSpeech = asieReady && asieDecision === 'BACKGROUND_SPEECH_IGNORED';
               const isBackgroundAudio  = asieReady && (asieDecision === 'BACKGROUND_AUDIO_ONLY' || asieDecision === 'MUSIC_DETECTED');
               const isAiEcho           = asieReady && asieDecision === 'AI_ECHO';
+
+              // ── SpeechStateGuard: derive authoritative candidateSpeaking ──────────
+              // feedFrame() applies hysteresis and returns the guard-controlled boolean.
+              // lastConfirmedCandidateSpeechAt is ONLY refreshed for genuine candidate frames.
+              const guardedCandidateSpeaking = speechGuardRef.current.feedFrame({
+                isCandidateSpeech:   candidateIsSpeaking,
+                isCalibrating:       !asieReady,
+                rawVadSpeechActive:  avgLevel > FALLBACK_THRESHOLD,
+                isAiEcho:            isAiEcho,
+                isBackgroundSpeech:  isBackgroundSpeech,
+                isBackgroundAudio:   isBackgroundAudio,
+                aiCurrentlySpeaking: aiCurrentlySpeaking,
+              });
 
               // 4. Barge-in: candidate speaks while AI is playing
               if (aiCurrentlySpeaking) {
@@ -1093,7 +1124,7 @@ const VoiceAgent: React.FC<{
               }
 
               // 6. Candidate speech VAD gate
-              if (candidateIsSpeaking) {
+              if (guardedCandidateSpeaking) {
                 lastUserSpeechRef.current = Date.now();
                 if (!vadSpeechActiveRef.current) {
                   vadSpeechActiveRef.current = true;
@@ -1139,9 +1170,22 @@ const VoiceAgent: React.FC<{
             //   INTERRUPT_AI    â†’ handled inline in onaudioprocess (barge-in)
             //   ANSWER_COMPLETE â†’ send activityEnd if not already sent, allow next Q
             //   NO_ANSWER_RECOVERY â†’ gentle text nudge (max 3 times)
-            silenceTimerRef.current = setInterval(() => {
+            silenceTimerRef.current = turnSilenceTimerRef.current = setInterval(() => {
               const gate = questionGateRef.current;
               if (!gate || !sessionRef.current) return;
+
+              // ── SpeechStateGuard reconciliation — MUST run before TTE ──────────────
+              // Expires stale candidateSpeaking if no genuine frames in 2500ms.
+              // This is the safety net: even if onaudioprocess frames stopped
+              // arriving (AudioContext suspended), stale speech state clears.
+              const guardState = speechGuardRef.current.reconcile();
+              if (guardState.staleSpeechExpired) {
+                // Guard forced candidateSpeaking=false due to no frames — sync vadSpeechActiveRef
+                vadSpeechActiveRef.current = false;
+                setIsUserSpeaking(false);
+              }
+              // Authoritative candidateSpeaking from guard (has hysteresis + hard expiry)
+              const guardedSpeaking = guardState.candidateSpeaking;
 
               const aiSpeaking        = sourcesRef.current.size > 0;
               const silenceMs         = Date.now() - lastUserSpeechRef.current;
@@ -1167,7 +1211,7 @@ const VoiceAgent: React.FC<{
               const asieCalibrated = asie != null && asie.isCalibrated;
 
               const decision = ttEngineRef.current.evaluate({
-                vadSpeechActive:            vadSpeechActiveRef.current,
+                vadSpeechActive:            guardedSpeaking,
                 aiSpeaking,
                 silenceDurationMs:          silenceMs,
                 speechDurationMs,
@@ -1194,6 +1238,22 @@ const VoiceAgent: React.FC<{
                 `stt=${sttFinalised} completion=${completionResult.state} ` +
                 `transcript="${transcript.slice(0, 40)}..."`
               );
+
+              // ── [TURN_AUDIO] structured diagnostics (dev-only, zero production cost) ──
+              if (process.env.NODE_ENV === 'development') {
+                const _asieDbg = lastAsieResultRef.current;
+                console.log(
+                  `[TURN_AUDIO] speechState=${guardedSpeaking ? 'SPEAKING' : 'SILENT'} ` +
+                  `vad=${vadSpeechActiveRef.current} ` +
+                  `candidateConf=${(_asieDbg?.candidateSpeechConfidence ?? 0).toFixed(2)} ` +
+                  `bgSpeech=${_asieDbg?.decision === 'BACKGROUND_SPEECH_IGNORED'} ` +
+                  `music=${_asieDbg?.decision === 'MUSIC_DETECTED'} ` +
+                  `aiEcho=${_asieDbg?.decision === 'AI_ECHO'} ` +
+                  `lastSpeechAgo=${guardState.msSinceLastConfirmedSpeech === Infinity ? 'never' : Math.round(guardState.msSinceLastConfirmedSpeech) + 'ms'} ` +
+                  `staleFired=${guardState.staleSpeechExpired} sttFinalised=${sttFinalised} ` +
+                  `silence=${silenceMs}ms decision=${decision.decision}`
+                );
+              }
 
               if (decision.decision === 'ANSWER_COMPLETE') {
                 // All conditions met â€” allow Gemini to proceed to next question
@@ -1282,6 +1342,7 @@ const VoiceAgent: React.FC<{
               // Reset per-turn STT/speech tracking for incoming user answer
               sttFinalisedRef.current  = false;
               vadSpeechActiveRef.current = false;
+              speechGuardRef.current.forceSilent('turn-complete');
               speechStartAtRef.current = null;
 
               // 1. Snapshot the current Q/A and push to history immediately.
