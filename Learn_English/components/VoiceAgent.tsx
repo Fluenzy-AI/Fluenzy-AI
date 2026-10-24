@@ -1,4 +1,4 @@
-
+﻿
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { GoogleGenAI, Modality } from '@google/genai';
@@ -157,7 +157,7 @@ const VoiceAgent: React.FC<{
   const [isAiSpeaking, setIsAiSpeaking] = useState(false);
   const [isUserSpeaking, setIsUserSpeaking] = useState(false);
 
-  // ── AI HR Video refs — only used when showHRVideo=true (Company Wise HR mobile) ──
+  // â”€â”€ AI HR Video refs â€” only used when showHRVideo=true (Company Wise HR mobile) â”€â”€
   // speakingVideoRef: /video/interviewvid.mp4  (plays while AI TTS is active)
   // listeningVideoRef: /video/stop.mp4         (loops while candidate answers)
   // Both are always mounted so they preload; visibility toggled via opacity.
@@ -193,7 +193,7 @@ const VoiceAgent: React.FC<{
   const { resolvedTheme } = useTheme();
   const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
 
-  // ── Safe URI decoder ──────────────────────────────────────────────────────────────
+  // â”€â”€ Safe URI decoder â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // decodeURIComponent throws URIError when the URL has been truncated
   // (e.g. a %2 at the end without two hex digits) or contains bare `%` chars.
   // This helper swallows the error and falls back to the raw encoded value.
@@ -207,7 +207,7 @@ const VoiceAgent: React.FC<{
     }
   };
 
-  // ── Resume text: stored in sessionStorage to avoid URL length limits ─────────
+  // â”€â”€ Resume text: stored in sessionStorage to avoid URL length limits â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // CompanyHRDashboard writes the text under a short `resumeKey` param.
   // useRef so it reads once per mount (safe against Strict Mode double-invocation).
   const resumeKey = searchParams.get('resumeKey');
@@ -218,15 +218,15 @@ const VoiceAgent: React.FC<{
       if (!resumeKey || typeof window === 'undefined') return undefined;
       try {
         const val = sessionStorage.getItem(resumeKey) ?? undefined;
-        // ── DIAGNOSTIC LOG: confirm resume made it across the navigation ─────
+        // â”€â”€ DIAGNOSTIC LOG: confirm resume made it across the navigation â”€â”€â”€â”€â”€
         console.log(
           val
             ? `[RESUME_READ] Read ${val.length} chars from sessionStorage key "${resumeKey}". Preview: "${val.slice(0, 80)}..."`
-            : `[RESUME_READ] sessionStorage key "${resumeKey}" was null/missing — resume will be empty in system prompt`
+            : `[RESUME_READ] sessionStorage key "${resumeKey}" was null/missing â€” resume will be empty in system prompt`
         );
         return val;
       } catch {
-        console.warn('[RESUME_READ] sessionStorage access threw — resume context will be empty');
+        console.warn('[RESUME_READ] sessionStorage access threw â€” resume context will be empty');
         return undefined;
       }
     })()
@@ -315,20 +315,20 @@ const VoiceAgent: React.FC<{
   const sessionRef = useRef<any>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // ── Sprint 1 Critical Fixes ──────────────────────────────────────────────
-  // FIX P8: Mutex guard — prevents duplicate sessions from double-click / React Strict Mode
+  // â”€â”€ Sprint 1 Critical Fixes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // FIX P8: Mutex guard â€” prevents duplicate sessions from double-click / React Strict Mode
   const isSessionStartingRef = useRef(false);
-  // FIX P3: Idempotency guard — cleanup() safe to call multiple times (onerror + onclose both fire)
+  // FIX P3: Idempotency guard â€” cleanup() safe to call multiple times (onerror + onclose both fire)
   const cleaningUpRef = useRef(false);
-  // FIX P1: Turn-ID arbitration — only audio from the CURRENT turn plays
+  // FIX P1: Turn-ID arbitration â€” only audio from the CURRENT turn plays
   const currentTurnIdRef = useRef<string | null>(null);
   const currentSessionIdRef = useRef<string | null>(null);
 
-  // ── P0 FIX: Post-turn finalization window ────────────────────────────────
+  // â”€â”€ P0 FIX: Post-turn finalization window â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   //
   // Root cause: Gemini Live delivers `inputTranscription` events and
   // `turnComplete` in SEPARATE WebSocket frames. The ordering is NOT
-  // guaranteed — `turnComplete` can arrive 50–500ms before the final
+  // guaranteed â€” `turnComplete` can arrive 50â€“500ms before the final
   // `inputTranscription` chunk. The old code reset `currentQA.current`
   // on `turnComplete`, so any late STT chunk was silently discarded or
   // added to the NEXT turn's answer instead.
@@ -344,8 +344,8 @@ const VoiceAgent: React.FC<{
   //      speech that arrived right before the button press.
   //
   // States:
-  //   null                    → no turn in finalization
-  //   { entryIndex, timer }   → window open; late STT still arriving
+  //   null                    â†’ no turn in finalization
+  //   { entryIndex, timer }   â†’ window open; late STT still arriving
   //
   const FINALIZATION_WINDOW_MS = 600;
   type PostTurnBuffer = {
@@ -355,14 +355,14 @@ const VoiceAgent: React.FC<{
   };
   const postTurnBufferRef = useRef<PostTurnBuffer | null>(null);
 
-  // ── Turn-Taking Engine (multi-signal) ──────────────────────────────────────
-  // Replaces the naive 400ms VAD silence → activityEnd approach.
+  // â”€â”€ Turn-Taking Engine (multi-signal) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // Replaces the naive 400ms VAD silence â†’ activityEnd approach.
   // Evaluates 10 prioritized signals to produce a typed TurnDecision.
   const ttEngineRef    = useRef(new TurnTakingEngine(TT_DEFAULT_CONFIG));
   const completionRef  = useRef(new AnswerCompletionAnalyzer());
   const questionGateRef = useRef<QuestionGate | null>(null);  // created in onopen
 
-  // ── Per-turn STT tracking ──────────────────────────────────────────────────
+  // â”€â”€ Per-turn STT tracking â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // sttFinalisedRef:   true after Gemini sends a complete inputTranscription
   //                    (i.e. the last chunk was received, window is closed)
   // vadSpeechActiveRef: mirrors the local ManualVAD state for the engine
@@ -374,7 +374,7 @@ const VoiceAgent: React.FC<{
   const turnSilenceTimerRef  = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentQuestionType  = useRef<QuestionType>('HR');
 
-  // ── Barge-in controller ────────────────────────────────────────────────────
+  // â”€â”€ Barge-in controller â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // When user speaks during AI audio, stop all playing AI audio immediately.
   const stopAiAudio = useCallback(() => {
     // Invalidate current turn so no new chunks play
@@ -385,7 +385,7 @@ const VoiceAgent: React.FC<{
     });
     sourcesRef.current.clear();
     setIsAiSpeaking(false);
-    console.log('[BARGE_IN] AI audio stopped — user has priority');
+    console.log('[BARGE_IN] AI audio stopped â€” user has priority');
   }, []);
 
 
@@ -435,7 +435,7 @@ const VoiceAgent: React.FC<{
 
     // Classify the transcript status
     if (!finalAnswer) {
-      // Confirm no speech — mark explicitly so History UI shows amber indicator
+      // Confirm no speech â€” mark explicitly so History UI shows amber indicator
       transcriptHistory.current[entryIndex] = {
         ...entry,
         transcriptStatus: 'NO_SPEECH',
@@ -472,7 +472,7 @@ const VoiceAgent: React.FC<{
           };
 
           if (p1Output.status === 'capture_failed') {
-            console.warn(`[FINALIZATION] Turn ${entryIndex}: capture_failed — nudging AI to repeat`);
+            console.warn(`[FINALIZATION] Turn ${entryIndex}: capture_failed â€” nudging AI to repeat`);
             sessionRef.current?.sendRealtimeInput({
               text: "[CAPTURE_FAILED: the candidate's last response was not captured by the microphone. Please ask them politely to repeat their answer before continuing.]",
             });
@@ -489,16 +489,16 @@ const VoiceAgent: React.FC<{
 
 
   const cleanup = useCallback(async (saveResults = false) => {
-    // ── FIX P3: Idempotency guard — safe to call multiple times ──────────────
+    // â”€â”€ FIX P3: Idempotency guard â€” safe to call multiple times â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // onerror and onclose both fire when Gemini session dies; without this guard
     // both triggers cause double-saves and double-calls to onSessionEnd.
     if (cleaningUpRef.current) {
-      console.warn('[cleanup] Already running — ignoring duplicate call');
+      console.warn('[cleanup] Already running â€” ignoring duplicate call');
       return;
     }
     cleaningUpRef.current = true;
 
-    // ── P0 FIX: Flush finalization window BEFORE saving ───────────────────────
+    // â”€â”€ P0 FIX: Flush finalization window BEFORE saving â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // If the user clicked End while a post-turn window was open (speech arrived
     // right before End button), flush immediately so the late STT is committed
     // to the history entry before we read transcriptHistory for saving.
@@ -512,7 +512,7 @@ const VoiceAgent: React.FC<{
     silencePromptCountRef.current = 0;
     isFirstChunkOfTurnRef.current = true;
 
-    // ── Reset turn-taking engine state ────────────────────────────────────────
+    // â”€â”€ Reset turn-taking engine state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     sttFinalisedRef.current    = false;
     vadSpeechActiveRef.current = false;
     speechStartAtRef.current   = null;
@@ -526,7 +526,7 @@ const VoiceAgent: React.FC<{
     lastAsieResultRef.current = null;
 
 
-    // ── FIX P1: Invalidate current turn so no stale audio chunks play ────────
+    // â”€â”€ FIX P1: Invalidate current turn so no stale audio chunks play â”€â”€â”€â”€â”€â”€â”€â”€
     currentTurnIdRef.current = null;
 
     // Stop Gemini session
@@ -545,7 +545,7 @@ const VoiceAgent: React.FC<{
     sourcesRef.current.forEach((s) => { try { s.stop(0); } catch { /* already ended */ } });
     sourcesRef.current.clear();
 
-    // ── FIX P5: Close AudioContexts to prevent browser 6-context cap ─────────
+    // â”€â”€ FIX P5: Close AudioContexts to prevent browser 6-context cap â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (inputAudioContextRef.current && inputAudioContextRef.current.state !== 'closed') {
       try { await inputAudioContextRef.current.close(); } catch { /* already closed */ }
       inputAudioContextRef.current = null;
@@ -559,14 +559,14 @@ const VoiceAgent: React.FC<{
     setIsConnecting(false);
     setIsAiSpeaking(false);
     setIsUserSpeaking(false);
-    // ── FIX P3: onSessionEnd fires AFTER saves (not before) ──────────────────
+    // â”€â”€ FIX P3: onSessionEnd fires AFTER saves (not before) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     // Moving this call to after all save logic prevents parent unmounting the
     // component while awaited fetches are still running.
 
     if (saveResults) {
       const endTime = new Date();
 
-      // ── FIX P3: Parallel evaluation with allSettled — one failure doesn't abort others ──
+      // â”€â”€ FIX P3: Parallel evaluation with allSettled â€” one failure doesn't abort others â”€â”€
       const FALLBACK_SCORES = { clarity: 7, relevance: 7, grammar: 7, confidence: 7, technicalAccuracy: 7 };
       const evalResults = await Promise.allSettled(
         transcriptHistory.current.map((qa) =>
@@ -719,7 +719,7 @@ const VoiceAgent: React.FC<{
       setIsFinished(true);
     }
 
-    // ── FIX P3: onSessionEnd fires LAST — after all saves are complete ────────
+    // â”€â”€ FIX P3: onSessionEnd fires LAST â€” after all saves are complete â”€â”€â”€â”€â”€â”€â”€â”€
     onSessionEnd(user);
 
     // Reset idempotency guard AFTER full completion
@@ -727,9 +727,9 @@ const VoiceAgent: React.FC<{
   }, [type, sessionMeta, onSessionEnd, user]);
 
   const startSession = async () => {
-    // ── FIX P8: Mutex guard — prevents duplicate sessions ─────────────────────
+    // â”€â”€ FIX P8: Mutex guard â€” prevents duplicate sessions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     if (isSessionStartingRef.current) {
-      console.warn('[startSession] Already starting — ignoring duplicate call (double-click / Strict Mode)');
+      console.warn('[startSession] Already starting â€” ignoring duplicate call (double-click / Strict Mode)');
       return;
     }
     isSessionStartingRef.current = true;
@@ -827,14 +827,14 @@ const VoiceAgent: React.FC<{
         return 'Advanced';
       };
 
-      // ── System Instruction ────────────────────────────────────────────────
+      // â”€â”€ System Instruction â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
       // Interview modules: use the full Prompt 2 instruction from interviewEngine.ts.
       // All other modules: keep existing SYSTEM_INSTRUCTIONS constant.
       let instruction: string;
 
       if (isInterviewModule) {
         if (type === ModuleType.COMPANY_WISE_HR) {
-          // ── Enterprise-Grade Company Interview Simulator (v3.0) ──────────────
+          // â”€â”€ Enterprise-Grade Company Interview Simulator (v3.0) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           // Uses the full 10-section spec: resume-anchored, company-specific,
           // round-type branched, experience-calibrated, intensity-gated verification.
           const simulatorCtx: CompanySimulatorContext = {
@@ -846,12 +846,12 @@ const VoiceAgent: React.FC<{
             resume_text:      sessionMeta?.resumeText || '',
           };
 
-          // ── DIAGNOSTIC LOG: confirm resume length before building system prompt ─
+          // â”€â”€ DIAGNOSTIC LOG: confirm resume length before building system prompt â”€
           console.log(
             `[RESUME_TO_PROMPT] resume_text length = ${simulatorCtx.resume_text.length} chars` +
             (simulatorCtx.resume_text.length === 0
-              ? ' ⚠️  EMPTY — AI will ask candidate to describe background verbally'
-              : ` ✓  Preview: "${simulatorCtx.resume_text.slice(0, 80)}..."`)
+              ? ' âš ï¸  EMPTY â€” AI will ask candidate to describe background verbally'
+              : ` âœ“  Preview: "${simulatorCtx.resume_text.slice(0, 80)}..."`)
           );
 
           instruction = buildCompanySimulatorInstruction(simulatorCtx);
@@ -910,11 +910,11 @@ const VoiceAgent: React.FC<{
         `;
       }
 
-      // ── Voice Resolution: read fresh at session-start, never from a stale closure ──
+      // â”€â”€ Voice Resolution: read fresh at session-start, never from a stale closure â”€â”€
       const activeSettingsAtStart = getActiveSettings();
       const voiceEntry = GEMINI_VOICE_MAP[activeSettingsAtStart.voiceId];
 
-      // Runtime assertion — fires in DevTools if mapping is ever missing
+      // Runtime assertion â€” fires in DevTools if mapping is ever missing
       if (!voiceEntry) {
         console.error(
           `[VOICE_BUG] No Gemini voice mapping found for voiceId="${activeSettingsAtStart.voiceId}". ` +
@@ -923,7 +923,7 @@ const VoiceAgent: React.FC<{
       } else {
         console.log(
           `[VOICE_OK] Persona: ${activeSettingsAtStart.voiceId} ` +
-          `→ Gemini voiceName: "${voiceEntry.voiceName}" (${voiceEntry.gender})`
+          `â†’ Gemini voiceName: "${voiceEntry.voiceName}" (${voiceEntry.gender})`
         );
       }
 
@@ -936,11 +936,11 @@ const VoiceAgent: React.FC<{
           systemInstruction: instruction,
           outputAudioTranscription: {},
           inputAudioTranscription: {},
-          // Disable thinking budget on Live sessions — full extended thinking
+          // Disable thinking budget on Live sessions â€” full extended thinking
           // adds 2-5 seconds of per-turn latency before the first audio byte.
           // The Live API already streams natively; thinking budget is for batch generation.
           thinkingConfig: { thinkingBudget: 0 },
-          // ── Voice selection: maps persona → Gemini prebuilt voice name ──────
+          // â”€â”€ Voice selection: maps persona â†’ Gemini prebuilt voice name â”€â”€â”€â”€â”€â”€
           // This is the ONLY place voiceName is sent to the provider.
           // Source of truth: GEMINI_VOICE_MAP in src/types/interviewSettings.ts
           speechConfig: {
@@ -950,9 +950,9 @@ const VoiceAgent: React.FC<{
               },
             },
           },
-          // ── MANUAL VAD MODE ──────────────────────────────────────────────────
+          // â”€â”€ MANUAL VAD MODE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
           // disabled: true means WE control when user speech starts/ends.
-          // The ⚡ button sends activityEnd which ONLY works in manual mode.
+          // The âš¡ button sends activityEnd which ONLY works in manual mode.
           // In auto mode (disabled:false), activityEnd is silently ignored.
           realtimeInputConfig: {
             automaticActivityDetection: { disabled: true }
@@ -964,79 +964,115 @@ const VoiceAgent: React.FC<{
             // Assign session ID for turn-ID arbitration
             currentSessionIdRef.current = `SES_${Date.now()}`;
             currentTurnIdRef.current = null;
-            isSessionStartingRef.current = false; // ── Release mutex after successful connect
+            isSessionStartingRef.current = false; // â”€â”€ Release mutex after successful connect
 
-            // ── Initialize QuestionGate for this session ──────────────────────
+            // â”€â”€ Initialize QuestionGate for this session â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             questionGateRef.current = new QuestionGate(currentSessionIdRef.current || `SES_${Date.now()}`);
 
             const source = inputAudioContextRef.current!.createMediaStreamSource(stream);
             const scriptProcessor = inputAudioContextRef.current!.createScriptProcessor(4096, 1, 1);
 
-            // ── Multi-Signal VAD (replaces naive 400ms single-threshold) ─────────
+            // -- ASIE-Powered Multi-Signal VAD ------------------------------------
             //
-            // The scriptProcessor feeds RMS frames.
-            // VAD logic:
-            //   SPEECH_THRESHOLD = 0.008 (unchanged — empirically calibrated)
-            //   Speech detected → vadSpeechActiveRef = true
-            //   Barge-in detection: user speech while AI speaking → stopAiAudio()
-            //   400ms VAD silence → tell Gemini activityEnd (still needed for server-side VAD)
-            //   FINAL decision (ask next question) is made by TurnTakingEngine, NOT here
-            const SPEECH_THRESHOLD = 0.008;
-            const VAD_SILENCE_MS   = 400; // minimum silence to send activityEnd to Gemini
+            // AcousticSourceIntelligenceEngine runs every ScriptProcessor frame:
+            //   AudioFeatureExtractor -> NoiseFloorEstimator -> BackgroundAudioClassifier
+            //   -> SpeakerConsistencyTracker -> weighted candidateSpeechConfidence
+            //
+            // candidateSpeechConfidence >= 0.55 = candidate speaking
+            // bargeIn = 'STOP_AI' = confirmed high-confidence barge-in
+            // Background speech / music / AI echo produce low confidence -> ignored.
+            const VAD_SILENCE_MS    = 400;   // ms of silence before activityEnd
+            const FALLBACK_THRESHOLD = 0.008; // pre-calibration fallback only
 
             scriptProcessor.onaudioprocess = (e) => {
+              if (cleaningUpRef.current) return;
+
               const inputData = e.inputBuffer.getChannelData(0);
-              const int16 = new Int16Array(inputData.length);
+              const int16     = new Int16Array(inputData.length);
               let sum = 0;
               for (let i = 0; i < inputData.length; i++) {
-                int16[i] = inputData[i] * 32768;
-                sum += Math.abs(inputData[i]);
+                const clamped = Math.max(-1, Math.min(1, inputData[i]));
+                int16[i] = clamped * 32768;
+                sum += Math.abs(clamped);
               }
               const avgLevel = sum / inputData.length;
 
-              // Always stream audio to Gemini
-              sessionRef.current?.sendRealtimeInput({
-                audio: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' }
-              });
+              // 1. Stream audio to Gemini Live
+              try {
+                sessionRef.current?.sendRealtimeInput({
+                  audio: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' }
+                });
+              } catch { /* WebSocket closed */ }
 
               const aiCurrentlySpeaking = sourcesRef.current.size > 0;
 
-              // ── BARGE-IN: User speaks while AI is playing ────────────────────
-              if (avgLevel > SPEECH_THRESHOLD && aiCurrentlySpeaking) {
-                stopAiAudio();
-                // Fall through to record speech start
+              // 2. ASIE: multi-signal acoustic analysis (< 1ms, sync)
+              let asieResult = lastAsieResultRef.current;
+              try {
+                asieResult = asieRef.current.processFrame(inputData, aiCurrentlySpeaking);
+                lastAsieResultRef.current = asieResult;
+              } catch (asieErr) {
+                console.warn('[ASIE] processFrame error - fallback to raw VAD:', asieErr);
               }
 
-              if (aiCurrentlySpeaking && avgLevel <= SPEECH_THRESHOLD) {
-                // AI speaking, no user speech → reset VAD, skip
-                if (vadSpeechActiveRef.current) {
+              // 3. Resolve candidateSpeaking
+              const asieReady     = asieResult != null && asieResult.isCalibrated;
+              const asieDecision  = asieResult?.decision ?? 'SILENCE';
+              const candidateConf = asieResult?.candidateSpeechConfidence ?? 0;
+
+              const candidateIsSpeaking = asieReady
+                ? (asieDecision === 'CANDIDATE_SPEAKING' || asieDecision === 'CANDIDATE_BARGE_IN')
+                : (avgLevel > FALLBACK_THRESHOLD);
+
+              const isBackgroundSpeech = asieReady && asieDecision === 'BACKGROUND_SPEECH_IGNORED';
+              const isBackgroundAudio  = asieReady && (asieDecision === 'BACKGROUND_AUDIO_ONLY' || asieDecision === 'MUSIC_DETECTED');
+              const isAiEcho           = asieReady && asieDecision === 'AI_ECHO';
+
+              // 4. Barge-in: candidate speaks while AI is playing
+              if (aiCurrentlySpeaking) {
+                const bargeIn = asieResult?.bargeIn ?? 'NO_ACTION';
+                if (bargeIn === 'STOP_AI') {
+                  stopAiAudio();
+                  console.log('[BARGE_IN] ASIE STOP_AI - conf:', candidateConf.toFixed(2));
+                } else if (!asieReady && avgLevel > FALLBACK_THRESHOLD) {
+                  stopAiAudio(); // pre-calibration fallback
+                  console.log('[BARGE_IN] Pre-cal fallback - level:', avgLevel.toFixed(4));
+                } else if (isBackgroundSpeech || isBackgroundAudio || isAiEcho) {
+                  return; // background/echo while AI plays - do not interrupt
+                }
+                if (!candidateIsSpeaking) {
+                  if (vadSpeechActiveRef.current) { vadSpeechActiveRef.current = false; setIsUserSpeaking(false); }
+                  return;
+                }
+              }
+
+              // 5. Background audio while AI is NOT playing - suppress VAD
+              if (asieReady && (isBackgroundSpeech || isBackgroundAudio || isAiEcho)) {
+                if (vadSpeechActiveRef.current && Date.now() - lastUserSpeechRef.current > VAD_SILENCE_MS * 2) {
                   vadSpeechActiveRef.current = false;
                   setIsUserSpeaking(false);
+                  try { sessionRef.current?.sendRealtimeInput({ activityEnd: {} }); } catch { /* ok */ }
                 }
                 return;
               }
 
-              if (avgLevel > SPEECH_THRESHOLD) {
-                // ── User is speaking ──────────────────────────────────────────
+              // 6. Candidate speech VAD gate
+              if (candidateIsSpeaking) {
                 lastUserSpeechRef.current = Date.now();
                 if (!vadSpeechActiveRef.current) {
                   vadSpeechActiveRef.current = true;
                   speechStartAtRef.current   = Date.now();
-                  sttFinalisedRef.current    = false; // new speech → STT not yet final
+                  sttFinalisedRef.current    = false;
                   setIsUserSpeaking(true);
-                  sessionRef.current?.sendRealtimeInput({ activityStart: {} });
-                  // Cancel any pending question generation on speech start
+                  try { sessionRef.current?.sendRealtimeInput({ activityStart: {} }); } catch { /* ok */ }
                   questionGateRef.current?.onUserSpeechStarted();
-                  console.log('[VAD] activityStart — user speaking, generation cancelled');
+                  console.log('[VAD] activityStart - conf:', candidateConf.toFixed(2), 'src:', asieDecision);
                 }
               } else if (vadSpeechActiveRef.current && Date.now() - lastUserSpeechRef.current > VAD_SILENCE_MS) {
-                // ── 400ms silence after speech → tell Gemini activityEnd ────────
-                // This tells the server user has paused, but we do NOT ask next
-                // question here — that decision belongs to TurnTakingEngine below.
                 vadSpeechActiveRef.current = false;
                 setIsUserSpeaking(false);
-                sessionRef.current?.sendRealtimeInput({ activityEnd: {} });
-                console.log('[VAD] activityEnd — 400ms silence. Engine will decide next action.');
+                try { sessionRef.current?.sendRealtimeInput({ activityEnd: {} }); } catch { /* ok */ }
+                console.log('[VAD] activityEnd - silence', Date.now() - lastUserSpeechRef.current, 'ms');
               }
             };
             source.connect(scriptProcessor);
@@ -1057,16 +1093,16 @@ const VoiceAgent: React.FC<{
               console.log('[AI_INITIAL_PROMPT] Sent initial prompt');
             });
 
-            // ── Multi-Signal Turn-Taking Evaluation Loop ─────────────────────
+            // â”€â”€ Multi-Signal Turn-Taking Evaluation Loop â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             // Runs every 300ms. Evaluates TurnTakingEngine with live signals.
             // Replaces the old 5s setInterval with a hardcoded 15s nudge.
             //
             // Decision actions:
-            //   WAIT_*          → do nothing
-            //   USER_IS_SPEAKING → do nothing (VAD handles)
-            //   INTERRUPT_AI    → handled inline in onaudioprocess (barge-in)
-            //   ANSWER_COMPLETE → send activityEnd if not already sent, allow next Q
-            //   NO_ANSWER_RECOVERY → gentle text nudge (max 3 times)
+            //   WAIT_*          â†’ do nothing
+            //   USER_IS_SPEAKING â†’ do nothing (VAD handles)
+            //   INTERRUPT_AI    â†’ handled inline in onaudioprocess (barge-in)
+            //   ANSWER_COMPLETE â†’ send activityEnd if not already sent, allow next Q
+            //   NO_ANSWER_RECOVERY â†’ gentle text nudge (max 3 times)
             silenceTimerRef.current = setInterval(() => {
               const gate = questionGateRef.current;
               if (!gate || !sessionRef.current) return;
@@ -1090,6 +1126,10 @@ const VoiceAgent: React.FC<{
                 sttFinalised,
               });
 
+              // Pass ASIE acoustic signals to TurnTakingEngine
+              const asie = lastAsieResultRef.current;
+              const asieCalibrated = asie != null && asie.isCalibrated;
+
               const decision = ttEngineRef.current.evaluate({
                 vadSpeechActive:            vadSpeechActiveRef.current,
                 aiSpeaking,
@@ -1103,6 +1143,12 @@ const VoiceAgent: React.FC<{
                 questionGenerationPending:  gate.isGenerationActive,
                 questionAlreadyAsked:       false,
                 sessionEnding:              cleaningUpRef.current,
+                // ASIE acoustic intelligence signals
+                candidateSpeechConfidence:  asieCalibrated ? asie.candidateSpeechConfidence : null,
+                backgroundSpeechDetected:   asieCalibrated && asie.decision === 'BACKGROUND_SPEECH_IGNORED',
+                backgroundAudioDetected:    asieCalibrated && (asie.decision === 'BACKGROUND_AUDIO_ONLY' || asie.decision === 'MUSIC_DETECTED'),
+                isCalibrating:              asie != null && !asie.isCalibrated,
+                acousticSource:             asie?.source ?? undefined,
               });
 
               console.log(
@@ -1112,13 +1158,13 @@ const VoiceAgent: React.FC<{
               );
 
               if (decision.decision === 'ANSWER_COMPLETE') {
-                // All conditions met — allow Gemini to proceed to next question
+                // All conditions met â€” allow Gemini to proceed to next question
                 // activityEnd was already sent by VAD; just reset tracking for next turn
                 sttFinalisedRef.current   = false;
                 speechStartAtRef.current  = null;
                 silencePromptCountRef.current = 0;
                 gate.resetSilenceRecovery();
-                console.log('[TT_ENGINE] ANSWER_COMPLETE — turn handed off to AI:', decision.reason);
+                console.log('[TT_ENGINE] ANSWER_COMPLETE â€” turn handed off to AI:', decision.reason);
               }
 
               if (decision.decision === 'NO_ANSWER_RECOVERY') {
@@ -1143,26 +1189,26 @@ const VoiceAgent: React.FC<{
           },
 
           onmessage: async (m) => {
-            // ── outputTranscription: AI's spoken text accumulates as the "question" ──
+            // â”€â”€ outputTranscription: AI's spoken text accumulates as the "question" â”€â”€
             if (m.serverContent?.outputTranscription?.text) {
               currentQA.current.question += m.serverContent.outputTranscription.text;
             }
 
-            // ── inputTranscription: User's STT — P0 RACE FIX ─────────────────────
+            // â”€â”€ inputTranscription: User's STT â€” P0 RACE FIX â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             //
             // Gemini Live does NOT guarantee that all inputTranscription events
             // arrive BEFORE turnComplete. The final STT chunk(s) often arrive in
-            // a subsequent WebSocket frame 50–500ms after turnComplete.
+            // a subsequent WebSocket frame 50â€“500ms after turnComplete.
             //
             // Decision table:
-            //   postTurnBuffer OPEN  → late STT: back-patch the COMMITTED entry
-            //   postTurnBuffer CLOSED → normal STT: accumulate in currentQA
+            //   postTurnBuffer OPEN  â†’ late STT: back-patch the COMMITTED entry
+            //   postTurnBuffer CLOSED â†’ normal STT: accumulate in currentQA
             if (m.serverContent?.inputTranscription?.text) {
               const sttText = m.serverContent.inputTranscription.text;
               const buf = postTurnBufferRef.current;
 
               if (buf) {
-                // ── Late STT: back-patch the committed history entry ──────────
+                // â”€â”€ Late STT: back-patch the committed history entry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 buf.extraAnswer += sttText;
                 const entry = transcriptHistory.current[buf.entryIndex];
                 if (entry) {
@@ -1181,11 +1227,11 @@ const VoiceAgent: React.FC<{
                   finalizeTurn(buf.entryIndex);
                 }, FINALIZATION_WINDOW_MS);
               } else {
-                // ── Normal STT: accumulate in current turn buffer ─────────────
+                // â”€â”€ Normal STT: accumulate in current turn buffer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                 currentQA.current.answer += sttText;
               }
 
-              // ── Mark STT as having received at least one finalisation chunk ──
+              // â”€â”€ Mark STT as having received at least one finalisation chunk â”€â”€
               // TurnTakingEngine checks this before allowing ANSWER_COMPLETE.
               // Prevents asking next Q when Gemini hasn't sent any STT yet.
               sttFinalisedRef.current = true;
@@ -1193,7 +1239,7 @@ const VoiceAgent: React.FC<{
               lastUserSpeechRef.current = Date.now();
             }
 
-            // ── turnComplete: AI's turn is done, user may speak next ─────────
+            // â”€â”€ turnComplete: AI's turn is done, user may speak next â”€â”€â”€â”€â”€â”€â”€â”€â”€
             if (m.serverContent?.turnComplete) {
               // Reset per-turn STT/speech tracking for incoming user answer
               sttFinalisedRef.current  = false;
@@ -1230,11 +1276,11 @@ const VoiceAgent: React.FC<{
             }
             const data = m.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
             if (data) {
-              // ── FIX P1: Turn-ID Arbitration — prevents multiple simultaneous AI voices ──
+              // â”€â”€ FIX P1: Turn-ID Arbitration â€” prevents multiple simultaneous AI voices â”€â”€
               // Each Gemini response turn gets a unique ID assigned at the start of the turn.
               // Any audio chunk that arrives AFTER a new turn has begun is silently rejected.
               if (!outputAudioContextRef.current || outputAudioContextRef.current.state === 'closed') {
-                console.warn('[AUDIO] outputAudioContext is null/closed — skipping chunk');
+                console.warn('[AUDIO] outputAudioContext is null/closed â€” skipping chunk');
                 return;
               }
 
@@ -1256,10 +1302,10 @@ const VoiceAgent: React.FC<{
                 console.log('[AUDIO] New turn started: turnId=', newTurnId, 'delay=', delaySec, 's');
               }
 
-              // ── THE KEY GUARD: Reject stale chunks from old turns ──
+              // â”€â”€ THE KEY GUARD: Reject stale chunks from old turns â”€â”€
               const chunkTurnId = currentTurnIdRef.current;
               if (!chunkTurnId) {
-                // Turn was invalidated (interview ending) — drop this chunk
+                // Turn was invalidated (interview ending) â€” drop this chunk
                 return;
               }
 
@@ -1267,7 +1313,7 @@ const VoiceAgent: React.FC<{
               
               // Double-check turn ID is still valid after async decodeAudioData
               if (currentTurnIdRef.current !== chunkTurnId) {
-                console.log('[AUDIO] Chunk rejected — turn invalidated during decode. turnId=', chunkTurnId);
+                console.log('[AUDIO] Chunk rejected â€” turn invalidated during decode. turnId=', chunkTurnId);
                 return;
               }
               // Double-check output context is still valid after async decode
@@ -1326,14 +1372,14 @@ const VoiceAgent: React.FC<{
     }
   }, [isFinished, router]);
 
-  // ── Dual-video HR sync: speaking ↔ listening (Company Wise HR mobile only) ──
+  // â”€â”€ Dual-video HR sync: speaking â†” listening (Company Wise HR mobile only) â”€â”€
   // Source of truth: isAiSpeaking (real TTS AudioBufferSourceNode lifecycle).
   // Both <video> elements are always in the DOM so both preload with no reload.
-  // Visibility is toggled via opacity — zero black flash between switches.
+  // Visibility is toggled via opacity â€” zero black flash between switches.
   //
-  //   isAiSpeaking = true  → speakingVideoRef (/video/interviewvid.mp4) plays
+  //   isAiSpeaking = true  â†’ speakingVideoRef (/video/interviewvid.mp4) plays
   //                          listeningVideoRef (/video/stop.mp4)        pauses
-  //   isAiSpeaking = false → listeningVideoRef (/video/stop.mp4)        plays
+  //   isAiSpeaking = false â†’ listeningVideoRef (/video/stop.mp4)        plays
   //                          speakingVideoRef (/video/interviewvid.mp4) pauses
   useEffect(() => {
     if (!showHRVideo) return;
@@ -1341,19 +1387,19 @@ const VoiceAgent: React.FC<{
     const listening = listeningVideoRef.current;
 
     if (isAiSpeaking) {
-      // ── AI is speaking: show interviewvid.mp4, pause stop.mp4 ──
+      // â”€â”€ AI is speaking: show interviewvid.mp4, pause stop.mp4 â”€â”€
       if (listening) listening.pause();
       if (speaking) {
         speaking.play().catch(() => {
-          // Autoplay blocked — interview continues working normally.
+          // Autoplay blocked â€” interview continues working normally.
         });
       }
     } else {
-      // ── AI finished / candidate turn: show stop.mp4, pause interviewvid.mp4 ──
+      // â”€â”€ AI finished / candidate turn: show stop.mp4, pause interviewvid.mp4 â”€â”€
       if (speaking) speaking.pause();
       if (listening) {
         listening.play().catch(() => {
-          // Autoplay blocked — interview continues working normally.
+          // Autoplay blocked â€” interview continues working normally.
         });
       }
     }
@@ -1412,10 +1458,10 @@ From now on, speak and act strictly according to these new settings!]`
     
     const handleEndInterviewEvent = async () => {
       if (isSavingRef.current) {
-        console.log('⚡ fluenzy_end_interview event ignored -> already saving');
+        console.log('âš¡ fluenzy_end_interview event ignored -> already saving');
         return;
       }
-      console.log('⚡ fluenzy_end_interview event received -> executing save & cleanup');
+      console.log('âš¡ fluenzy_end_interview event received -> executing save & cleanup');
       isSavingRef.current = true;
       setIsSaving(true);
       await cleanup(true);
@@ -1457,21 +1503,21 @@ From now on, speak and act strictly according to these new settings!]`
             </div>
           </div>
           <div className="flex items-center gap-1.5 md:gap-2 ml-2">
-            {/* ⚡ Instant Reply — forces AI to respond NOW via activityEnd (manual VAD mode) */}
+            {/* âš¡ Instant Reply â€” forces AI to respond NOW via activityEnd (manual VAD mode) */}
             {isActive && (
               <button
                 id="instant-reply-btn"
                 onClick={() => {
                   if (!sessionRef.current) return;
                   sessionRef.current.sendRealtimeInput({ activityEnd: {} });
-                  console.log('[INSTANT_REPLY] activityEnd → AI responds now');
+                  console.log('[INSTANT_REPLY] activityEnd â†’ AI responds now');
                 }}
                 className={`p-2 rounded-xl border transition-all duration-150 active:scale-90
                   ${ isLight
                     ? 'border-emerald-400 bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
                     : 'border-emerald-500 bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
                   }`}
-                title="Instant Reply — AI responds right now"
+                title="Instant Reply â€” AI responds right now"
               >
                 <Zap size={16} className="fill-current" />
               </button>
@@ -1561,7 +1607,7 @@ From now on, speak and act strictly according to these new settings!]`
                   {isEnglishLearning
                     ? (lessonContext?.coachMessage || 'Get ready to practice your English speaking skills with personalized coaching.')
                     : isConversationPractice
-                      ? 'Chat with your AI friend in English — casual, natural, and fun. Great for building everyday fluency.'
+                      ? 'Chat with your AI friend in English â€” casual, natural, and fun. Great for building everyday fluency.'
                       : sessionMeta?.isCompanyWise
                         ? 'Prepare for your company-specific interview with structured practice and expert feedback.'
                         : `Practice behavioral and HR questions${sessionMeta?.lessonTitle ? ` for: ${sessionMeta.lessonTitle}` : ''} with expert AI coaching.`
@@ -1576,7 +1622,7 @@ From now on, speak and act strictly according to these new settings!]`
               {isEnglishLearning
                 ? (lessonContext?.coachMessage || 'Get ready to practice your English speaking skills.')
                 : isConversationPractice
-                  ? 'Chat with your AI friend in English — casual and fun.'
+                  ? 'Chat with your AI friend in English â€” casual and fun.'
                   : sessionMeta?.isCompanyWise
                     ? 'Company-specific structured interview practice.'
                     : `HR behavioral practice${sessionMeta?.lessonTitle ? `: ${sessionMeta.lessonTitle}` : ''}.`
@@ -1588,7 +1634,7 @@ From now on, speak and act strictly according to these new settings!]`
               }`}>
                 <p className={`text-xs font-semibold mb-1 ${
                   isLight ? 'text-blue-500' : 'text-blue-300'
-                }`}>🎯 Lesson Objective</p>
+                }`}>ðŸŽ¯ Lesson Objective</p>
                 <p className={`text-xs leading-relaxed ${
                   isLight ? 'text-slate-700' : 'text-white'
                 }`}>{lessonContext.objective}</p>
@@ -1616,18 +1662,18 @@ From now on, speak and act strictly according to these new settings!]`
         </div>
         ) : (
           <div className="w-full max-w-2xl mx-auto space-y-1.5">
-            {/* AI HR Interviewer — dual-video on Company Wise HR, static image elsewhere */}
+            {/* AI HR Interviewer â€” dual-video on Company Wise HR, static image elsewhere */}
             {/* Desktop: taller container + object-contain so full face is visible without cropping */}
             <div className="relative w-full min-h-[140px] max-h-44 sm:max-h-56 md:max-h-80 lg:max-h-[420px] md:aspect-auto aspect-[16/10] rounded-xl overflow-hidden border shadow-xl bg-slate-950 border-slate-700/60">
               {showHRVideo ? (
                 <>
-                  {/* ── Company Wise HR Mobile: dual muted HR videos ──────────────
+                  {/* â”€â”€ Company Wise HR Mobile: dual muted HR videos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
                    *  Both <video> elements are always mounted (preloaded).
-                   *  Visibility toggled via opacity — zero black flash on switch.
+                   *  Visibility toggled via opacity â€” zero black flash on switch.
                    *  object-position: center 15% frames the face in the upper-center
                    *  of the card (head+eyes+shoulders visible, professional framing).
                    *  Both videos use identical objectPosition so the face stays
-                   *  locked when switching speaking ↔ listening.
+                   *  locked when switching speaking â†” listening.
                    */}
 
                   {/* Speaking video: plays while AI TTS is active */}
@@ -1645,7 +1691,7 @@ From now on, speak and act strictly according to these new settings!]`
                       pointerEvents: 'none',
                     }}
                     onError={() => {
-                      console.warn('[AIHRVideo] /video/interviewvid.mp4 failed to load — interview unaffected');
+                      console.warn('[AIHRVideo] /video/interviewvid.mp4 failed to load â€” interview unaffected');
                     }}
                   />
 
@@ -1664,7 +1710,7 @@ From now on, speak and act strictly according to these new settings!]`
                       pointerEvents: 'none',
                     }}
                     onError={() => {
-                      console.warn('[AIHRVideo] /video/stop.mp4 failed to load — interview unaffected');
+                      console.warn('[AIHRVideo] /video/stop.mp4 failed to load â€” interview unaffected');
                     }}
                   />
                 </>

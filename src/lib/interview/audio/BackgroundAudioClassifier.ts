@@ -52,9 +52,9 @@ export interface ClassifierOptions {
 
 export class BackgroundAudioClassifier {
   private _opts: Required<ClassifierOptions>;
-  private _smoothedCandidate = 0.5;  // smoothed candidateProbability
-  private _smoothedBackground = 0.2;
-  private _smoothedMusic = 0.1;
+  private _smoothedCandidate  = 0.0;  // no false-positive prior
+  private _smoothedBackground = 0.0;
+  private _smoothedMusic      = 0.0;
   private _consecutiveSilenceFrames = 0;
   private _consecutiveSpeechFrames = 0;
   private _consecutiveMusicFrames = 0;
@@ -93,18 +93,24 @@ export class BackgroundAudioClassifier {
     this._consecutiveSilenceFrames = 0;
 
     // ── AI ECHO ──────────────────────────────────────────────────────────────
-    // If AI is playing, any audio energy is assumed to be AI echo until user
-    // speech is confirmed with high confidence.
+    // If AI is playing, ALL audio energy is assumed to be AI echo/playback
+    // unless the candidate produces a strongly dominant signal.
+    //
+    // Barge-in requires:
+    //   1. Energy at least 2.5x the calibrated noise floor (very strong signal)
+    //   2. localSpeechProbability > 0.75 (clearly human speech pattern)
+    //
+    // This prevents TV/background speech from triggering barge-in during AI playback.
     if (isAiPlaying && rms > this._opts.silenceThreshold) {
-      // High-confidence barge-in: energy significantly above noise floor
-      const bargeInConfidence = rms / Math.max(noiseFloor * 3.5, 0.012);
-      if (bargeInConfidence > 1.5 && localSpeechProbability > 0.65) {
-        // Candidate barge-in: strong signal well above AI playback level
-        return this._emit('CANDIDATE_SPEECH', Math.min(0.8, bargeInConfidence * 0.5),
-          0.78, 0.05, 0.02,
-          `Barge-in: energy=${rms.toFixed(4)} >> noiseFloor*3.5=${(noiseFloor*3.5).toFixed(4)}`);
+      // Only classify as barge-in if energy is strongly above noise floor
+      const bargeInThreshold = Math.max(noiseFloor * 5.0, 0.025);
+      const isStrongBarge = rms > bargeInThreshold && localSpeechProbability > 0.75;
+      if (isStrongBarge) {
+        return this._emit('CANDIDATE_SPEECH', 0.75,
+          0.75, 0.05, 0.02,
+          `Barge-in: rms=${rms.toFixed(4)} > bargeInThreshold=${bargeInThreshold.toFixed(4)}`);
       }
-      return this._emit('AI_ECHO', 0.80, 0.05, 0.10, 0.02,
+      return this._emit('AI_ECHO', 0.85, 0.05, 0.10, 0.02,
         'AI is playing — energy attributed to echo/playback');
     }
 
@@ -122,11 +128,13 @@ export class BackgroundAudioClassifier {
     this._consecutiveMusicFrames = 0;
 
     // ── MECHANICAL NOISE (fan/keyboard/AC) ───────────────────────────────────
-    // Characteristics: steady energy, high ZCR, flat spectrum, low speech prob
-    const isMechanical = zcr > 0.38 && localSpeechProbability < 0.20
-      && spectralCentroid > 0.55 && rms < 0.04;
+    // Characteristics: broadband high ZCR, low speech probability.
+    // Threshold note: localSpeechProbability has a 0.25 energy floor, so white
+    // noise ≈ 0.27. Threshold 0.35 catches all broadband noise while letting
+    // true speech (with high ZCR + centroid scores) pass through.
+    const isMechanical = zcr > 0.32 && localSpeechProbability < 0.35;
     if (isMechanical) {
-      return this._emit('MECHANICAL_NOISE', 0.75, 0.03, 0.05, 0.02,
+      return this._emit('MECHANICAL_NOISE', 0.75, 0.08, 0.05, 0.02,
         `Mech noise: zcr=${zcr.toFixed(3)} speechProb=${localSpeechProbability.toFixed(3)}`);
     }
 
@@ -231,9 +239,9 @@ export class BackgroundAudioClassifier {
   }
 
   reset(): void {
-    this._smoothedCandidate  = 0.5;
-    this._smoothedBackground = 0.2;
-    this._smoothedMusic      = 0.1;
+    this._smoothedCandidate  = 0.0;
+    this._smoothedBackground = 0.0;
+    this._smoothedMusic      = 0.0;
     this._consecutiveSilenceFrames = 0;
     this._consecutiveSpeechFrames  = 0;
     this._consecutiveMusicFrames   = 0;
