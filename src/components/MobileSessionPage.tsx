@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Sparkles, Home, Link2, BarChart3, User, Target,
-  Settings, X, Check, Clock, Menu, Bell, CameraOff
+  Settings, X, Check, Clock, Menu, Bell, CameraOff,
+  Mic, MicOff, Video, VideoOff
 } from 'lucide-react';
 import { useTheme } from '@/contexts/ThemeContext';
 import VoiceAgent from '../../Learn_English/components/VoiceAgent';
@@ -29,6 +30,7 @@ import {
   getInterviewSettings,
   saveInterviewSettings,
 } from '@/lib/interviewSettingsStore';
+import { CandidateMediaController } from '@/lib/interview/media/CandidateMediaController';
 
 const TABS = [
   { label: 'Quick Links', icon: Link2, href: '/train', tabColor: '#8B5CF6' },
@@ -80,6 +82,49 @@ export default function MobileSessionPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settings, setSettings] = useState<InterviewSettings>(DEFAULT_SETTINGS);
+
+  // ── Candidate Media Controls ─ single source of truth ────────────────────────
+  const [micMuted, setMicMuted] = useState(false);
+  const [cameraMuted, setCameraMuted] = useState(false);
+  const [micAvailable, setMicAvailable] = useState(false);
+  const [cameraAvailable, setCameraAvailable] = useState(false);
+  const mediaControllerRef = useRef<CandidateMediaController | null>(null);
+
+  // Create controller once per mount
+  useEffect(() => {
+    const ctrl = new CandidateMediaController();
+    mediaControllerRef.current = ctrl;
+    const unsub = ctrl.subscribe((state) => {
+      setMicMuted(!state.microphone.enabled);
+      setCameraMuted(!state.camera.enabled);
+      setMicAvailable(state.microphone.available);
+      setCameraAvailable(state.camera.available);
+    });
+    ctrl.startDeviceChangeListener();
+    return () => {
+      unsub();
+      ctrl.destroy();
+      mediaControllerRef.current = null;
+    };
+  }, []);
+
+  const handleToggleMic = useCallback(() => {
+    mediaControllerRef.current?.toggleMic();
+  }, []);
+
+  const handleToggleCamera = useCallback(() => {
+    mediaControllerRef.current?.toggleCamera();
+  }, []);
+
+  // Called by VoiceAgent once getUserMedia() is resolved
+  const handleMicStreamReady = useCallback((stream: MediaStream) => {
+    mediaControllerRef.current?.attachMicStream(stream);
+  }, []);
+
+  // Called by VideoAnalysisPanel once camera getUserMedia() is resolved
+  const handleCameraStreamReady = useCallback((stream: MediaStream) => {
+    mediaControllerRef.current?.attachCameraStream(stream);
+  }, []);
   
   // Timer starts at 0 (Actual live calculated elapsed time)
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -327,6 +372,8 @@ export default function MobileSessionPage() {
             onShowSettingsChange={setShowSettings}
             hideEndButton={true}
             showHRVideo={isCompanyWise}
+            micMuted={micMuted}
+            onMicStreamReady={handleMicStreamReady}
           />
         </div>
 
@@ -350,8 +397,78 @@ export default function MobileSessionPage() {
                 sessionId={sessionId}
                 isActive={isInterviewActive}
                 isCompact={false}
+                cameraMuted={cameraMuted}
+                onCameraStreamReady={handleCameraStreamReady}
               />
             </div>
+
+            {/* ── CANDIDATE MEDIA CONTROLS ─────────────────────────────────── */}
+            {isInterviewActive && (
+              <div
+                role="toolbar"
+                aria-label="Media controls"
+                className="flex items-center justify-center gap-4 py-3 px-4 rounded-xl border shadow-sm"
+                style={{ background: cardBgHex, borderColor: borderHex }}
+              >
+                {/* Microphone toggle */}
+                <button
+                  id="btn-toggle-mic"
+                  type="button"
+                  onClick={handleToggleMic}
+                  aria-label={micMuted ? 'Unmute microphone' : 'Mute microphone'}
+                  title={micMuted ? 'Unmute microphone' : 'Mute microphone'}
+                  className={`flex flex-col items-center gap-1 px-5 py-2.5 rounded-xl transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:outline-none ${
+                    micMuted
+                      ? 'bg-red-600/90 text-white shadow-lg shadow-red-900/30'
+                      : 'bg-emerald-600/90 text-white shadow-lg shadow-emerald-900/30'
+                  }`}
+                >
+                  {micMuted
+                    ? <MicOff size={20} strokeWidth={2.5} />
+                    : <Mic   size={20} strokeWidth={2.5} />}
+                  <span className="text-[9px] font-extrabold tracking-wide">
+                    {micMuted ? 'Mic Off' : 'Mic On'}
+                  </span>
+                </button>
+
+                {/* Separator */}
+                <div className="h-10 w-px opacity-20" style={{ background: borderHex }} />
+
+                {/* Camera toggle */}
+                <button
+                  id="btn-toggle-camera"
+                  type="button"
+                  onClick={handleToggleCamera}
+                  aria-label={cameraMuted ? 'Turn camera on' : 'Turn camera off'}
+                  title={cameraMuted ? 'Turn camera on' : 'Turn camera off'}
+                  className={`flex flex-col items-center gap-1 px-5 py-2.5 rounded-xl transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:outline-none ${
+                    cameraMuted
+                      ? 'bg-red-600/90 text-white shadow-lg shadow-red-900/30'
+                      : 'bg-emerald-600/90 text-white shadow-lg shadow-emerald-900/30'
+                  }`}
+                >
+                  {cameraMuted
+                    ? <VideoOff size={20} strokeWidth={2.5} />
+                    : <Video   size={20} strokeWidth={2.5} />}
+                  <span className="text-[9px] font-extrabold tracking-wide">
+                    {cameraMuted ? 'Cam Off' : 'Cam On'}
+                  </span>
+                </button>
+              </div>
+            )}
+
+            {/* Mic-muted notification banner */}
+            {isInterviewActive && micMuted && (
+              <div
+                role="status"
+                aria-live="polite"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg border text-[10px] font-bold"
+                style={{ background: 'rgba(220,38,38,0.1)', borderColor: 'rgba(220,38,38,0.3)', color: '#F87171' }}
+              >
+                <MicOff size={12} />
+                <span>Your microphone is off. Turn it on to continue speaking.</span>
+              </div>
+            )}
           </>
         )}
       </div>

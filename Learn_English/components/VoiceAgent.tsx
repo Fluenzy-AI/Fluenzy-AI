@@ -1,4 +1,4 @@
-﻿
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { GoogleGenAI, Modality } from '@google/genai';
@@ -134,6 +134,11 @@ const VoiceAgent: React.FC<{
   /** When true, the static HR image is replaced by the muted AI HR video.
    *  Must ONLY be set to true for Company Wise HR on mobile. */
   showHRVideo?: boolean;
+  /** When true, the candidate has intentionally muted their microphone.
+   *  Audio is NOT sent to Gemini and TTE receives MIC_MUTED signal. */
+  micMuted?: boolean;
+  /** Callback fired once the microphone MediaStream is ready — for CandidateMediaController.attachMicStream() */
+  onMicStreamReady?: (stream: MediaStream) => void;
 }> = ({ 
   user, 
   type: propType,
@@ -143,6 +148,8 @@ const VoiceAgent: React.FC<{
   onShowSettingsChange,
   hideEndButton = false,
   showHRVideo = false,
+  micMuted: micMutedProp = false,
+  onMicStreamReady,
 }) => {
   const { type: paramType } = useParams<{ type: string }>();
   const type = propType || (paramType as ModuleType);
@@ -396,6 +403,12 @@ const VoiceAgent: React.FC<{
   // Latest ASIE result for the 300ms evaluation loop
   const lastAsieResultRef = useRef<ReturnType<AcousticSourceIntelligenceEngine['processFrame']> | null>(null);
 
+  // ── Mic-muted ref — keeps onaudioprocess closure always current ──────────────
+  // micMutedProp flows from parent (MobileSessionPage) via CandidateMediaController.
+  // We mirror it into a ref so the onaudioprocess closure (which is stale) always
+  // reads the live value without re-creating the entire ScriptProcessor chain.
+  const micMutedRef = useRef(micMutedProp);
+  useEffect(() => { micMutedRef.current = micMutedProp; }, [micMutedProp]);
 
   /**
    * Flush the finalization window immediately (called from cleanup before save).
@@ -792,6 +805,10 @@ const VoiceAgent: React.FC<{
       });
       streamRef.current = stream;
 
+      // Notify parent (CandidateMediaController) so it can attach the mic stream.
+      // This fires ONCE after getUserMedia — no second getUserMedia call needed.
+      onMicStreamReady?.(stream);
+
     
       // Lesson-specific messaging for English
       const getLessonContext = () => {
@@ -998,6 +1015,18 @@ const VoiceAgent: React.FC<{
               const avgLevel = sum / inputData.length;
 
               // 1. Stream audio to Gemini Live
+              // MIC MUTED GUARD: When candidate mutes mic, send NO audio to Gemini.
+              // This prevents fake transcript generation and prevents VAD activityStart.
+              if (micMutedRef.current) {
+                // Drain VAD if it was active before mute
+                if (vadSpeechActiveRef.current) {
+                  vadSpeechActiveRef.current = false;
+                  setIsUserSpeaking(false);
+                  try { sessionRef.current?.sendRealtimeInput({ activityEnd: {} }); } catch { /* ok */ }
+                }
+                return; // Skip ALL audio processing while muted
+              }
+
               try {
                 sessionRef.current?.sendRealtimeInput({
                   audio: { data: encode(new Uint8Array(int16.buffer)), mimeType: 'audio/pcm;rate=16000' }
@@ -1149,6 +1178,8 @@ const VoiceAgent: React.FC<{
                 backgroundAudioDetected:    asieCalibrated && (asie.decision === 'BACKGROUND_AUDIO_ONLY' || asie.decision === 'MUSIC_DETECTED'),
                 isCalibrating:              asie != null && !asie.isCalibrated,
                 acousticSource:             asie?.source ?? undefined,
+                // Candidate media control: mic intentionally muted by candidate
+                micMuted:                   micMutedRef.current,
               });
 
               console.log(

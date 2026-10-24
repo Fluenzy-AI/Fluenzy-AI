@@ -31,6 +31,10 @@ interface VideoAnalysisPanelProps {
   onSessionEnd?: (metrics: BehavioralMetrics) => void;
   onMetricsUpdate?: (metrics: BehavioralMetrics) => void;
   isCompact?: boolean;
+  /** When true, hides candidate video and pauses frame capture + WS. No fake metrics. */
+  cameraMuted?: boolean;
+  /** Callback fired once the camera MediaStream is ready — for CandidateMediaController.attachCameraStream() */
+  onCameraStreamReady?: (stream: MediaStream) => void;
 }
 
 interface BehavioralTimelinePoint {
@@ -74,7 +78,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   isActive,
   onSessionEnd,
   onMetricsUpdate,
-  isCompact = false
+  isCompact = false,
+  cameraMuted = false,
+  onCameraStreamReady,
 }) => {
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -429,6 +435,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
       streamRef.current = stream;
       console.log("✅ Camera started successfully");
       setIsCameraOn(true);
+
+      // Notify parent so CandidateMediaController can attach the stream
+      onCameraStreamReady?.(stream);
       
       // ── FIX P4: Enable reconnect BEFORE opening WS ────────────────────────
       shouldReconnectRef.current = true;
@@ -541,6 +550,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
 
   // Process frames and send to backend with throttling, downscaling, and backpressure
   const processFrame = useCallback(() => {
+    // CAMERA MUTED guard: never capture or send frames when candidate disabled camera
+    if (cameraMuted) return;
+
     if (!videoRef.current || !canvasRef.current || !wsRef.current || !isAnalyzing) {
       return;
     }
@@ -779,7 +791,16 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
             className="col-span-5 relative rounded-xl overflow-hidden border aspect-[3/4] max-h-36 flex items-center justify-center shadow-md border-slate-700/60 video-box-container"
             style={{ background: '#090D16', backgroundColor: '#090D16' }}
           >
-            {isCameraOn ? (
+            {cameraMuted ? (
+              /* Camera OFF placeholder — shown instead of broken/black video */
+              <div className="flex flex-col items-center justify-center h-full w-full gap-2 p-2 text-center" style={{ background: '#090D16' }}>
+                <div className="w-8 h-8 rounded-full bg-slate-700/60 flex items-center justify-center">
+                  <CameraOff size={16} className="text-slate-400" />
+                </div>
+                <p className="text-slate-400 text-[9px] font-bold leading-tight">Camera Off</p>
+                <p className="text-slate-500 text-[8px] leading-tight">Analysis Paused</p>
+              </div>
+            ) : isCameraOn ? (
               <>
                 <video
                   ref={videoRef}
@@ -820,13 +841,13 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
           <div className="col-span-7 space-y-1.5">
             {/* Top Face Detection Badge */}
             <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60 flex items-center gap-1.5">
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${isCameraOn && metrics.face_detected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700/40 text-slate-400'}`}>
-                {isCameraOn && metrics.face_detected ? <Check size={11} strokeWidth={3} /> : <AlertTriangle size={11} />}
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${!cameraMuted && isCameraOn && metrics.face_detected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700/40 text-slate-400'}`}>
+                {!cameraMuted && isCameraOn && metrics.face_detected ? <Check size={11} strokeWidth={3} /> : <AlertTriangle size={11} />}
               </div>
               <div>
                 <p className="text-[8px] font-bold text-slate-400 leading-none">Face Detection</p>
-                <p className={`text-[11px] font-black mt-0.5 leading-none ${isCameraOn && metrics.face_detected ? 'text-emerald-400' : 'text-slate-400'}`}>
-                  {isCameraOn ? (metrics.face_detected ? 'Detected' : 'Searching...') : 'Camera Offline'}
+                <p className={`text-[11px] font-black mt-0.5 leading-none ${!cameraMuted && isCameraOn && metrics.face_detected ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  {cameraMuted ? 'Camera Off' : isCameraOn ? (metrics.face_detected ? 'Detected' : 'Searching...') : 'Camera Offline'}
                 </p>
               </div>
             </div>
@@ -836,25 +857,25 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
               <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60">
                 <p className="text-[8px] font-bold text-slate-400">Confidence</p>
                 <p className="text-xs font-black text-purple-400 mt-0.5">
-                  {isCameraOn && metrics.confidence > 0 ? `${metrics.confidence.toFixed(0)}%` : '--'}
+                  {cameraMuted ? <span className="text-slate-500">Paused</span> : (isCameraOn && metrics.confidence > 0 ? `${metrics.confidence.toFixed(0)}%` : '--')}
                 </p>
               </div>
               <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60">
                 <p className="text-[8px] font-bold text-slate-400">Eye Contact</p>
                 <p className="text-xs font-black text-sky-400 mt-0.5">
-                  {isCameraOn && metrics.eye_contact > 0 ? `${metrics.eye_contact.toFixed(0)}%` : '--'}
+                  {cameraMuted ? <span className="text-slate-500">Paused</span> : (isCameraOn && metrics.eye_contact > 0 ? `${metrics.eye_contact.toFixed(0)}%` : '--')}
                 </p>
               </div>
               <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60">
                 <p className="text-[8px] font-bold text-slate-400">Posture</p>
                 <p className="text-xs font-black text-emerald-400 mt-0.5">
-                  {isCameraOn && metrics.posture > 0 ? `${metrics.posture.toFixed(0)}%` : '--'}
+                  {cameraMuted ? <span className="text-slate-500">Paused</span> : (isCameraOn && metrics.posture > 0 ? `${metrics.posture.toFixed(0)}%` : '--')}
                 </p>
               </div>
               <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60">
                 <p className="text-[8px] font-bold text-slate-400">Clarity</p>
                 <p className="text-xs font-black text-amber-400 mt-0.5">
-                  {isCameraOn && metrics.engagement > 0 ? `${metrics.engagement.toFixed(0)}%` : '--'}
+                  {cameraMuted ? <span className="text-slate-500">Paused</span> : (isCameraOn && metrics.engagement > 0 ? `${metrics.engagement.toFixed(0)}%` : '--')}
                 </p>
               </div>
             </div>

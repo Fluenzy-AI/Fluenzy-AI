@@ -94,6 +94,7 @@ export type TurnDecision =
   | 'BACKGROUND_SPEECH_IGNORED'      // Background/distant speech — ignore, keep waiting
   | 'BACKGROUND_AUDIO_ONLY'          // Music / env noise only — not advancing turn
   | 'WAIT_FOR_SOURCE_CLASSIFICATION' // Acoustic engine still calibrating
+  | 'MIC_MUTED_WAITING'              // Candidate intentionally muted mic — do not advance
 
 export interface TurnSignals {
   /** True if VAD reports active speech right now */
@@ -132,6 +133,17 @@ export interface TurnSignals {
   isCalibrating?: boolean;
   /** Raw acoustic source class from BackgroundAudioClassifier */
   acousticSource?: string;
+
+  // ── Candidate media control signals ──────────────────────────────────────────
+  /**
+   * True when candidate has intentionally muted their microphone via the UI toggle.
+   * While true:
+   *   - ANSWER_COMPLETE must NEVER fire
+   *   - NO_ANSWER_RECOVERY must NEVER fire
+   *   - Silence must NOT be interpreted as candidate finished speaking
+   *   - No duplicate questions must be generated
+   */
+  micMuted?: boolean;
 }
 
 export type AnswerCompletionState =
@@ -203,6 +215,20 @@ export class TurnTakingEngine {
 
     const backgroundSpeech = signals.backgroundSpeechDetected ?? false;
     const backgroundAudio  = signals.backgroundAudioDetected  ?? false;
+
+    // ── Priority 0.5: Candidate microphone intentionally MUTED ────────────
+    // INVARIANT: MIC_MUTED silence must NEVER trigger ANSWER_COMPLETE or
+    // NO_ANSWER_RECOVERY. The candidate paused their mic voluntarily.
+    // This check fires BEFORE all silence-based decisions but AFTER barge-in
+    // (barge-in cannot fire if mic is muted anyway since no audio reaches ASIE).
+    if (signals.micMuted) {
+      return {
+        decision: 'MIC_MUTED_WAITING',
+        reason:   'Candidate microphone muted — silence must not advance turn',
+        silenceClass,
+        thresholds,
+      };
+    }
 
     // ── Priority 1: Candidate BARGE-IN ────────────────────────────────────
     // ONLY stop AI for HIGH-CONFIDENCE candidate speech.
