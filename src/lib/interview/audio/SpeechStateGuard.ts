@@ -68,10 +68,13 @@ export class SpeechStateGuard {
 
   /**
    * Consecutive speech-positive frames required to enter SPEAKING state.
-   * Buffer=4096 at 16kHz -> ~256ms/frame. 2 frames ~= 512ms.
-   * Prevents single noise clicks/keyboard/echo from becoming "candidate speaking".
+   * Buffer=4096 at 16kHz -> ~256ms/frame.
+   * 1 frame = ~256ms — requires one genuine positive frame to start.
+   * Noise spikes are still filtered because ASIE/isGenuineCandidate
+   * already excludes echo, background speech, music, and AI audio.
+   * Lowered from 2 to 1 to prevent hysteresis from blocking real speech detection.
    */
-  private readonly SPEECH_START_FRAMES = 2;
+  private readonly SPEECH_START_FRAMES = 1;
 
   /**
    * Consecutive speech-negative frames required to exit SPEAKING state.

@@ -1256,13 +1256,32 @@ const VoiceAgent: React.FC<{
               }
 
               if (decision.decision === 'ANSWER_COMPLETE') {
-                // All conditions met â€” allow Gemini to proceed to next question
-                // activityEnd was already sent by VAD; just reset tracking for next turn
+                // All conditions met — allow Gemini to proceed to next question.
+                // CRITICAL FIX: ALWAYS send activityEnd to Gemini here.
+                // In manual VAD mode, Gemini only asks next Q after activityEnd.
+                // SpeechStateGuard hysteresis may have prevented vadSpeechActiveRef
+                // from being set (quiet voice / short answer) so activityEnd was
+                // never sent from the VAD gate — causing the interview to silently stall.
+                if (vadSpeechActiveRef.current) {
+                  vadSpeechActiveRef.current = false;
+                  setIsUserSpeaking(false);
+                  try {
+                    sessionRef.current?.sendRealtimeInput({ activityEnd: {} });
+                    console.log('[TT_ENGINE] ANSWER_COMPLETE: activityEnd sent (VAD missed)');
+                  } catch (_) { /* session closing */ }
+                } else {
+                  // VAD already cleared, send as safety belt
+                  try {
+                    sessionRef.current?.sendRealtimeInput({ activityEnd: {} });
+                    console.log('[TT_ENGINE] ANSWER_COMPLETE: activityEnd safety sent');
+                  } catch (_) { /* session closing */ }
+                }
+                speechGuardRef.current.forceSilent('answer-complete');
                 sttFinalisedRef.current   = false;
                 speechStartAtRef.current  = null;
                 silencePromptCountRef.current = 0;
                 gate.resetSilenceRecovery();
-                console.log('[TT_ENGINE] ANSWER_COMPLETE â€” turn handed off to AI:', decision.reason);
+                console.log('[TT_ENGINE] ANSWER_COMPLETE — AI gets next turn:', decision.reason);
               }
 
               if (decision.decision === 'NO_ANSWER_RECOVERY') {
