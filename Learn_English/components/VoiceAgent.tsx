@@ -139,6 +139,12 @@ const VoiceAgent: React.FC<{
   micMuted?: boolean;
   /** Callback fired once the microphone MediaStream is ready — for CandidateMediaController.attachMicStream() */
   onMicStreamReady?: (stream: MediaStream) => void;
+  /**
+   * DESKTOP ONLY: when true, uses interviewvidDesktop.mp4 / stopDesktop.mp4 as video sources
+   * and renders the video with object-cover (no md:object-contain pillarboxing).
+   * Mobile MUST NOT pass this prop — it defaults to false and preserves exact mobile behaviour.
+   */
+  useDesktopHRVideo?: boolean;
 }> = ({ 
   user, 
   type: propType,
@@ -150,6 +156,7 @@ const VoiceAgent: React.FC<{
   showHRVideo = false,
   micMuted: micMutedProp = false,
   onMicStreamReady,
+  useDesktopHRVideo = false,
 }) => {
   const { type: paramType } = useParams<{ type: string }>();
   const type = propType || (paramType as ModuleType);
@@ -1695,7 +1702,7 @@ From now on, speak and act strictly according to these new settings!]`
           <div className="w-full max-w-2xl mx-auto space-y-1.5">
             {/* AI HR Interviewer â€” dual-video on Company Wise HR, static image elsewhere */}
             {/* Desktop: taller container + object-contain so full face is visible without cropping */}
-            <div className="relative w-full min-h-[140px] max-h-44 sm:max-h-56 md:max-h-80 lg:max-h-[420px] md:aspect-auto aspect-[16/10] rounded-xl overflow-hidden border shadow-xl bg-slate-950 border-slate-700/60">
+            <div className="relative w-full min-h-[140px] max-h-44 sm:max-h-56 md:max-h-80 lg:min-h-[440px] lg:max-h-none md:aspect-auto aspect-[16/10] rounded-xl overflow-hidden border shadow-xl bg-slate-950 border-slate-700/60">
               {showHRVideo ? (
                 <>
                   {/* â”€â”€ Company Wise HR Mobile: dual muted HR videos â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -1710,14 +1717,14 @@ From now on, speak and act strictly according to these new settings!]`
                   {/* Speaking video: plays while AI TTS is active */}
                   <video
                     ref={speakingVideoRef}
-                    src="/video/interviewvid.mp4"
+                    src={useDesktopHRVideo ? '/video/interviewvidDesktop.mp4' : '/video/interviewvid.mp4'}
                     muted
                     loop
                     playsInline
                     preload="auto"
-                    className="absolute inset-0 w-full h-full transition-opacity duration-200 object-cover md:object-contain"
+                    className={`absolute inset-0 w-full h-full transition-opacity duration-200 ${useDesktopHRVideo ? 'object-cover' : 'object-cover md:object-contain'}`}
                     style={{
-                      objectPosition: 'center 15%',
+                      objectPosition: useDesktopHRVideo ? 'center top' : 'center 15%',
                       opacity: isAiSpeaking ? 1 : 0,
                       pointerEvents: 'none',
                     }}
@@ -1729,14 +1736,14 @@ From now on, speak and act strictly according to these new settings!]`
                   {/* Listening video: loops while candidate answers */}
                   <video
                     ref={listeningVideoRef}
-                    src="/video/stop.mp4"
+                    src={useDesktopHRVideo ? '/video/stopDesktop.mp4' : '/video/stop.mp4'}
                     muted
                     loop
                     playsInline
                     preload="auto"
-                    className="absolute inset-0 w-full h-full transition-opacity duration-200 object-cover md:object-contain"
+                    className={`absolute inset-0 w-full h-full transition-opacity duration-200 ${useDesktopHRVideo ? 'object-cover' : 'object-cover md:object-contain'}`}
                     style={{
-                      objectPosition: 'center 15%',
+                      objectPosition: useDesktopHRVideo ? 'center top' : 'center 15%',
                       opacity: isAiSpeaking ? 0 : 1,
                       pointerEvents: 'none',
                     }}

@@ -123,6 +123,7 @@ export const SessionPageClient = () => {
                 showSettings={showSettings}
                 onShowSettingsChange={setShowSettings}
                 showHRVideo={isCompanyWise}
+                useDesktopHRVideo={isCompanyWise}
               />
             </div>
           </div>
