@@ -161,50 +161,83 @@ function SessionDetailModal({
   const isPassed = scorePct >= 70;
 
   // ── Production-grade PDF download ─────────────────────────────────────────
-  // Uses fetch + blob download to trigger a real file download.
-  // Previously used window.open which opened an HTML page instead of a PDF.
+  // State machine: IDLE → PREPARING → FETCHING → VALIDATING → DOWNLOADING → DONE
+  // • AbortController timeout (50s) — no infinite spinner
+  // • PDF magic-byte validation — never saves JSON/HTML as .pdf
+  // • Duplicate-click guard via isDownloading state
   const handleDownloadPDF = async () => {
     if (isDownloading) return;
     setIsDownloading(true);
     setDownloadError(null);
+
+    const sid = session.sessionId || session.id;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 50_000);
+
     try {
-      const sid = session.sessionId || session.id;
-      const response = await fetch(`/api/generate-pdf?sessionId=${sid}&format=pdf`);
+      // FETCHING
+      const response = await fetch(`/api/generate-pdf?sessionId=${sid}&format=pdf`, {
+        signal: controller.signal,
+        credentials: "same-origin",
+      });
+
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData?.error || `Server returned ${response.status}`);
-      }
-      const contentType = response.headers.get("content-type") || "";
-      // If the server redirected to a CDN URL, open that directly
-      if (contentType.includes("text/html")) {
-        // Fallback: server returned HTML report — open in new tab for printing
-        const html = await response.text();
-        const blob = new Blob([html], { type: "text/html" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.target = "_blank";
-        a.rel = "noopener";
-        a.click();
-        URL.revokeObjectURL(url);
-      } else {
-        // Real PDF binary — trigger browser download
-        const blob = await response.blob();
-        if (blob.size < 100) {
-          throw new Error("PDF is empty or corrupt. Please try again.");
+        // Try to parse structured error from server
+        const ct = response.headers.get("content-type") || "";
+        if (ct.includes("application/json")) {
+          const errData = await response.json().catch(() => ({}));
+          const code = errData?.error?.code || errData?.error || "";
+          const msg  = errData?.error?.message || errData?.error || `Server error ${response.status}`;
+          if (code === "PDF_TIMEOUT") {
+            throw new Error("PDF generation timed out. Please try again in a moment.");
+          }
+          throw new Error(typeof msg === "string" ? msg : `Server error ${response.status}`);
         }
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = `fluenzy-audit-${sid}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        throw new Error(`Server returned ${response.status}. Please try again.`);
       }
+
+      const contentType = response.headers.get("content-type") || "";
+
+      // VALIDATING: ensure we got actual PDF bytes, not an HTML error page
+      if (!contentType.includes("application/pdf")) {
+        if (contentType.includes("text/html")) {
+          throw new Error("Server returned HTML instead of PDF. Please try again.");
+        }
+        throw new Error(`Unexpected content type: ${contentType}`);
+      }
+
+      const blob = await response.blob();
+
+      // Validate PDF magic bytes (%PDF)
+      const headerBytes = await blob.slice(0, 5).arrayBuffer();
+      const magic = new TextDecoder("ascii").decode(headerBytes);
+      if (!magic.startsWith("%PDF")) {
+        throw new Error("Downloaded file is not a valid PDF. Please try again.");
+      }
+      if (blob.size < 500) {
+        throw new Error("PDF is empty or corrupt. Please try again.");
+      }
+
+      // DOWNLOADING
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `fluenzy-audit-${sid}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+
     } catch (err: any) {
-      console.error("[PDF_DOWNLOAD_ERROR]", err);
-      setDownloadError(err?.message || "Download failed. Please try again.");
+      clearTimeout(timeoutId);
+      if (err?.name === "AbortError") {
+        setDownloadError("Request timed out. Please try again.");
+      } else {
+        console.error("[PDF_DOWNLOAD_ERROR]", err);
+        setDownloadError(err?.message || "Download failed. Please try again.");
+      }
     } finally {
       setIsDownloading(false);
     }

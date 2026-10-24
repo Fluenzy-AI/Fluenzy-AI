@@ -1721,29 +1721,95 @@ export async function GET(request: NextRequest) {
     });
 
     if (format === "pdf") {
-      const result = await getOrGenerateDocument({
-        documentType: "interview-report",
-        documentId: sessionId,
-        ownerId: user.id,
-        generatePdf: async () => {
-          const html = await renderInterviewReportHtml(sessionId, traceMeta);
-          return htmlToPdf(html);
-        },
-        fileName: buildDocumentFileName("interview-report", sessionId),
-      });
+      // ── PDF Generation with bounded timeout ──────────────────────────────────
+      // NEVER redirect to CDN — browser-side fetch() across domains causes CORS
+      // failures. Always stream the PDF buffer directly to the browser.
+      const PDF_TIMEOUT_MS = 55_000; // Render has 60s limit; 5s headroom
 
-      if (result.cdnUrl) {
-        return NextResponse.redirect(result.cdnUrl);
+      let pdfBuffer: Buffer;
+
+      try {
+        const pdfPromise = (async () => {
+          const result = await getOrGenerateDocument({
+            documentType: "interview-report",
+            documentId: sessionId,
+            ownerId: user.id,
+            generatePdf: async () => {
+              const html = await renderInterviewReportHtml(sessionId, traceMeta);
+              return htmlToPdf(html);
+            },
+            fileName: buildDocumentFileName("interview-report", sessionId),
+          });
+
+          // If R2-cached: fetch the CDN bytes server-side and return directly.
+          // This avoids CORS issues on the client side.
+          if (result.cdnUrl && !result.pdfBuffer) {
+            const cdnRes = await fetch(result.cdnUrl, {
+              signal: AbortSignal.timeout(20_000),
+            });
+            if (!cdnRes.ok) throw new Error(`CDN fetch failed: ${cdnRes.status}`);
+            const arrBuf = await cdnRes.arrayBuffer();
+            return Buffer.from(arrBuf);
+          }
+
+          if (result.pdfBuffer) return result.pdfBuffer;
+          throw new Error("PDF buffer unavailable after generation");
+        })();
+
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("PDF_TIMEOUT")), PDF_TIMEOUT_MS)
+        );
+
+        pdfBuffer = await Promise.race([pdfPromise, timeoutPromise]);
+      } catch (genErr: any) {
+        const isTimeout = genErr?.message === "PDF_TIMEOUT";
+        console.error("[PDF_GEN_ERROR]", genErr?.message);
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: isTimeout ? "PDF_TIMEOUT" : "PDF_GENERATION_FAILED",
+              message: isTimeout
+                ? "PDF generation timed out. Please try again."
+                : "Unable to generate audit PDF.",
+            },
+          },
+          { status: isTimeout ? 504 : 500 }
+        );
       }
 
-      // Fallback
-      return new NextResponse(result.pdfBuffer as unknown as BodyInit, {
+      // ── PDF Signature Validation ─────────────────────────────────────────────
+      const MIN_PDF_BYTES = 500;
+      const pdfMagic = pdfBuffer.slice(0, 5).toString("ascii");
+      if (pdfBuffer.length < MIN_PDF_BYTES || !pdfMagic.startsWith("%PDF")) {
+        console.error(
+          "[PDF_VALIDATION_FAILED] size=%d magic=%s",
+          pdfBuffer.length,
+          pdfMagic
+        );
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "PDF_CONTENT_INVALID",
+              message: "Generated PDF failed validation. Please try again.",
+            },
+          },
+          { status: 500 }
+        );
+      }
+
+      const fileName = buildDocumentFileName("interview-report", sessionId);
+      return new NextResponse(pdfBuffer as unknown as BodyInit, {
         headers: {
           "Content-Type": "application/pdf",
-          "Content-Disposition": `attachment; filename="${buildDocumentFileName("interview-report", sessionId)}"`,
+          "Content-Disposition": `attachment; filename="${fileName}"`,
+          "Content-Length": String(pdfBuffer.length),
+          "Cache-Control": "private, no-store",
         },
       });
     }
+
 
     // Default: return HTML for printing (window.print() fallback)
     const html = await renderInterviewReportHtml(sessionId, traceMeta);
