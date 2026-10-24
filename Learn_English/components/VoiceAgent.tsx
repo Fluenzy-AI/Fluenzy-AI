@@ -1678,15 +1678,26 @@ From now on, speak and act strictly according to these new settings!]`
                   ? 'aspect-[3/4] max-h-72'
                   : 'aspect-[16/9] max-h-56'
             }`}>
+              {/* Mobile: original avtar.jpg */}
               <img
-                src={
-                  (type === ModuleType.COMPANY_WISE_HR || type === ModuleType.COMPANY_SPECIFIC)
-                    ? '/image/avtardesktop.png'
-                    : '/image/avtar.jpg'
-                }
+                src="/image/avtar.jpg"
                 alt="AI Coach"
-                className="w-full h-full object-cover object-top"
+                className="block md:hidden w-full h-full object-cover object-center"
               />
+              {/* Desktop (md+): avtardesktop.png — only for COMPANY_WISE_HR / COMPANY_SPECIFIC */}
+              {(type === ModuleType.COMPANY_WISE_HR || type === ModuleType.COMPANY_SPECIFIC) ? (
+                <img
+                  src="/image/avtardesktop.png"
+                  alt="AI Coach"
+                  className="hidden md:block w-full h-full object-cover object-top"
+                />
+              ) : (
+                <img
+                  src="/image/avtar.jpg"
+                  alt="AI Coach"
+                  className="hidden md:block w-full h-full object-cover object-center"
+                />
+              )}
               <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[10px] font-black text-white force-white border border-white/10">
                 {isEnglishLearning ? 'AI Coach' : isConversationPractice ? 'AI Friend' : (sessionMeta?.isCompanyWise ? 'Company Coach' : 'HR Coach')}
               </div>
