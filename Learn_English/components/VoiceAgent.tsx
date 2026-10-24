@@ -85,7 +85,7 @@ const HumanAvatar = ({
 
   const avatarImage = useMemo(() => {
     if (type === ModuleType.HR_INTERVIEW || type === ModuleType.COMPANY_WISE_HR) {
-      return "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=800"; 
+      return "/image/avtardesktop.png";
     }
     if (type === ModuleType.TECH_INTERVIEW) {
       return "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=800"; 
@@ -1667,7 +1667,11 @@ From now on, speak and act strictly according to these new settings!]`
               : 'bg-gradient-to-br from-slate-900/90 to-slate-800/90 backdrop-blur-xl border-slate-700/50 shadow-2xl'
           }`}>
             {/* Large Full-Width AI HR Coach Image */}
-            <div className={`w-full relative rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 mb-2 bg-slate-950 ${
+            <div className={`w-full relative rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 mb-2 ${
+              (type === ModuleType.COMPANY_WISE_HR || type === ModuleType.COMPANY_SPECIFIC)
+                ? 'bg-transparent'
+                : 'bg-slate-950'
+            } ${
               hideEndButton && type !== ModuleType.COMPANY_WISE_HR && type !== ModuleType.COMPANY_SPECIFIC
                 ? 'h-64 sm:h-80'
                 : (type === ModuleType.COMPANY_WISE_HR || type === ModuleType.COMPANY_SPECIFIC)
@@ -1675,10 +1679,13 @@ From now on, speak and act strictly according to these new settings!]`
                   : 'aspect-[16/9] max-h-56'
             }`}>
               <img
-                src="/image/avtar.jpg"
+                src={
+                  (type === ModuleType.COMPANY_WISE_HR || type === ModuleType.COMPANY_SPECIFIC)
+                    ? '/image/avtardesktop.png'
+                    : '/image/avtar.jpg'
+                }
                 alt="AI Coach"
-                className="w-full h-full object-cover"
-                style={{ objectPosition: 'center center' }}
+                className="w-full h-full object-cover object-top"
               />
               <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-[10px] font-black text-white force-white border border-white/10">
                 {isEnglishLearning ? 'AI Coach' : isConversationPractice ? 'AI Friend' : (sessionMeta?.isCompanyWise ? 'Company Coach' : 'HR Coach')}
