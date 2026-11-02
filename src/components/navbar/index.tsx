@@ -1,5 +1,6 @@
 "use client";
 import { signOut, useSession } from "next-auth/react";
+import { useTheme } from "@/contexts/ThemeContext";
 import React, { useEffect, useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, Sparkles, X, User, CreditCard, LogOut, Bell, Search, ChevronRight, Building2, Briefcase, GraduationCap } from "lucide-react";
@@ -66,6 +67,8 @@ const PAGE_TITLES: Record<string, { label: string; color: string }> = {
 };
 
 const Navbar = ({ showSidebar, userData }: NavbarProps) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [imageError, setImageError] = useState(false);
@@ -173,10 +176,10 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                     <Menu className="h-5 w-5 text-slate-300" />
                   </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] bg-slate-950 border-r border-white/5 p-0 overflow-y-auto">
-                  <SheetHeader className="p-3 border-b border-white/5 bg-slate-900/50">
+                <SheetContent side="left" className={`w-[300px] bg-slate-950 border-r ${isLight ? "border-slate-100" : "border-white/5"} p-0 overflow-y-auto`}>
+                  <SheetHeader className={`p-3 border-b ${isLight ? "border-slate-100" : "border-white/5"} ${isLight ? "bg-white" : "bg-slate-900"}/50`}>
                     <SheetTitle className="flex items-center space-x-3">
-                      <div className="h-9 w-9 shrink-0 rounded-lg bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center overflow-hidden">
+                      <div className={`h-9 w-9 shrink-0 rounded-lg ${isLight ? "bg-white" : "bg-slate-900"}/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center overflow-hidden`}>
                         <img src="/white-removebg-preview1.png" alt="Logo" className="h-6 w-auto max-w-full max-h-full object-contain" />
                       </div>
                       <span className="text-xl font-black bg-gradient-to-r from-purple-400 via-indigo-300 to-purple-400 !bg-clip-text text-transparent">Fluenzy AI</span>
@@ -194,7 +197,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
               whileTap={{ scale: 0.98 }}
               onClick={() => window.location.href = "/"}
             >
-              <div className="h-9 w-9 shrink-0 rounded-xl bg-slate-900/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center overflow-hidden">
+              <div className={`h-9 w-9 shrink-0 rounded-xl ${isLight ? "bg-white" : "bg-slate-900"}/90 border border-purple-500/20 shadow-md shadow-purple-900/20 flex items-center justify-center overflow-hidden`}>
                 <img
                   src="/white-removebg-preview1.png"
                   alt="Fluenzy AI Logo"
@@ -223,7 +226,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                 {/* Profile Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-full pr-3 sm:pr-4 p-1 transition-all duration-200 h-auto">
+                    <Button variant="ghost" className={`flex items-center gap-2 bg-white/5 hover:bg-white/10 border ${isLight ? "border-slate-200" : "border-white/10"} hover:border-white/20 rounded-full pr-3 sm:pr-4 p-1 transition-all duration-200 h-auto`}>
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-[10px] font-black text-white overflow-hidden uppercase ring-2 ring-white/10">
                         {showAvatarImage ? (
                           <img
@@ -240,7 +243,7 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                       <span className="hidden sm:inline-block text-xs font-bold text-slate-200 max-w-[80px] truncate">{displayName.split(' ')[0]}</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-60 bg-slate-900/95 backdrop-blur-xl border-white/10 mt-2 rounded-xl p-1">
+                  <DropdownMenuContent align="end" className={`w-60 ${isLight ? "bg-white" : "bg-slate-900"}/95 backdrop-blur-xl ${isLight ? "border-slate-200" : "border-white/10"} mt-2 rounded-xl p-1`}>
                     {/* User info header */}
                     <div className="px-3 py-2.5 mb-1">
                       <p className="text-sm font-semibold text-white truncate">{displayName}</p>
@@ -335,33 +338,33 @@ const Navbar = ({ showSidebar, userData }: NavbarProps) => {
                 <div className="flex items-center gap-1.5 sm:gap-2">
                   <Link
                     href="/company-portal"
-                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                    className={`hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border ${isLight ? "border-slate-200" : "border-white/10"} hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all`}
                   >
                     <Building2 className="w-3.5 h-3.5 text-cyan-400" />
                     <span>For Companies</span>
                   </Link>
                   <Link
                     href="/college-portal"
-                    className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                    className={`hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border ${isLight ? "border-slate-200" : "border-white/10"} hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all`}
                   >
                     <GraduationCap className="w-3.5 h-3.5 text-cyan-400" />
                     <span>For Colleges</span>
                   </Link>
                   <Link
                     href="/pricing"
-                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                    className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border ${isLight ? "border-slate-200" : "border-white/10"} hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all`}
                   >
                     <span>Pricing</span>
                   </Link>
                   <Link
                     href="/hirelens"
-                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                    className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border ${isLight ? "border-slate-200" : "border-white/10"} hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all`}
                   >
                     <span>HireLens</span>
                   </Link>
                   <Link
                     href="/blog"
-                    className="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border border-white/10 hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all"
+                    className={`hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold text-slate-300 hover:text-white border ${isLight ? "border-slate-200" : "border-white/10"} hover:border-cyan-500/40 hover:bg-cyan-500/10 transition-all`}
                   >
                     <span>Blog</span>
                   </Link>

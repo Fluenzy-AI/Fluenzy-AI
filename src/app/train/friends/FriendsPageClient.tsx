@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, 
@@ -44,6 +45,8 @@ export default function FriendsPageClient({
   incomingRequests: initialIncoming,
   outgoingRequests: initialOutgoing
 }: FriendsPageClientProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const router = useRouter();
   const [tab, setTab] = useState<Tab>('friends');
   const [friends, setFriends] = useState(initialFriends);
@@ -310,7 +313,7 @@ export default function FriendsPageClient({
         </div>
 
         {/* Content */}
-        <div className="bg-slate-900/50 rounded-2xl border border-white/5 overflow-hidden">
+        <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-2xl border ${isLight ? "border-slate-100" : "border-white/5"} overflow-hidden`}>
           {/* Friends Tab */}
           <AnimatePresence mode="wait">
             {tab === 'friends' && (
@@ -321,7 +324,7 @@ export default function FriendsPageClient({
                 exit={{ opacity: 0 }}
               >
                 {/* Search */}
-                <div className="p-4 border-b border-white/5">
+                <div className={`p-4 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
                     <input
@@ -329,7 +332,7 @@ export default function FriendsPageClient({
                       placeholder="Search friends..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2 bg-slate-800/50 border border-white/5 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                      className={`w-full pl-9 pr-4 py-2 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 border ${isLight ? "border-slate-100" : "border-white/5"} rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
                     />
                   </div>
                 </div>
@@ -403,7 +406,7 @@ export default function FriendsPageClient({
                 exit={{ opacity: 0 }}
               >
                 {/* Incoming Requests */}
-                <div className="p-4 border-b border-white/5">
+                <div className={`p-4 border-b ${isLight ? "border-slate-100" : "border-white/5"}`}>
                   <h3 className="text-sm font-medium text-slate-400 mb-3">
                     Incoming Requests ({incomingRequests.length})
                   </h3>
@@ -412,7 +415,7 @@ export default function FriendsPageClient({
                   ) : (
                     <div className="space-y-3">
                       {incomingRequests.map((request) => (
-                        <div key={request.id} className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg">
+                        <div key={request.id} className={`flex items-center gap-3 p-3 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg`}>
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
                             {request.user.avatar ? (
                               <img src={request.user.avatar} alt="" className="w-full h-full object-cover" />
@@ -462,7 +465,7 @@ export default function FriendsPageClient({
                   ) : (
                     <div className="space-y-3">
                       {outgoingRequests.map((request) => (
-                        <div key={request.id} className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg">
+                        <div key={request.id} className={`flex items-center gap-3 p-3 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg`}>
                           <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
                             {request.user.avatar ? (
                               <img src={request.user.avatar} alt="" className="w-full h-full object-cover" />
@@ -514,7 +517,7 @@ export default function FriendsPageClient({
                       setSearchQuery(e.target.value);
                       handleSearch(e.target.value);
                     }}
-                    className="w-full pl-9 pr-4 py-3 bg-slate-800/50 border border-white/5 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50"
+                    className={`w-full pl-9 pr-4 py-3 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 border ${isLight ? "border-slate-100" : "border-white/5"} rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50`}
                   />
                 </div>
 
@@ -532,7 +535,7 @@ export default function FriendsPageClient({
                 ) : (
                   <div className="space-y-2">
                     {searchResults.map((user) => (
-                      <div key={user.id} className="flex items-center gap-3 p-3 bg-slate-800/50 rounded-lg">
+                      <div key={user.id} className={`flex items-center gap-3 p-3 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg`}>
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center overflow-hidden">
                           {user.avatar ? (
                             <img src={user.avatar} alt="" className="w-full h-full object-cover" />

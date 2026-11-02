@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef } from 'react';
+import { useTheme } from "@/contexts/ThemeContext";
 import {
   Star,
   TrendingUp,
@@ -106,6 +107,8 @@ function ScoreBar({ label, score, meta }: { label: string; score: number; meta: 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 export default function InterviewReport({ report, onClose }: InterviewReportProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const printRef = useRef<HTMLDivElement>(null);
 
   const { scores, strengths, improvements, aiSuggestions, summary, duration, role, interviewType } = report;
@@ -122,7 +125,7 @@ export default function InterviewReport({ report, onClose }: InterviewReportProp
   const typeLabel = interviewType === 'PI' ? 'Personal Interview' : 'Technical Interview';
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white">
+    <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} text-white`}>
       {/* Print-friendly container */}
       <div ref={printRef} className="max-w-3xl mx-auto px-4 py-10">
         {/* Back */}
@@ -162,7 +165,7 @@ export default function InterviewReport({ report, onClose }: InterviewReportProp
 
         {/* Summary */}
         {summary && (
-          <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-5 mb-5">
+          <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/60 border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-2xl p-5 mb-5`}>
             <h2 className="text-sm font-bold text-slate-300 mb-2 uppercase tracking-wide">Session Summary</h2>
             <p className="text-slate-300 text-sm leading-relaxed">{summary}</p>
           </div>
@@ -170,7 +173,7 @@ export default function InterviewReport({ report, onClose }: InterviewReportProp
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
           {/* Score breakdown */}
-          <div className="bg-slate-800/60 border border-slate-700 rounded-2xl p-5">
+          <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/60 border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-2xl p-5`}>
             <h2 className="text-sm font-bold text-slate-300 mb-4 uppercase tracking-wide">Score Breakdown</h2>
             <div className="space-y-3">
               {mainScores.map(([key, val]) => (
@@ -181,7 +184,7 @@ export default function InterviewReport({ report, onClose }: InterviewReportProp
 
           {/* Strengths & Improvements */}
           <div className="flex flex-col gap-4">
-            <div className="bg-slate-800/60 border border-green-500/20 rounded-2xl p-4 flex-1">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/60 border border-green-500/20 rounded-2xl p-4 flex-1`}>
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp size={14} className="text-green-400" />
                 <h2 className="text-sm font-bold text-green-400 uppercase tracking-wide">Strengths</h2>
@@ -197,7 +200,7 @@ export default function InterviewReport({ report, onClose }: InterviewReportProp
               </ul>
             </div>
 
-            <div className="bg-slate-800/60 border border-orange-500/20 rounded-2xl p-4 flex-1">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/60 border border-orange-500/20 rounded-2xl p-4 flex-1`}>
               <div className="flex items-center gap-2 mb-3">
                 <AlertCircle size={14} className="text-orange-400" />
                 <h2 className="text-sm font-bold text-orange-400 uppercase tracking-wide">Areas to Improve</h2>
@@ -230,7 +233,7 @@ export default function InterviewReport({ report, onClose }: InterviewReportProp
         <div className="flex gap-3 print:hidden">
           <button
             onClick={handlePrint}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:border-slate-600 text-slate-300 text-sm font-medium transition-colors"
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-xl ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"} hover:border-slate-600 text-slate-300 text-sm font-medium transition-colors`}
           >
             <Download size={14} /> Save / Print
           </button>

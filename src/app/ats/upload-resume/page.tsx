@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -47,6 +48,8 @@ interface AnalysisResult {
 }
 
 export default function UploadResumePage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -179,7 +182,7 @@ export default function UploadResumePage() {
 
         {/* Input mode tab switcher */}
         {!result && (
-          <div className="flex gap-1 bg-slate-900/80 border border-white/5 rounded-xl p-1 mb-4">
+          <div className={`flex gap-1 ${isLight ? "bg-white" : "bg-slate-900"}/80 border ${isLight ? "border-slate-100" : "border-white/5"} rounded-xl p-1 mb-4`}>
             <button
               className={`flex-1 flex items-center justify-center gap-2 text-sm font-semibold py-2.5 rounded-lg transition-all ${
                 inputMode === "file"
@@ -207,7 +210,7 @@ export default function UploadResumePage() {
 
         {/* Upload Zone */}
         {!result && (
-          <Card className="bg-slate-900/80 border-white/5 mb-6">
+          <Card className={`${isLight ? "bg-white" : "bg-slate-900"}/80 ${isLight ? "border-slate-100" : "border-white/5"} mb-6`}>
             <CardContent className="pt-6">
 
               {inputMode === "text" ? (
@@ -220,7 +223,7 @@ export default function UploadResumePage() {
                     </span>
                   </label>
                   <textarea
-                    className="w-full bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 resize-y focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                    className={`w-full ${isLight ? "bg-slate-100" : "bg-slate-800"}/60 border ${isLight ? "border-slate-200" : "border-white/10"} rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 resize-y focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all`}
                     rows={16}
                     placeholder={`Paste your full resume text here…\n\nACHHUTA NAND JHA\ntheanjha@gmail.com | +91-8439131459\n\nTECHNICAL SKILLS\nLanguages: Java, Python, JavaScript, TypeScript\nWeb: React.js, Next.js, Node.js, Express.js, MongoDB\nTools: Git, GitHub, Docker, AWS\n\nEXPERIENCE\nFull Stack Developer Intern | EY  (Dec 2024 – Jan 2025)\n…`}
                     value={resumeText}
@@ -299,7 +302,7 @@ export default function UploadResumePage() {
                   Job Description <span className="text-slate-600 font-normal normal-case">(optional – for JD-based scoring)</span>
                 </label>
                 <textarea
-                  className="w-full bg-slate-800/60 border border-white/10 rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                  className={`w-full ${isLight ? "bg-slate-100" : "bg-slate-800"}/60 border ${isLight ? "border-slate-200" : "border-white/10"} rounded-xl px-4 py-3 text-sm text-slate-200 placeholder:text-slate-600 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all`}
                   rows={4}
                   placeholder="Paste the job description here to get a tailored ATS match score…"
                   value={jobDescription}
@@ -337,7 +340,7 @@ export default function UploadResumePage() {
               </div>
 
               {/* Info note */}
-              <div className="mt-4 flex items-start gap-2 text-xs text-slate-500 bg-slate-800/50 rounded-lg px-3 py-2">
+              <div className={`mt-4 flex items-start gap-2 text-xs text-slate-500 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg px-3 py-2`}>
                 <Info className="h-3.5 w-3.5 flex-shrink-0 mt-0.5" />
                 Your resume text is processed server-side and never shared. Only extracted
                 text and scores are stored.
@@ -374,7 +377,7 @@ export default function UploadResumePage() {
             )}
 
             {/* Big score */}
-            <Card className="bg-slate-900/80 border-white/5">
+            <Card className={`${isLight ? "bg-white" : "bg-slate-900"}/80 ${isLight ? "border-slate-100" : "border-white/5"}`}>
               <CardHeader>
                 <CardTitle className="text-sm font-bold text-slate-400 uppercase tracking-widest">
                   Your ATS Score
@@ -392,7 +395,7 @@ export default function UploadResumePage() {
                     </span>
                     <span className="text-slate-400 text-sm">out of 100</span>
                     {result.jobTitleMatch && (
-                      <span className="mt-2 text-xs bg-white/5 border border-white/10 px-2 py-1 rounded-full text-slate-400">
+                      <span className={`mt-2 text-xs bg-white/5 border ${isLight ? "border-slate-200" : "border-white/10"} px-2 py-1 rounded-full text-slate-400`}>
                         Detected: {result.jobTitleMatch}
                       </span>
                     )}
@@ -412,7 +415,7 @@ export default function UploadResumePage() {
 
             {/* JD Skill Match */}
             {result.jdSkillMatch > 0 && (
-              <Card className="bg-slate-900/80 border-white/5">
+              <Card className={`${isLight ? "bg-white" : "bg-slate-900"}/80 ${isLight ? "border-slate-100" : "border-white/5"}`}>
                 <CardHeader>
                   <CardTitle className="text-sm font-bold text-slate-400 uppercase tracking-widest">
                     📄 JD Skill Match — {Math.round(result.jdSkillMatch)}%
@@ -445,7 +448,7 @@ export default function UploadResumePage() {
             )}
 
             {/* Skills detected */}
-            <Card className="bg-slate-900/80 border-white/5">
+            <Card className={`${isLight ? "bg-white" : "bg-slate-900"}/80 ${isLight ? "border-slate-100" : "border-white/5"}`}>
               <CardHeader>
                 <CardTitle className="text-sm font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400" />
@@ -470,7 +473,7 @@ export default function UploadResumePage() {
             </Card>
 
             {/* Suggestions */}
-            <Card className="bg-slate-900/80 border-white/5">
+            <Card className={`${isLight ? "bg-white" : "bg-slate-900"}/80 ${isLight ? "border-slate-100" : "border-white/5"}`}>
               <CardHeader>
                 <CardTitle className="text-sm font-bold text-slate-400 uppercase tracking-widest">
                   Improvement Suggestions
@@ -508,7 +511,7 @@ export default function UploadResumePage() {
               <Link href="/ats">
                 <Button
                   variant="outline"
-                  className="border-white/10 text-slate-300 hover:text-white gap-2"
+                  className={`${isLight ? "border-slate-200" : "border-white/10"} text-slate-300 hover:text-white gap-2`}
                 >
                   View Full Dashboard
                 </Button>
@@ -516,7 +519,7 @@ export default function UploadResumePage() {
               <Link href="/ats/ranking">
                 <Button
                   variant="outline"
-                  className="border-white/10 text-slate-300 hover:text-white gap-2"
+                  className={`${isLight ? "border-slate-200" : "border-white/10"} text-slate-300 hover:text-white gap-2`}
                 >
                   View Leaderboard
                 </Button>

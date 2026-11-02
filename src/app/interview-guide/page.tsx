@@ -123,6 +123,8 @@ const SectionAccordion = ({
   onToggle?: () => void;
   sectionId?: string;
 }) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
   const isControlled = isOpen !== undefined;
   const currentIsOpen = isControlled ? isOpen : internalIsOpen;
@@ -166,7 +168,7 @@ const SectionAccordion = ({
       <div 
         className={`px-4 md:px-5 lg:px-6 overflow-hidden transition-all duration-300 ease-in-out ${currentIsOpen ? "max-h-[5000px] opacity-100 pb-5 md:pb-6 pt-1" : "max-h-0 opacity-0"}`}
       >
-        <div className="border-t border-white/10 pt-4 md:pt-5">
+        <div className={`border-t ${isLight ? "border-slate-200" : "border-white/10"} pt-4 md:pt-5`}>
           {children}
         </div>
       </div>
@@ -219,8 +221,11 @@ const QuestionCard = ({
   answer: string;
   tips?: string;
   index: number;
-}) => (
-  <div className="group rounded-2xl bg-slate-950/40 p-5 border border-white/10 transition-colors duration-200 hover:border-blue-500/30">
+}) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
+  return (
+  <div className={`group rounded-2xl ${isLight ? "bg-slate-50" : "bg-slate-950/40"} p-5 border ${isLight ? "border-slate-200" : "border-white/10"} transition-colors duration-200 hover:border-blue-500/30`}>
     
     <div className="flex items-start justify-between gap-4 mb-4">
       <div className="flex items-start gap-4">
@@ -252,7 +257,8 @@ const QuestionCard = ({
       )}
     </div>
   </div>
-);
+  );
+};
 
 const IntroductionCard = ({
   duration,
@@ -263,15 +269,17 @@ const IntroductionCard = ({
   content: string;
   icon: React.ReactNode;
 }) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   // Split content into lines/paragraphs for better readability
   const contentLines = content.split('\n').filter(line => line.trim());
   
   return (
-    <div className="rounded-2xl p-5 md:p-6 border border-white/10 bg-slate-950/40 h-full flex flex-col">
+    <div className={`rounded-2xl p-5 md:p-6 border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-slate-50" : "bg-slate-950/40"} h-full flex flex-col`}>
       
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <div className="flex items-center gap-3 md:gap-4">
-          <div className="w-9 h-9 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center flex-shrink-0">
+          <div className={`w-9 h-9 rounded-lg bg-white/5 border ${isLight ? "border-slate-200" : "border-white/10"} flex items-center justify-center flex-shrink-0`}>
             {icon}
           </div>
           <div className="flex flex-col">
@@ -299,6 +307,7 @@ const IntroductionCard = ({
 const InterviewGuidePageContent = () => {
   const { data: session, status } = useSession();
   const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const router = useRouter();
   const searchParams = useSearchParams();
   const guideId = searchParams.get("id");
@@ -1110,8 +1119,8 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
             </div>
           )}
 
-          <Card className="overflow-hidden rounded-2xl border-white/10 bg-slate-900/75 shadow-xl backdrop-blur-2xl">
-            <CardHeader className="space-y-3 border-b border-white/10 p-5 md:p-6">
+          <Card className={`overflow-hidden rounded-2xl ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/75 shadow-xl backdrop-blur-2xl`}>
+            <CardHeader className={`space-y-3 border-b ${isLight ? "border-slate-200" : "border-white/10"} p-5 md:p-6`}>
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base font-semibold text-[color:var(--ig-heading)] md:text-lg">
                   Step {currentStep} of 3
@@ -1120,7 +1129,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                   {stepProgress}% complete
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-slate-800/80">
+              <div className={`h-2 w-full overflow-hidden rounded-full ${isLight ? "bg-slate-100" : "bg-slate-800"}/80`}>
                 <div
                   className={`h-full rounded-full bg-gradient-to-r from-blue-500 to-cyan-400 transition-all duration-300 ${
                     currentStep === 1 ? "w-1/3" : currentStep === 2 ? "w-2/3" : "w-full"
@@ -1136,7 +1145,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
 
             <CardContent className="space-y-6 p-5 md:p-6">
               {currentStep === 1 && (
-                <section className="space-y-5 rounded-xl border border-white/10 bg-slate-950/40 p-4 md:p-5">
+                <section className={`space-y-5 rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-slate-50" : "bg-slate-950/40"} p-4 md:p-5`}>
                   <div className="space-y-1">
                     <h2 className="text-lg font-semibold text-[color:var(--ig-heading)]">Role & Company</h2>
                     <p className="text-sm text-slate-400">Set your target role and hiring context.</p>
@@ -1167,7 +1176,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                         placeholder="Stripe, Google, Netflix"
                         value={targetCompany}
                         onChange={(e) => setTargetCompany(e.target.value)}
-                        className="h-12 rounded-xl border border-white/10 bg-slate-900/80 text-[color:var(--ig-heading)] placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-blue-500/40"
+                        className={`h-12 rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/80 text-[color:var(--ig-heading)] placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-blue-500/40`}
                       />
                     </div>
                   </div>
@@ -1175,7 +1184,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
               )}
 
               {currentStep === 2 && (
-                <section className="space-y-5 rounded-xl border border-white/10 bg-slate-950/40 p-4 md:p-5">
+                <section className={`space-y-5 rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-slate-50" : "bg-slate-950/40"} p-4 md:p-5`}>
                   <div className="space-y-1">
                     <h2 className="text-lg font-semibold text-[color:var(--ig-heading)]">Communication & Experience Context</h2>
                     <p className="text-sm text-slate-400">Tune strategy depth for your interview narrative.</p>
@@ -1184,10 +1193,10 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                     <div className="space-y-2">
                       <label className="text-xs font-medium text-slate-300">Communication Level</label>
                       <Select value={communicationLevel} onValueChange={setCommunicationLevel}>
-                        <SelectTrigger className="h-12 rounded-xl border border-white/10 bg-slate-900/80 text-[color:var(--ig-heading)] focus:ring-2 focus:ring-cyan-500/40">
+                        <SelectTrigger className={`h-12 rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/80 text-[color:var(--ig-heading)] focus:ring-2 focus:ring-cyan-500/40`}>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-xl border-white/10 bg-slate-900 text-[color:var(--ig-heading)]">
+                        <SelectContent className={`rounded-xl ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"} text-[color:var(--ig-heading)]`}>
                           <SelectItem value="Beginner">Beginner</SelectItem>
                           <SelectItem value="Intermediate">Intermediate</SelectItem>
                           <SelectItem value="Advanced">Advanced</SelectItem>
@@ -1200,7 +1209,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                         placeholder="Mention years of experience, domain projects, strengths, and goals..."
                         value={experienceContext}
                         onChange={(e) => setExperienceContext(e.target.value)}
-                        className="min-h-[110px] rounded-xl border border-white/10 bg-slate-900/80 text-[color:var(--ig-heading)] placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-cyan-500/40"
+                        className={`min-h-[110px] rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/80 text-[color:var(--ig-heading)] placeholder:text-slate-500 focus-visible:ring-2 focus-visible:ring-cyan-500/40`}
                       />
                     </div>
                   </div>
@@ -1208,7 +1217,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
               )}
 
               {currentStep === 3 && (
-                <section className="space-y-5 rounded-xl border border-white/10 bg-slate-950/40 p-4 md:p-5">
+                <section className={`space-y-5 rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-slate-50" : "bg-slate-950/40"} p-4 md:p-5`}>
                   <div className="space-y-1">
                     <h2 className="text-lg font-semibold text-[color:var(--ig-heading)]">Job Description + AI Analysis</h2>
                     <p className="text-sm text-slate-400">
@@ -1237,7 +1246,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                     </div>
                     <p className="text-sm font-medium text-[color:var(--ig-text)]">Drag and drop JD file or upload text file</p>
                     <p className="mt-1 text-xs text-slate-500">Supported: .txt, .md, .json</p>
-                    <label className="mt-3 inline-flex cursor-pointer items-center rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-[color:var(--ig-text)] hover:bg-white/10">
+                    <label className={`mt-3 inline-flex cursor-pointer items-center rounded-lg border ${isLight ? "border-slate-200" : "border-white/10"} bg-white/5 px-3 py-2 text-xs font-medium text-[color:var(--ig-text)] hover:bg-white/10`}>
                       Choose File
                       <input
                         type="file"
@@ -1277,7 +1286,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                     )}
                   </div>
 
-                  <div className="overflow-hidden rounded-xl border border-white/10 bg-slate-900/70">
+                  <div className={`overflow-hidden rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/70`}>
                     <button
                       onClick={() => setJdAnalysisOpen((prev) => !prev)}
                       className="flex w-full items-center justify-between p-4 text-left"
@@ -1293,7 +1302,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                       )}
                     </button>
                     {jdAnalysisOpen && (
-                      <div className="space-y-3 border-t border-white/10 p-4">
+                      <div className={`space-y-3 border-t ${isLight ? "border-slate-200" : "border-white/10"} p-4`}>
                         <Button
                           onClick={runJdAnalysis}
                           disabled={jdAnalyzing || !jobDescription.trim()}
@@ -1312,7 +1321,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                           )}
                         </Button>
                         {jdSummary && (
-                          <div className="rounded-lg border border-white/10 bg-slate-950/60 p-3">
+                          <div className={`rounded-lg border ${isLight ? "border-slate-200" : "border-white/10"} bg-slate-950/60 p-3`}>
                             <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">Preview Summary</p>
                             <p className="mt-2 text-sm text-slate-300">{jdSummary}</p>
                           </div>
@@ -1361,12 +1370,12 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
                 </div>
               )}
 
-              <div className="hidden items-center justify-between border-t border-white/10 pt-2 md:flex">
+              <div className={`hidden items-center justify-between border-t ${isLight ? "border-slate-200" : "border-white/10"} pt-2 md:flex`}>
                 <Button
                   variant="ghost"
                   onClick={goPreviousStep}
                   disabled={currentStep === 1}
-                  className="h-10 rounded-lg border border-white/10 bg-white/5 px-4 text-[color:var(--ig-text)] hover:bg-white/10 disabled:opacity-40"
+                  className={`h-10 rounded-lg border ${isLight ? "border-slate-200" : "border-white/10"} bg-white/5 px-4 text-[color:var(--ig-text)] hover:bg-white/10 disabled:opacity-40`}
                 >
                   <ChevronLeft className="mr-1 h-4 w-4" />
                   Back
@@ -1405,7 +1414,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
             </CardContent>
           </Card>
 
-          <section className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
+          <section className={`rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/60 p-4`}>
             <p className="text-sm font-medium text-[color:var(--ig-heading)]">Keep Your Profile Updated</p>
             <p className="mt-2 text-sm text-slate-400 leading-6">
               For the best output, keep your profile updated with projects, education, experience, skills, and other relevant details.
@@ -1421,7 +1430,7 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
             </p>
             <div className="mt-3">
               <Link href="/profile">
-                <Button variant="ghost" className="h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-xs text-[color:var(--ig-text)] hover:bg-white/10">
+                <Button variant="ghost" className={`h-9 rounded-lg border ${isLight ? "border-slate-200" : "border-white/10"} bg-white/5 px-3 text-xs text-[color:var(--ig-text)] hover:bg-white/10`}>
                   Go to Profile
                 </Button>
               </Link>
@@ -1429,32 +1438,32 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
           </section>
 
           <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
+            <div className={`rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/60 p-4`}>
               <p className="text-sm font-medium text-[color:var(--ig-heading)]">Personalized</p>
               <p className="mt-1 text-xs text-slate-400">Role-specific strategy mapped to your context.</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
+            <div className={`rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/60 p-4`}>
               <p className="text-sm font-medium text-[color:var(--ig-heading)]">JD Analysis</p>
               <p className="mt-1 text-xs text-slate-400">Extracts recruiter expectations and skill signals.</p>
             </div>
-            <div className="rounded-xl border border-white/10 bg-slate-900/60 p-4">
+            <div className={`rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/60 p-4`}>
               <p className="text-sm font-medium text-[color:var(--ig-heading)]">PDF Ready</p>
               <p className="mt-1 text-xs text-slate-400">Export your generated strategy in one click.</p>
             </div>
           </div>
 
-          <footer className="border-t border-white/10 py-4 text-center text-xs text-slate-500">
+          <footer className={`border-t ${isLight ? "border-slate-200" : "border-white/10"} py-4 text-center text-xs text-slate-500`}>
             Fluenzy AI Interview Intelligence Suite
           </footer>
         </div>
 
-        <div className="fixed inset-x-0 bottom-16 z-30 border-t border-white/10 bg-slate-950/95 p-3 backdrop-blur md:hidden">
+        <div className={`fixed inset-x-0 bottom-16 z-30 border-t ${isLight ? "border-slate-200" : "border-white/10"} bg-slate-950/95 p-3 backdrop-blur md:hidden`}>
           <div className="mx-auto flex max-w-6xl items-center gap-2">
             <Button
               variant="ghost"
               onClick={goPreviousStep}
               disabled={currentStep === 1}
-              className="h-11 rounded-lg border border-white/10 bg-white/5 px-4 text-[color:var(--ig-text)] disabled:opacity-40"
+              className={`h-11 rounded-lg border ${isLight ? "border-slate-200" : "border-white/10"} bg-white/5 px-4 text-[color:var(--ig-text)] disabled:opacity-40`}
             >
               Back
             </Button>
@@ -1530,6 +1539,8 @@ const DEFAULT_DEMO_GUIDE: InterviewGuide = {
   );
 };
 const InterviewGuidePage = () => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   return (
     <Suspense fallback={
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center gap-6">

@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
@@ -123,6 +124,8 @@ export default function StudentCompetitionDetailPage({
 }: {
   params: Promise<{ competitionId: string }>
 }) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -324,7 +327,7 @@ export default function StudentCompetitionDetailPage({
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950">
       {/* Header */}
-      <div className="border-b border-slate-800">
+      <div className={`border-b ${isLight ? "border-slate-200" : "border-slate-800"}`}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <Link href="/train/competitions" className="inline-flex items-center gap-2 text-muted-foreground hover:text-white transition-colors text-sm sm:text-base">
             <ArrowLeft className="h-4 w-4" />
@@ -471,7 +474,7 @@ export default function StudentCompetitionDetailPage({
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-          <Card className="bg-slate-800/50">
+          <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50`}>
             <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
@@ -485,7 +488,7 @@ export default function StudentCompetitionDetailPage({
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/50">
+          <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50`}>
             <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
@@ -497,7 +500,7 @@ export default function StudentCompetitionDetailPage({
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/50">
+          <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50`}>
             <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <Users className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
@@ -512,7 +515,7 @@ export default function StudentCompetitionDetailPage({
             </CardContent>
           </Card>
 
-          <Card className="bg-slate-800/50">
+          <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50`}>
             <CardContent className="pt-3 sm:pt-4 pb-3 sm:pb-4">
               <div className="flex items-center gap-2 sm:gap-3">
                 <Trophy className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
@@ -545,7 +548,7 @@ export default function StudentCompetitionDetailPage({
 
         <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
           {/* Modules */}
-          <Card className="bg-slate-800/50">
+          <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50`}>
             <CardHeader className="pb-3 sm:pb-6">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <Target className="h-4 w-4 sm:h-5 sm:w-5 text-violet-400" />
@@ -574,7 +577,7 @@ export default function StudentCompetitionDetailPage({
           </Card>
 
           {/* Rewards */}
-          <Card className="bg-slate-800/50">
+          <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50`}>
             <CardHeader className="pb-3 sm:pb-6">
               <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                 <Gift className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />

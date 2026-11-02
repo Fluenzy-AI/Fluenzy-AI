@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
@@ -259,6 +260,8 @@ function OtpInputRow({
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 export default function SignupPage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -515,7 +518,7 @@ export default function SignupPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
-              className="rounded-3xl border border-white/10 bg-slate-900/70 p-8 shadow-2xl backdrop-blur-xl"
+              className={`rounded-3xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/70 p-8 shadow-2xl backdrop-blur-xl`}
             >
               {/* Header */}
               <div className="mb-6">
@@ -720,7 +723,7 @@ export default function SignupPage() {
               <motion.button
                 whileTap={{ scale: 0.975 }}
                 onClick={() => signIn("google", { callbackUrl: "/train" })}
-                className="flex w-full items-center justify-center gap-3 rounded-xl border border-white/10 bg-white/5 px-5 py-3.5 text-sm font-semibold text-slate-100 shadow-sm transition-all hover:bg-white/10 hover:border-white/20"
+                className={`flex w-full items-center justify-center gap-3 rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} bg-white/5 px-5 py-3.5 text-sm font-semibold text-slate-100 shadow-sm transition-all hover:bg-white/10 hover:border-white/20`}
               >
                 <GoogleIcon />
                 Sign Up with Google
@@ -736,7 +739,7 @@ export default function SignupPage() {
                 <p className="text-sm text-slate-500">Already have an account?</p>
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/4 px-5 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-violet-300"
+                  className={`inline-flex items-center gap-1.5 rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} bg-white/4 px-5 py-2.5 text-sm font-semibold text-slate-200 transition-all hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-violet-300`}
                 >
                   Sign In
                 </Link>
@@ -754,7 +757,7 @@ export default function SignupPage() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -40 }}
               transition={{ duration: 0.4 }}
-              className="rounded-3xl border border-white/10 bg-slate-900/70 p-8 shadow-2xl backdrop-blur-xl"
+              className={`rounded-3xl border ${isLight ? "border-slate-200" : "border-white/10"} ${isLight ? "bg-white" : "bg-slate-900"}/70 p-8 shadow-2xl backdrop-blur-xl`}
             >
               {/* Back */}
               <button
@@ -861,7 +864,7 @@ export default function SignupPage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.4, type: "spring", stiffness: 200, damping: 20 }}
-              className="rounded-3xl border border-emerald-500/20 bg-slate-900/70 p-10 shadow-2xl backdrop-blur-xl text-center"
+              className={`rounded-3xl border border-emerald-500/20 ${isLight ? "bg-white" : "bg-slate-900"}/70 p-10 shadow-2xl backdrop-blur-xl text-center`}
             >
               <motion.div
                 initial={{ scale: 0, rotate: -30 }}

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTheme } from "@/contexts/ThemeContext";
 import { 
   CameraOff, 
   Activity, 
@@ -82,6 +83,8 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   cameraMuted = false,
   onCameraStreamReady,
 }) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [isCameraOn, setIsCameraOn] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [metrics, setMetrics] = useState<BehavioralMetrics>(DEFAULT_METRICS);
@@ -747,9 +750,9 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
   };
 
   return (
-    <div className="bg-slate-800/50 backdrop-blur rounded-xl border border-slate-700/50 overflow-hidden">
+    <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 backdrop-blur rounded-xl border ${isLight ? "border-slate-300" : "border-slate-700"}/50 overflow-hidden`}>
       {/* Header */}
-      <div className="bg-slate-900/50 px-3 py-2 border-b border-slate-700/50 flex items-center justify-between">
+      <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 px-3 py-2 border-b ${isLight ? "border-slate-300" : "border-slate-700"}/50 flex items-center justify-between`}>
         <div className="flex items-center gap-1.5">
           <Activity className={`w-4 h-4 ${wsConnected ? 'text-emerald-400' : 'text-slate-500'}`} />
           <span className="text-white font-bold text-xs">AI Video Analysis</span>
@@ -788,7 +791,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
         <div className="grid grid-cols-12 gap-2">
           {/* LEFT COLUMN: Real Candidate Webcam Video Feed (5 cols) */}
           <div 
-            className="col-span-5 relative rounded-xl overflow-hidden border aspect-[3/4] max-h-36 flex items-center justify-center shadow-md border-slate-700/60 video-box-container"
+            className={`col-span-5 relative rounded-xl overflow-hidden border aspect-[3/4] max-h-36 flex items-center justify-center shadow-md ${isLight ? "border-slate-300" : "border-slate-700"}/60 video-box-container`}
             style={{ background: '#090D16', backgroundColor: '#090D16' }}
           >
             {cameraMuted ? (
@@ -822,7 +825,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
                 {/* Analysis indicator */}
                 {isAnalyzing && (
                   <div 
-                    className="absolute top-1 right-1 flex items-center gap-1 px-1.5 py-0.2 rounded bg-black/80 border border-white/10"
+                    className={`absolute top-1 right-1 flex items-center gap-1 px-1.5 py-0.2 rounded bg-black/80 border ${isLight ? "border-slate-200" : "border-white/10"}`}
                   >
                     <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse" />
                     <span className="text-white text-[8px] font-bold force-white">Analyzing...</span>
@@ -840,7 +843,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
           {/* RIGHT COLUMN: Real-Time AI Score Metrics (7 cols) */}
           <div className="col-span-7 space-y-1.5">
             {/* Top Face Detection Badge */}
-            <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60 flex items-center gap-1.5">
+            <div className={`p-1.5 rounded-lg border ${isLight ? "border-slate-300" : "border-slate-700"}/50 ${isLight ? "bg-white" : "bg-slate-900"}/60 flex items-center gap-1.5`}>
               <div className={`w-4 h-4 rounded-full flex items-center justify-center shrink-0 ${!cameraMuted && isCameraOn && metrics.face_detected ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700/40 text-slate-400'}`}>
                 {!cameraMuted && isCameraOn && metrics.face_detected ? <Check size={11} strokeWidth={3} /> : <AlertTriangle size={11} />}
               </div>
@@ -854,25 +857,25 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
 
             {/* 2x2 Real-Time Score Metrics Grid */}
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60">
+              <div className={`p-1.5 rounded-lg border ${isLight ? "border-slate-300" : "border-slate-700"}/50 ${isLight ? "bg-white" : "bg-slate-900"}/60`}>
                 <p className="text-[8px] font-bold text-slate-400">Confidence</p>
                 <p className="text-xs font-black text-purple-400 mt-0.5">
                   {cameraMuted ? <span className="text-slate-500">Paused</span> : (isCameraOn && metrics.confidence > 0 ? `${metrics.confidence.toFixed(0)}%` : '--')}
                 </p>
               </div>
-              <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60">
+              <div className={`p-1.5 rounded-lg border ${isLight ? "border-slate-300" : "border-slate-700"}/50 ${isLight ? "bg-white" : "bg-slate-900"}/60`}>
                 <p className="text-[8px] font-bold text-slate-400">Eye Contact</p>
                 <p className="text-xs font-black text-sky-400 mt-0.5">
                   {cameraMuted ? <span className="text-slate-500">Paused</span> : (isCameraOn && metrics.eye_contact > 0 ? `${metrics.eye_contact.toFixed(0)}%` : '--')}
                 </p>
               </div>
-              <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60">
+              <div className={`p-1.5 rounded-lg border ${isLight ? "border-slate-300" : "border-slate-700"}/50 ${isLight ? "bg-white" : "bg-slate-900"}/60`}>
                 <p className="text-[8px] font-bold text-slate-400">Posture</p>
                 <p className="text-xs font-black text-emerald-400 mt-0.5">
                   {cameraMuted ? <span className="text-slate-500">Paused</span> : (isCameraOn && metrics.posture > 0 ? `${metrics.posture.toFixed(0)}%` : '--')}
                 </p>
               </div>
-              <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60">
+              <div className={`p-1.5 rounded-lg border ${isLight ? "border-slate-300" : "border-slate-700"}/50 ${isLight ? "bg-white" : "bg-slate-900"}/60`}>
                 <p className="text-[8px] font-bold text-slate-400">Clarity</p>
                 <p className="text-xs font-black text-amber-400 mt-0.5">
                   {cameraMuted ? <span className="text-slate-500">Paused</span> : (isCameraOn && metrics.engagement > 0 ? `${metrics.engagement.toFixed(0)}%` : '--')}
@@ -882,7 +885,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
 
             {/* Bottom Stats: Smile & Stress Level */}
             <div className="grid grid-cols-2 gap-1.5">
-              <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60 flex items-center gap-1">
+              <div className={`p-1.5 rounded-lg border ${isLight ? "border-slate-300" : "border-slate-700"}/50 ${isLight ? "bg-white" : "bg-slate-900"}/60 flex items-center gap-1`}>
                 <Smile size={12} className="text-amber-400 shrink-0" />
                 <div>
                   <p className="text-[7px] font-bold text-slate-400 leading-none">Smile</p>
@@ -892,7 +895,7 @@ const VideoAnalysisPanel: React.FC<VideoAnalysisPanelProps> = ({
                 </div>
               </div>
 
-              <div className="p-1.5 rounded-lg border border-slate-700/50 bg-slate-900/60 flex items-center gap-1">
+              <div className={`p-1.5 rounded-lg border ${isLight ? "border-slate-300" : "border-slate-700"}/50 ${isLight ? "bg-white" : "bg-slate-900"}/60 flex items-center gap-1`}>
                 <Activity size={12} className="text-orange-400 shrink-0" />
                 <div>
                   <p className="text-[7px] font-bold text-slate-400 leading-none">Stress Level</p>

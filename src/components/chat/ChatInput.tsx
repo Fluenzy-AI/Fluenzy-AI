@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -33,6 +34,8 @@ export function ChatInput({
   replyingTo,
   onCancelReply
 }: ChatInputProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [message, setMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
@@ -253,7 +256,7 @@ export function ChatInput({
   const commonEmojis = ['😀', '😂', '❤️', '👍', '🙏', '🎉', '🔥', '✨', '💯', '👋'];
 
   return (
-    <div className="border-t border-white/5 bg-slate-900/50 flex-shrink-0">
+    <div className={`border-t ${isLight ? "border-slate-100" : "border-white/5"} ${isLight ? "bg-white" : "bg-slate-900"}/50 flex-shrink-0`}>
       {/* Reply preview */}
       <AnimatePresence>
         {replyingTo && (
@@ -263,7 +266,7 @@ export function ChatInput({
             exit={{ height: 0, opacity: 0 }}
             className="px-4 pt-3 overflow-hidden"
           >
-            <div className="flex items-center gap-3 p-2 bg-slate-800/50 rounded-lg border-l-2 border-purple-500">
+            <div className={`flex items-center gap-3 p-2 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg border-l-2 border-purple-500`}>
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-purple-400">Replying to {replyingTo.senderName}</p>
                 <p className="text-sm text-slate-300 truncate">{replyingTo.content}</p>
@@ -288,7 +291,7 @@ export function ChatInput({
             exit={{ height: 0, opacity: 0 }}
             className="px-4 pt-3 overflow-hidden"
           >
-            <div className="flex items-center gap-3 p-2 bg-slate-800/50 rounded-lg">
+            <div className={`flex items-center gap-3 p-2 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg`}>
               <Loader2 className="w-5 h-5 text-purple-500 animate-spin" />
               <div className="flex-1">
                 <p className="text-sm text-slate-300">Uploading...</p>
@@ -307,7 +310,7 @@ export function ChatInput({
       <div className="p-4 pt-3 flex items-end gap-2">
         {/* Recording UI */}
         {isRecording ? (
-          <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-slate-800 rounded-2xl">
+          <div className={`flex-1 flex items-center gap-3 px-4 py-3 ${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-2xl`}>
             <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
             <span className="text-white font-mono">
               {Math.floor(recordingTime / 60)}:{String(recordingTime % 60).padStart(2, '0')}
@@ -356,7 +359,7 @@ export function ChatInput({
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="fixed bottom-24 left-4 p-3 bg-slate-900 rounded-xl border border-white/10 shadow-2xl z-50 flex gap-2"
+                    className={`fixed bottom-24 left-4 p-3 ${isLight ? "bg-white" : "bg-slate-900"} rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} shadow-2xl z-50 flex gap-2`}
                   >
                     <div className="flex gap-2">
                       <button
@@ -409,7 +412,7 @@ export function ChatInput({
                 placeholder="Type a message..."
                 disabled={disabled}
                 rows={1}
-                className="w-full px-4 py-3 bg-slate-800 border border-white/5 rounded-2xl text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50"
+                className={`w-full px-4 py-3 ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-100" : "border-white/5"} rounded-2xl text-white placeholder-slate-500 resize-none focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50`}
               />
             </div>
 
@@ -430,7 +433,7 @@ export function ChatInput({
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    className="fixed bottom-24 right-4 p-3 bg-slate-900 rounded-xl border border-white/10 shadow-2xl z-50"
+                    className={`fixed bottom-24 right-4 p-3 ${isLight ? "bg-white" : "bg-slate-900"} rounded-xl border ${isLight ? "border-slate-200" : "border-white/10"} shadow-2xl z-50`}
                   >
                     <div className="grid grid-cols-5 gap-1">
                       {commonEmojis.map((emoji) => (
