@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';import { useTheme } from "@/contexts/ThemeContext";
+
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Users, Briefcase, Code2, Copy, CheckCheck, Loader2 } from 'lucide-react';
@@ -9,6 +10,8 @@ import { ArrowLeft, Users, Briefcase, Code2, Copy, CheckCheck, Loader2 } from 'l
 type InterviewType = 'PI' | 'Technical';
 
 export default function PrivateInterviewPage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const { data: session } = useSession();
   const router = useRouter();
 
@@ -56,7 +59,7 @@ export default function PrivateInterviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center px-4 py-12">
+    <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} text-white flex flex-col items-center justify-center px-4 py-12`}>
       <div className="w-full max-w-lg">
         <Link href="/train/interview" className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
           <ArrowLeft size={14} /> Back
@@ -102,7 +105,7 @@ export default function PrivateInterviewPage() {
               onChange={(e) => setTopic(e.target.value)}
               placeholder={`e.g. ${selectedType === 'PI' ? 'Behavioral Questions, Leadership' : 'System Design, DSA'}`}
               maxLength={80}
-              className="w-full bg-slate-800 border border-slate-700 text-white rounded-xl px-4 py-3 text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 mb-6"
+              className={`w-full ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"} text-white rounded-xl px-4 py-3 text-sm placeholder-slate-500 focus:outline-none focus:border-indigo-500 mb-6`}
             />
 
             {error && (
@@ -128,7 +131,7 @@ export default function PrivateInterviewPage() {
             <p className="text-slate-400 text-sm mb-6">Share the invite link with participants. Click &quot;Enter Room&quot; to start whenever you&apos;re ready.</p>
 
             {/* Invite link */}
-            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 mb-4">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-2xl p-4 mb-4`}>
               <p className="text-xs text-slate-500 mb-2">Invite Link</p>
               <div className="flex items-center gap-2">
                 <p className="flex-1 text-sm text-indigo-300 font-mono truncate">{created.inviteUrl}</p>
@@ -142,7 +145,7 @@ export default function PrivateInterviewPage() {
             </div>
 
             {/* Room ID */}
-            <div className="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 mb-6">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-2xl p-4 mb-6`}>
               <p className="text-xs text-slate-500 mb-1">Room ID</p>
               <p className="text-sm font-mono text-white">{created.roomId}</p>
             </div>

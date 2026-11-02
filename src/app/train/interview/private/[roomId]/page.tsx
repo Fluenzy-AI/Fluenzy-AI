@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';import { useTheme } from "@/contexts/ThemeContext";
+
 import { useParams, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -13,7 +14,7 @@ import { io, Socket } from 'socket.io-client';
 const LiveInterviewRoom = dynamic(() => import('@/components/LiveInterviewRoom'), {
   ssr: false,
   loading: () => (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+    <div className={`min-h-screen bg-slate-900 flex items-center justify-center`}>
       <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
     </div>
   ),
@@ -42,6 +43,8 @@ function getStableAgoraUid(): number {
 }
 
 export default function PrivateInterviewRoomPage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const { data: session } = useSession();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -125,7 +128,7 @@ export default function PrivateInterviewRoomPage() {
 
   if (step === 'validating') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className={`min-h-screen bg-slate-900 flex items-center justify-center`}>
         <Loader2 className="w-10 h-10 text-indigo-400 animate-spin" />
       </div>
     );
@@ -133,7 +136,7 @@ export default function PrivateInterviewRoomPage() {
 
   if (step === 'error') {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center px-4">
+      <div className={`min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center px-4`}>
         <p className="text-red-400 text-lg font-semibold mb-2">Room Error</p>
         <p className="text-slate-400 text-sm mb-6">{error}</p>
         <Link href="/train/interview" className="text-indigo-400 hover:text-indigo-300 text-sm">← Back to Interview</Link>
@@ -143,7 +146,7 @@ export default function PrivateInterviewRoomPage() {
 
   if (step === 'removed') {
     return (
-      <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center px-4">
+      <div className={`min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center px-4`}>
         <p className="text-yellow-400 text-lg font-semibold mb-2">Removed from Room</p>
         <p className="text-slate-400 text-sm mb-6">The host removed you from this interview session.</p>
         <Link href="/train/interview" className="text-indigo-400 hover:text-indigo-300 text-sm">← Back to Interview</Link>
@@ -171,7 +174,7 @@ export default function PrivateInterviewRoomPage() {
   const availableRoles: Role[] = [...rolesForType[interviewType], 'Host'];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center px-4 py-12">
+    <div className={`min-h-screen bg-slate-900 text-white flex flex-col items-center justify-center px-4 py-12`}>
       <div className="w-full max-w-md">
         <Link href="/train/interview" className="inline-flex items-center gap-2 text-slate-400 hover:text-white text-sm mb-8 transition-colors">
           <ArrowLeft size={14} /> Back

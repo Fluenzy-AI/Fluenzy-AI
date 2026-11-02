@@ -1,10 +1,13 @@
 "use client";
+import { useTheme } from "@/contexts/ThemeContext";
 import React from "react";
 import { motion } from "framer-motion";
 import { Activity } from "lucide-react";
 import Card3D from "@/components/ui/Card3D";
 
 const AnalyticsIntelligence = () => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   return (
     <section className="relative overflow-hidden bg-slate-950 py-20 md:py-24">
       <div className="absolute -left-10 top-10 h-80 w-80 rounded-full bg-cyan-500/8 blur-3xl" />
@@ -36,7 +39,7 @@ const AnalyticsIntelligence = () => {
           className="grid grid-cols-1 md:grid-cols-3 gap-6"
         >
           <Card3D depth={35} glowColor="rgba(6, 182, 212, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl ${isLight ? "bg-white" : "bg-slate-900"}/70 p-2 group`}>
               <img
                 src="/image/BEHAVIORALMETRICS1.png"
                 alt="Live AI Video & Behavioral Metrics"
@@ -50,7 +53,7 @@ const AnalyticsIntelligence = () => {
           </Card3D>
 
           <Card3D depth={35} glowColor="rgba(168, 85, 247, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl ${isLight ? "bg-white" : "bg-slate-900"}/70 p-2 group`}>
               <img
                 src="/image/BEHAVIORALMETRICS2.png"
                 alt="Speech Tone & Emotion Tracking"
@@ -64,7 +67,7 @@ const AnalyticsIntelligence = () => {
           </Card3D>
 
           <Card3D depth={35} glowColor="rgba(59, 130, 246, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-2xl ${isLight ? "bg-white" : "bg-slate-900"}/70 p-2 group`}>
               <img
                 src="/image/OverallPerformance1.png"
                 alt="Candidate Overall Performance Scorecard"
@@ -78,7 +81,7 @@ const AnalyticsIntelligence = () => {
           </Card3D>
 
           <Card3D depth={35} glowColor="rgba(239, 68, 68, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-red-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+            <div className={`relative rounded-2xl overflow-hidden border border-red-500/30 shadow-2xl ${isLight ? "bg-white" : "bg-slate-900"}/70 p-2 group`}>
               <img
                 src="/image/Chart.png"
                 alt="Growth & Performance Metrics"
@@ -92,7 +95,7 @@ const AnalyticsIntelligence = () => {
           </Card3D>
 
           <Card3D depth={35} glowColor="rgba(239, 68, 68, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-red-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+            <div className={`relative rounded-2xl overflow-hidden border border-red-500/30 shadow-2xl ${isLight ? "bg-white" : "bg-slate-900"}/70 p-2 group`}>
               <img
                 src="/image/Chart1.png"
                 alt="Category Score Breakdown"
@@ -106,7 +109,7 @@ const AnalyticsIntelligence = () => {
           </Card3D>
 
           <Card3D depth={35} glowColor="rgba(239, 68, 68, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-red-500/30 shadow-2xl bg-slate-900/70 p-2 group">
+            <div className={`relative rounded-2xl overflow-hidden border border-red-500/30 shadow-2xl ${isLight ? "bg-white" : "bg-slate-900"}/70 p-2 group`}>
               <img
                 src="/image/Chart2.png"
                 alt="Competency Radar Graph"

@@ -10,7 +10,8 @@ import AgoraRTC, {
   IRemoteAudioTrack,
   UID,
 } from 'agora-rtc-sdk-ng';
-import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';import { useTheme } from "@/contexts/ThemeContext";
+
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -81,6 +82,8 @@ const MediaPlayer = ({
   userName?: string;
   hasAudio?: boolean;
 }) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -105,7 +108,7 @@ const MediaPlayer = ({
   }, [audioTrack, local]);
 
   return (
-    <div className="relative w-full h-full bg-slate-900 rounded-lg overflow-hidden">
+    <div className={`relative w-full h-full ${isLight ? "bg-white" : "bg-slate-900"} rounded-lg overflow-hidden`}>
       <div ref={containerRef} className="w-full h-full" />
       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
         <div className="bg-black/60 px-3 py-1 rounded-full text-xs text-white">
@@ -129,6 +132,8 @@ export default function CompetitionGDBattleRoom({
   userId,
   participants
 }: CompetitionGDBattleRoomProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const { data: session } = useSession();
   const userName = session?.user?.name || 'Guest';
 
@@ -550,8 +555,8 @@ export default function CompetitionGDBattleRoom({
   // Show evaluating screen
   if (isEvaluating) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-        <div className="bg-slate-800 rounded-xl p-8 max-w-md text-center">
+      <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} flex items-center justify-center p-6`}>
+        <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-xl p-8 max-w-md text-center`}>
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-violet-500 mx-auto mb-6"></div>
           <h2 className="text-2xl font-bold text-white mb-2">Evaluating Your Performance</h2>
           <p className="text-slate-400">
@@ -608,7 +613,7 @@ export default function CompetitionGDBattleRoom({
             <p className="text-slate-400">out of 100</p>
             
             {evaluationResults.rank && (
-              <div className="mt-4 inline-flex items-center gap-2 bg-slate-800/50 px-4 py-2 rounded-full">
+              <div className={`mt-4 inline-flex items-center gap-2 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 px-4 py-2 rounded-full`}>
                 <span className="text-slate-400">Your Rank:</span>
                 <span className="text-xl font-bold text-violet-400">#{evaluationResults.rank}</span>
               </div>
@@ -616,7 +621,7 @@ export default function CompetitionGDBattleRoom({
           </div>
 
           {/* Score Breakdown */}
-          <div className="bg-slate-800/50 rounded-xl p-6 mb-6">
+          <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-xl p-6 mb-6`}>
             <h3 className="text-lg font-semibold text-white mb-4">Score Breakdown</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {[
@@ -626,7 +631,7 @@ export default function CompetitionGDBattleRoom({
                 { label: 'Content Quality', value: scores.contentQuality || 70 },
                 { label: 'Teamwork', value: scores.teamwork || 70 },
               ].map((item) => (
-                <div key={item.label} className="bg-slate-900/50 rounded-lg p-4">
+                <div key={item.label} className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-lg p-4`}>
                   <p className="text-sm text-slate-400 mb-1">{item.label}</p>
                   <p className={cn("text-2xl font-bold", getScoreColor(item.value))}>
                     {item.value}
@@ -638,7 +643,7 @@ export default function CompetitionGDBattleRoom({
 
           {/* Feedback */}
           {evaluationResults.feedback && (
-            <div className="bg-slate-800/50 rounded-xl p-6 mb-6">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-xl p-6 mb-6`}>
               <h3 className="text-lg font-semibold text-white mb-3">AI Feedback</h3>
               <p className="text-slate-300">{evaluationResults.feedback}</p>
             </div>
@@ -698,8 +703,8 @@ export default function CompetitionGDBattleRoom({
   // Session ended without results - redirect
   if (sessionEnded) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-        <div className="bg-slate-800 rounded-xl p-8 max-w-md text-center">
+      <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} flex items-center justify-center p-6`}>
+        <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-xl p-8 max-w-md text-center`}>
           <Trophy className="w-16 h-16 text-violet-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-white mb-2">Battle Complete!</h2>
           <p className="text-slate-400 mb-6">Your results have been saved.</p>
@@ -713,8 +718,8 @@ export default function CompetitionGDBattleRoom({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-        <div className="bg-slate-800 rounded-xl p-8 max-w-md text-center">
+      <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} flex items-center justify-center p-6`}>
+        <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-xl p-8 max-w-md text-center`}>
           <div className="text-red-400 text-5xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-white mb-2">Connection Error</h2>
           <p className="text-slate-400 mb-6">{error}</p>
@@ -726,10 +731,10 @@ export default function CompetitionGDBattleRoom({
 
   if (!joined) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} flex items-center justify-center p-4`}>
         {waitingForParticipants ? (
           // Waiting for minimum participants
-          <div className="bg-slate-800 rounded-xl p-8 max-w-md text-center">
+          <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-xl p-8 max-w-md text-center`}>
             <div className="mb-6">
               <Users className="w-16 h-16 text-violet-400 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-white mb-2">Waiting for Participants</h2>
@@ -746,7 +751,7 @@ export default function CompetitionGDBattleRoom({
               </div>
             )}
             
-            <div className="bg-slate-900 rounded-lg p-6 mb-6">
+            <div className={`${isLight ? "bg-white" : "bg-slate-900"} rounded-lg p-6 mb-6`}>
               <div className="flex items-center justify-center gap-8">
                 <div className="text-center">
                   <div className="text-4xl font-bold text-violet-400 mb-1">
@@ -808,10 +813,10 @@ export default function CompetitionGDBattleRoom({
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 p-4 pb-28">
+    <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} p-4 pb-28`}>
       {/* Header */}
       <div className="max-w-7xl mx-auto mb-4">
-        <div className="bg-slate-800/50 rounded-lg p-4 flex items-center justify-between">
+        <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg p-4 flex items-center justify-between`}>
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <Trophy className="h-5 w-5 text-violet-400" />
@@ -850,7 +855,7 @@ export default function CompetitionGDBattleRoom({
           remoteUsers.length >= 4 && "grid-cols-2 lg:grid-cols-4"
         )}>
           {/* Local Video */}
-          <div className="relative aspect-video bg-slate-800 rounded-xl overflow-hidden border-2 border-violet-500/30 shadow-lg">
+          <div className={`relative aspect-video ${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-xl overflow-hidden border-2 border-violet-500/30 shadow-lg`}>
             {localVideoTrack && !isVideoOff ? (
               <MediaPlayer
                 videoTrack={localVideoTrack}
@@ -860,7 +865,7 @@ export default function CompetitionGDBattleRoom({
                 userName={userName}
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-800">
+              <div className={`w-full h-full flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-slate-800"}`}>
                 <div className="text-center">
                   <div className="w-24 h-24 rounded-full bg-violet-500/20 border-2 border-violet-400/30 flex items-center justify-center mx-auto mb-3">
                     <span className="text-3xl font-bold text-violet-400">
@@ -892,7 +897,7 @@ export default function CompetitionGDBattleRoom({
             const participantName = participant?.user.name || `User ${user.uid}`;
             
             return (
-              <div key={user.uid} className="relative aspect-video bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-lg">
+              <div key={user.uid} className={`relative aspect-video ${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-xl overflow-hidden border ${isLight ? "border-slate-300" : "border-slate-700"} shadow-lg`}>
                 {user.videoTrack ? (
                   <MediaPlayer
                     videoTrack={user.videoTrack}
@@ -901,7 +906,7 @@ export default function CompetitionGDBattleRoom({
                     userName={participantName}
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                  <div className={`w-full h-full flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-slate-800"}`}>
                     <div className="text-center">
                       <div className="w-24 h-24 rounded-full bg-blue-500/20 border-2 border-blue-400/30 flex items-center justify-center mx-auto mb-3">
                         <span className="text-3xl font-bold text-blue-400">
@@ -932,7 +937,7 @@ export default function CompetitionGDBattleRoom({
 
         {/* Topic Card */}
         {competition.topic && (
-          <div className="mt-4 bg-slate-800/50 rounded-lg p-6">
+          <div className={`mt-4 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg p-6`}>
             <div className="flex items-start gap-3">
               <MessageSquare className="h-5 w-5 text-violet-400 mt-1" />
               <div>

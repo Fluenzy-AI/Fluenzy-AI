@@ -1,4 +1,5 @@
 "use client";
+import { useTheme } from "@/contexts/ThemeContext";
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,8 @@ import GlobeNetworkBackground from "@/components/ui/GlobeNetworkBackground";
 const headlineWords = ["Train", "Smarter.", "Crack", "MAANG", "Interviews", "with", "AI."];
 
 const Hero = () => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [ripple, setRipple] = useState<{ x: number; y: number; key: number } | null>(null);
 
   const scrollToSection = (sectionId: string) => {
@@ -133,13 +136,13 @@ const Hero = () => {
                 variant="outline"
                 size="lg"
                 onClick={() => scrollToSection("features")}
-                className="touch-target w-full rounded-xl border-slate-700/60 bg-slate-900/60 px-8 py-4 text-slate-200 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/40 hover:bg-cyan-500/10 sm:w-auto"
+                className={`touch-target w-full rounded-xl ${isLight ? "border-slate-300" : "border-slate-700"}/60 ${isLight ? "bg-white" : "bg-slate-900"}/60 px-8 py-4 text-slate-200 backdrop-blur-md transition-all duration-300 hover:border-cyan-400/40 hover:bg-cyan-500/10 sm:w-auto`}
               >
                 Explore Features ↓
               </Button>
             </motion.div>
 
-            <PWAInstallButton className="touch-target inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-slate-700/60 bg-slate-900/60 px-6 py-4 font-semibold text-slate-200 backdrop-blur-md transition hover:border-cyan-400/40 hover:bg-cyan-500/10 sm:w-auto" />
+            <PWAInstallButton className={`touch-target inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border ${isLight ? "border-slate-300" : "border-slate-700"}/60 ${isLight ? "bg-white" : "bg-slate-900"}/60 px-6 py-4 font-semibold text-slate-200 backdrop-blur-md transition hover:border-cyan-400/40 hover:bg-cyan-500/10 sm:w-auto`} />
           </motion.div>
 
           <motion.div
@@ -170,7 +173,7 @@ const Hero = () => {
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -top-6 -left-4 z-30 hidden sm:flex items-center gap-2 rounded-xl border border-cyan-500/30 bg-slate-900/90 px-3.5 py-2 text-xs font-medium text-cyan-300 backdrop-blur-xl shadow-2xl"
+            className={`absolute -top-6 -left-4 z-30 hidden sm:flex items-center gap-2 rounded-xl border border-cyan-500/30 ${isLight ? "bg-white" : "bg-slate-900"}/90 px-3.5 py-2 text-xs font-medium text-cyan-300 backdrop-blur-xl shadow-2xl`}
           >
             <Cpu className="h-4 w-4 text-cyan-400 animate-spin" style={{ animationDuration: "8s" }} />
             <span>Neural AI Engine Active</span>
@@ -179,7 +182,7 @@ const Hero = () => {
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute -bottom-6 -right-4 z-30 hidden sm:flex items-center gap-2 rounded-xl border border-blue-500/30 bg-slate-900/90 px-3.5 py-2 text-xs font-medium text-blue-300 backdrop-blur-xl shadow-2xl"
+            className={`absolute -bottom-6 -right-4 z-30 hidden sm:flex items-center gap-2 rounded-xl border border-blue-500/30 ${isLight ? "bg-white" : "bg-slate-900"}/90 px-3.5 py-2 text-xs font-medium text-blue-300 backdrop-blur-xl shadow-2xl`}
           >
             <Zap className="h-4 w-4 text-blue-400" />
             <span>Real-Time Latency &lt; 200ms</span>
@@ -187,7 +190,7 @@ const Hero = () => {
 
           {/* 3D Tilt Card Frame */}
           <Card3D depth={50} glowColor="rgba(6, 182, 212, 0.4)" className="max-w-xl w-full">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-cyan-500/30 bg-slate-900/60 p-2.5 backdrop-blur-xl">
+            <div className={`relative rounded-3xl overflow-hidden shadow-2xl border border-cyan-500/30 ${isLight ? "bg-white" : "bg-slate-900"}/60 p-2.5 backdrop-blur-xl`}>
               <img
                 src="/image/landingimg2.png"
                 alt="Fluenzy AI Interview Platform"

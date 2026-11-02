@@ -1,4 +1,5 @@
 "use client";
+import { useTheme } from "@/contexts/ThemeContext";
 
 import React from "react";
 import { motion } from "framer-motion";
@@ -222,11 +223,13 @@ const VideoMetricRow: React.FC<{
   icon: React.ReactNode;
   isStress?: boolean;
 }> = ({ label, value, feedback, icon, isStress = false }) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const colorClass = getMetricColor(value, isStress);
   const statusLabel = getMetricLabel(value, isStress);
   
   return (
-    <div className="p-4 bg-slate-800/50 rounded-lg border border-slate-700/50">
+    <div className={`p-4 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-lg border ${isLight ? "border-slate-300" : "border-slate-700"}/50`}>
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2">
           <span className={cn("w-5 h-5", colorClass)}>{icon}</span>
@@ -263,13 +266,15 @@ export default function PerformanceBreakdown({
   passingScore,
   jobRole,
 }: PerformanceBreakdownProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const showInterviewScores = ["AI_INTERVIEW", "VOICE", "GD"].includes(type) && interviewScores;
   const showVideoMetrics = videoMetrics && videoFeedback;
 
   return (
     <div className="space-y-6">
       {/* Overall Result Header */}
-      <Card className="bg-gradient-to-r from-slate-800 to-slate-900 border-slate-700">
+      <Card className={`bg-gradient-to-r from-slate-800 to-slate-900 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row items-center gap-6">
             {/* Pass/Fail indicator */}
@@ -310,7 +315,7 @@ export default function PerformanceBreakdown({
 
       {/* Interview Performance Section */}
       {showInterviewScores && (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <MessageSquare className="w-5 h-5 text-purple-400" />
@@ -342,7 +347,7 @@ export default function PerformanceBreakdown({
             </div>
 
             {/* Overall Rating */}
-            <div className="pt-4 border-t border-slate-700">
+            <div className={`pt-4 border-t ${isLight ? "border-slate-300" : "border-slate-700"}`}>
               <div className="flex items-center justify-between">
                 <span className="text-slate-300">Overall Rating</span>
                 <div className="flex items-center gap-2">
@@ -377,7 +382,7 @@ export default function PerformanceBreakdown({
 
       {/* Video Analysis Section */}
       {showVideoMetrics && (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-white">
               <Activity className="w-5 h-5 text-blue-400" />
@@ -446,7 +451,7 @@ export default function PerformanceBreakdown({
             />
 
             {/* Overall behavioral score */}
-            <div className="pt-4 border-t border-slate-700">
+            <div className={`pt-4 border-t ${isLight ? "border-slate-300" : "border-slate-700"}`}>
               <div className="flex items-center justify-between">
                 <span className="text-slate-300 font-medium">Overall Behavioral Score</span>
                 <div className="flex items-center gap-3">
@@ -478,7 +483,7 @@ export default function PerformanceBreakdown({
         videoFeedback?.strengths || videoFeedback?.improvements) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Strengths */}
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-green-400 text-base">
                 <CheckCircle className="w-4 h-4" />
@@ -500,7 +505,7 @@ export default function PerformanceBreakdown({
           </Card>
 
           {/* Improvements */}
-          <Card className="bg-slate-800/50 border-slate-700">
+          <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-amber-400 text-base">
                 <TrendingUp className="w-4 h-4" />
@@ -525,7 +530,7 @@ export default function PerformanceBreakdown({
 
       {/* Summary */}
       {interviewScores?.summary && (
-        <Card className="bg-slate-800/50 border-slate-700">
+        <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-white text-base">
               <Award className="w-4 h-4 text-purple-400" />

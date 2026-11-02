@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession } from 'next-auth/react';import { useTheme } from "@/contexts/ThemeContext";
+
 import { useRouter, useParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { io, Socket } from 'socket.io-client';
@@ -25,7 +26,7 @@ import {
 const LiveGDRoom = dynamic(() => import('@/components/LiveGDRoom'), {
   ssr: false,
   loading: () => (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+    <div className={`min-h-screen bg-slate-900 flex items-center justify-center`}>
       <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
     </div>
   )
@@ -52,6 +53,8 @@ interface Participant {
 }
 
 export default function PrivateGDPage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const { data: session, status: authStatus } = useSession();
   const router = useRouter();
   const params = useParams();
@@ -229,7 +232,7 @@ export default function PrivateGDPage() {
   // Room not found
   if (roomStatus === 'not_found') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
+      <div className={`min-h-screen bg-slate-900 flex items-center justify-center p-4`}>
         <div className="text-center max-w-md">
           <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <XCircle className="w-10 h-10 text-red-400" />
@@ -247,7 +250,7 @@ export default function PrivateGDPage() {
   // Loading
   if (authStatus === 'loading' || roomStatus === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className={`min-h-screen bg-slate-900 flex items-center justify-center`}>
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-500"></div>
       </div>
     );
@@ -256,7 +259,7 @@ export default function PrivateGDPage() {
   // Not authenticated
   if (authStatus === 'unauthenticated') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className={`min-h-screen bg-slate-900 flex items-center justify-center`}>
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white mb-4">Sign In Required</h1>
           <p className="text-gray-400 mb-6">Please sign in to join the private GD room</p>
@@ -268,7 +271,7 @@ export default function PrivateGDPage() {
   const inviteLink = `${typeof window !== 'undefined' ? window.location.origin : ''}/train/gd/private/${roomId}`;
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+    <div className={`min-h-screen bg-slate-900 text-white p-4 md:p-8`}>
       <div className="max-w-4xl mx-auto">
         {/* Back Button */}
         <Link href="/train/gd" className="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6">
@@ -291,7 +294,7 @@ export default function PrivateGDPage() {
         )}
 
         {/* Invite Link Card */}
-        <div className="bg-slate-800/50 rounded-xl p-6 mb-6 border border-slate-700/50">
+        <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-xl p-6 mb-6 border ${isLight ? "border-slate-300" : "border-slate-700"}/50`}>
           <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
             <Share2 className="w-5 h-5 text-purple-400" /> Invite Link
           </h2>
@@ -315,7 +318,7 @@ export default function PrivateGDPage() {
 
         {/* Enter Room Button */}
         {!socket && (
-          <div className="bg-slate-800/50 rounded-xl p-6 mb-6 border border-slate-700/50">
+          <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-xl p-6 mb-6 border ${isLight ? "border-slate-300" : "border-slate-700"}/50`}>
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-4">Ready to Join?</h2>
               <p className="text-gray-400 mb-6">Copy the invite link above, share it with participants, then click below to enter the room.</p>
@@ -338,7 +341,7 @@ export default function PrivateGDPage() {
         {socket && (
           <>
             {/* Discussion Setup */}
-            <div className="bg-slate-800/50 rounded-xl p-6 mb-6 border border-slate-700/50">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-xl p-6 mb-6 border ${isLight ? "border-slate-300" : "border-slate-700"}/50`}>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <MessageSquare className="w-5 h-5 text-blue-400" /> Discussion Setup
               </h2>
@@ -375,7 +378,7 @@ export default function PrivateGDPage() {
             </div>
 
             {/* Participants */}
-            <div className="bg-slate-800/50 rounded-xl p-6 mb-6 border border-slate-700/50">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-xl p-6 mb-6 border ${isLight ? "border-slate-300" : "border-slate-700"}/50`}>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Users className="w-5 h-5 text-green-400" /> Participants ({participants.length})
               </h2>

@@ -1,4 +1,5 @@
 'use client';
+import { useTheme } from "@/contexts/ThemeContext";
 
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import AgoraRTC, {
@@ -94,6 +95,8 @@ const MediaPlayer = ({
   label?: string;
   role?: string;
 }) => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -108,10 +111,10 @@ const MediaPlayer = ({
   }, [audioTrack, local]);
 
   return (
-    <div className="relative w-full h-full min-h-[160px] bg-slate-800 rounded-xl overflow-hidden">
+    <div className={`relative w-full h-full min-h-[160px] ${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-xl overflow-hidden`}>
       <div ref={containerRef} id={`player-${uid}`} className="w-full h-full" />
       {!videoTrack && (
-        <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
+        <div className={`absolute inset-0 flex items-center justify-center ${isLight ? "bg-slate-100" : "bg-slate-800"}`}>
           <div className="w-16 h-16 rounded-full bg-indigo-500/20 flex items-center justify-center">
             <span className="text-2xl font-bold text-indigo-300">{label?.charAt(0) ?? '?'}</span>
           </div>
@@ -147,6 +150,8 @@ export default function LiveInterviewRoom({
   socket,
   onEnd,
 }: LiveInterviewRoomProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
   const [localAudio, setLocalAudio] = useState<IMicrophoneAudioTrack | null>(null);
@@ -420,7 +425,7 @@ export default function LiveInterviewRoom({
 
   if (loadingReport) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center gap-4 text-white">
+      <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} flex flex-col items-center justify-center gap-4 text-white`}>
         <Loader2 className="w-12 h-12 text-indigo-400 animate-spin" />
         <p className="text-lg font-semibold">Generating your AI report…</p>
         <p className="text-slate-400 text-sm">This takes a few seconds.</p>
@@ -430,7 +435,7 @@ export default function LiveInterviewRoom({
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-4 px-4 text-center">
+      <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} flex flex-col items-center justify-center text-white gap-4 px-4 text-center`}>
         <p className="text-red-400 text-lg font-semibold">Connection Error</p>
         <p className="text-slate-400 text-sm max-w-sm">{error}</p>
         <button onClick={() => onEnd()} className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-sm font-medium transition-colors">
@@ -446,7 +451,7 @@ export default function LiveInterviewRoom({
   return (
     <div className="min-h-screen bg-slate-950 text-white flex flex-col">
       {/* ── Header ────────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800">
+      <div className={`flex items-center justify-between px-4 py-3 ${isLight ? "bg-white" : "bg-slate-900"} border-b ${isLight ? "border-slate-200" : "border-slate-800"}`}>
         <div className="flex items-center gap-3">
           <div className={`w-2 h-2 rounded-full ${connected ? 'bg-green-400 animate-pulse' : 'bg-slate-600'}`} />
           <span className="text-sm font-semibold text-slate-200">{roomData.topic}</span>
@@ -520,7 +525,7 @@ export default function LiveInterviewRoom({
 
           {/* Placeholder when no remote */}
           {allRemote.length === 0 && (
-            <div className="flex flex-col items-center justify-center bg-slate-800/60 rounded-xl border border-slate-700 border-dashed gap-3 min-h-[160px]">
+            <div className={`flex flex-col items-center justify-center ${isLight ? "bg-slate-100" : "bg-slate-800"}/60 rounded-xl border ${isLight ? "border-slate-300" : "border-slate-700"} border-dashed gap-3 min-h-[160px]`}>
               <Loader2 size={24} className="text-slate-600 animate-spin" />
               <p className="text-slate-500 text-sm">Waiting for the other participant…</p>
             </div>
@@ -528,8 +533,8 @@ export default function LiveInterviewRoom({
         </div>
 
         {/* Transcript sidebar */}
-        <div className="w-72 flex flex-col bg-slate-900 border-l border-slate-800 shrink-0">
-          <div className="px-3 py-2 border-b border-slate-800 flex items-center gap-2">
+        <div className={`w-72 flex flex-col ${isLight ? "bg-white" : "bg-slate-900"} border-l ${isLight ? "border-slate-200" : "border-slate-800"} shrink-0`}>
+          <div className={`px-3 py-2 border-b ${isLight ? "border-slate-200" : "border-slate-800"} flex items-center gap-2`}>
             <ClipboardList size={13} className="text-slate-400" />
             <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Transcript</span>
           </div>
@@ -538,19 +543,19 @@ export default function LiveInterviewRoom({
               <p className="text-slate-600 text-xs text-center mt-6">No messages yet.<br />Type below to add notes or relay speech.</p>
             )}
             {transcript.map((line, i) => (
-              <div key={i} className="text-xs text-slate-300 bg-slate-800/60 px-2.5 py-1.5 rounded-lg">
+              <div key={i} className={`text-xs text-slate-300 ${isLight ? "bg-slate-100" : "bg-slate-800"}/60 px-2.5 py-1.5 rounded-lg`}>
                 {line}
               </div>
             ))}
           </div>
-          <div className="p-2 border-t border-slate-800 flex gap-1.5">
+          <div className={`p-2 border-t ${isLight ? "border-slate-200" : "border-slate-800"} flex gap-1.5`}>
             <input
               type="text"
               value={transcriptInput}
               onChange={(e) => setTranscriptInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && sendTranscript()}
               placeholder="Type & Enter…"
-              className="flex-1 bg-slate-800 border border-slate-700 text-white text-xs rounded-lg px-2.5 py-1.5 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
+              className={`flex-1 ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"} text-white text-xs rounded-lg px-2.5 py-1.5 placeholder-slate-600 focus:outline-none focus:border-indigo-500`}
             />
             <button
               onClick={sendTranscript}
@@ -563,7 +568,7 @@ export default function LiveInterviewRoom({
       </div>
 
       {/* ── Controls ──────────────────────────────────────────────────────── */}
-      <div className="bg-slate-900 border-t border-slate-800 px-6 py-3 flex items-center justify-center gap-3">
+      <div className={`${isLight ? "bg-white" : "bg-slate-900"} border-t ${isLight ? "border-slate-200" : "border-slate-800"} px-6 py-3 flex items-center justify-center gap-3`}>
         <button
           onClick={toggleMute}
           title={isMuted ? 'Unmute' : 'Mute'}

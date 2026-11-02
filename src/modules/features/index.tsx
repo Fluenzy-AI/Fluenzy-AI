@@ -1,9 +1,12 @@
 "use client";
+import { useTheme } from "@/contexts/ThemeContext";
 import React from "react";
 import { motion } from "framer-motion";
 import Card3D from "@/components/ui/Card3D";
 
 const Features = () => {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   return (
     <section id="features" className="relative overflow-hidden bg-gradient-to-b from-slate-900 to-slate-950 py-20 md:py-24">
       <div className="absolute left-1/4 top-20 h-[500px] w-[500px] rounded-full bg-blue-500/5 blur-[120px]" />
@@ -29,7 +32,7 @@ const Features = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
         >
           <Card3D depth={40} glowColor="rgba(6, 182, 212, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl bg-slate-900/80 p-2 group transition-all duration-300">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl ${isLight ? "bg-white" : "bg-slate-900"}/80 p-2 group transition-all duration-300`}>
               <img
                 src="/image/landingimg3.png"
                 alt="Technical Interview & Coding Evaluation"
@@ -40,7 +43,7 @@ const Features = () => {
           </Card3D>
 
           <Card3D depth={40} glowColor="rgba(168, 85, 247, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl bg-slate-900/80 p-2 group transition-all duration-300">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl ${isLight ? "bg-white" : "bg-slate-900"}/80 p-2 group transition-all duration-300`}>
               <img
                 src="/image/GDAgent.png"
                 alt="GD Agent & AI Group Discussion Room"
@@ -51,7 +54,7 @@ const Features = () => {
           </Card3D>
 
           <Card3D depth={40} glowColor="rgba(16, 185, 129, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl bg-slate-900/80 p-2 group transition-all duration-300">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl ${isLight ? "bg-white" : "bg-slate-900"}/80 p-2 group transition-all duration-300`}>
               <img
                 src="/image/ATS.png"
                 alt="ATS Resume Checker & Score Engine"
@@ -62,7 +65,7 @@ const Features = () => {
           </Card3D>
 
           <Card3D depth={40} glowColor="rgba(245, 158, 11, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl bg-slate-900/80 p-2 group transition-all duration-300">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl ${isLight ? "bg-white" : "bg-slate-900"}/80 p-2 group transition-all duration-300`}>
               <img
                 src="/image/AIJobSearch.png"
                 alt="AI Job Search & Auto Apply Matcher"
@@ -73,7 +76,7 @@ const Features = () => {
           </Card3D>
 
           <Card3D depth={40} glowColor="rgba(59, 130, 246, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl bg-slate-900/80 p-2 group transition-all duration-300">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl ${isLight ? "bg-white" : "bg-slate-900"}/80 p-2 group transition-all duration-300`}>
               <img
                 src="/image/landingimg4.png"
                 alt="Behavioral Analytics & Feedback"
@@ -84,7 +87,7 @@ const Features = () => {
           </Card3D>
 
           <Card3D depth={40} glowColor="rgba(236, 72, 153, 0.4)">
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl bg-slate-900/80 p-2 group transition-all duration-300">
+            <div className={`relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-xl ${isLight ? "bg-white" : "bg-slate-900"}/80 p-2 group transition-all duration-300`}>
               <img
                 src="/image/GD.png"
                 alt="Group Discussion Room Simulation"

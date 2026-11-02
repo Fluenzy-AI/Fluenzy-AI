@@ -1,4 +1,5 @@
 'use client';
+import { useTheme } from "@/contexts/ThemeContext";
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -14,6 +15,8 @@ import {
 } from 'lucide-react';
 
 export default function CreatePrivateRoomPage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const router = useRouter();
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +60,7 @@ export default function CreatePrivateRoomPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-white p-4 md:p-8">
+    <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} text-white p-4 md:p-8`}>
       <div className="max-w-2xl mx-auto">
         {/* Back Button */}
         <Link
@@ -84,7 +87,7 @@ export default function CreatePrivateRoomPage() {
         </div>
 
         {/* Generate Button Card */}
-        <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700/50 text-center">
+        <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-2xl p-8 border ${isLight ? "border-slate-300" : "border-slate-700"}/50 text-center`}>
           {/* Lock Icon */}
           <div className="w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-6">
             <Lock className="w-10 h-10 text-white" />
@@ -129,15 +132,15 @@ export default function CreatePrivateRoomPage() {
 
         {/* Info Section */}
         <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+          <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/30 rounded-xl p-4 text-center`}>
             <div className="text-purple-400 font-semibold mb-2">🔒 Secure</div>
             <p className="text-gray-500 text-sm">Unique, randomly generated room IDs that can't be guessed</p>
           </div>
-          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+          <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/30 rounded-xl p-4 text-center`}>
             <div className="text-pink-400 font-semibold mb-2">👥 Unlimited</div>
             <p className="text-gray-500 text-sm">No participant limits - invite as many as you want</p>
           </div>
-          <div className="bg-slate-800/30 rounded-xl p-4 text-center">
+          <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/30 rounded-xl p-4 text-center`}>
             <div className="text-blue-400 font-semibold mb-2">🎯 Flexible</div>
             <p className="text-gray-500 text-sm">Set your own topic and roles - or discuss freely</p>
           </div>
