@@ -458,7 +458,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             <div className="relative">
               <button
                 onClick={() => setShowThemeMenu(!showThemeMenu)}
-                className={`p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5 transition-colors`}
+                className={`p-2 rounded-lg ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} transition-colors`}
               >
                 {theme === 'dark' && <Moon size={18} />}
                 {theme === 'midnight' && <Sparkles size={18} />}
@@ -550,7 +550,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                           <Link
                             href="/train"
                             onClick={() => setShowProfileMenu(false)}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${currentTheme.textMuted} hover:${currentTheme.text} hover:bg-white/5 transition-colors`}
+                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm ${currentTheme.textMuted} hover:${currentTheme.text} ${isLight ? 'hover:bg-slate-100' : 'hover:bg-white/5'} transition-colors`}
                           >
                             <LayoutDashboard size={15} />
                             Go to App
@@ -591,7 +591,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
   // Don't render sidebar wrapper on pages without sidebar
   if (!showSidebar) {
     return (
-      <div className="min-h-screen flex flex-col bg-slate-950">
+      <div className={`min-h-screen flex flex-col ${isLight ? 'bg-slate-50' : 'bg-slate-950'}`}>
         <div className="flex flex-1">
           <main className="flex-1">
             {!hideNav && <Navbar showSidebar={false} userData={userData} />}
@@ -622,7 +622,7 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             <button
               type="button"
               onClick={() => setSectionsOpen(prev => ({ ...prev, [section.key]: !prev[section.key] }))}
-              className={`w-full flex items-center justify-between px-2.5 h-[26px] mb-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${st.sectionText} hover:text-white hover:bg-white/[0.02]`}
+              className={`w-full flex items-center justify-between px-2.5 h-[26px] mb-0.5 rounded text-[10px] font-bold uppercase tracking-wider transition-colors ${st.sectionText} ${isLight ? 'hover:text-slate-700 hover:bg-slate-100' : 'hover:text-white hover:bg-white/[0.02]'}`}
             >
               <span>{section.title}</span>
               <ChevronDown
