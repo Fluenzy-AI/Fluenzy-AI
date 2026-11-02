@@ -108,6 +108,7 @@ function AssessmentsContent({ isMobile }: { isMobile: boolean }) {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+  const isLight = resolvedTheme === 'parchment' || resolvedTheme === 'light';
 
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [stats, setStats] = useState<Stats>({
@@ -473,7 +474,7 @@ function AssessmentsContent({ isMobile }: { isMobile: boolean }) {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-white/5">
+                  <div className={`flex items-center justify-end gap-2 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 ${isLight ? 'border-slate-200' : 'border-white/5'}`}>
                     {canStart && (
                       <Button
                         onClick={() => handleStartAssessment(item.sessionToken)}
@@ -487,7 +488,7 @@ function AssessmentsContent({ isMobile }: { isMobile: boolean }) {
                       <Button
                         variant="outline"
                         onClick={() => handleViewResult(item.sessionToken)}
-                        className="h-10 px-5 rounded-full border-white/10 text-xs font-bold gap-2"
+                        className={`h-10 px-5 rounded-full text-xs font-bold gap-2 ${isLight ? 'border-slate-300' : 'border-white/10'}`}
                       >
                         <Eye className="w-3.5 h-3.5" />
                         <span>View Result</span>

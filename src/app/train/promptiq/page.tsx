@@ -701,7 +701,7 @@ export default function PromptIQPage() {
   const { status } = useSession();
   const router = useRouter();
   const { resolvedTheme } = useTheme();
-  const dark = resolvedTheme !== 'parchment';
+  const dark = resolvedTheme !== 'parchment' && resolvedTheme !== 'light';
 
   // Challenge state
   const [{ challenge, taskIdx }, setCurrentChallenge] = useState(() => getRandomChallenge());

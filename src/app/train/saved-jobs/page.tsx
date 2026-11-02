@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Bookmark, Trash2, ExternalLink, MapPin, Building2, Briefcase, Loader2 } from "lucide-react";
 
 interface SavedJob {
@@ -21,6 +22,8 @@ interface SavedJob {
 
 export default function SavedJobsPage() {
   const { data: session, status } = useSession();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [savedJobs, setSavedJobs] = useState<SavedJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [removingId, setRemovingId] = useState<string | null>(null);
@@ -69,8 +72,8 @@ export default function SavedJobsPage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="flex items-center gap-3 text-white">
+      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-gradient-to-b from-slate-50 to-white' : 'bg-gradient-to-b from-gray-900 via-gray-900 to-black'}`}>
+        <div className={`flex items-center gap-3 ${isLight ? 'text-slate-700' : 'text-white'}`}>
           <Loader2 className="w-6 h-6 animate-spin" />
           <span>Loading saved jobs...</span>
         </div>
@@ -80,37 +83,37 @@ export default function SavedJobsPage() {
 
   if (!session) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center text-white">
+      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-gradient-to-b from-slate-50 to-white' : 'bg-gradient-to-b from-gray-900 via-gray-900 to-black'}`}>
+        <div className={`text-center ${isLight ? 'text-slate-900' : 'text-white'}`}>
           <h2 className="text-xl font-semibold mb-2">Sign in to view saved jobs</h2>
-          <p className="text-gray-400">You need to be logged in to access your saved jobs.</p>
+          <p className={isLight ? 'text-slate-500' : 'text-gray-400'}>You need to be logged in to access your saved jobs.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 via-gray-900 to-black py-8 px-4">
+    <div className={`min-h-screen py-8 px-4 transition-colors ${isLight ? 'bg-gradient-to-b from-slate-50 to-white' : 'bg-gradient-to-b from-gray-900 via-gray-900 to-black'}`}>
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-2">
-            <Bookmark className="w-8 h-8 text-blue-400" />
-            <h1 className="text-3xl font-bold text-white">Saved Jobs</h1>
+            <Bookmark className={`w-8 h-8 ${isLight ? 'text-indigo-500' : 'text-blue-400'}`} />
+            <h1 className={`text-3xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Saved Jobs</h1>
           </div>
-          <p className="text-gray-400">
-            {savedJobs.length === 0 
-              ? "No saved jobs yet. Save jobs from AI Job Search!" 
+          <p className={isLight ? 'text-slate-500' : 'text-gray-400'}>
+            {savedJobs.length === 0
+              ? "No saved jobs yet. Save jobs from AI Job Search!"
               : `${savedJobs.length} job${savedJobs.length !== 1 ? 's' : ''} saved`}
           </p>
         </div>
 
         {/* Jobs List */}
         {savedJobs.length === 0 ? (
-          <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-12 text-center">
-            <Bookmark className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-white mb-2">No saved jobs</h3>
-            <p className="text-gray-400 mb-6">
+          <div className={`border rounded-2xl p-12 text-center ${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-gray-800/50 border-gray-700'}`}>
+            <Bookmark className={`w-16 h-16 mx-auto mb-4 ${isLight ? 'text-slate-300' : 'text-gray-600'}`} />
+            <h3 className={`text-xl font-semibold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>No saved jobs</h3>
+            <p className={`mb-6 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
               Start searching for jobs and save the ones you're interested in!
             </p>
             <a 
@@ -123,22 +126,22 @@ export default function SavedJobsPage() {
         ) : (
           <div className="space-y-4">
             {savedJobs.map((job, index) => (
-              <div 
+              <div
                 key={`${job.id}_${index}`}
-                className="bg-gray-800/60 border border-gray-700 rounded-xl p-6 hover:border-gray-600 transition-all"
+                className={`border rounded-xl p-6 transition-all ${isLight ? 'bg-white border-slate-200 hover:border-slate-300 hover:shadow-sm' : 'bg-gray-800/60 border-gray-700 hover:border-gray-600'}`}
               >
                 <div className="flex justify-between items-start gap-4">
                   {/* Job Info */}
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white mb-1">
+                    <h3 className={`text-lg font-semibold mb-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                       {job.title}
                     </h3>
-                    <div className="flex items-center gap-2 text-gray-400 mb-3">
+                    <div className={`flex items-center gap-2 mb-3 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
                       <Building2 className="w-4 h-4" />
                       <span>{job.company}</span>
                     </div>
                     
-                    <div className="flex flex-wrap gap-3 text-sm text-gray-400 mb-4">
+                    <div className={`flex flex-wrap gap-3 text-sm mb-4 ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
                       <div className="flex items-center gap-1">
                         <MapPin className="w-4 h-4" />
                         {job.location || "Remote"}
@@ -162,7 +165,7 @@ export default function SavedJobsPage() {
                     )}
 
                     {/* Saved Date */}
-                    <p className="text-xs text-gray-500">
+                    <p className={`text-xs ${isLight ? 'text-slate-400' : 'text-gray-500'}`}>
                       Saved on {new Date(job.savedAt).toLocaleDateString()}
                     </p>
                   </div>

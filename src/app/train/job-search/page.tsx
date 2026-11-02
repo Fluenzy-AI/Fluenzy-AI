@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useSession } from "next-auth/react";
 import { JobCard } from "@/components/jobs/JobCard";
 import { SessionUsageBar } from "@/components/jobs/SessionUsageBar";
@@ -67,6 +68,8 @@ interface SearchHistoryItem {
 
 export default function BrowseJobsPage() {
   const { data: session } = useSession();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   
   // Step 1: Job Position
   const [jobPosition, setJobPosition] = useState("");
@@ -569,7 +572,11 @@ export default function BrowseJobsPage() {
       />
 
       {/* Desktop View (>= 640px) */}
-      <div className="hidden sm:block min-h-screen bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900/20 p-6">
+      <div className={`hidden sm:block min-h-screen p-6 transition-colors ${
+          isLight
+            ? 'bg-gradient-to-br from-slate-50 via-white to-violet-50/40'
+            : 'bg-gradient-to-br from-gray-900 via-gray-900 to-blue-900/20'
+        }`}>
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Header */}
           <div className="text-center space-y-2">
@@ -577,26 +584,26 @@ export default function BrowseJobsPage() {
               <div className="p-3 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl">
                 <Sparkles className="h-8 w-8 text-white" />
               </div>
-              <h1 className="text-4xl font-bold text-white">
+              <h1 className={`text-4xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 AI Job Search
               </h1>
             </div>
-            <p className="text-gray-400 text-lg">
+            <p className={`text-lg ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
               Answer 3 simple questions to find your perfect job
             </p>
           </div>
           
           {/* Session Usage Bar */}
           {sessionInfo && (
-            <div className="bg-gray-800/50 rounded-xl p-4 border border-gray-700">
+            <div className={`rounded-xl p-4 border transition-colors ${isLight ? 'bg-white border-slate-200 shadow-sm' : 'bg-gray-800/50 border-gray-700'}`}>
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-gray-300">Search Sessions</span>
+                <span className={`text-sm font-medium ${isLight ? 'text-slate-700' : 'text-gray-300'}`}>Search Sessions</span>
                 <div className="flex items-center gap-3">
-                  <span className="text-sm text-gray-400">{sessionsUsed}/{sessionsLimit} used</span>
+                  <span className={`text-sm ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>{sessionsUsed}/{sessionsLimit} used</span>
                   <span className="text-xs px-2 py-1 rounded-full bg-blue-600/30 text-blue-300 capitalize">{plan} plan</span>
                 </div>
               </div>
-              <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div className={`h-2 rounded-full overflow-hidden ${isLight ? 'bg-slate-200' : 'bg-gray-700'}`}>
                 <div 
                   className={`h-full rounded-full transition-all duration-300 ${
                     sessionsLimit === 0 ? "bg-red-500" :
@@ -644,7 +651,7 @@ export default function BrowseJobsPage() {
             {searchHistory.length > 0 && (
               <button
                 onClick={() => setShowHistory(!showHistory)}
-                className="flex items-center gap-2 px-4 py-2 text-sm text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 rounded-lg border border-gray-700 transition-all"
+                className={`flex items-center gap-2 px-4 py-2 text-sm rounded-lg border transition-all ${isLight ? 'text-slate-500 hover:text-slate-900 bg-white hover:bg-slate-50 border-slate-200' : 'text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-700/50 border-gray-700'}`}
               >
                 <History className="w-4 h-4" />
                 Recent Searches ({searchHistory.length})
@@ -656,13 +663,13 @@ export default function BrowseJobsPage() {
           {showResumeUpload && (
             <div className="bg-purple-900/20 backdrop-blur-sm border border-purple-700/50 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-medium flex items-center gap-2">
+                <h3 className={`font-medium flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
                   Upload Resume for Better Matching
                 </h3>
-                <button onClick={() => setShowResumeUpload(false)} className="text-gray-400 hover:text-white">
+                <button onClick={() => setShowResumeUpload(false)} className={`transition-colors ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-gray-400 hover:text-white'}`}>
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -711,11 +718,11 @@ export default function BrowseJobsPage() {
           {showHistory && searchHistory.length > 0 && (
             <div className="bg-gray-800/80 backdrop-blur-sm border border-gray-700 rounded-xl p-4 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-white font-medium flex items-center gap-2">
+                <h3 className={`font-medium flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
                   <History className="w-4 h-4 text-blue-400" />
                   Recent Searches
                 </h3>
-                <button onClick={() => setShowHistory(false)} className="text-gray-400 hover:text-white">
+                <button onClick={() => setShowHistory(false)} className={`transition-colors ${isLight ? 'text-slate-400 hover:text-slate-700' : 'text-gray-400 hover:text-white'}`}>
                   <X className="w-4 h-4" />
                 </button>
               </div>
@@ -729,7 +736,7 @@ export default function BrowseJobsPage() {
                       onClick={() => runHistorySearch(item)}
                       className="flex-1 text-left"
                     >
-                      <p className="text-white text-sm font-medium">{item.query}</p>
+                      <p className={`text-sm font-medium ${isLight ? 'text-slate-900' : 'text-white'}`}>{item.query}</p>
                       <p className="text-gray-400 text-xs">
                         {item.location || "Any location"} • {item.resultsCount} results
                       </p>
@@ -760,7 +767,7 @@ export default function BrowseJobsPage() {
             <div className="space-y-6">
               {/* Step 1: Job Position */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-white font-medium">
+                <label className={`flex items-center gap-2 font-medium ${isLight ? 'text-slate-800' : 'text-white'}`}>
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-xs font-bold">1</span>
                   What job are you looking for?
                 </label>
@@ -771,7 +778,7 @@ export default function BrowseJobsPage() {
                     value={jobPosition}
                     onChange={(e) => setJobPosition(e.target.value)}
                     placeholder="e.g., Data Science Intern, Software Developer, Marketing Manager"
-                    className="w-full bg-gray-700/50 border border-gray-600 rounded-xl pl-12 pr-4 py-3.5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                    className={`w-full border rounded-xl pl-12 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isLight ? 'bg-white border-slate-200 text-slate-900 placeholder-slate-400' : 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400'}`}
                   />
                 </div>
                 {jobPosition && (
@@ -784,7 +791,7 @@ export default function BrowseJobsPage() {
 
               {/* Step 2: Job Type */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-white font-medium">
+                <label className={`flex items-center gap-2 font-medium ${isLight ? 'text-slate-800' : 'text-white'}`}>
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-xs font-bold">2</span>
                   What type of job? <span className="text-xs text-gray-400 font-normal">(select multiple)</span>
                 </label>
@@ -813,7 +820,7 @@ export default function BrowseJobsPage() {
 
               {/* Step 3: Location */}
               <div className="space-y-3">
-                <label className="flex items-center gap-2 text-white font-medium">
+                <label className={`flex items-center gap-2 font-medium ${isLight ? 'text-slate-800' : 'text-white'}`}>
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-600 text-xs font-bold">3</span>
                   Where do you want to work?
                 </label>
@@ -825,7 +832,7 @@ export default function BrowseJobsPage() {
                     <select
                       value={country}
                       onChange={(e) => setCountry(e.target.value)}
-                      className="w-full bg-gray-700/50 border border-gray-600 rounded-xl pl-12 pr-4 py-3.5 text-white appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                      className={`w-full border rounded-xl pl-12 pr-4 py-3.5 appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-gray-700/50 border-gray-600 text-white'}`}
                     >
                       <option value="">Select a country</option>
                       {COUNTRIES.map((c) => (
@@ -910,7 +917,7 @@ export default function BrowseJobsPage() {
 
               {/* Step 4: Experience Level */}
               <div className="space-y-2">
-                <label className="flex items-center gap-2 text-white font-medium">
+                <label className={`flex items-center gap-2 font-medium ${isLight ? 'text-slate-800' : 'text-white'}`}>
                   <span className="flex items-center justify-center w-6 h-6 rounded-full bg-gray-600 text-xs font-bold">4</span>
                   Experience Level <span className="text-xs text-gray-400 font-normal">(optional)</span>
                 </label>

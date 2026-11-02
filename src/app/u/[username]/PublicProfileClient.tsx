@@ -1,4 +1,5 @@
 "use client";
+import { useTheme } from "@/contexts/ThemeContext";
 
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -102,6 +103,8 @@ type PublicProfileClientProps = {
 };
 
 export default function PublicProfileClient({ initialData, username }: PublicProfileClientProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [data, setData] = useState<PublicProfileData | null>(initialData);
   const [loading, setLoading] = useState(!initialData);
   const [preview, setPreview] = useState<{ title: string; url: string } | null>(null);
@@ -188,7 +191,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="container mx-auto px-4 py-10 space-y-8 scroll-smooth">
-        <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/70 via-slate-900/40 to-slate-800/70 shadow-2xl shadow-slate-900/40">
+        <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/70 via-slate-900/40 to-slate-800/70 shadow-2xl shadow-slate-900/40`}>
           <CardContent className="p-6 md:p-10 flex flex-col gap-6">
             <div className="flex flex-col md:flex-row md:items-center gap-6">
               <div className="relative">
@@ -196,10 +199,10 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                   <img
                     src={profile.user.image}
                     alt={profile.user.name}
-                    className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover border border-slate-700/60 shadow-lg"
+                    className={`w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover border ${isLight ? "border-slate-300" : "border-slate-700"}/60 shadow-lg`}
                   />
                 ) : (
-                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-slate-800 border border-slate-700/60" />
+                  <div className={`w-24 h-24 md:w-28 md:h-28 rounded-2xl ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"}/60`} />
                 )}
               </div>
               <div className="flex-1">
@@ -230,14 +233,14 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                           href={item.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="rounded-full border border-slate-700/60 p-2 transition hover:border-slate-400 hover:text-white"
+                          className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"}/60 p-2 transition hover:border-slate-400 hover:text-white`}
                         >
                           <Icon className="h-4 w-4" />
                         </a>
                       ) : (
                         <span
                           key={item.key}
-                          className="rounded-full border border-slate-700/60 p-2 opacity-40"
+                          className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"}/60 p-2 opacity-40`}
                           aria-disabled
                         >
                           <Icon className="h-4 w-4" />
@@ -259,7 +262,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                   </a>
                 </Button>
                 {analyticsReportEnabled && (
-                  <Button variant="outline" className="w-full border-slate-700/60" asChild>
+                  <Button variant="outline" className={`w-full ${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                     <a
                       href={`/analytics/report?public=1&username=${encodeURIComponent(profile.username)}`}
                       target="_blank"
@@ -273,7 +276,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                 {primaryResume && (
                   <Button
                     variant="outline"
-                    className="w-full border-slate-700/60"
+                    className={`w-full ${isLight ? "border-slate-300" : "border-slate-700"}/60`}
                     onClick={() =>
                       setPreview({
                         title: "Resume Preview",
@@ -291,7 +294,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         </Card>
 
         {profile.bio && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg shadow-slate-900/40">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg shadow-slate-900/40`}>
             <CardHeader>
               <CardTitle>About</CardTitle>
             </CardHeader>
@@ -304,7 +307,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         )}
 
         {sections.skills.length > 0 && (
-          <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/60 to-slate-900/30 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/60 to-slate-900/30 shadow-lg`}>
             <CardHeader>
               <CardTitle>Skills</CardTitle>
             </CardHeader>
@@ -313,7 +316,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                 {skillsList.map((skill) => (
                   <span
                     key={skill.id}
-                    className="rounded-full bg-slate-800/80 px-3 py-1 text-xs text-slate-200 border border-slate-700/60"
+                    className={`rounded-full ${isLight ? "bg-slate-100" : "bg-slate-800"}/80 px-3 py-1 text-xs text-slate-200 border ${isLight ? "border-slate-300" : "border-slate-700"}/60`}
                   >
                     {skill.name}
                   </span>
@@ -324,7 +327,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         )}
 
         {sections.experiences.length > 0 && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
             <CardHeader>
               <CardTitle>Experience</CardTitle>
             </CardHeader>
@@ -332,7 +335,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
               {sections.experiences.map((exp) => (
                 <div
                   key={exp.id}
-                  className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4 transition hover:-translate-y-0.5 hover:border-slate-600/60"
+                  className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4 transition hover:-translate-y-0.5 hover:border-slate-600/60`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
@@ -360,7 +363,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         )}
 
         {sections.projects.length > 0 && (
-          <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/70 to-slate-900/30 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/70 to-slate-900/30 shadow-lg`}>
             <CardHeader>
               <CardTitle>Projects</CardTitle>
             </CardHeader>
@@ -382,7 +385,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                       {techStack.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {techStack.map((tech) => (
-                            <Badge key={tech} variant="secondary" className="bg-slate-800/80 text-slate-200">
+                            <Badge key={tech} variant="secondary" className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 text-slate-200`}>
                               {tech}
                             </Badge>
                           ))}
@@ -390,7 +393,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                       )}
                       <div className="mt-4 flex flex-wrap gap-2">
                         {project.projectUrl && (
-                          <Button size="sm" variant="outline" className="border-slate-700/60" asChild>
+                          <Button size="sm" variant="outline" className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                             <a href={project.projectUrl} target="_blank" rel="noreferrer">
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Live / Demo
@@ -398,7 +401,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                           </Button>
                         )}
                         {project.repoUrl && (
-                          <Button size="sm" variant="outline" className="border-slate-700/60" asChild>
+                          <Button size="sm" variant="outline" className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                             <a href={project.repoUrl} target="_blank" rel="noreferrer">
                               <Github className="mr-2 h-4 w-4" />
                               GitHub
@@ -415,13 +418,13 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         )}
 
         {sections.educations.length > 0 && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
             <CardHeader>
               <CardTitle>Education</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {sections.educations.map((edu) => (
-                <div key={edu.id} className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4">
+                <div key={edu.id} className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4`}>
                   <p className="text-base font-semibold text-white">{edu.degree}</p>
                   <p className="text-sm text-slate-400">{edu.institution}</p>
                   <p className="text-xs text-slate-500">
@@ -435,21 +438,21 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         )}
 
         {sections.certifications.length > 0 && (
-          <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/70 to-slate-900/40 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/70 to-slate-900/40 shadow-lg`}>
             <CardHeader>
               <CardTitle>Certifications</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 {sections.certifications.map((cert) => (
-                  <div key={cert.id} className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4">
+                  <div key={cert.id} className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4`}>
                     <p className="text-base font-semibold text-white">{cert.name}</p>
                     <p className="text-sm text-slate-400">{cert.issuer}</p>
                     <p className="text-xs text-slate-500">Issued {formatDate(cert.issueDate)}</p>
                     {cert.skills?.length ? (
                       <div className="mt-2 flex flex-wrap gap-2">
                         {cert.skills.map((skill) => (
-                          <Badge key={skill} variant="secondary" className="bg-slate-800/80 text-slate-200">
+                          <Badge key={skill} variant="secondary" className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 text-slate-200`}>
                             {skill}
                           </Badge>
                         ))}
@@ -460,7 +463,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-slate-700/60"
+                          className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`}
                           onClick={() =>
                             setPreview({
                               title: `${cert.name} Certificate`,
@@ -473,7 +476,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                         </Button>
                       )}
                       {cert.credentialUrl && (
-                        <Button size="sm" variant="outline" className="border-slate-700/60" asChild>
+                        <Button size="sm" variant="outline" className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                           <a href={cert.credentialUrl} target="_blank" rel="noreferrer">
                             <ExternalLink className="mr-2 h-4 w-4" />
                             View Credential
@@ -481,7 +484,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                         </Button>
                       )}
                       {cert.imageUrl && (
-                        <Button size="sm" variant="outline" className="border-slate-700/60" asChild>
+                        <Button size="sm" variant="outline" className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                           <a href={cert.imageUrl} download>
                             <Download className="mr-2 h-4 w-4" />
                             Download Certificate
@@ -497,14 +500,14 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         )}
 
         {sections.courses.length > 0 && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
             <CardHeader>
               <CardTitle>Courses</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 {sections.courses.map((course) => (
-                  <div key={course.id} className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4">
+                  <div key={course.id} className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4`}>
                     <p className="text-base font-semibold text-white">{course.name}</p>
                     <p className="text-sm text-slate-400">{course.platform}</p>
                     <p className="text-xs text-slate-500">Status: {course.status}</p>
@@ -516,7 +519,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
         )}
 
         {sections.languages.length > 0 && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
             <CardHeader>
               <CardTitle>Languages</CardTitle>
             </CardHeader>
@@ -525,7 +528,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
                 {sections.languages.map((lang) => (
                   <span
                     key={lang.id}
-                    className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-200"
+                    className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-3 py-1 text-xs text-slate-200`}
                   >
                     {lang.name} · {lang.proficiency}
                   </span>
@@ -535,7 +538,7 @@ export default function PublicProfileClient({ initialData, username }: PublicPro
           </Card>
         )}
 
-        <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+        <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
           <CardHeader>
             <CardTitle>Practice Consistency</CardTitle>
           </CardHeader>

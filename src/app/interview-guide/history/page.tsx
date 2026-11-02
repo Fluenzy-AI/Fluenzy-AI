@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -31,6 +32,8 @@ interface GuideHistoryItem {
 
 const InterviewGuideHistoryPage = () => {
   const { data: session, status } = useSession();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [guides, setGuides] = useState<GuideHistoryItem[]>([]);
@@ -155,9 +158,9 @@ const InterviewGuideHistoryPage = () => {
 
           {/* Guides List */}
           {guides.length === 0 ? (
-          <Card className="border-white/10 bg-slate-900/40 backdrop-blur-2xl rounded-[2rem]">
+          <Card className={`border-white/10 ${isLight ? "bg-white" : "bg-slate-900"}/40 backdrop-blur-2xl rounded-[2rem]`}>
               <CardContent className="py-16 text-center">
-                <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center mx-auto mb-6">
+                <div className={`w-20 h-20 rounded-full ${isLight ? "bg-slate-100" : "bg-slate-800"} flex items-center justify-center mx-auto mb-6`}>
                   <FileText size={40} className="text-slate-600" />
                 </div>
                 <h2 className="text-xl font-bold text-white mb-2">No Guides Yet</h2>
@@ -178,7 +181,7 @@ const InterviewGuideHistoryPage = () => {
               {guides.map((guide) => (
                 <Card
                   key={guide.id}
-                  className="border-white/5 bg-slate-900/40 backdrop-blur-xl hover:border-purple-500/30 transition-all duration-300 rounded-2xl group"
+                  className={`border-white/5 ${isLight ? "bg-white" : "bg-slate-900"}/40 backdrop-blur-xl hover:border-purple-500/30 transition-all duration-300 rounded-2xl group`}
                 >
                   <CardContent className="p-4">
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -258,13 +261,13 @@ const InterviewGuideHistoryPage = () => {
           {/* Stats Card */}
           {guides.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <Card className="border-white/5 bg-slate-900/40 rounded-2xl">
+              <Card className={`border-white/5 ${isLight ? "bg-white" : "bg-slate-900"}/40 rounded-2xl`}>
                 <CardContent className="p-3 text-center">
                   <p className="text-2xl font-black text-purple-400">{guides.length}</p>
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Total Guides</p>
                 </CardContent>
               </Card>
-              <Card className="border-white/5 bg-slate-900/40 rounded-2xl">
+              <Card className={`border-white/5 ${isLight ? "bg-white" : "bg-slate-900"}/40 rounded-2xl`}>
                 <CardContent className="p-3 text-center">
                   <p className="text-2xl font-black text-emerald-400">
                     {new Set(guides.map((g) => g.targetRole)).size}
@@ -272,7 +275,7 @@ const InterviewGuideHistoryPage = () => {
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Unique Roles</p>
                 </CardContent>
               </Card>
-              <Card className="border-white/5 bg-slate-900/40 rounded-2xl">
+              <Card className={`border-white/5 ${isLight ? "bg-white" : "bg-slate-900"}/40 rounded-2xl`}>
                 <CardContent className="p-3 text-center">
                   <p className="text-2xl font-black text-amber-400">
                     {guides.filter((g) => g.targetCompany).length}
@@ -280,7 +283,7 @@ const InterviewGuideHistoryPage = () => {
                   <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">Company-Specific</p>
                 </CardContent>
               </Card>
-              <Card className="border-white/5 bg-slate-900/40 rounded-2xl">
+              <Card className={`border-white/5 ${isLight ? "bg-white" : "bg-slate-900"}/40 rounded-2xl`}>
                 <CardContent className="p-3 text-center">
                   <p className="text-2xl font-black text-pink-400">
                     {guides.filter((g) => g.experienceLevel === "Fresher").length}

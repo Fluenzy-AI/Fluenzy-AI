@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -99,6 +100,10 @@ export default function ProfileClient() {
   const router = useRouter();
   const [profileData, setProfileData] = useState<ProfileData | null>(() => getCachedProfile());
   const [loading, setLoading] = useState<boolean>(() => getCachedProfile() === null);
+
+  // Theme detection
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
 
   // Mobile detection
   const [isMobile, setIsMobile] = useState(false);
@@ -671,11 +676,11 @@ export default function ProfileClient() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
+    <div className={`min-h-screen transition-colors ${isLight ? 'bg-gradient-to-b from-slate-50 to-white' : 'bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950'}`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-6xl space-y-8">
 
         {/* ─── Hero Profile Card ─── */}
-        <Card className="relative overflow-hidden border-slate-700/50 bg-slate-900/60">
+        <Card className={`relative overflow-hidden ${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
           {/* Gradient banner */}
           <div className="h-32 sm:h-40 bg-gradient-to-r from-purple-600/40 via-blue-600/40 to-pink-600/40 relative">
             <div className="absolute inset-0 bg-[url('/image/grid-pattern.svg')] opacity-10" />
@@ -691,7 +696,7 @@ export default function ProfileClient() {
             <div className="flex flex-col sm:flex-row sm:items-end gap-5">
               {/* Avatar */}
               <div className="relative group">
-                <div className="w-28 h-28 rounded-2xl border-4 border-slate-900 overflow-hidden bg-slate-800 shadow-xl">
+                <div className={`w-28 h-28 rounded-2xl border-4 overflow-hidden shadow-xl ${isLight ? 'border-slate-100 bg-slate-200' : 'border-slate-900 bg-slate-800'}`}>
                   {user.image ? (
                     <img src={user.image} alt={user.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                   ) : (
@@ -732,7 +737,7 @@ export default function ProfileClient() {
                   />
                 </label>
                 {avatarUploading && (
-                  <div className="absolute inset-0 rounded-2xl bg-slate-900/70 flex items-center justify-center">
+                  <div className={`absolute inset-0 rounded-2xl flex items-center justify-center ${isLight ? 'bg-white/70' : 'bg-slate-900/70'}`}>
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   </div>
                 )}
@@ -741,7 +746,7 @@ export default function ProfileClient() {
 
               {/* Name + Info */}
               <div className="flex-1 min-w-0">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">{user.name}</h1>
+                <h1 className={`text-2xl sm:text-3xl font-bold tracking-tight ${isLight ? 'text-slate-900' : 'text-white'}`}>{user.name}</h1>
                 {profile.headline && (
                   <p className="text-sm text-slate-400 mt-0.5">{profile.headline}</p>
                 )}
@@ -761,11 +766,11 @@ export default function ProfileClient() {
                 <div className="flex items-center gap-4 text-sm">
                   <div className="text-right">
                     <p className="text-xs text-slate-500">Usage</p>
-                    <p className="font-semibold text-white">{planInfo.currentUsage} / {planInfo.isUnlimited ? "∞" : planInfo.monthlyLimit}</p>
+                    <p className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{planInfo.currentUsage} / {planInfo.isUnlimited ? "∞" : planInfo.monthlyLimit}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-slate-500">Renewal</p>
-                    <p className="font-semibold text-white">{planInfo.renewalDate ? new Date(planInfo.renewalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "N/A"}</p>
+                    <p className={`font-semibold ${isLight ? 'text-slate-900' : 'text-white'}`}>{planInfo.renewalDate ? new Date(planInfo.renewalDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "N/A"}</p>
                   </div>
                 </div>
                 {/* Progress bar */}
@@ -797,7 +802,7 @@ export default function ProfileClient() {
           <div className="lg:col-span-3 space-y-6">
 
             {/* Basic Info Card */}
-            <Card className="border-slate-700/50 bg-slate-900/60">
+            <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2 justify-between">
                   <span className="flex items-center gap-2">
@@ -899,7 +904,7 @@ export default function ProfileClient() {
             </Card>
 
             {/* Social Links Card */}
-            <Card className="border-slate-700/50 bg-slate-900/60">
+            <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2 justify-between">
                   <span className="flex items-center gap-2">
@@ -961,7 +966,7 @@ export default function ProfileClient() {
             </Card>
 
             {/* Public Profile URL Card */}
-            <Card className="border-slate-700/50 bg-slate-900/60">
+            <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
               <CardHeader className="pb-4">
                 <CardTitle className="text-base flex items-center gap-2 justify-between">
                   <span className="flex items-center gap-2">
@@ -1060,7 +1065,7 @@ export default function ProfileClient() {
           <div className="lg:col-span-2 space-y-6">
 
             {/* Practice Activity Heatmap */}
-            <Card className="border-slate-700/50 bg-slate-900/60">
+            <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Activity className="h-4 w-4 text-emerald-400" /> Practice Activity
@@ -1103,7 +1108,7 @@ export default function ProfileClient() {
                 { label: "Certifications", count: sections.certifications.length, icon: Award, color: "text-purple-400", bg: "bg-purple-500/10" },
                 { label: "Resumes", count: resumes?.length || 0, icon: FileText, color: "text-emerald-400", bg: "bg-emerald-500/10" },
               ].map((stat) => (
-                <Card key={stat.label} className="border-slate-700/50 bg-slate-900/60">
+                <Card key={stat.label} className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
                   <CardContent className="p-4 flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-xl ${stat.bg} flex items-center justify-center shrink-0`}>
                       <stat.icon className={`h-5 w-5 ${stat.color}`} />
@@ -1118,7 +1123,7 @@ export default function ProfileClient() {
             </div>
 
             {/* Resume Card */}
-            <Card className="border-slate-700/50 bg-slate-900/60">
+            <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
               <CardHeader className="pb-3 flex flex-row items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <FileText className="h-4 w-4 text-rose-400" /> Resume
@@ -1188,7 +1193,7 @@ export default function ProfileClient() {
         <div className="grid lg:grid-cols-2 gap-6">
 
           {/* Skills */}
-          <Card className="border-slate-700/50 bg-slate-900/60">
+          <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Star className="h-4 w-4 text-amber-400" /> Skills
@@ -1218,7 +1223,7 @@ export default function ProfileClient() {
           </Card>
 
           {/* Experience */}
-          <Card className="border-slate-700/50 bg-slate-900/60">
+          <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Briefcase className="h-4 w-4 text-blue-400" /> Experience
@@ -1259,7 +1264,7 @@ export default function ProfileClient() {
           </Card>
 
           {/* Education */}
-          <Card className="border-slate-700/50 bg-slate-900/60">
+          <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <GraduationCap className="h-4 w-4 text-emerald-400" /> Education
@@ -1299,7 +1304,7 @@ export default function ProfileClient() {
           </Card>
 
           {/* Certifications */}
-          <Card className="border-slate-700/50 bg-slate-900/60">
+          <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Award className="h-4 w-4 text-purple-400" /> Certifications
@@ -1364,7 +1369,7 @@ export default function ProfileClient() {
           </Card>
 
           {/* Projects */}
-          <Card className="border-slate-700/50 bg-slate-900/60">
+          <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <FolderKanban className="h-4 w-4 text-cyan-400" /> Projects
@@ -1411,7 +1416,7 @@ export default function ProfileClient() {
           </Card>
 
           {/* Courses */}
-          <Card className="border-slate-700/50 bg-slate-900/60">
+          <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <BookOpen className="h-4 w-4 text-orange-400" /> Courses
@@ -1448,7 +1453,7 @@ export default function ProfileClient() {
           </Card>
 
           {/* Languages */}
-          <Card className="border-slate-700/50 bg-slate-900/60">
+          <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Languages className="h-4 w-4 text-teal-400" /> Languages
@@ -1478,7 +1483,7 @@ export default function ProfileClient() {
           </Card>
 
           {/* Billing & Payments */}
-          <Card className="border-slate-700/50 bg-slate-900/60">
+          <Card className={`${isLight ? 'border-slate-200 bg-white shadow-sm' : 'border-slate-700/50 bg-slate-900/60'}`}>
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-pink-400" /> Billing & Payments

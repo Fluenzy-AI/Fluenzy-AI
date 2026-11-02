@@ -7,6 +7,7 @@ import { io, Socket } from 'socket.io-client';
 import GDMatchingUI from '@/components/GDMatchingUI';
 import GDHistory from '@/components/GDHistory';
 import MobileliveGDPage from './MobileliveGDPage';
+import { useTheme } from '@/contexts/ThemeContext';
 
 // Dynamic import for LiveGDRoom to avoid SSR issues with Agora
 const LiveGDRoom = dynamic(() => import('@/components/LiveGDRoom'), {
@@ -72,6 +73,8 @@ function useMobileBreakpoint() {
 
 export default function LiveGDPage() {
   const { data: session, status: authStatus } = useSession();
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const isMobile = useMobileBreakpoint();
 
   // Generate stable user ID that persists during session (client-side only)
@@ -381,7 +384,7 @@ export default function LiveGDPage() {
 
   if (authStatus === 'loading') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-slate-50' : 'bg-slate-900'}`}>
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
@@ -389,10 +392,10 @@ export default function LiveGDPage() {
 
   if (authStatus === 'unauthenticated') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className={`min-h-screen flex items-center justify-center ${isLight ? 'bg-slate-50' : 'bg-slate-900'}`}>
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white mb-4">Sign In Required</h1>
-          <p className="text-gray-400 mb-6">Please sign in to join a Group Discussion</p>
+          <h1 className={`text-3xl font-bold mb-4 ${isLight ? 'text-slate-900' : 'text-white'}`}>Sign In Required</h1>
+          <p className={isLight ? 'text-slate-500 mb-6' : 'text-gray-400 mb-6'}>Please sign in to join a Group Discussion</p>
         </div>
       </div>
     );
@@ -419,19 +422,19 @@ export default function LiveGDPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className={`min-h-screen transition-colors ${isLight ? 'bg-slate-50' : 'bg-slate-900'}`}>
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-white mb-2">
+            <h1 className={`text-4xl font-bold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
               Live Group Discussion
             </h1>
-            <p className="text-gray-400">
+            <p className={isLight ? 'text-slate-500' : 'text-gray-400'}>
               Join random Omegle-style GD sessions with real participants
             </p>
             {/* Debug info */}
-            <div className="mt-2 text-xs text-gray-500">
+            <div className={`mt-2 text-xs ${isLight ? 'text-slate-400' : 'text-gray-500'}`}>
               User: {userId.slice(0, 20)}... | UID: {agoraUid}
             </div>
             {/* Socket status indicator */}
@@ -453,17 +456,17 @@ export default function LiveGDPage() {
           )}
 
           {/* GD Setup Card */}
-          <div className="bg-slate-800 rounded-xl p-6 mb-8">
-            <h2 className="text-xl font-semibold text-white mb-6">Configure Your GD Session</h2>
+          <div className={`rounded-xl p-6 mb-8 ${isLight ? 'bg-white border border-slate-200 shadow-sm' : 'bg-slate-800'}`}>
+            <h2 className={`text-xl font-semibold mb-6 ${isLight ? 'text-slate-900' : 'text-white'}`}>Configure Your GD Session</h2>
             
             <div className="mb-6">
               {/* Participant Count */}
               <div>
-                <label className="block text-gray-400 mb-2">Participants</label>
+                <label className={`block mb-2 ${isLight ? 'text-slate-600' : 'text-gray-400'}`}>Participants</label>
                 <select
                   value={participantCount}
                   onChange={(e) => setParticipantCount(parseInt(e.target.value))}
-                  className="w-full bg-slate-700 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isLight ? 'bg-slate-100 text-slate-900 border border-slate-200' : 'bg-slate-700 text-white'}`}
                 >
                   <option value={3}>3 Participants</option>
                   <option value={4}>4 Participants</option>
@@ -488,26 +491,26 @@ export default function LiveGDPage() {
 
           {/* Info Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-slate-800 rounded-xl p-6">
-              <div className="text-3xl mb-4">Random Matching</div>
-              <h3 className="text-lg font-semibold text-white mb-2">Random Matching</h3>
-              <p className="text-gray-400 text-sm">
+            <div className={`rounded-xl p-6 ${isLight ? 'bg-white border border-slate-200 shadow-sm' : 'bg-slate-800'}`}>
+              <div className="text-3xl mb-4">🎲</div>
+              <h3 className={`text-lg font-semibold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Random Matching</h3>
+              <p className={`text-sm ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
                 Get matched with real participants automatically based on your preferences.
               </p>
             </div>
 
-            <div className="bg-slate-800 rounded-xl p-6">
-              <div className="text-3xl mb-4">Dynamic Roles</div>
-              <h3 className="text-lg font-semibold text-white mb-2">Dynamic Roles</h3>
-              <p className="text-gray-400 text-sm">
+            <div className={`rounded-xl p-6 ${isLight ? 'bg-white border border-slate-200 shadow-sm' : 'bg-slate-800'}`}>
+              <div className="text-3xl mb-4">🎭</div>
+              <h3 className={`text-lg font-semibold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Dynamic Roles</h3>
+              <p className={`text-sm ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
                 Each session assigns unique roles like Initiator, Moderator, Analyzer, etc.
               </p>
             </div>
 
-            <div className="bg-slate-800 rounded-xl p-6">
-              <div className="text-3xl mb-4">Performance Report</div>
-              <h3 className="text-lg font-semibold text-white mb-2">Performance Report</h3>
-              <p className="text-gray-400 text-sm">
+            <div className={`rounded-xl p-6 ${isLight ? 'bg-white border border-slate-200 shadow-sm' : 'bg-slate-800'}`}>
+              <div className="text-3xl mb-4">📊</div>
+              <h3 className={`text-lg font-semibold mb-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>Performance Report</h3>
+              <p className={`text-sm ${isLight ? 'text-slate-500' : 'text-gray-400'}`}>
                 Get detailed analytics and feedback after each session.
               </p>
             </div>

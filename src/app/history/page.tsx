@@ -147,6 +147,7 @@ function SessionDetailModal({
 }) {
   const { resolvedTheme } = useTheme();
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
+  const isLight = resolvedTheme === 'parchment' || resolvedTheme === 'light';
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
@@ -249,7 +250,7 @@ function SessionDetailModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200 overflow-y-auto">
       <div className={`w-full max-w-4xl rounded-2xl md:rounded-3xl ${currentTheme.cardBg} border ${currentTheme.cardBorder} shadow-2xl overflow-hidden my-auto max-h-[90vh] flex flex-col`}>
         {/* Modal Header */}
-        <div className="px-5 md:px-6 py-4 border-b border-white/10 flex items-center justify-between gap-4 shrink-0 bg-slate-900/50">
+        <div className={`px-5 md:px-6 py-4 border-b flex items-center justify-between gap-4 shrink-0 ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-900/50'}`}>
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 flex items-center justify-center text-white flex-shrink-0 shadow-md">
               <Building2 size={20} />
@@ -280,7 +281,7 @@ function SessionDetailModal({
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all flex-shrink-0"
+            className={`w-9 h-9 rounded-xl border flex items-center justify-center transition-all flex-shrink-0 ${isLight ? 'bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-500 hover:text-slate-800' : 'bg-white/5 hover:bg-white/10 border-white/10 text-slate-400 hover:text-white'}`}
           >
             <X size={18} />
           </button>
@@ -290,15 +291,15 @@ function SessionDetailModal({
         <div className="p-5 md:p-6 space-y-6 overflow-y-auto flex-1">
           {/* Summary Stat Grid */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3.5 flex flex-col justify-between">
+            <div className={`rounded-xl border p-3.5 flex flex-col justify-between ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-950/40'}`}>
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Score</span>
               <div className="flex items-baseline gap-1 mt-1">
-                <span className="text-2xl font-black text-white">{scorePct}%</span>
+                <span className={`text-2xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{scorePct}%</span>
                 <span className="text-xs text-slate-500">/ 100</span>
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3.5 flex flex-col justify-between">
+            <div className={`rounded-xl border p-3.5 flex flex-col justify-between ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-950/40'}`}>
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Status</span>
               <div className="mt-1">
                 <Badge className={isPassed ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-rose-500/15 text-rose-400 border-rose-500/30"}>
@@ -307,14 +308,14 @@ function SessionDetailModal({
               </div>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3.5 flex flex-col justify-between">
+            <div className={`rounded-xl border p-3.5 flex flex-col justify-between ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-950/40'}`}>
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Module</span>
-              <span className="text-sm font-bold text-white mt-1 truncate">{session.module || "Interview AI"}</span>
+              <span className={`text-sm font-bold mt-1 truncate ${isLight ? 'text-slate-900' : 'text-white'}`}>{session.module || "Interview AI"}</span>
             </div>
 
-            <div className="rounded-xl border border-white/10 bg-slate-950/40 p-3.5 flex flex-col justify-between">
+            <div className={`rounded-xl border p-3.5 flex flex-col justify-between ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-950/40'}`}>
               <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Turn Prompts</span>
-              <span className="text-2xl font-black text-white mt-1">{transcripts.length || 2}</span>
+              <span className={`text-2xl font-black mt-1 ${isLight ? 'text-slate-900' : 'text-white'}`}>{transcripts.length || 2}</span>
             </div>
           </div>
 

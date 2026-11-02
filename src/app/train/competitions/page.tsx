@@ -145,8 +145,8 @@ function CompetitionsContent({ isMobile }: { isMobile: boolean }) {
   const router = useRouter();
   const { resolvedTheme } = useTheme();
   const currentTheme = themeConfig[resolvedTheme] || themeConfig.dark;
-  
-  const [activeTab, setActiveTab] = useState<'available' | 'registered' | 'history'>('available');
+  const isLight = resolvedTheme === 'parchment' || resolvedTheme === 'light';
+    const [activeTab, setActiveTab] = useState<'available' | 'registered' | 'history'>('available');
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [myCompetitions, setMyCompetitions] = useState<MyCompetition[]>([]);
   const [loading, setLoading] = useState(true);
@@ -243,7 +243,7 @@ function CompetitionsContent({ isMobile }: { isMobile: boolean }) {
           </div>
 
           {/* Quick Stats Pill */}
-          <div className="grid grid-cols-3 gap-3 bg-slate-950/40 p-3 rounded-2xl border border-white/10 text-center shrink-0">
+          <div className={`grid grid-cols-3 gap-3 p-3 rounded-2xl border text-center shrink-0 ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-950/40 border-white/10'}`}>
             <div>
               <p className="text-lg md:text-xl font-black text-emerald-400">{registeredCompetitions.length}</p>
               <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Active</p>
@@ -265,7 +265,7 @@ function CompetitionsContent({ isMobile }: { isMobile: boolean }) {
       {/* Main Tabs Container */}
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'available' | 'registered' | 'history')} className="space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <TabsList className="bg-slate-900/60 p-1 border border-white/10 rounded-xl">
+          <TabsList className={`p-1 border rounded-xl ${isLight ? 'bg-slate-100 border-slate-200' : 'bg-slate-900/60 border-white/10'}`}>
             <TabsTrigger value="available" className="gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg">
               <Sparkles className="h-3.5 w-3.5 text-cyan-400" />
               <span>Open Competitions</span>
@@ -298,15 +298,15 @@ function CompetitionsContent({ isMobile }: { isMobile: boolean }) {
                 placeholder="Search tournament..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9 text-xs rounded-xl bg-slate-900/60 border-white/10 text-white placeholder:text-slate-500 focus-visible:ring-blue-500/40"
+                className={`pl-9 h-9 text-xs rounded-xl focus-visible:ring-blue-500/40 ${isLight ? 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400' : 'bg-slate-900/60 border-white/10 text-white placeholder:text-slate-500'}`}
               />
             </div>
 
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="h-9 w-28 text-xs rounded-xl bg-slate-900/60 border-white/10 text-slate-200">
+              <SelectTrigger className={`h-9 w-28 text-xs rounded-xl ${isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-slate-900/60 border-white/10 text-slate-200'}`}>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-white/10 text-white">
+              <SelectContent className={isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-white/10 text-white'}>
                 <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="UPCOMING">Upcoming</SelectItem>
                 <SelectItem value="ACTIVE">Live</SelectItem>
@@ -315,10 +315,10 @@ function CompetitionsContent({ isMobile }: { isMobile: boolean }) {
             </Select>
 
             <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="h-9 w-32 text-xs rounded-xl bg-slate-900/60 border-white/10 text-slate-200">
+              <SelectTrigger className={`h-9 w-32 text-xs rounded-xl ${isLight ? 'bg-white border-slate-200 text-slate-700' : 'bg-slate-900/60 border-white/10 text-slate-200'}`}>
                 <SelectValue placeholder="Type" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 border-white/10 text-white">
+              <SelectContent className={isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-white/10 text-white'}>
                 <SelectItem value="all">All Types</SelectItem>
                 <SelectItem value="GD_BATTLE">GD Battle</SelectItem>
                 <SelectItem value="HR_INTERVIEW_BATTLE">HR Interview</SelectItem>
@@ -378,7 +378,7 @@ function CompetitionsContent({ isMobile }: { isMobile: boolean }) {
           )}
 
           {competitions.length === 0 && (
-            <div className="text-center py-12 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
+            <div className={`text-center py-12 rounded-2xl border p-6 ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-900/40'}`}>
               <Trophy className="h-12 w-12 mx-auto mb-3 text-slate-600" />
               <h3 className={`text-base font-bold ${currentTheme.text} mb-1`}>No Competitions Found</h3>
               <p className="text-xs text-slate-400">Check back soon for upcoming GD battles and HR placement leagues.</p>
@@ -389,7 +389,7 @@ function CompetitionsContent({ isMobile }: { isMobile: boolean }) {
         {/* My Competitions Tab */}
         <TabsContent value="registered" className="space-y-4">
           {registeredCompetitions.length === 0 ? (
-            <div className="text-center py-12 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
+            <div className={`text-center py-12 rounded-2xl border p-6 ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-900/40'}`}>
               <Trophy className="h-12 w-12 mx-auto mb-3 text-slate-600" />
               <h3 className={`text-base font-bold ${currentTheme.text} mb-1`}>No Active Registrations</h3>
               <p className="text-xs text-slate-400 mb-4">Register for an open competition to start competing and ranking on the leaderboard!</p>
@@ -439,7 +439,7 @@ function CompetitionsContent({ isMobile }: { isMobile: boolean }) {
         {/* History Tab */}
         <TabsContent value="history" className="space-y-4">
           {historyCompetitions.length === 0 ? (
-            <div className="text-center py-12 rounded-2xl border border-white/10 bg-slate-900/40 p-6">
+            <div className={`text-center py-12 rounded-2xl border p-6 ${isLight ? 'border-slate-200 bg-slate-50' : 'border-white/10 bg-slate-900/40'}`}>
               <Medal className="h-12 w-12 mx-auto mb-3 text-slate-600" />
               <h3 className={`text-base font-bold ${currentTheme.text} mb-1`}>No Completed Competitions</h3>
               <p className="text-xs text-slate-400">Complete tournaments to view your scores, certificates, and final leaderboard rank!</p>

@@ -738,7 +738,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
             <button
               type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`p-1 rounded-md transition-colors ${st.sectionText} hover:text-white hover:bg-white/10`}
+              className={`p-1 rounded-md transition-colors ${st.sectionText} ${
+                isLight
+                  ? 'hover:text-slate-800 hover:bg-slate-200'
+                  : 'hover:text-white hover:bg-white/10'
+              }`}
               title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
             >
               <ChevronRight size={14} className={`transition-transform duration-200 ${shouldExpandSidebar ? 'rotate-180' : ''}`} />
@@ -748,7 +752,11 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           {mobile && (
             <button
               onClick={() => setMobileMenuOpen(false)}
-              className={`p-1 rounded-md transition-colors ${st.sectionText} hover:text-white hover:bg-white/10`}
+              className={`p-1 rounded-md transition-colors ${st.sectionText} ${
+                isLight
+                  ? 'hover:text-slate-800 hover:bg-slate-200'
+                  : 'hover:text-white hover:bg-white/10'
+              }`}
             >
               <X size={18} />
             </button>
@@ -805,9 +813,13 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                     if (mobile) setMobileMenuOpen(false);
                     window.location.href = '/billing';
                   }}
-                  className="w-full flex items-center justify-center gap-1.5 h-8 rounded-lg bg-white/[0.06] hover:bg-white/10 border border-white/10 text-white font-semibold text-[11px] transition-all"
+                  className={`w-full flex items-center justify-center gap-1.5 h-8 rounded-lg text-xs font-semibold transition-all ${
+                    isLight
+                      ? 'bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700'
+                      : 'bg-white/[0.06] hover:bg-white/10 border border-white/10 text-white'
+                  }`}
                 >
-                  <CreditCard size={13} className="text-slate-300" />
+                  <CreditCard size={13} className={isLight ? 'text-slate-500' : 'text-slate-300'} />
                   <span>Manage Plan</span>
                 </button>
               )}
@@ -845,10 +857,12 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
                   window.location.href = '/billing';
                 }}
                 title={planInfo?.plan === 'Free' || !planInfo ? 'Upgrade Plan' : 'Manage Plan'}
-                className={`w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm ${
+                className={`w-8 h-8 rounded-lg flex items-center justify-center shadow-sm transition-all ${
                   planInfo?.plan === 'Free' || !planInfo
-                    ? 'bg-gradient-to-r from-orange-500 to-amber-600'
-                    : 'bg-white/10 border border-white/10'
+                    ? 'bg-gradient-to-r from-orange-500 to-amber-600 text-white'
+                    : isLight
+                      ? 'bg-slate-100 border border-slate-200 text-slate-600 hover:bg-slate-200'
+                      : 'bg-white/10 border border-white/10 text-white hover:bg-white/15'
                 }`}
               >
                 {planInfo?.plan === 'Free' || !planInfo ? <Crown size={14} /> : <CreditCard size={14} />}

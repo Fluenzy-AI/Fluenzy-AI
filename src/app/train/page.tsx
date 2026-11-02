@@ -732,7 +732,9 @@ export default function TrainPage() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => router.push('/train/company')}
-          className="relative overflow-hidden rounded-3xl shadow-2xl cursor-pointer group transition-all duration-300 border border-white/10 hover:scale-[1.015] hover:shadow-orange-500/10"
+          className={`relative overflow-hidden rounded-3xl shadow-2xl cursor-pointer group transition-all duration-300 hover:scale-[1.015] hover:shadow-orange-500/10 ${
+            isLightMode ? 'border border-slate-200/80' : 'border border-white/10'
+          }`}
         >
           <img
             src={companyBannerSrc}
@@ -747,7 +749,9 @@ export default function TrainPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
           onClick={() => router.push('/train/live-red-heart')}
-          className="relative overflow-hidden rounded-3xl shadow-2xl cursor-pointer group transition-all duration-300 border border-white/10 hover:scale-[1.015] hover:shadow-rose-500/10"
+          className={`relative overflow-hidden rounded-3xl shadow-2xl cursor-pointer group transition-all duration-300 hover:scale-[1.015] hover:shadow-rose-500/10 ${
+            isLightMode ? 'border border-slate-200/80' : 'border border-white/10'
+          }`}
         >
           <img
             src={heartsyncBannerSrc}

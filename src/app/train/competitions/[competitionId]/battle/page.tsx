@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { useTheme } from "@/contexts/ThemeContext";
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { CompetitionTimer } from '@/components/competitions';
@@ -120,6 +121,8 @@ const moduleLabels: Record<string, string> = {
 // ─── Battle Room Page ──────────────────────────────────────────────────────────
 
 export default function BattleRoomPage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
@@ -400,7 +403,7 @@ export default function BattleRoomPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+      <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} flex items-center justify-center`}>
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-violet-500 mx-auto mb-4" />
           <p className="text-slate-300">Loading battle room...</p>
@@ -413,8 +416,8 @@ export default function BattleRoomPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
-        <div className="bg-slate-800 rounded-xl p-8 max-w-md text-center">
+      <div className={`min-h-screen ${isLight ? "bg-white" : "bg-slate-900"} flex items-center justify-center p-4`}>
+        <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-xl p-8 max-w-md text-center`}>
           <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <h1 className="text-xl font-semibold text-white mb-2">Error</h1>
           <p className="text-slate-400 mb-6">{error}</p>
@@ -451,7 +454,7 @@ export default function BattleRoomPage() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-slate-800/80 backdrop-blur-xl rounded-2xl p-8 max-w-lg w-full border border-slate-700"
+          className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 backdrop-blur-xl rounded-2xl p-8 max-w-lg w-full border ${isLight ? "border-slate-300" : "border-slate-700"}`}
         >
           <div className="text-center">
             <div className="w-20 h-20 bg-violet-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -464,7 +467,7 @@ export default function BattleRoomPage() {
             </p>
             
             {/* Module Preview */}
-            <div className="bg-slate-900/50 rounded-xl p-4 mb-8">
+            <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-xl p-4 mb-8`}>
               <h3 className="text-sm font-medium text-slate-400 mb-3">Battle Modules</h3>
               <div className="flex justify-center flex-wrap gap-2">
                 {competition.modules.map((module, idx) => {
@@ -472,7 +475,7 @@ export default function BattleRoomPage() {
                   return (
                     <div
                       key={module.id}
-                      className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded-lg"
+                      className={`flex items-center gap-2 px-3 py-2 ${isLight ? "bg-slate-100" : "bg-slate-800"} rounded-lg`}
                     >
                       <Icon className="w-4 h-4 text-violet-400" />
                       <span className="text-sm text-slate-300">
@@ -485,7 +488,7 @@ export default function BattleRoomPage() {
             </div>
             
             {/* Rules */}
-            <div className="text-left bg-slate-900/50 rounded-xl p-4 mb-8">
+            <div className={`text-left ${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-xl p-4 mb-8`}>
               <h3 className="text-sm font-medium text-slate-400 mb-2">Rules</h3>
               <ul className="text-sm text-slate-300 space-y-1">
                 <li>• Complete each module within the time limit</li>
@@ -518,7 +521,7 @@ export default function BattleRoomPage() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-slate-800/80 backdrop-blur-xl rounded-2xl p-8 max-w-lg w-full border border-slate-700"
+          className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 backdrop-blur-xl rounded-2xl p-8 max-w-lg w-full border ${isLight ? "border-slate-300" : "border-slate-700"}`}
         >
           <div className="text-center">
             <div className="w-20 h-20 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -529,7 +532,7 @@ export default function BattleRoomPage() {
             <p className="text-slate-400 mb-8">You've completed all modules</p>
             
             {/* Score Display */}
-            <div className="bg-slate-900/50 rounded-xl p-6 mb-6">
+            <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-xl p-6 mb-6`}>
               <div className="text-5xl font-bold text-violet-400 mb-2">
                 {Math.round(totalScore)}%
               </div>
@@ -543,7 +546,7 @@ export default function BattleRoomPage() {
                 const Icon = moduleIcons[module.moduleType] || Target;
                 
                 return (
-                  <div key={module.id} className="bg-slate-900/50 rounded-lg p-3 flex items-center gap-3">
+                  <div key={module.id} className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-lg p-3 flex items-center gap-3`}>
                     <Icon className="w-5 h-5 text-violet-400" />
                     <span className="text-slate-300 flex-1 text-left text-sm">
                       {moduleLabels[module.moduleType]}
@@ -584,7 +587,7 @@ export default function BattleRoomPage() {
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-slate-800/80 backdrop-blur-xl rounded-2xl p-8 max-w-lg w-full border border-slate-700"
+          className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 backdrop-blur-xl rounded-2xl p-8 max-w-lg w-full border ${isLight ? "border-slate-300" : "border-slate-700"}`}
         >
           <div className="text-center mb-6">
             <div className={cn(
@@ -606,7 +609,7 @@ export default function BattleRoomPage() {
           </div>
           
           {/* Score */}
-          <div className="bg-slate-900/50 rounded-xl p-4 mb-6 text-center">
+          <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-xl p-4 mb-6 text-center`}>
             <div className="text-4xl font-bold text-violet-400 mb-1">
               {Math.round(score)}%
             </div>
@@ -616,7 +619,7 @@ export default function BattleRoomPage() {
           {/* Score Breakdown */}
           <div className="grid grid-cols-2 gap-3 mb-6">
             {currentFeedback.pronunciationScore !== undefined && (
-              <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-lg p-3 text-center`}>
                 <div className="text-lg font-semibold text-white">
                   {Math.round(currentFeedback.pronunciationScore)}%
                 </div>
@@ -624,7 +627,7 @@ export default function BattleRoomPage() {
               </div>
             )}
             {currentFeedback.fluencyScore !== undefined && (
-              <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-lg p-3 text-center`}>
                 <div className="text-lg font-semibold text-white">
                   {Math.round(currentFeedback.fluencyScore)}%
                 </div>
@@ -632,7 +635,7 @@ export default function BattleRoomPage() {
               </div>
             )}
             {currentFeedback.grammarScore !== undefined && (
-              <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-lg p-3 text-center`}>
                 <div className="text-lg font-semibold text-white">
                   {Math.round(currentFeedback.grammarScore)}%
                 </div>
@@ -640,7 +643,7 @@ export default function BattleRoomPage() {
               </div>
             )}
             {currentFeedback.confidenceScore !== undefined && (
-              <div className="bg-slate-900/50 rounded-lg p-3 text-center">
+              <div className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-lg p-3 text-center`}>
                 <div className="text-lg font-semibold text-white">
                   {Math.round(currentFeedback.confidenceScore)}%
                 </div>
@@ -696,7 +699,7 @@ export default function BattleRoomPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-violet-950">
       {/* Header */}
-      <div className="bg-slate-800/80 backdrop-blur-xl border-b border-slate-700 sticky top-0 z-10">
+      <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 backdrop-blur-xl border-b ${isLight ? "border-slate-300" : "border-slate-700"} sticky top-0 z-10`}>
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
@@ -739,7 +742,7 @@ export default function BattleRoomPage() {
             className="space-y-6"
           >
             {/* Module Instructions */}
-            <div className="bg-slate-800/80 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 backdrop-blur rounded-xl p-6 border ${isLight ? "border-slate-300" : "border-slate-700"}`}>
               <h2 className="text-lg font-semibold text-white mb-3">Instructions</h2>
               <p className="text-slate-300">
                 {currentModule?.moduleType === 'READ_ALOUD' && 
@@ -758,7 +761,7 @@ export default function BattleRoomPage() {
             </div>
             
             {/* Content Area - This would be dynamically loaded based on module config */}
-            <div className="bg-slate-800/80 backdrop-blur rounded-xl p-6 border border-slate-700 min-h-[200px]">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 backdrop-blur rounded-xl p-6 border ${isLight ? "border-slate-300" : "border-slate-700"} min-h-[200px]`}>
               <div className="text-center text-slate-400">
                 {/* Module-specific content would be rendered here based on config */}
                 <p className="text-lg text-slate-300">
@@ -769,7 +772,7 @@ export default function BattleRoomPage() {
             </div>
             
             {/* Response Area */}
-            <div className="bg-slate-800/80 backdrop-blur rounded-xl p-6 border border-slate-700">
+            <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 backdrop-blur rounded-xl p-6 border ${isLight ? "border-slate-300" : "border-slate-700"}`}>
               <h3 className="text-sm font-medium text-slate-400 mb-4">Your Response</h3>
               
               {/* Audio Response */}
@@ -799,7 +802,7 @@ export default function BattleRoomPage() {
                   value={textResponse}
                   onChange={(e) => setTextResponse(e.target.value)}
                   placeholder="Type your response here..."
-                  className="w-full h-32 bg-slate-900/50 border border-slate-600 rounded-lg p-4 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-violet-500 resize-none"
+                  className={`w-full h-32 ${isLight ? "bg-white" : "bg-slate-900"}/50 border border-slate-600 rounded-lg p-4 text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-violet-500 resize-none`}
                 />
               )}
               
@@ -815,7 +818,7 @@ export default function BattleRoomPage() {
       </div>
       
       {/* Footer Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-slate-800/95 backdrop-blur-xl border-t border-slate-700 p-4">
+      <div className={`fixed bottom-0 left-0 right-0 ${isLight ? "bg-slate-100" : "bg-slate-800"}/95 backdrop-blur-xl border-t ${isLight ? "border-slate-300" : "border-slate-700"} p-4`}>
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div className="text-sm text-slate-400">
             Weight: {currentModule?.weight}% of total score

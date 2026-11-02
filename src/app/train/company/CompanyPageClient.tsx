@@ -28,7 +28,7 @@ export default function CompanyPageClient() {
   }, []);
 
   if (!mounted) {
-    return <div className="min-h-screen bg-slate-900" />;
+    return <div className={`min-h-screen ${resolvedTheme === 'light' || resolvedTheme === 'parchment' ? 'bg-slate-50' : 'bg-slate-900'}`} />;
   }
 
   if (isMobile) {

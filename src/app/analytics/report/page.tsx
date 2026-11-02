@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useTheme } from "@/contexts/ThemeContext";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -560,6 +561,8 @@ function ProfessionalPrintReport({
 }
 
 function AnalyticsReportContent() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const searchParams = useSearchParams();
   const { data: session } = useSession();
   const [data, setData] = useState<AnalyticsResponse | null>(null);
@@ -640,7 +643,7 @@ function AnalyticsReportContent() {
           <iframe
             title="Public Analytics Dashboard"
             src={`/analytics?${params.toString()}`}
-            className="h-[calc(100vh-40px)] w-full rounded-xl border border-slate-800 bg-slate-950"
+            className={`h-[calc(100vh-40px)] w-full rounded-xl border ${isLight ? "border-slate-200" : "border-slate-800"} bg-slate-950`}
           />
         </div>
       </div>
@@ -660,7 +663,7 @@ function AnalyticsReportContent() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 print:bg-slate-950">
       <div className="mx-auto max-w-5xl px-6 py-10 print:max-w-none print:px-2 print:py-4">
-        <header className="flex items-center justify-between border-b border-slate-800 pb-6">
+        <header className={`flex items-center justify-between border-b ${isLight ? "border-slate-200" : "border-slate-800"} pb-6`}>
           <div className="flex items-center gap-3">
             <Image src="/image/final_logo-removebg-preview.png" alt="Fluenzy AI" width={36} height={36} />
             <div>
@@ -675,15 +678,15 @@ function AnalyticsReportContent() {
         </header>
 
         <section className="mt-4 grid gap-3 md:grid-cols-3 print:break-inside-avoid">
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-3">
+          <div className={`rounded-xl border ${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"} p-3`}>
             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Candidate</p>
             <p className="mt-1 text-sm font-semibold text-slate-100">{candidateName}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-3">
+          <div className={`rounded-xl border ${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"} p-3`}>
             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Primary Company</p>
             <p className="mt-1 text-sm font-semibold text-slate-100">{primaryCompany}</p>
           </div>
-          <div className="rounded-xl border border-slate-800 bg-slate-900 p-3">
+          <div className={`rounded-xl border ${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"} p-3`}>
             <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Report Date</p>
             <p className="mt-1 text-sm font-semibold text-slate-100">{reportDate}</p>
           </div>
@@ -691,7 +694,7 @@ function AnalyticsReportContent() {
 
         <section className="mt-8 grid gap-4 md:grid-cols-5 print:break-inside-avoid">
           {summaryCards.map((card) => (
-            <div key={card.label} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div key={card.label} className={`rounded-xl border ${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"} p-4`}>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{card.label}</p>
               <p className="mt-2 text-2xl font-semibold text-slate-100">{card.value}</p>
             </div>
@@ -706,7 +709,7 @@ function AnalyticsReportContent() {
             { label: "Technical Knowledge", value: Math.round(data.summary.technicalScore) },
             { label: "Avg Time per Question", value: `${data.summary.avgTimePerQuestion}m` },
           ].map((card) => (
-            <div key={card.label} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div key={card.label} className={`rounded-xl border ${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"} p-4`}>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{card.label}</p>
               <p className="mt-2 text-2xl font-semibold text-slate-100">{card.value}</p>
             </div>
@@ -719,9 +722,9 @@ function AnalyticsReportContent() {
             { label: "Grammar Accuracy", value: Math.round(data.summary.grammarScore), color: "#22c55e" },
             { label: "Vocabulary Usage", value: Math.round(data.summary.vocabularyScore), color: "#a855f7" },
           ].map((metric) => (
-            <div key={metric.label} className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+            <div key={metric.label} className={`rounded-xl border ${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"} p-4`}>
               <p className="text-xs uppercase tracking-[0.2em] text-slate-400">{metric.label}</p>
-              <div className="mt-3 h-2 rounded-full bg-slate-800">
+              <div className={`mt-3 h-2 rounded-full ${isLight ? "bg-slate-100" : "bg-slate-800"}`}>
                 <div className="h-2 rounded-full" style={{ width: `${metric.value}%`, background: metric.color }} />
               </div>
               <p className="mt-2 text-lg font-semibold text-slate-100">{metric.value}</p>
@@ -730,7 +733,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-10 grid gap-6 print:break-inside-avoid print-page-break">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Skill Progress Over Time</CardTitle>
             </CardHeader>
@@ -752,7 +755,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-8 grid gap-6 md:grid-cols-2 print:break-inside-avoid">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Confidence Timeline (Latest Session)</CardTitle>
             </CardHeader>
@@ -769,7 +772,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Session Confidence Trend</CardTitle>
             </CardHeader>
@@ -794,7 +797,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-8 grid gap-6 md:grid-cols-2 print:break-inside-avoid">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Communication Skills Snapshot</CardTitle>
             </CardHeader>
@@ -818,7 +821,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Accuracy vs Speed</CardTitle>
             </CardHeader>
@@ -837,7 +840,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-8 grid gap-6 md:grid-cols-2 print:break-inside-avoid print-page-break">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Filler Word Detector</CardTitle>
             </CardHeader>
@@ -857,7 +860,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Speaking Speed vs Ideal</CardTitle>
             </CardHeader>
@@ -865,7 +868,7 @@ function AnalyticsReportContent() {
               <div>Current pace: <strong>{data.advanced.communication.speakingWpm} WPM</strong></div>
               <div>Ideal range: {data.advanced.communication.idealWpmRange[0]}-{data.advanced.communication.idealWpmRange[1]} WPM</div>
               <div>Pace quality score: <strong>{data.advanced.communication.speakingPaceScore}</strong></div>
-              <div className="rounded-full bg-slate-800 h-2 relative">
+              <div className={`rounded-full ${isLight ? "bg-slate-100" : "bg-slate-800"} h-2 relative`}>
                 <div
                   className="absolute h-2 bg-emerald-500/50 rounded-full"
                   style={{ left: `${(data.advanced.communication.idealWpmRange[0] / 220) * 100}%`, width: `${((data.advanced.communication.idealWpmRange[1] - data.advanced.communication.idealWpmRange[0]) / 220) * 100}%` }}
@@ -885,13 +888,13 @@ function AnalyticsReportContent() {
             { label: "Tone Consistency", value: data.advanced.communication.toneConsistency },
             { label: "Hesitation Index", value: data.advanced.communication.hesitationIndex },
           ].map((metric) => (
-            <Card key={metric.label} className="border-slate-800 bg-slate-900">
+            <Card key={metric.label} className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
               <CardHeader>
                 <CardTitle>{metric.label}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-semibold">{Math.round(metric.value)}</div>
-                <div className="mt-3 h-2 rounded-full bg-slate-800">
+                <div className={`mt-3 h-2 rounded-full ${isLight ? "bg-slate-100" : "bg-slate-800"}`}>
                   <div className="h-2 rounded-full bg-slate-400" style={{ width: `${metric.value}%` }} />
                 </div>
               </CardContent>
@@ -900,7 +903,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-10 grid gap-6 md:grid-cols-2 print:break-inside-avoid print-page-break">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Practice Statistics</CardTitle>
             </CardHeader>
@@ -928,7 +931,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Practice Distribution by Module</CardTitle>
             </CardHeader>
@@ -945,7 +948,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>AI Insights & Recommendations</CardTitle>
             </CardHeader>
@@ -956,7 +959,7 @@ function AnalyticsReportContent() {
                   {(data.insights.commonGrammarIssues.length ? data.insights.commonGrammarIssues : ["Not enough data"])
                     .slice(0, 4)
                     .map((issue) => (
-                      <span key={issue} className="rounded-full border border-slate-700 px-3 py-1 text-xs">
+                      <span key={issue} className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-3 py-1 text-xs`}>
                         {issue}
                       </span>
                     ))}
@@ -978,7 +981,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-8 grid gap-6 md:grid-cols-2 print:break-inside-avoid">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Strengths & Focus Areas</CardTitle>
             </CardHeader>
@@ -987,7 +990,7 @@ function AnalyticsReportContent() {
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Most Practiced</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {data.insights.mostPracticed.map((item) => (
-                    <span key={item.name} className="rounded-full border border-slate-700 px-3 py-1 text-xs">
+                    <span key={item.name} className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-3 py-1 text-xs`}>
                       {item.name} ({item.count})
                     </span>
                   ))}
@@ -997,7 +1000,7 @@ function AnalyticsReportContent() {
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Least Practiced</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {data.insights.leastPracticed.map((item) => (
-                    <span key={item.name} className="rounded-full border border-slate-700 px-3 py-1 text-xs">
+                    <span key={item.name} className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-3 py-1 text-xs`}>
                       {item.name} ({item.count})
                     </span>
                   ))}
@@ -1007,7 +1010,7 @@ function AnalyticsReportContent() {
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Focus Areas</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {data.insights.focusAreas.map((area) => (
-                    <span key={area} className="rounded-full border border-slate-700 px-3 py-1 text-xs">
+                    <span key={area} className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-3 py-1 text-xs`}>
                       {area}
                     </span>
                   ))}
@@ -1016,7 +1019,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Overall Status & Summary</CardTitle>
             </CardHeader>
@@ -1030,7 +1033,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-8 grid gap-6 md:grid-cols-2 print:break-inside-avoid print-page-break">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Question Difficulty Distribution</CardTitle>
             </CardHeader>
@@ -1047,7 +1050,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Accuracy by Question Type</CardTitle>
             </CardHeader>
@@ -1069,7 +1072,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-8 grid gap-6 md:grid-cols-2 print:break-inside-avoid">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Company-wise Readiness</CardTitle>
             </CardHeader>
@@ -1086,7 +1089,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>Company Gaps & Recommendations</CardTitle>
             </CardHeader>
@@ -1096,7 +1099,7 @@ function AnalyticsReportContent() {
                   <p className="font-semibold">{company.name}</p>
                   <div className="mt-1 flex flex-wrap gap-2">
                     {company.missingSkills.map((skill) => (
-                      <span key={skill} className="rounded-full border border-slate-700 px-3 py-1 text-xs">
+                      <span key={skill} className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-3 py-1 text-xs`}>
                         {skill}
                       </span>
                     ))}
@@ -1111,7 +1114,7 @@ function AnalyticsReportContent() {
         </section>
 
         <section className="mt-8 grid gap-6 md:grid-cols-2 print:break-inside-avoid">
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>AI Coach Summary</CardTitle>
             </CardHeader>
@@ -1121,7 +1124,7 @@ function AnalyticsReportContent() {
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Strengths</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {data.advanced.coach.strengths.map((item) => (
-                    <span key={item} className="rounded-full border border-slate-700 px-3 py-1 text-xs">
+                    <span key={item} className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-3 py-1 text-xs`}>
                       {item}
                     </span>
                   ))}
@@ -1131,7 +1134,7 @@ function AnalyticsReportContent() {
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-400">Focus Areas</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   {data.advanced.coach.weaknesses.map((item) => (
-                    <span key={item} className="rounded-full border border-slate-700 px-3 py-1 text-xs">
+                    <span key={item} className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-3 py-1 text-xs`}>
                       {item}
                     </span>
                   ))}
@@ -1140,7 +1143,7 @@ function AnalyticsReportContent() {
             </CardContent>
           </Card>
 
-          <Card className="border-slate-800 bg-slate-900">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"} ${isLight ? "bg-white" : "bg-slate-900"}`}>
             <CardHeader>
               <CardTitle>7-Day Improvement Plan</CardTitle>
             </CardHeader>
@@ -1188,7 +1191,7 @@ function AnalyticsReportContent() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 shadow-lg transition hover:-translate-y-1 hover:shadow-purple-500/10">
+            <div className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 p-6 shadow-lg transition hover:-translate-y-1 hover:shadow-purple-500/10`}>
               <h3 className="text-lg font-semibold text-white">Connect communication to outcomes</h3>
               <p className="mt-3 text-sm leading-relaxed text-slate-300">
                 The report is also a practical tool for HR interview preparation. Communication scores, vocabulary usage, and filler word
@@ -1198,7 +1201,7 @@ function AnalyticsReportContent() {
                 practice with the AI Interview Coach.
               </p>
             </div>
-            <div className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-6 shadow-lg transition hover:-translate-y-1 hover:shadow-purple-500/10">
+            <div className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 p-6 shadow-lg transition hover:-translate-y-1 hover:shadow-purple-500/10`}>
               <h3 className="text-lg font-semibold text-white">Build a complete preparation plan</h3>
               <p className="mt-3 text-sm leading-relaxed text-slate-300">
                 If you want to build a complete preparation plan, combine this report with the feature modules and pricing options.
@@ -1212,10 +1215,10 @@ function AnalyticsReportContent() {
             <a href="/train" className="rounded-full bg-gradient-to-r from-purple-500 to-cyan-400 px-5 py-2.5 text-sm font-semibold text-slate-950">
               Start Training
             </a>
-            <a href="/features" className="rounded-full border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-400">
+            <a href="/features" className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-400`}>
               Explore Features
             </a>
-            <a href="/pricing" className="rounded-full border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-400">
+            <a href="/pricing" className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"} px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-slate-400`}>
               View Pricing
             </a>
           </div>
@@ -1241,7 +1244,7 @@ function AnalyticsReportContent() {
                   a: "Review after every few sessions to track improvements and set the next practice goal within the AI Interview Coach.",
                 },
               ].map((item) => (
-                <details key={item.q} className="rounded-2xl border border-slate-800/70 bg-slate-900/60 p-5">
+                <details key={item.q} className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 p-5`}>
                   <summary className="cursor-pointer text-sm font-semibold text-slate-100">{item.q}</summary>
                   <p className="mt-3 text-sm leading-relaxed text-slate-300">{item.a}</p>
                 </details>
@@ -1360,6 +1363,8 @@ function AnalyticsReportContent() {
 }
 
 export default function AnalyticsReportPage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   return (
     <Suspense fallback={<div className="min-h-screen bg-slate-950" /> }>
       <AnalyticsReportContent />
