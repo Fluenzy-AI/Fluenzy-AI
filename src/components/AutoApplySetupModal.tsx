@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Check, ChevronRight, ChevronLeft, User, Briefcase, MapPin, Zap,
@@ -55,6 +56,8 @@ export default function AutoApplySetupModal({
   onComplete,
   plan,
 }: AutoApplySetupModalProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -231,10 +234,10 @@ export default function AutoApplySetupModal({
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col"
+        className={`${isLight ? "bg-white" : "bg-slate-900"} border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-700">
+        <div className={`flex items-center justify-between p-6 border-b ${isLight ? "border-slate-300" : "border-slate-700"}`}>
           <div>
             <h2 className="text-xl font-bold text-white">Set Up Auto-Apply</h2>
             <p className="text-sm text-slate-400 mt-1">One-time setup to enable automatic job applications</p>
@@ -245,7 +248,7 @@ export default function AutoApplySetupModal({
         </div>
 
         {/* Step Indicators */}
-        <div className="px-6 py-4 border-b border-slate-700/50">
+        <div className={`px-6 py-4 border-b ${isLight ? "border-slate-300" : "border-slate-700"}/50`}>
           <div className="flex items-center justify-between">
             {STEPS.map((s, idx) => {
               const Icon = s.icon;
@@ -294,7 +297,7 @@ export default function AutoApplySetupModal({
                       We&apos;ll use your profile information to auto-apply to jobs. Please ensure your profile is complete.
                     </p>
 
-                    <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 space-y-3">
+                    <div className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-xl p-4 space-y-3`}>
                       <ProfileField icon={User} label="Full Name" value={profile?.name} required />
                       <ProfileField icon={Mail} label="Email" value={profile?.email} required />
                       <ProfileField icon={Phone} label="Phone" value={profile?.phone} required />
@@ -364,7 +367,7 @@ export default function AutoApplySetupModal({
                           onChange={(e) => setRoleInput(e.target.value)}
                           onKeyDown={(e) => e.key === "Enter" && addRole(roleInput)}
                           placeholder="Type a role and press Enter"
-                          className="flex-1 px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                          className={`flex-1 px-4 py-2 ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500`}
                         />
                       </div>
                     </div>
@@ -376,7 +379,7 @@ export default function AutoApplySetupModal({
                           <button
                             key={role}
                             onClick={() => addRole(role)}
-                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded text-xs transition"
+                            className={`px-2 py-1 ${isLight ? "bg-slate-100" : "bg-slate-800"} hover:bg-slate-700 text-slate-400 hover:text-white rounded text-xs transition`}
                           >
                             + {role}
                           </button>
@@ -415,7 +418,7 @@ export default function AutoApplySetupModal({
                           <button
                             key={loc}
                             onClick={() => addLocation(loc)}
-                            className="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded text-xs transition"
+                            className={`px-2 py-1 ${isLight ? "bg-slate-100" : "bg-slate-800"} hover:bg-slate-700 text-slate-400 hover:text-white rounded text-xs transition`}
                           >
                             + {loc}
                           </button>
@@ -453,7 +456,7 @@ export default function AutoApplySetupModal({
                         value={minSalary}
                         onChange={(e) => setMinSalary(e.target.value)}
                         placeholder="e.g. 25000"
-                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                        className={`w-full px-4 py-2 ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500`}
                       />
                       <p className="text-xs text-slate-500 mt-1">Leave blank to apply to all salary ranges</p>
                     </div>
@@ -481,7 +484,7 @@ export default function AutoApplySetupModal({
                         onChange={(e) => setExcludeInput(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && addExcludedCompany(excludeInput)}
                         placeholder="Type company name and press Enter"
-                        className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500"
+                        className={`w-full px-4 py-2 ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-lg text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500`}
                       />
                     </div>
                   </div>
@@ -490,7 +493,7 @@ export default function AutoApplySetupModal({
                 {/* Step 4: Enable Auto-Apply */}
                 {step === 4 && (
                   <div className="space-y-6">
-                    <div className="flex items-center justify-between p-4 bg-slate-800/50 border border-slate-700 rounded-xl">
+                    <div className={`flex items-center justify-between p-4 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-xl`}>
                       <div>
                         <p className="text-white font-medium">Enable Auto-Apply</p>
                         <p className="text-sm text-slate-400">Start automatically applying to matching jobs</p>
@@ -509,7 +512,7 @@ export default function AutoApplySetupModal({
                       </button>
                     </div>
 
-                    <div className="p-4 bg-slate-800/30 border border-slate-700/50 rounded-xl text-sm text-slate-400">
+                    <div className={`p-4 ${isLight ? "bg-slate-100" : "bg-slate-800"}/30 border ${isLight ? "border-slate-300" : "border-slate-700"}/50 rounded-xl text-sm text-slate-400`}>
                       <p>
                         By enabling Auto-Apply, Fluenzy AI will automatically submit your job application
                         (using your saved profile, resume, and the above preferences) whenever a company
@@ -532,7 +535,7 @@ export default function AutoApplySetupModal({
                     </div>
 
                     {/* Summary */}
-                    <div className="p-4 bg-slate-800/50 border border-slate-700 rounded-xl">
+                    <div className={`p-4 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-xl`}>
                       <p className="text-white font-medium mb-3">Summary</p>
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -569,7 +572,7 @@ export default function AutoApplySetupModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t border-slate-700">
+        <div className={`flex items-center justify-between p-6 border-t ${isLight ? "border-slate-300" : "border-slate-700"}`}>
           <button
             onClick={step === 1 ? onClose : handleBack}
             className="flex items-center gap-2 px-4 py-2 text-slate-400 hover:text-white transition"

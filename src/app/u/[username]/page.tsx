@@ -4,6 +4,7 @@
 export const dynamic = "force-dynamic";
 
 import { useEffect, useMemo, useState } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -89,6 +90,8 @@ const categorizeSkill = (name: string) => {
 };
 
 export default function PublicProfilePage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const params = useParams();
   const username = params.username as string;
   const [data, setData] = useState<PublicProfileData | null>(null);
@@ -168,7 +171,7 @@ export default function PublicProfilePage() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <div className="container mx-auto px-4 py-10 space-y-8 scroll-smooth">
-        <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/70 via-slate-900/40 to-slate-800/70 shadow-2xl shadow-slate-900/40">
+        <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/70 via-slate-900/40 to-slate-800/70 shadow-2xl shadow-slate-900/40`}>
           <CardContent className="p-6 md:p-10 flex flex-col gap-6">
             <div className="flex flex-col md:flex-row md:items-center gap-6">
               <div className="relative">
@@ -176,10 +179,10 @@ export default function PublicProfilePage() {
                   <img
                     src={profile.user.image}
                     alt={profile.user.name}
-                    className="w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover border border-slate-700/60 shadow-lg"
+                    className={`w-24 h-24 md:w-28 md:h-28 rounded-2xl object-cover border ${isLight ? "border-slate-300" : "border-slate-700"}/60 shadow-lg`}
                   />
                 ) : (
-                  <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl bg-slate-800 border border-slate-700/60" />
+                  <div className={`w-24 h-24 md:w-28 md:h-28 rounded-2xl ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"}/60`} />
                 )}
               </div>
               <div className="flex-1">
@@ -210,14 +213,14 @@ export default function PublicProfilePage() {
                           href={item.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="rounded-full border border-slate-700/60 p-2 transition hover:border-slate-400 hover:text-white"
+                          className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"}/60 p-2 transition hover:border-slate-400 hover:text-white`}
                         >
                           <Icon className="h-4 w-4" />
                         </a>
                       ) : (
                         <span
                           key={item.key}
-                          className="rounded-full border border-slate-700/60 p-2 opacity-40"
+                          className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"}/60 p-2 opacity-40`}
                           aria-disabled
                         >
                           <Icon className="h-4 w-4" />
@@ -239,7 +242,7 @@ export default function PublicProfilePage() {
                   </a>
                 </Button>
                 {analyticsReportEnabled && (
-                  <Button variant="outline" className="w-full border-slate-700/60" asChild>
+                  <Button variant="outline" className={`w-full ${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                     <a
                       href={`/analytics/report?public=1&username=${encodeURIComponent(profile.username)}`}
                       target="_blank"
@@ -253,7 +256,7 @@ export default function PublicProfilePage() {
                 {primaryResume && (
                   <Button
                     variant="outline"
-                    className="w-full border-slate-700/60"
+                    className={`w-full ${isLight ? "border-slate-300" : "border-slate-700"}/60`}
                     onClick={() =>
                       setPreview({
                         title: "Resume Preview",
@@ -271,7 +274,7 @@ export default function PublicProfilePage() {
         </Card>
 
         {profile.bio && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg shadow-slate-900/40">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg shadow-slate-900/40`}>
             <CardHeader>
               <CardTitle>About</CardTitle>
             </CardHeader>
@@ -284,7 +287,7 @@ export default function PublicProfilePage() {
         )}
 
         {sections.skills.length > 0 && (
-          <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/60 to-slate-900/30 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/60 to-slate-900/30 shadow-lg`}>
             <CardHeader>
               <CardTitle>Skills</CardTitle>
             </CardHeader>
@@ -293,7 +296,7 @@ export default function PublicProfilePage() {
                 {skillsList.map((skill) => (
                   <span
                     key={skill.id}
-                    className="rounded-full bg-slate-800/80 px-3 py-1 text-xs text-slate-200 border border-slate-700/60"
+                    className={`rounded-full ${isLight ? "bg-slate-100" : "bg-slate-800"}/80 px-3 py-1 text-xs text-slate-200 border ${isLight ? "border-slate-300" : "border-slate-700"}/60`}
                   >
                     {skill.name}
                   </span>
@@ -304,7 +307,7 @@ export default function PublicProfilePage() {
         )}
 
         {sections.experiences.length > 0 && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
             <CardHeader>
               <CardTitle>Experience</CardTitle>
             </CardHeader>
@@ -312,7 +315,7 @@ export default function PublicProfilePage() {
               {sections.experiences.map((exp) => (
                 <div
                   key={exp.id}
-                  className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4 transition hover:-translate-y-0.5 hover:border-slate-600/60"
+                  className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4 transition hover:-translate-y-0.5 hover:border-slate-600/60`}
                 >
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
@@ -340,7 +343,7 @@ export default function PublicProfilePage() {
         )}
 
         {sections.projects.length > 0 && (
-          <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/70 to-slate-900/30 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/70 to-slate-900/30 shadow-lg`}>
             <CardHeader>
               <CardTitle>Projects</CardTitle>
             </CardHeader>
@@ -362,7 +365,7 @@ export default function PublicProfilePage() {
                       {techStack.length > 0 && (
                         <div className="mt-3 flex flex-wrap gap-2">
                           {techStack.map((tech) => (
-                            <Badge key={tech} variant="secondary" className="bg-slate-800/80 text-slate-200">
+                            <Badge key={tech} variant="secondary" className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/80 text-slate-200`}>
                               {tech}
                             </Badge>
                           ))}
@@ -370,7 +373,7 @@ export default function PublicProfilePage() {
                       )}
                       <div className="mt-4 flex flex-wrap gap-2">
                         {project.projectUrl && (
-                          <Button size="sm" variant="outline" className="border-slate-700/60" asChild>
+                          <Button size="sm" variant="outline" className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                             <a href={project.projectUrl} target="_blank" rel="noreferrer">
                               <ExternalLink className="mr-2 h-4 w-4" />
                               Live / Demo
@@ -378,7 +381,7 @@ export default function PublicProfilePage() {
                           </Button>
                         )}
                         {project.repoUrl && (
-                          <Button size="sm" variant="outline" className="border-slate-700/60" asChild>
+                          <Button size="sm" variant="outline" className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                             <a href={project.repoUrl} target="_blank" rel="noreferrer">
                               <Github className="mr-2 h-4 w-4" />
                               GitHub
@@ -395,13 +398,13 @@ export default function PublicProfilePage() {
         )}
 
         {sections.educations.length > 0 && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
             <CardHeader>
               <CardTitle>Education</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {sections.educations.map((edu) => (
-                <div key={edu.id} className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4">
+                <div key={edu.id} className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4`}>
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
                     <div>
                       <p className="text-base font-semibold text-white">{edu.degree}</p>
@@ -419,29 +422,29 @@ export default function PublicProfilePage() {
         )}
 
         {sections.certifications.length > 0 && (
-          <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/70 to-slate-900/30 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/70 to-slate-900/30 shadow-lg`}>
             <CardHeader>
               <CardTitle>Certifications</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 {sections.certifications.map((cert) => (
-                  <div key={cert.id} className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4">
+                  <div key={cert.id} className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4`}>
                     <div className="flex items-start gap-4">
                       {cert.imageUrl ? (
                         /\.pdf($|\?)/i.test(cert.imageUrl) ? (
-                          <div className="h-16 w-16 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-200 font-semibold">
+                          <div className={`h-16 w-16 rounded-xl ${isLight ? "bg-slate-100" : "bg-slate-800"}/80 border ${isLight ? "border-slate-300" : "border-slate-700"}/60 flex items-center justify-center text-slate-200 font-semibold`}>
                             PDF
                           </div>
                         ) : (
                           <img
                             src={cert.imageUrl}
                             alt={cert.name}
-                            className="h-16 w-16 rounded-xl object-cover border border-slate-700/60"
+                            className={`h-16 w-16 rounded-xl object-cover border ${isLight ? "border-slate-300" : "border-slate-700"}/60`}
                           />
                         )
                       ) : (
-                        <div className="h-16 w-16 rounded-xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center text-slate-200 font-semibold">
+                        <div className={`h-16 w-16 rounded-xl ${isLight ? "bg-slate-100" : "bg-slate-800"}/80 border ${isLight ? "border-slate-300" : "border-slate-700"}/60 flex items-center justify-center text-slate-200 font-semibold`}>
                           {cert.issuer?.slice(0, 2)?.toUpperCase() || "CR"}
                         </div>
                       )}
@@ -453,7 +456,7 @@ export default function PublicProfilePage() {
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
                       {cert.credentialUrl && (
-                        <Button size="sm" variant="outline" className="border-slate-700/60" asChild>
+                        <Button size="sm" variant="outline" className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                           <a href={cert.credentialUrl} target="_blank" rel="noreferrer">
                             Verify
                           </a>
@@ -463,14 +466,14 @@ export default function PublicProfilePage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          className="border-slate-700/60"
+                          className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`}
                           onClick={() => setPreview({ title: cert.name, url: cert.imageUrl || cert.credentialUrl || "" })}
                         >
                           Preview Certificate
                         </Button>
                       )}
                       {(cert.imageUrl || cert.credentialUrl) && (
-                        <Button size="sm" variant="outline" className="border-slate-700/60" asChild>
+                        <Button size="sm" variant="outline" className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`} asChild>
                           <a href={cert.imageUrl || cert.credentialUrl || "#"} target="_blank" rel="noreferrer" download>
                             Download
                           </a>
@@ -485,14 +488,14 @@ export default function PublicProfilePage() {
         )}
 
         {sections.courses.length > 0 && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
             <CardHeader>
               <CardTitle>Courses</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid gap-3 md:grid-cols-2">
                 {sections.courses.map((course) => (
-                  <div key={course.id} className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4">
+                  <div key={course.id} className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4`}>
                     <p className="text-base font-semibold text-white">{course.name}</p>
                     <p className="text-sm text-slate-400">{course.platform}</p>
                     <p className="text-xs text-emerald-300 mt-2">{course.status}</p>
@@ -504,13 +507,13 @@ export default function PublicProfilePage() {
         )}
 
         {sections.languages.length > 0 && (
-          <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
             <CardHeader>
               <CardTitle>Languages</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-wrap gap-3">
               {sections.languages.map((language) => (
-                <div key={language.id} className="rounded-full border border-slate-700/60 bg-slate-800/70 px-4 py-2 text-sm">
+                <div key={language.id} className={`rounded-full border ${isLight ? "border-slate-300" : "border-slate-700"}/60 ${isLight ? "bg-slate-100" : "bg-slate-800"}/70 px-4 py-2 text-sm`}>
                   <span className="text-white font-medium">{language.name}</span>
                   <span className="text-slate-400"> • {language.proficiency}</span>
                 </div>
@@ -520,7 +523,7 @@ export default function PublicProfilePage() {
         )}
 
         {Object.values(activity || {}).some((value) => value > 0) && (
-          <Card className="border-slate-800/70 bg-gradient-to-br from-slate-900/70 to-slate-900/30 shadow-lg">
+          <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 bg-gradient-to-br from-slate-900/70 to-slate-900/30 shadow-lg`}>
             <CardHeader>
               <CardTitle>Practice Activity</CardTitle>
             </CardHeader>
@@ -540,13 +543,13 @@ export default function PublicProfilePage() {
           </Card>
         )}
 
-        <Card className="border-slate-800/70 bg-slate-900/60 shadow-lg">
+        <Card className={`${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/60 shadow-lg`}>
           <CardHeader>
             <CardTitle>Resume</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {primaryResume ? (
-              <div className="rounded-2xl border border-slate-800/70 bg-slate-900/80 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div className={`rounded-2xl border ${isLight ? "border-slate-200" : "border-slate-800"}/70 ${isLight ? "bg-white" : "bg-slate-900"}/80 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3`}>
                 <div>
                   <p className="text-base font-semibold text-white">{primaryResume.fileName}</p>
                   <p className="text-xs text-slate-400">
@@ -556,7 +559,7 @@ export default function PublicProfilePage() {
                 <div className="flex flex-wrap gap-2">
                   <Button
                     variant="outline"
-                    className="border-slate-700/60"
+                    className={`${isLight ? "border-slate-300" : "border-slate-700"}/60`}
                     onClick={() => setPreview({ title: "Resume Preview", url: primaryResume.fileUrl })}
                   >
                     Preview Resume
@@ -577,12 +580,12 @@ export default function PublicProfilePage() {
       </div>
 
       <Dialog open={Boolean(preview)} onOpenChange={(open) => !open && setPreview(null)}>
-        <DialogContent className="max-w-4xl bg-slate-950 border-slate-800">
+        <DialogContent className={`max-w-4xl bg-slate-950 ${isLight ? "border-slate-200" : "border-slate-800"}`}>
           <DialogHeader>
             <DialogTitle className="text-white">{preview?.title}</DialogTitle>
           </DialogHeader>
           {preview?.url && (
-            <div className="mt-2 rounded-xl border border-slate-800 overflow-hidden">
+            <div className={`mt-2 rounded-xl border ${isLight ? "border-slate-200" : "border-slate-800"} overflow-hidden`}>
               {preview.url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                 <img src={preview.url} alt={preview.title} className="w-full h-auto max-h-[70vh] object-contain" />
               ) : (

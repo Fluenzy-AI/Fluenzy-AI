@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect, useState, useCallback } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Check,
@@ -44,6 +45,8 @@ export function ChatMessages({
   onLoadMore,
   hasMore = false
 }: ChatMessagesProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -99,7 +102,7 @@ export function ChatMessages({
         <div key={date}>
           {/* Date separator */}
           <div className="flex items-center justify-center my-3 sm:my-4">
-            <div className="px-2 sm:px-3 py-0.5 sm:py-1 bg-slate-800/50 rounded-full text-[10px] sm:text-xs text-slate-400">
+            <div className={`px-2 sm:px-3 py-0.5 sm:py-1 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 rounded-full text-[10px] sm:text-xs text-slate-400`}>
               {date}
             </div>
           </div>
@@ -168,6 +171,8 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [showMenu, setShowMenu] = useState(false);
   const [showReactions, setShowReactions] = useState(false);
 
@@ -175,7 +180,7 @@ function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
   if (message.isDeleted && message.deletedForAll) {
     return (
       <div className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-        <div className="px-3 sm:px-4 py-1 sm:py-2 bg-slate-800/30 rounded-xl text-slate-500 text-xs sm:text-sm italic">
+        <div className={`px-3 sm:px-4 py-1 sm:py-2 ${isLight ? "bg-slate-100" : "bg-slate-800"}/30 rounded-xl text-slate-500 text-xs sm:text-sm italic`}>
           This message was deleted
         </div>
       </div>
@@ -267,13 +272,13 @@ function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
               {uniqueReactions.slice(0, 3).map((emoji) => (
                 <span
                   key={emoji}
-                  className="w-4 h-4 sm:w-5 sm:h-5 bg-slate-700 rounded-full flex items-center justify-center text-xs border border-slate-800"
+                  className={`w-4 h-4 sm:w-5 sm:h-5 bg-slate-700 rounded-full flex items-center justify-center text-xs border ${isLight ? "border-slate-200" : "border-slate-800"}`}
                 >
                   {emoji}
                 </span>
               ))}
               {uniqueReactions.length > 3 && (
-                <span className="w-4 h-4 sm:w-5 sm:h-5 bg-slate-700 rounded-full flex items-center justify-center text-[8px] sm:text-[10px] text-slate-300 border border-slate-800">
+                <span className={`w-4 h-4 sm:w-5 sm:h-5 bg-slate-700 rounded-full flex items-center justify-center text-[8px] sm:text-[10px] text-slate-300 border ${isLight ? "border-slate-200" : "border-slate-800"}`}>
                   +{uniqueReactions.length - 3}
                 </span>
               )}
@@ -286,20 +291,20 @@ function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
           className={`absolute top-0 ${isOwn ? '-left-16 sm:-left-20' : '-right-16 sm:-right-20'} opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 sm:gap-1`}
         >
           <button
-            className="p-1 sm:p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className={`p-1 sm:p-1.5 rounded-lg ${isLight ? "bg-slate-100" : "bg-slate-800"} hover:bg-slate-700 text-slate-400 hover:text-white transition-colors`}
             title="Reply"
           >
             <Reply size={12} className="sm:w-[14px] sm:h-[14px]" />
           </button>
           <button
-            className="p-1 sm:p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className={`p-1 sm:p-1.5 rounded-lg ${isLight ? "bg-slate-100" : "bg-slate-800"} hover:bg-slate-700 text-slate-400 hover:text-white transition-colors`}
             title="React"
             onClick={() => setShowReactions(!showReactions)}
           >
             <Smile size={12} className="sm:w-[14px] sm:h-[14px]" />
           </button>
           <button
-            className="p-1 sm:p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className={`p-1 sm:p-1.5 rounded-lg ${isLight ? "bg-slate-100" : "bg-slate-800"} hover:bg-slate-700 text-slate-400 hover:text-white transition-colors`}
             title="More"
             onClick={() => setShowMenu(!showMenu)}
           >
@@ -364,6 +369,8 @@ function MessageBubble({ message, isOwn, showAvatar }: MessageBubbleProps) {
 
 // Message Content by Type
 function MessageContent({ message, isOwn }: { message: MessageWithDetails; isOwn: boolean }) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [isPlaying, setIsPlaying] = useState(false);
 
   switch (message.type) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import Link from "next/link";
 import {
   Search, MapPin, Briefcase, Clock, Building2, Zap, Filter, X, ChevronRight,
@@ -58,6 +59,8 @@ interface CandidatePrefs {
 }
 
 export default function JobsClient() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchInput, setSearchInput] = useState(""); // For debounce
@@ -202,7 +205,7 @@ export default function JobsClient() {
         <button
           onClick={() => setPage((p) => Math.max(1, p - 1))}
           disabled={page === 1}
-          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`p-2 rounded-lg ${isLight ? "bg-slate-100" : "bg-slate-800"} text-slate-400 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -230,7 +233,7 @@ export default function JobsClient() {
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
-          className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className={`p-2 rounded-lg ${isLight ? "bg-slate-100" : "bg-slate-800"} text-slate-400 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed`}
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -378,7 +381,7 @@ export default function JobsClient() {
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search jobs, skills, or companies..."
-                className="w-full bg-[#0f1627] border border-slate-700/60 rounded-xl pl-12 pr-4 py-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30"
+                className={`w-full bg-[#0f1627] border ${isLight ? "border-slate-300" : "border-slate-700"}/60 rounded-xl pl-12 pr-4 py-4 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/30`}
               />
             </div>
 
@@ -525,14 +528,14 @@ export default function JobsClient() {
                     placeholder="Min"
                     value={filters.salaryMin}
                     onChange={(e) => handleFilterChange("salaryMin", e.target.value)}
-                    className="w-1/2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className={`w-1/2 px-3 py-2 ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500`}
                   />
                   <input
                     type="number"
                     placeholder="Max"
                     value={filters.salaryMax}
                     onChange={(e) => handleFilterChange("salaryMax", e.target.value)}
-                    className="w-1/2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500"
+                    className={`w-1/2 px-3 py-2 ${isLight ? "bg-slate-100" : "bg-slate-800"} border ${isLight ? "border-slate-300" : "border-slate-700"} rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500`}
                   />
                 </div>
               </div>
@@ -566,10 +569,10 @@ export default function JobsClient() {
             {loading ? (
               <div className="space-y-4">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="bg-slate-900/50 rounded-xl p-6 animate-pulse">
-                    <div className="h-6 bg-slate-800 rounded w-3/4 mb-4" />
-                    <div className="h-4 bg-slate-800 rounded w-1/2 mb-2" />
-                    <div className="h-4 bg-slate-800 rounded w-1/4" />
+                  <div key={i} className={`${isLight ? "bg-white" : "bg-slate-900"}/50 rounded-xl p-6 animate-pulse`}>
+                    <div className={`h-6 ${isLight ? "bg-slate-100" : "bg-slate-800"} rounded w-3/4 mb-4`} />
+                    <div className={`h-4 ${isLight ? "bg-slate-100" : "bg-slate-800"} rounded w-1/2 mb-2`} />
+                    <div className={`h-4 ${isLight ? "bg-slate-100" : "bg-slate-800"} rounded w-1/4`} />
                   </div>
                 ))}
               </div>
@@ -606,16 +609,18 @@ export default function JobsClient() {
 }
 
 function JobCard({ job }: { job: Job }) {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   const postedRelative = getRelativeTime(job.createdAt);
 
   return (
     <Link
       href={`/jobs/${job.company.slug}/${job.slug}`}
-      className="block bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-indigo-500/30 rounded-xl p-6 transition-all group"
+      className={`block ${isLight ? "bg-white" : "bg-slate-900"}/50 hover:${isLight ? "bg-white" : "bg-slate-900"} border border-white/5 hover:border-indigo-500/30 rounded-xl p-6 transition-all group`}
     >
       <div className="flex items-start gap-4">
         {/* Company Logo */}
-        <div className="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className={`w-12 h-12 rounded-xl ${isLight ? "bg-slate-100" : "bg-slate-800"} flex items-center justify-center flex-shrink-0 overflow-hidden`}>
           {job.company.logoUrl ? (
             <img src={job.company.logoUrl} alt={job.company.name} className="w-full h-full object-cover" />
           ) : (
@@ -670,7 +675,7 @@ function JobCard({ job }: { job: Job }) {
           {/* Skills */}
           <div className="flex flex-wrap gap-2 mt-3">
             {job.skills.slice(0, 5).map((skill) => (
-              <span key={skill} className="px-2 py-0.5 bg-slate-800 text-slate-400 rounded text-xs">
+              <span key={skill} className={`px-2 py-0.5 ${isLight ? "bg-slate-100" : "bg-slate-800"} text-slate-400 rounded text-xs`}>
                 {skill}
               </span>
             ))}

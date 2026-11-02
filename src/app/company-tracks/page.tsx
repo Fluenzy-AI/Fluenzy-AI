@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +98,8 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function CompanyTracksPage() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === 'light' || resolvedTheme === 'parchment';
   // Video state
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -581,8 +584,8 @@ export default function CompanyTracksPage() {
           {/* Video Preview Section */}
           <div className="lg:col-span-2 space-y-6">
             {/* Video Container */}
-            <Card className="bg-slate-800/50 border-slate-700 overflow-hidden">
-              <CardHeader className="pb-2 border-b border-slate-700">
+            <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"} overflow-hidden`}>
+              <CardHeader className={`pb-2 border-b ${isLight ? "border-slate-300" : "border-slate-700"}`}>
                 <div className="flex justify-between items-center">
                   <CardTitle className="text-white flex items-center gap-2">
                     <Eye className="w-5 h-5 text-cyan-400" />
@@ -630,7 +633,7 @@ export default function CompanyTracksPage() {
 
                   {/* Placeholder when not streaming */}
                   {!isStreaming && (
-                    <div className="w-full h-[400px] bg-slate-900 flex flex-col items-center justify-center text-slate-500">
+                    <div className={`w-full h-[400px] ${isLight ? "bg-white" : "bg-slate-900"} flex flex-col items-center justify-center text-slate-500`}>
                       <CameraOff className="w-16 h-16 mb-4 opacity-50" />
                       <p className="text-lg">Camera not active</p>
                       <p className="text-sm mt-2">Click "Start Camera" to begin monitoring</p>
@@ -671,7 +674,7 @@ export default function CompanyTracksPage() {
             </Card>
 
             {/* Detection History Chart */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-white flex items-center gap-2">
                   <TrendingUp className="w-5 h-5 text-cyan-400" />
@@ -729,7 +732,7 @@ export default function CompanyTracksPage() {
           {/* Analytics Dashboard */}
           <div className="space-y-6">
             {/* Session Stats */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-white flex items-center justify-between">
                   <span className="flex items-center gap-2">
@@ -791,7 +794,7 @@ export default function CompanyTracksPage() {
             </Card>
 
             {/* Real-time Alerts */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-white flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5 text-amber-400" />
@@ -849,7 +852,7 @@ export default function CompanyTracksPage() {
             </Card>
 
             {/* Detection Classes */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-white flex items-center gap-2">
                   <Settings className="w-5 h-5 text-cyan-400" />
@@ -880,7 +883,7 @@ export default function CompanyTracksPage() {
 
             {/* Current Detections List */}
             {currentDetection && currentDetection.detections.length > 0 && (
-              <Card className="bg-slate-800/50 border-slate-700">
+              <Card className={`${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
                 <CardHeader className="pb-2">
                   <CardTitle className="text-white flex items-center gap-2">
                     <History className="w-5 h-5 text-cyan-400" />
@@ -908,7 +911,7 @@ export default function CompanyTracksPage() {
         </div>
 
         {/* Confidence Score Chart */}
-        <Card className="mt-6 bg-slate-800/50 border-slate-700">
+        <Card className={`mt-6 ${isLight ? "bg-slate-100" : "bg-slate-800"}/50 ${isLight ? "border-slate-300" : "border-slate-700"}`}>
           <CardHeader className="pb-2">
             <CardTitle className="text-white flex items-center gap-2">
               <Activity className="w-5 h-5 text-cyan-400" />
@@ -950,7 +953,7 @@ export default function CompanyTracksPage() {
       {isFullscreen && (
         <Button
           onClick={toggleFullscreen}
-          className="fixed top-4 right-4 z-50 bg-slate-800/80 hover:bg-slate-700"
+          className={`fixed top-4 right-4 z-50 ${isLight ? "bg-slate-100" : "bg-slate-800"}/80 hover:bg-slate-700`}
         >
           <Minimize2 className="w-4 h-4 mr-2" />
           Exit Fullscreen
